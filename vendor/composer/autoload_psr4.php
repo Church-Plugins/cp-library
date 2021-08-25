@@ -6,7 +6,6 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'SkillfulPlugins\\' => array($vendorDir . '/skillfulplugins/toolbox'),
-    'RCP_UM\\' => array($baseDir . '/includes'),
+    'SC_Library\\' => array($baseDir . '/includes'),
     'Composer\\Installers\\' => array($vendorDir . '/composer/installers/src/Composer/Installers'),
 );

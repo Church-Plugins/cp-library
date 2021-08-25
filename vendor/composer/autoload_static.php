@@ -9,11 +9,7 @@ class ComposerStaticInitf6622c997b7bb7571d287508e03c43f5
     public static $prefixLengthsPsr4 = array (
         'S' => 
         array (
-            'SkillfulPlugins\\' => 16,
-        ),
-        'R' => 
-        array (
-            'RCP_UM\\' => 7,
+            'SC_Library\\' => 11,
         ),
         'C' => 
         array (
@@ -22,11 +18,7 @@ class ComposerStaticInitf6622c997b7bb7571d287508e03c43f5
     );
 
     public static $prefixDirsPsr4 = array (
-        'SkillfulPlugins\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/skillfulplugins/toolbox',
-        ),
-        'RCP_UM\\' => 
+        'SC_Library\\' => 
         array (
             0 => __DIR__ . '/../..' . '/includes',
         ),
@@ -36,11 +28,16 @@ class ComposerStaticInitf6622c997b7bb7571d287508e03c43f5
         ),
     );
 
+    public static $classMap = array (
+        'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+    );
+
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
             $loader->prefixLengthsPsr4 = ComposerStaticInitf6622c997b7bb7571d287508e03c43f5::$prefixLengthsPsr4;
             $loader->prefixDirsPsr4 = ComposerStaticInitf6622c997b7bb7571d287508e03c43f5::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInitf6622c997b7bb7571d287508e03c43f5::$classMap;
 
         }, null, ClassLoader::class);
     }
