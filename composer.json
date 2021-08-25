@@ -1,0 +1,23 @@
+{
+  "name": "church-plugins/cp-library",
+  "type": "wordpress-plugin",
+  "description": "Church library plugin for sermons, talks, and other media.",
+  "keywords": [],
+  "homepage": "https://churchplugins.com",
+  "authors": [
+    {
+      "name": "Tanner Moushey",
+      "email": "tanner@churchplugins.com",
+      "homepage": "https://churchplugins.com"
+    }
+  ],
+  "require": {
+    "php": ">=5.3.0",
+    "composer/installers": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "SC_Library\\": "includes/"
+    }
+  }
+}

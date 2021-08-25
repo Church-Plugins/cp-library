@@ -1,0 +1,4 @@
+.DS_STORE
+composer.lock
+/build/
+/node_modules/
