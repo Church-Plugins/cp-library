@@ -3,13 +3,13 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 
-const root = document.getElementById( 'cpl-root' );
+const root = document.getElementById( 'scl-root' );
 
-const itemList = document.getElementById( 'cpl-item_list' );
-const item = document.getElementById( 'cpl-item' );
-const sourceList = document.getElementById( 'cpl-source_list' );
-const source = document.getElementById( 'cpl-source' );
-const player = document.getElementById( 'cpl-player' );
+const itemList = document.getElementById( 'scl-item_list' );
+const item = document.getElementById( 'scl-item' );
+const sourceList = document.getElementById( 'scl-source_list' );
+const source = document.getElementById( 'cscl-source' );
+const player = document.getElementById( 'scl-player' );
 
 // TODO: These will be different things accpting different parameters, based on the shortcode we're fulfilling
 

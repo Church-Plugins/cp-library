@@ -10,8 +10,8 @@ function App() {
 
 	// normalize input parameters
 	let params = null;
-	if( window && window.cplParams ) {
-		params = window.cplParams;
+	if( window && window.sclParams ) {
+		params = window.sclParams;
 	} else {
 		params = {};
 	}
