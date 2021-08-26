@@ -4,6 +4,10 @@ namespace SC_Library\Admin;
 
 use SC_Library\Init as SC_Library;
 
+/**
+ * Plugin settings
+ *
+ */
 class Settings {
 
 	/**
@@ -25,7 +29,8 @@ class Settings {
 	}
 
 	/**
-	 * Add Hooks and Actions
+	 * Class constructor. Add admin hooks and actions
+	 *
 	 */
 	protected function __construct() {
 		add_action( 'admin_init', array( $this, 'register_settings' ), 50 );
@@ -36,6 +41,7 @@ class Settings {
 	/**
 	 * Register the settings
 	 *
+	 * @return void
 	 * @access      public
 	 * @since       1.0.0
 	 */
@@ -54,6 +60,11 @@ class Settings {
 		add_submenu_page( 'settings', __( 'Church Plugins Library Settings', 'cp-library' ), __( 'CP Library', 'cp-library' ), 'manage_options', cp_library()->get_id(), array( $this, 'settings_page' ) );
 	}
 
+	/**
+	 * Licensing admin UI
+	 *
+	 * @return void
+	 */
 	public function settings_page() {
 		$license  = get_option( 'sc_library_license_key', '' );
 		$status   = get_option( 'sc_library_license_status', '' );
@@ -103,6 +114,13 @@ class Settings {
 	}
 
 
+	/**
+	 * Sanitize license input
+	 *
+	 * @param String $new
+	 * @return String
+	 * @author costmo
+	 */
 	public function sanitize_license( $new ) {
 		$old = get_option( 'sc_library_license_key' );
 		if ( $old && $old != $new ) {
@@ -114,6 +132,8 @@ class Settings {
 
 	/**
 	 * This is a means of catching errors from the activation method above and displaying it to the customer
+	 *
+	 * @return void
 	 */
 	public function license_admin_notice() {
 		if ( isset( $_GET['sl_activation'] ) && ! empty( $_GET['message'] ) ) {

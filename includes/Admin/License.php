@@ -2,10 +2,16 @@
 
 namespace SC_Library\Admin;
 
+/**
+ * Plugin licensing class
+ *
+ * TODO: Determine whether the "EDD" keys/functionality contained in this class is appropriate
+ *
+ */
 class License {
 
 	/**
-	 * @var
+	 * @var License
 	 */
 	protected static $_instance;
 
@@ -22,6 +28,10 @@ class License {
 		return self::$_instance;
 	}
 
+	/**
+	 * Class constructor
+	 *
+	 */
 	protected function __construct() {
 		add_action( 'admin_init', array( $this, 'check_license'      ) );
 		add_action( 'admin_init', array( $this, 'activate_license'   ) );
@@ -31,6 +41,8 @@ class License {
 
 	/**
 	 * Handle License activation
+	 *
+	 * @return void
 	 */
 	public function activate_license() {
 
@@ -78,6 +90,8 @@ class License {
 
 	/**
 	 * Handle License deactivation
+	 *
+	 * @return void
 	 */
 	public function deactivate_license() {
 
@@ -128,6 +142,7 @@ class License {
 	/**
 	 * Check license
 	 *
+	 * @return void
 	 * @since       1.0.0
 	 */
 	public function check_license() {
@@ -172,6 +187,8 @@ class License {
 
 	/**
 	 * Plugin Updater
+	 *
+	 * @return void
 	 */
 	public function plugin_updater() {
 		// load our custom updater

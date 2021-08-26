@@ -2,10 +2,13 @@
 
 namespace SC_Library\Admin;
 
+/**
+ * Admin-only plugin initialization
+ */
 class Init {
 
 	/**
-	 * @var
+	 * @var Init
 	 */
 	protected static $_instance;
 
@@ -22,10 +25,19 @@ class Init {
 		return self::$_instance;
 	}
 
+	/**
+	 * Class constructor
+	 *
+	 */
 	protected function __construct() {
 		$this->includes();
 	}
 
+	/**
+	 * Admin init includes
+	 *
+	 * @return void
+	 */
 	protected function includes() {
 		License::get_instance();
 		Settings::get_instance();

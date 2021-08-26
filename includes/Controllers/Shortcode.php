@@ -3,6 +3,11 @@ namespace SC_Library\Controllers;
 
 use SC_Library\Views\Shortcode as Shortcode_View;
 
+/**
+ * Shortcode controller class
+ *
+ * @author costmo
+ */
 class Shortcode
 {
 
@@ -46,6 +51,7 @@ class Shortcode
 	public function add_shortcodes() {
 
 		$view = Shortcode_View::get_instance();
+		// An array of mappings from `shortcode` => `handler method`
 		$codes = [
 			'cpl_root'		=> 'render_cpl_root'
 		];

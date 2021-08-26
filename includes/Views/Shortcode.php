@@ -1,6 +1,11 @@
 <?php
 namespace SC_Library\Views;
 
+/**
+ * Shortcode view/render class
+ *
+ * @author costmo
+ */
 class Shortcode
 {
 

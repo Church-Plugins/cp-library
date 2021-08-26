@@ -8,6 +8,11 @@ define( 'CPL_APP_PREFIX', 		'cpl' );
 
 use SC_Library\Controllers\Shortcode as Shortcode_Controller;
 
+/**
+ * WordPress plugin initialization
+ *
+ * @author costmo
+ */
 class Init {
 
 	/**
@@ -29,14 +34,17 @@ class Init {
 	}
 
 	/**
-	 * Add Hooks and Actions
+	 * Class constructor: Add Hooks and Actions
+	 *
 	 */
 	protected function __construct() {
 		add_action( 'plugins_loaded', array( $this, 'maybe_setup' ), - 9999 );
 	}
 
 	/**
-	 * Setup the plugin
+	 * Plugin setup entry hub
+	 *
+	 * @return void
 	 */
 	public function maybe_setup() {
 		if ( ! $this->check_required_plugins() ) {
@@ -81,7 +89,7 @@ class Init {
 	}
 
 	/**
-	 * `wp_enqueue_scripts` actions for the app
+	 * `wp_enqueue_scripts` actions for the app's compiled sources
 	 *
 	 * @return void
 	 * @author costmo
@@ -94,10 +102,7 @@ class Init {
 			wp_enqueue_style( CPL_APP_PREFIX, get_site_url() . $asset_manifest[ 'main.css' ] );
 		}
 
-		// echo "<pre>" . var_export( $asset_manifest, true ) . "</pre>";
-
 		wp_enqueue_script( CPL_APP_PREFIX . '-runtime', get_site_url() . $asset_manifest[ 'runtime-main.js' ], array(), null, true );
-
 		wp_enqueue_script( CPL_APP_PREFIX . '-main', get_site_url() . $asset_manifest[ 'main.js' ], array( CPL_APP_PREFIX . '-runtime' ), null, true );
 
 		foreach( $asset_manifest as $key => $value ) {
@@ -120,6 +125,8 @@ class Init {
 
 	/**
 	 * Includes
+	 *
+	 * @return void
 	 */
 	protected function includes() {
 		Admin\Init::get_instance();
@@ -127,6 +134,8 @@ class Init {
 
 	/**
 	 * Actions and Filters
+	 *
+	 * @return void
 	 */
 	protected function actions() {}
 
@@ -134,6 +143,8 @@ class Init {
 
 	/**
 	 * Required Plugins notice
+	 *
+	 * @return void
 	 */
 	public function required_plugins() {
 		printf( '<div class="error"><p>%s</p></div>', __( 'Your system does not meet the requirements for Church Plugins - Library', 'cp-library' ) );
@@ -142,7 +153,8 @@ class Init {
 	/** Helper Methods **************************************/
 
 	/**
-	 * Make sure RCP is active
+	 * Make sure required plugins are active
+	 *
 	 * @return bool
 	 */
 	protected function check_required_plugins() {
