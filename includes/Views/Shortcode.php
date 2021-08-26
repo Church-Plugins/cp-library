@@ -40,6 +40,30 @@ class Shortcode
 	}
 
 	/**
+	 * Generate static JS to feed parameters between PHP and JS
+	 *
+	 * @param array $args
+	 * @return String
+	 * @author costmo
+	 */
+	protected static function staticScript( $args = array() ) {
+
+		$output = '
+		<script>
+			var cplParams = cplParams || {};
+		';
+		// Push shortcode parameters to the frontend so that JS has access to the data
+		foreach( $args as $key => $value ) {
+			$output .= "cplParams." . $key . " = '" . $value . "';\n";
+		}
+		$output .= '
+		</script>
+		';
+
+		return $output;
+	}
+
+	/**
 	 * Renderer for the `cpl_root` shortcode - a top-level view
 	 *
 	 * @param Array $args
@@ -48,19 +72,52 @@ class Shortcode
 	 */
 	public function render_cpl_root( $args ) {
 
-		$output = '
-		<script>
-			var cplParams = cplParams || {};
-		';
+		$output  = self::staticScript( $args );
+		$output .= '<div id="' . CPL_APP_PREFIX . '-root"></div>';
 
-		// Push shortcode parameters to the frontend so that JS has access to the data
-		foreach( $args as $key => $value ) {
-			$output .= "cplParams." . $key . " = '" . $value . "';\n";
-		}
+		return $output;
+	}
 
-		$output .= '
-		</script>
-		<div id="' . CPL_APP_PREFIX . '-root"></div>';
+	public function render_item_list( $args ) {
+
+		$output  = self::staticScript( $args );
+		$output .= '<div id="' . CPL_APP_PREFIX . '-item_list"></div>';
+
+		return $output;
+
+	}
+
+	public function render_item( $args ) {
+
+		$output  = self::staticScript( $args );
+		$output .= '<div id="' . CPL_APP_PREFIX . '-item"></div>';
+
+		return $output;
+
+	}
+
+	public function render_source_list( $args ) {
+
+		$output  = self::staticScript( $args );
+		$output .= '<div id="' . CPL_APP_PREFIX . '-source_list"></div>';
+
+		return $output;
+
+	}
+
+	public function render_source( $args ) {
+
+		$output  = self::staticScript( $args );
+		$output .= '<div id="' . CPL_APP_PREFIX . '-source"></div>';
+
+		return $output;
+
+	}
+
+	public function render_player( $args ) {
+
+		$output  = self::staticScript( $args );
+		$output .= '<div id="' . CPL_APP_PREFIX . '-player"></div>';
 
 		return $output;
 	}

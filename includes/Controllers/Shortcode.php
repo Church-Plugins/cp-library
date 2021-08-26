@@ -53,7 +53,15 @@ class Shortcode
 		$view = Shortcode_View::get_instance();
 		// An array of mappings from `shortcode` => `handler method`
 		$codes = [
-			'cpl_root'		=> 'render_cpl_root'
+			'cpl_root'			=> 'render_cpl_root',
+
+			'cpl_item_list'		=> 'render_item_list',
+			'cpl_item'			=> 'render_item',
+
+			'cpl_source_list'	=> 'render_source_list',
+			'cpl_source'		=> 'render_source',
+
+			'cpl_player'		=> 'render_player'
 		];
 
 		foreach( $codes as $shortcode => $handler ) {
