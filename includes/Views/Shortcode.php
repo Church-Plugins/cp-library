@@ -49,19 +49,13 @@ class Shortcode
 		';
 
 		// Push shortcode parameters to the frontend so that JS has access to the data
-		$tmp_extra_info = "";
 		foreach( $args as $key => $value ) {
 			$output .= "cplParams." . $key . " = '" . $value . "';\n";
-			$tmp_extra_info .= "<p>" . $key . " = " . $value . "</p>\n";
 		}
 
 		$output .= '
 		</script>
-		<pre>' .
-			$tmp_extra_info .
-		'</pre>
 		<div id="' . CPL_APP_PREFIX . '-root"></div>';
-
 
 		return $output;
 	}
