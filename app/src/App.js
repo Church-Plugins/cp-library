@@ -6,7 +6,13 @@ function App() {
 	let now = new Date();
 	let showNow = now.toString();
 
-	let params = window.cplParams;
+	// normalize input parameters
+	let params = null;
+	if( window && window.cplParams ) {
+		params = window.cplParams;
+	} else {
+		params = {};
+	}
 
 	return (
 		<div className="App">
