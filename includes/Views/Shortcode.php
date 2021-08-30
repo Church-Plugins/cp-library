@@ -50,11 +50,11 @@ class Shortcode
 
 		$output = '
 		<script>
-			var sclParams = sclParams || {};
+			var cplParams = cplParams || {};
 		';
 		// Push shortcode parameters to the frontend so that JS has access to the data
 		foreach( $args as $key => $value ) {
-			$output .= "sclParams." . $key . " = '" . $value . "';\n";
+			$output .= "cplParams." . $key . " = '" . $value . "';\n";
 		}
 		$output .= '
 		</script>
@@ -64,16 +64,16 @@ class Shortcode
 	}
 
 	/**
-	 * Renderer for the `scl_root` shortcode - a top-level view
+	 * Renderer for the `cpl_root` shortcode - a top-level view
 	 *
 	 * @param Array $args
 	 * @return String
 	 * @author costmo
 	 */
-	public function render_root( $args ) {
+	public function render_cpl_root( $args ) {
 
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . SCL_APP_PREFIX . '-root"></div>';
+		$output .= '<div id="' . CPL_APP_PREFIX . '-root"></div>';
 
 		return $output;
 	}
@@ -81,7 +81,7 @@ class Shortcode
 	public function render_item_list( $args ) {
 
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . SCL_APP_PREFIX . '-item_list"></div>';
+		$output .= '<div id="' . CPL_APP_PREFIX . '-item_list"></div>';
 
 		return $output;
 
@@ -90,7 +90,7 @@ class Shortcode
 	public function render_item( $args ) {
 
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . SCL_APP_PREFIX . '-item"></div>';
+		$output .= '<div id="' . CPL_APP_PREFIX . '-item"></div>';
 
 		return $output;
 
@@ -99,7 +99,7 @@ class Shortcode
 	public function render_source_list( $args ) {
 
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . SCL_APP_PREFIX . '-source_list"></div>';
+		$output .= '<div id="' . CPL_APP_PREFIX . '-source_list"></div>';
 
 		return $output;
 
@@ -108,7 +108,7 @@ class Shortcode
 	public function render_source( $args ) {
 
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . SCL_APP_PREFIX . '-source"></div>';
+		$output .= '<div id="' . CPL_APP_PREFIX . '-source"></div>';
 
 		return $output;
 
@@ -117,7 +117,7 @@ class Shortcode
 	public function render_player( $args ) {
 
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . SCL_APP_PREFIX . '-player"></div>';
+		$output .= '<div id="' . CPL_APP_PREFIX . '-player"></div>';
 
 		return $output;
 	}
