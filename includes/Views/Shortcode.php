@@ -48,13 +48,17 @@ class Shortcode
 	 */
 	protected static function staticScript( $args = array() ) {
 
+		echo var_export( $args, true ) . "\n";
+
 		$output = '
 		<script>
 			var cplParams = cplParams || {};
 		';
 		// Push shortcode parameters to the frontend so that JS has access to the data
-		foreach( $args as $key => $value ) {
-			$output .= "cplParams." . $key . " = '" . $value . "';\n";
+		if( !empty( $args) && is_array( $args ) ) {
+			foreach( $args as $key => $value ) {
+				$output .= "cplParams." . $key . " = '" . $value . "';\n";
+			}
 		}
 		$output .= '
 		</script>
@@ -70,7 +74,7 @@ class Shortcode
 	 * @return String
 	 * @author costmo
 	 */
-	public function render_cpl_root( $args ) {
+	public function render_root( $args ) {
 
 		$output  = self::staticScript( $args );
 		$output .= '<div id="' . CPL_APP_PREFIX . '-root"></div>';
