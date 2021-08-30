@@ -1,6 +1,6 @@
 <?php
 
-namespace SC_Library\Admin;
+namespace CP_Library\Admin;
 
 /**
  * Plugin licensing class
@@ -47,17 +47,17 @@ class License {
 	public function activate_license() {
 
 		// listen for our activate button to be clicked
-		if ( ! isset( $_POST['sc_library_license_activate'], $_POST['sc_library_nonce'] ) ) {
+		if ( ! isset( $_POST['cp_library_license_activate'], $_POST['cp_library_nonce'] ) ) {
 			return;
 		}
 
 		// run a quick security check
-		if ( ! check_admin_referer( 'sc_library_nonce', 'sc_library_nonce' ) ) {
+		if ( ! check_admin_referer( 'cp_library_nonce', 'cp_library_nonce' ) ) {
 			return;
 		} // get out if we didn't click the Activate button
 
 		// retrieve the license from the database
-		$license = trim( get_option( 'sc_library_license_key' ) );
+		$license = trim( get_option( 'cp_library_license_key' ) );
 
 		// data to send in our API request
 		$api_params = array(
@@ -83,8 +83,8 @@ class License {
 		$license_data = json_decode( wp_remote_retrieve_body( $response ) );
 
 		// $license_data->license will be either "valid" or "invalid"
-		update_option( 'sc_library_license_status', $license_data->license );
-		delete_transient( 'sc_library_license_check' );
+		update_option( 'cp_library_license_status', $license_data->license );
+		delete_transient( 'cp_library_license_check' );
 
 	}
 
@@ -96,17 +96,17 @@ class License {
 	public function deactivate_license() {
 
 		// listen for our activate button to be clicked
-		if ( ! isset( $_POST['sc_library_license_deactivate'], $_POST['sc_library_nonce'] ) ) {
+		if ( ! isset( $_POST['cp_library_license_deactivate'], $_POST['cp_library_nonce'] ) ) {
 			return;
 		}
 
 		// run a quick security check
-		if ( ! check_admin_referer( 'sc_library_nonce', 'sc_library_nonce' ) ) {
+		if ( ! check_admin_referer( 'cp_library_nonce', 'cp_library_nonce' ) ) {
 			return;
 		}
 
 		// retrieve the license from the database
-		$license = trim( get_option( 'sc_library_license_key' ) );
+		$license = trim( get_option( 'cp_library_license_key' ) );
 
 		// data to send in our API request
 		$api_params = array(
@@ -133,8 +133,8 @@ class License {
 
 		// $license_data->license will be either "deactivated" or "failed"
 		if ( $license_data->license == 'deactivated' ) {
-			delete_option( 'sc_library_license_status' );
-			delete_transient( 'sc_library_license_check' );
+			delete_option( 'cp_library_license_status' );
+			delete_transient( 'cp_library_license_check' );
 		}
 
 	}
@@ -148,12 +148,12 @@ class License {
 	public function check_license() {
 
 		// Don't fire when saving settings
-		if ( ! empty( $_POST['sc_library_nonce'] ) ) {
+		if ( ! empty( $_POST['cp_library_nonce'] ) ) {
 			return;
 		}
 
-		$license = get_option( 'sc_library_license_key' );
-		$status  = get_transient( 'sc_library_license_check' );
+		$license = get_option( 'cp_library_license_key' );
+		$status  = get_transient( 'cp_library_license_check' );
 
 		if ( $status === false && $license ) {
 
@@ -174,12 +174,12 @@ class License {
 
 			$status = $license_data->license;
 
-			update_option( 'sc_library_license_status', $status );
+			update_option( 'cp_library_license_status', $status );
 
-			set_transient( 'sc_library_license_check', $license_data->license, DAY_IN_SECONDS );
+			set_transient( 'cp_library_license_check', $license_data->license, DAY_IN_SECONDS );
 
 			if ( $status !== 'valid' ) {
-				delete_option( 'sc_library_license_status' );
+				delete_option( 'cp_library_license_status' );
 			}
 		}
 
@@ -197,7 +197,7 @@ class License {
 		}
 
 		// retrieve our license key from the DB
-		$license_key = trim( get_option( 'sc_library_license_key' ) );
+		$license_key = trim( get_option( 'cp_library_license_key' ) );
 
 		// setup the updater
 		new \EDD_SL_Plugin_Updater( CP_LIBRARY_STORE_URL, CP_LIBRARY_PLUGIN_FILE, array(

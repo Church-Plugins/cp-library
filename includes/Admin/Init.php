@@ -1,6 +1,6 @@
 <?php
 
-namespace SC_Library\Admin;
+namespace CP_Library\Admin;
 
 use SC_Library\Setup\Source;
 
