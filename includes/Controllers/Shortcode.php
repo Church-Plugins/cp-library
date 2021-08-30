@@ -1,8 +1,8 @@
 <?php
-namespace SC_Library\Controllers;
+namespace CP_Library\Controllers;
 
-use SC_Library\Init as Init;
-use SC_Library\Views\Shortcode as Shortcode_View;
+use CP_Library\Init as Init;
+use CP_Library\Views\Shortcode as Shortcode_View;
 
 /**
  * Shortcode controller class

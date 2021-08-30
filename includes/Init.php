@@ -1,12 +1,12 @@
 <?php
-namespace SC_Library;
+namespace CP_Library;
 
 define( 'CPL_APP_PATH', 		plugin_dir_path( dirname( __FILE__ ) ) . '/app' );
 define( 'CPL_ASSET_MANIFEST', 	CPL_APP_PATH . '/build/asset-manifest.json' );
 define( 'CPL_INCLUDES', 		plugin_dir_path( dirname( __FILE__ ) ) . '/includes' );
 define( 'CPL_APP_PREFIX', 		'cpl' );
 
-use SC_Library\Controllers\Shortcode as Shortcode_Controller;
+use CP_Library\Controllers\Shortcode as Shortcode_Controller;
 
 /**
  * WordPress plugin initialization

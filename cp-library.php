@@ -30,16 +30,16 @@ define( 'CP_LIBRARY_ITEM_NAME', 'Church Plugins - Library' );
 require_once( CP_LIBRARY_PLUGIN_DIR . 'vendor/autoload.php' );
 
 /**
- * @var SC_Library\Init
+ * @var CP_Library\Init
  */
 global $cp_library;
 $cp_library = cp_library();
 
 /**
- * @return \SC_Library\Init
+ * @return \CP_Library\Init
  */
 function cp_library() {
-	return SC_Library\Init::get_instance();
+	return CP_Library\Init::get_instance();
 }
 
 /**

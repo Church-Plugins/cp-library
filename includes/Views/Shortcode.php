@@ -1,5 +1,5 @@
 <?php
-namespace SC_Library\Views;
+namespace CP_Library\Views;
 
 /**
  * Shortcode view/render class
