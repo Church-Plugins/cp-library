@@ -22,7 +22,7 @@ class Shortcode
 	/**
 	 * Enforce singleton instantiation
 	 *
-	 * @return Init
+	 * @return Shortcode
 	 */
 	public static function get_instance() {
 		if( !self::$_instance instanceof Shortcode ) {

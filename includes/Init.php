@@ -21,6 +21,11 @@ class Init {
 	protected static $_instance;
 
 	/**
+	 * @var Setup\Init
+	 */
+	public $setup;
+
+	/**
 	 * Only make one instance of Init
 	 *
 	 * @return Init
@@ -54,6 +59,9 @@ class Init {
 		$this->includes();
 		$this->actions();
 		$this->app_init();
+
+
+		$this->setup = Setup\Init::get_instance();
 	}
 
 	/**
