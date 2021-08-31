@@ -1,6 +1,6 @@
 <?php
 
-namespace SC_Library\Models;
+namespace CP_Library\Models;
 
 /**
  * Source DB Class
@@ -51,7 +51,7 @@ class Item extends Table  {
 
 		global $wpdb;
 
-		$this->table_name  = $wpdb->prefix . SCL_APP_PREFIX . '_source';
+		$this->table_name  = $wpdb->prefix . CPL_APP_PREFIX . '_source';
 		$this->primary_key = 'id';
 		$this->version     = '1.0';
 

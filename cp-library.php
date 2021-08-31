@@ -36,7 +36,7 @@ global $cp_library;
 $cp_library = cp_library();
 
 /**
- * @return \CP_Library\Init
+ * @return CP_Library\Init
  */
 function cp_library() {
 	return CP_Library\Init::get_instance();

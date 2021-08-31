@@ -1,6 +1,8 @@
 <?php
 
-namespace SC_Library\Models;
+namespace CP_Library\Models;
+
+use CP_Library\Exception;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -145,10 +147,16 @@ abstract class Table {
 	}
 
 	/**
-	 * Update a row
+	 * @param        $row_id
+	 * @param array  $data
+	 * @param string $where
 	 *
-	 * @since   1.0
-	 * @return  bool
+	 *
+	 * @return bool
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
 	 */
 	public function update( $row_id, $data = array(), $where = '' ) {
 
@@ -158,7 +166,7 @@ abstract class Table {
 		$row_id = absint( $row_id );
 
 		if( empty( $row_id ) ) {
-			return false;
+			throw new Exception( 'No row id provided.' );
 		}
 
 		if( empty( $where ) ) {
@@ -179,17 +187,20 @@ abstract class Table {
 		$column_formats = array_merge( array_flip( $data_keys ), $column_formats );
 
 		if ( false === $wpdb->update( $this->table_name, $data, array( $where => $row_id ), $column_formats ) ) {
-			return false;
+			throw new Exception( sprintf( 'The row (%d) was not updated.', absint( $row_id ) ) );
 		}
 
 		return true;
 	}
 
 	/**
-	 * Delete a row identified by the primary key
+	 * @param int $row_id
 	 *
-	 * @since   1.0
-	 * @return  bool
+	 * @return bool
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
 	 */
 	public function delete( $row_id = 0 ) {
 
@@ -199,11 +210,11 @@ abstract class Table {
 		$row_id = absint( $row_id );
 
 		if( empty( $row_id ) ) {
-			return false;
+			throw new Exception( 'No row id provided.' );
 		}
 
 		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM $this->table_name WHERE $this->primary_key = %d", $row_id ) ) ) {
-			return false;
+			throw new Exception( sprintf( 'The row (%d) was not deleted.', absint( $row_id ) ) );
 		}
 
 		return true;

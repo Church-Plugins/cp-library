@@ -2,7 +2,7 @@
 
 namespace CP_Library\Admin;
 
-use SC_Library\Setup\Source;
+use CP_Library\Setup\Source;
 
 /**
  * Admin-only plugin initialization
@@ -55,12 +55,11 @@ class Init {
 	public function after_install() {
 		return;
 
-		new \WP_Post()
 		if ( ! is_admin() ) {
 			return;
 		}
 
-		$table_check = get_option( SCL_APP_PREFIX . '_table_check', false );
+		$table_check = get_option( CPL_APP_PREFIX . '_table_check', false );
 		$installed   = false;
 
 		if ( false === $table_check || current_time( 'timestamp' ) > $table_check ) {
@@ -72,10 +71,10 @@ class Init {
 			}
 
 			if ( $installed ) {
-				do_action( SCL_APP_PREFIX . '_after_install' );
+				do_action( CPL_APP_PREFIX . '_after_install' );
 			}
 
-			update_option( SCL_APP_PREFIX . '_table_check', ( current_time( 'timestamp' ) + WEEK_IN_SECONDS ) );
+			update_option( CPL_APP_PREFIX . '_table_check', ( current_time( 'timestamp' ) + WEEK_IN_SECONDS ) );
 
 		}
 

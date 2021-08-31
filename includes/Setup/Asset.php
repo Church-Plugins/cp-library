@@ -1,6 +1,6 @@
 <?php
 
-namespace SC_Library\Setup;
+namespace CP_Library\Setup;
 
 /**
  * Source DB Class
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  *
  * @since 2.1
  */
-class Object extends Table  {
+class Asset extends Table  {
 
 	/**
 	 * The name of the date column.
@@ -38,6 +38,7 @@ class Object extends Table  {
 		$this->primary_key = 'id';
 		$this->version     = '1.0';
 
+		parent::__construct();
 	}
 
 	/**
@@ -68,64 +69,6 @@ class Object extends Table  {
 			'published' => date( 'Y-m-d H:i:s' ),
 			'updated'   => date( 'Y-m-d H:i:s' ),
 		);
-	}
-
-	/**
-	 * Add a customer
-	 *
-	 * @since   2.1
-	*/
-	public function add( $data = array() ) {
-
-		$defaults = array(
-			'payment_ids' => ''
-		);
-
-		$args = wp_parse_args( $data, $defaults );
-
-		if( empty( $args['email'] ) ) {
-			return false;
-		}
-
-		if( ! empty( $args['payment_ids'] ) && is_array( $args['payment_ids'] ) ) {
-			$args['payment_ids'] = implode( ',', array_unique( array_values( $args['payment_ids'] ) ) );
-		}
-
-		$customer = $this->get_customer_by( 'email', $args['email'] );
-
-		if( $customer ) {
-			// update an existing customer
-
-			// Update the payment IDs attached to the customer
-			if( ! empty( $args['payment_ids'] ) ) {
-
-				if( empty( $customer->payment_ids ) ) {
-
-					$customer->payment_ids = $args['payment_ids'];
-
-				} else {
-
-					$existing_ids = array_map( 'absint', explode( ',', $customer->payment_ids ) );
-					$payment_ids  = array_map( 'absint', explode( ',', $args['payment_ids'] ) );
-					$payment_ids  = array_merge( $payment_ids, $existing_ids );
-					$customer->payment_ids = implode( ',', array_unique( array_values( $payment_ids ) ) );
-
-				}
-
-				$args['payment_ids'] = $customer->payment_ids;
-
-			}
-
-			$this->update( $customer->id, $args );
-
-			return $customer->id;
-
-		} else {
-
-			return $this->insert( $args, 'customer' );
-
-		}
-
 	}
 
 	/**
@@ -452,17 +395,11 @@ class Object extends Table  {
 
 		$sql = "CREATE TABLE " . $this->table_name . " (
 		id bigint(20) NOT NULL AUTO_INCREMENT,
-		user_id bigint(20) NOT NULL,
-		email varchar(50) NOT NULL,
-		name mediumtext NOT NULL,
-		purchase_value mediumtext NOT NULL,
-		purchase_count bigint(20) NOT NULL,
-		payment_ids longtext NOT NULL,
-		notes longtext NOT NULL,
-		date_created datetime NOT NULL,
+		title mediumtext NOT NULL,
+		status varchar(50) NOT NULL,
+		published datetime NOT NULL,
+		updated datetime NOT NULL,
 		PRIMARY KEY  (id),
-		UNIQUE KEY email (email),
-		KEY user (user_id)
 		) CHARACTER SET utf8 COLLATE utf8_general_ci;";
 
 		dbDelta( $sql );

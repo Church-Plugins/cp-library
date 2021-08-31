@@ -1,6 +1,6 @@
 <?php
 
-namespace SC_Library\Setup;
+namespace CP_Library\Setup;
 
 
 /**
