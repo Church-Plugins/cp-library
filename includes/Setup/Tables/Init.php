@@ -1,6 +1,6 @@
 <?php
 
-namespace CP_Library\Setup;
+namespace CP_Library\Setup\Tables;
 
 
 /**
@@ -14,12 +14,32 @@ class Init {
 	protected static $_instance;
 
 	/**
-	 * @var Tables\Init
+	 * @var Source
 	 * @since  1.0.0
 	 *
 	 * @author Tanner Moushey
 	 */
-	public $tables;
+	public $source;
+
+	/**
+	 * @var SourceMeta
+	 */
+	public $source_meta;
+
+	public $source_type;
+
+	/**
+	 * @var Item
+	 */
+	public $item;
+
+	/**
+	 * @var ItemMeta
+	 */
+	public $item_meta;
+
+	public $item_type;
+	public $options;
 
 	/**
 	 * Only make one instance of Init
@@ -49,7 +69,13 @@ class Init {
 	 * @return void
 	 */
 	protected function includes() {
-		$this->tables = Tables\Init::get_instance();
+		$this->source = Source::get_instance();
+		$this->source_meta = SourceMeta::get_instance();
+		$this->source_type = SourceType::get_instance();
+
+		$this->item = Item::get_instance();
+		$this->item_meta = ItemMeta::get_instance();
+		$this->item_type = ItemType::get_instance();
 	}
 
 	protected function actions() {}

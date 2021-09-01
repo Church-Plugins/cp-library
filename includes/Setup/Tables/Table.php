@@ -1,6 +1,6 @@
 <?php
 
-namespace CP_Library\Setup;
+namespace CP_Library\Setup\Tables;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -57,19 +57,9 @@ abstract class Table {
 	/**
 	 * Get things started
 	 *
-	 * @since   2.1
+	 * @since   1.0
 	 */
 	public function __construct() {}
-
-	/**
-	 * Whitelist of columns
-	 *
-	 * @since   1.0
-	 * @return  array
-	 */
-	public function get_columns() {
-		return array();
-	}
 
 	/**
 	 * Check if the given table exists
@@ -93,6 +83,35 @@ abstract class Table {
 	 */
 	public function installed() {
 		return $this->table_exists( $this->table_name );
+	}
+
+	/**
+	 * SQL string to create the Table
+	 *
+	 * @return string
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_sql() {
+		return '';
+	}
+
+	/**
+	 * Create the table
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function create_table() {
+		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+
+		$sql = apply_filters( 'cpl_create_table_sql', $this->get_sql(), $this );
+
+		dbDelta( $sql );
+
+		update_option( $this->table_name . '_db_version', $this->version );
 	}
 
 }

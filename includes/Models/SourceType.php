@@ -3,7 +3,7 @@
 namespace CP_Library\Models;
 
 /**
- * Item DB Class
+ * SourceType DB Class
  *
  * @since       1.0
  */
@@ -12,11 +12,11 @@ namespace CP_Library\Models;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * Item Class
+ * SourceType Class
  *
  * @since 1.0.0
  */
-class Item extends Table  {
+class SourceType extends Table  {
 
 	/**
 	 * Get things started
@@ -24,7 +24,7 @@ class Item extends Table  {
 	 * @since  1.0
 	*/
 	public function __construct() {
-		$this->type        = 'item';
+		$this->type        = 'source_type';
 
 		parent::__construct();
 	}
@@ -38,7 +38,7 @@ class Item extends Table  {
 		return array(
 			'id'        => '%d',
 			'title'     => '%s',
-			'status'    => '%s',
+			'parent_id' => '%d',
 			'published' => '%s',
 			'updated'   => '%s',
 		);
@@ -53,7 +53,7 @@ class Item extends Table  {
 		return array(
 			'id'        => 0,
 			'title'     => '',
-			'status'    => '',
+			'parent_id' => 0,
 			'published' => date( 'Y-m-d H:i:s' ),
 			'updated'   => date( 'Y-m-d H:i:s' ),
 		);

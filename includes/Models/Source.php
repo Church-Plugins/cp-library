@@ -3,7 +3,7 @@
 namespace CP_Library\Models;
 
 /**
- * Item DB Class
+ * Source DB Class
  *
  * @since       1.0
  */
@@ -12,11 +12,11 @@ namespace CP_Library\Models;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * Item Class
+ * Source Class
  *
  * @since 1.0.0
  */
-class Item extends Table  {
+class Source extends Table  {
 
 	/**
 	 * Get things started
@@ -24,7 +24,7 @@ class Item extends Table  {
 	 * @since  1.0
 	*/
 	public function __construct() {
-		$this->type        = 'item';
+		$this->type        = 'source';
 
 		parent::__construct();
 	}

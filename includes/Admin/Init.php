@@ -59,22 +59,25 @@ class Init {
 			return;
 		}
 
-		$table_check = get_option( CPL_APP_PREFIX . '_table_check', false );
+		$table_check = get_option( 'cpl_table_check', false );
 		$installed   = false;
+		$tables      = [ 'item', 'item_meta', 'item_type', 'source', 'source_meta', 'source_type' ];
 
 		if ( false === $table_check || current_time( 'timestamp' ) > $table_check ) {
 
-			if ( ! @cp_library()->setup->source->installed() ) {
-				// Create the source database (this ensures it creates it on multisite instances where it is network activated)
-				@cp_library()->setup->source->create_table();
-				$installed = true;
+			foreach( $tables as $table ) {
+				if ( ! @cp_library()->setup->tables->$table->installed() ) {
+					// Create the source database (this ensures it creates it on multisite instances where it is network activated)
+					@cp_library()->setup->tables->$table->create_table();
+					$installed = true;
+				}
 			}
 
 			if ( $installed ) {
-				do_action( CPL_APP_PREFIX . '_after_install' );
+				do_action( 'cpl_after_install' );
 			}
 
-			update_option( CPL_APP_PREFIX . '_table_check', ( current_time( 'timestamp' ) + WEEK_IN_SECONDS ) );
+			update_option( 'cpl_table_check', ( current_time( 'timestamp' ) + WEEK_IN_SECONDS ) );
 
 		}
 

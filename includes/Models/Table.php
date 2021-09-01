@@ -23,13 +23,6 @@ abstract class Table {
 	public $table_name;
 
 	/**
-	 * The version of our database table
-	 *
-	 * @since   1.0
-	 */
-	public $version;
-
-	/**
 	 * The name of the primary column
 	 *
 	 * @since   1.0
@@ -37,11 +30,31 @@ abstract class Table {
 	public $primary_key;
 
 	/**
+	 * Unique string to identify this data type
+	 *
+	 * @var string
+	 */
+	public $type;
+
+	/**
+	 * ID of the cache group to use
+	 *
+	 * @var string
+	 */
+	public $cache_group;
+
+	/**
 	 * Get things started
 	 *
-	 * @since   2.1
+	 * @since   1.0
 	 */
-	public function __construct() {}
+	public function __construct() {
+		global $wpdb;
+
+		$this->cache_group = $this->type;
+		$this->table_name  = $wpdb->prefix . CPL_APP_PREFIX . '_' . $this->type;
+		$this->primary_key = 'id';
+	}
 
 	/**
 	 * Whitelist of columns
@@ -66,6 +79,8 @@ abstract class Table {
 	/**
 	 * Retrieve a row by the primary key
 	 *
+	 * @param $row_id
+	 *
 	 * @since   1.0
 	 * @return  object
 	 */
@@ -76,6 +91,9 @@ abstract class Table {
 
 	/**
 	 * Retrieve a row by a specific column / value
+	 *
+	 * @param $column
+	 * @param $row_id
 	 *
 	 * @since   1.0
 	 * @return  object
@@ -89,6 +107,9 @@ abstract class Table {
 	/**
 	 * Retrieve a specific column's value by the primary key
 	 *
+	 * @param $column
+	 * @param $row_id
+	 *
 	 * @since   1.0
 	 * @return  string
 	 */
@@ -100,6 +121,10 @@ abstract class Table {
 
 	/**
 	 * Retrieve a specific column's value by the the specified column / value
+	 *
+	 * @param $column
+	 * @param $column_where
+	 * @param $column_value
 	 *
 	 * @since   1.0
 	 * @return  string
@@ -114,16 +139,22 @@ abstract class Table {
 	/**
 	 * Insert a new row
 	 *
-	 * @since   1.0
-	 * @return  int
+	 * @param        $data
+	 *
+	 *
+	 * @return int
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
 	 */
-	public function insert( $data, $type = '' ) {
+	public function insert( $data ) {
 		global $wpdb;
+
+		$data = apply_filters( 'cpl_pre_insert', $data, $this );
 
 		// Set default values
 		$data = wp_parse_args( $data, $this->get_column_defaults() );
-
-		do_action( 'edd_pre_insert_' . $type, $data );
 
 		// Initialise column format array
 		$column_formats = $this->get_columns();
@@ -139,9 +170,14 @@ abstract class Table {
 		$column_formats = array_merge( array_flip( $data_keys ), $column_formats );
 
 		$wpdb->insert( $this->table_name, $data, $column_formats );
-		$wpdb_insert_id = $wpdb->insert_id;
 
-		do_action( 'edd_post_insert_' . $type, $wpdb_insert_id, $data );
+		if ( ! $wpdb_insert_id = $wpdb->insert_id ) {
+			throw new Exception( 'Could not insert data.' );
+		}
+
+		$this->set_last_changed();
+
+		do_action( 'cpl_post_insert', $wpdb_insert_id, $data, $this );
 
 		return $wpdb_insert_id;
 	}
@@ -162,14 +198,16 @@ abstract class Table {
 
 		global $wpdb;
 
+		$data = apply_filters( 'cpl_pre_update', $data, $this );
+
 		// Row ID must be positive integer
 		$row_id = absint( $row_id );
 
-		if( empty( $row_id ) ) {
+		if ( empty( $row_id ) ) {
 			throw new Exception( 'No row id provided.' );
 		}
 
-		if( empty( $where ) ) {
+		if ( empty( $where ) ) {
 			$where = $this->primary_key;
 		}
 
@@ -189,6 +227,10 @@ abstract class Table {
 		if ( false === $wpdb->update( $this->table_name, $data, array( $where => $row_id ), $column_formats ) ) {
 			throw new Exception( sprintf( 'The row (%d) was not updated.', absint( $row_id ) ) );
 		}
+
+		$this->set_last_changed();
+
+		do_action( 'cpl_post_update', $data, $this );
 
 		return true;
 	}
@@ -218,6 +260,34 @@ abstract class Table {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Sets the last_changed cache key for customers.
+	 *
+	 * @since  1.0
+	 */
+	public function set_last_changed() {
+		wp_cache_set( 'last_changed', microtime(), $this->cache_group );
+	}
+
+	/**
+	 * Retrieves the value of the last_changed cache key for customers.
+	 *
+	 * @since  1.0.0
+	 */
+	public function get_last_changed() {
+		if ( function_exists( 'wp_cache_get_last_changed' ) ) {
+			return wp_cache_get_last_changed( $this->cache_group );
+		}
+
+		$last_changed = wp_cache_get( 'last_changed', $this->cache_group );
+		if ( ! $last_changed ) {
+			$last_changed = microtime();
+			wp_cache_set( 'last_changed', $last_changed, $this->cache_group );
+		}
+
+		return $last_changed;
 	}
 
 }
