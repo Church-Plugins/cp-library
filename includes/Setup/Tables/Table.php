@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * @author Tanner Moushey
  * @since  1.0
 */
-abstract class Table {
+class Table {
 
 	/**
 	 * The name of our database table
@@ -94,7 +94,7 @@ abstract class Table {
 	 * @author Tanner Moushey
 	 */
 	public function get_sql() {
-		return '';
+		throw new Exception( "get_sql() can't come from the parent." );
 	}
 
 	/**

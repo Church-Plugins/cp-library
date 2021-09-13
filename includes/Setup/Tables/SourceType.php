@@ -40,13 +40,14 @@ class SourceType extends Table  {
 	public function get_sql() {
 
 		return "CREATE TABLE " . $this->table_name . " (
-			id bigint(20) NOT NULL AUTO_INCREMENT,
-			title varchar(255) NOT NULL,
-			parent_id bigint(20),
-			published datetime NOT NULL,
-			updated datetime NOT NULL,
-			PRIMARY KEY  (id),
-			Key title (title),
+			`id` bigint(20) NOT NULL AUTO_INCREMENT,
+			`title` varchar(255) NOT NULL,
+			`parent_id` bigint(20),
+			`published` datetime NOT NULL,
+			`updated` datetime NOT NULL,
+			PRIMARY KEY  (`id`),
+			FULLTEXT INDEX `idx_title` (`title`),
+			KEY `idx_parent_id` (`parent_id`),
 		) CHARACTER SET utf8 COLLATE utf8_general_ci;";
 
 	}
