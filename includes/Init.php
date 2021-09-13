@@ -9,7 +9,7 @@ define( 'CPL_APP_PREFIX', 		'cpl' );
 use CP_Library\Controllers\Shortcode as Shortcode_Controller;
 
 /**
- * WordPress plugin initialization
+ * Provides the global $cp_library object
  *
  * @author costmo
  */

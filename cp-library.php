@@ -10,6 +10,8 @@
  * Domain Path: languages
  */
 
+ use CP_Library\Init as CP_Init;
+
 if ( !defined( 'CP_LIBRARY_PLUGIN_DIR' ) ) {
 	define( 'CP_LIBRARY_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 }
@@ -39,7 +41,7 @@ $cp_library = cp_library();
  * @return CP_Library\Init
  */
 function cp_library() {
-	return CP_Library\Init::get_instance();
+	return CP_Init::get_instance();
 }
 
 /**
