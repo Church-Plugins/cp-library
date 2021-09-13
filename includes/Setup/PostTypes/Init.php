@@ -4,7 +4,7 @@ namespace CP_Library\Setup\PostTypes;
 
 
 /**
- * Setup plugin initialization
+ * Setup plugin initialization for CPTs
  */
 class Init {
 
@@ -71,8 +71,8 @@ class Init {
 	 */
 	protected function actions() {
 
-		$this->item->register();
-		$this->source->register();
+		$this->item->register_post_type();
+		$this->source->register_post_type();
 	}
 
 

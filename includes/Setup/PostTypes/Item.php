@@ -12,8 +12,14 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  */
 class Item extends PostType  {
 
+	/**
+	 * Child class constructor. Punts to the parent.
+	 *
+	 * @author costmo
+	 */
 	public function __construct() {
 
+		$this->post_type = CP_LIBRARY_UPREFIX . "_items";
 		parent::__construct();
 	}
 
@@ -71,6 +77,17 @@ class Item extends PostType  {
 				'parent'             => 'Parent ' . $single
 			]
 		];
+
+	}
+
+	/**
+	 * Add metaboxes for Item admin
+	 *
+	 * @return void
+	 * @author costmo
+	 */
+	public function register_metaboxes() {
+
 
 	}
 

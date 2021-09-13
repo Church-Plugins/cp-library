@@ -1,11 +1,11 @@
 <?php
-namespace CP_Library\Views;
+namespace CP_Library\Views\Admin;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * Front-facing view class for Item objects
+ * Admin View class for Item objects
  *
  * @author costmo
  * @since 1.0

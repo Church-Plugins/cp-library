@@ -4,16 +4,25 @@ namespace CP_Library\Setup\PostTypes;
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+use CP_Library\Views\Admin\Source as Source_Admin_View;
+use CP_Library\Views\Admin\Item as Item_Admin_View;
+
 /**
  * Setup for custom post type: Source
  *
  * @author costmo
  * @since 1.0
  */
-class Source extends PostType  {
+class Source extends PostType {
 
+	/**
+	 * Child class constructor. Punts to the parent.
+	 *
+	 * @author costmo
+	 */
 	public function __construct() {
 
+		$this->post_type = CP_LIBRARY_UPREFIX . "_sources";
 		parent::__construct();
 	}
 
@@ -27,7 +36,8 @@ class Source extends PostType  {
 
 		if ( !self::$_instance instanceof $class ) {
 			self::$_instance = new $class();
-			self::$_instance->cpt_args = self::get_args();
+			self::$_instance->cpt_args = self::$_instance->get_args();
+			self::$_instance->metaboxes = self::$_instance->add_metaboxes();
 		}
 
 		return self::$_instance;
@@ -39,7 +49,7 @@ class Source extends PostType  {
 	 * @return array
 	 * @author costmo
 	 */
-	private static function get_args() {
+	private function get_args() {
 
 		$plural = __( 'Sources', 'cp_library' );
 		$single = __( 'Source', 'cp_library' );
@@ -72,6 +82,26 @@ class Source extends PostType  {
 			]
 		];
 
+	}
+
+	/**
+	 * Add metaboxes for Source admin
+	 *
+	 * @return void
+	 * @author costmo
+	 */
+	public function register_metaboxes() {
+
+		$admin_view = new Source_Admin_View();
+
+		add_meta_box(
+			CP_LIBRARY_UPREFIX . '-parent-source',
+			__( 'Parent Source', 'cp_library' ),
+			[ $admin_view, 'render_parent_source_metabox' ],
+			$this->post_type,
+			'side',
+			'high'
+		);
 	}
 
 

@@ -5,12 +5,12 @@ namespace CP_Library\Views;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * Front-facing view class for Item objects
+ * Front-facing view class for Source objects
  *
  * @author costmo
  * @since 1.0
  */
-class Item {
+class Source {
 
 	public function __construct() {
 
