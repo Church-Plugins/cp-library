@@ -54,18 +54,18 @@ class ItemMeta extends Table  {
 		$keys = "'" . implode( "', '", $this->get_keys() ) . "'";
 
 		return "CREATE TABLE " . $this->table_name . " (
-			`id` bigint(20) NOT NULL AUTO_INCREMENT,
+			`id` bigint NOT NULL AUTO_INCREMENT,
 			`key` ENUM( $keys ),
 			`value` longtext,
-			`item_id` bigint(20),
-			`item_type_id` bigint(20),
-			`order` bigint(20),
+			`item_id` bigint,
+			`item_type_id` bigint,
+			`order` bigint,
 			`published` datetime NOT NULL,
 			`updated` datetime NOT NULL,
 			PRIMARY KEY  (`id`),
 			KEY `idx_key` (`key`),
 			KEY `idx_item_id` (`item_id`),
-			Key `idx_item_type_id` (`item_type_id`),
+			KEY `idx_item_type_id` (`item_type_id`)
 		) CHARACTER SET utf8 COLLATE utf8_general_ci;";
 
 

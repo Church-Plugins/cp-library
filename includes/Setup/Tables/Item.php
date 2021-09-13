@@ -39,15 +39,16 @@ class Item extends Table  {
 	public function get_sql() {
 
 		return "CREATE TABLE " . $this->table_name . " (
-			`id` bigint(20) NOT NULL AUTO_INCREMENT,
-			`origin_id` bigint(20),
+			`id` bigint NOT NULL AUTO_INCREMENT,
+			`origin_id` bigint,
 			`status` ENUM( 'draft', 'publish', 'scheduled' ),
 			`published` datetime NOT NULL,
 			`updated` datetime NOT NULL,
 			PRIMARY KEY  (`id`),
 			KEY `idx_origin_id` (`origin_id`),
-			KEY `idx_status` (`status`),
+			KEY `idx_status` (`status`)
 		) CHARACTER SET utf8 COLLATE utf8_general_ci;";
 
 	}
 }
+

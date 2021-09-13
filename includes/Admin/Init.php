@@ -53,7 +53,7 @@ class Init {
 	/** Actions ***************************************************/
 
 	public function after_install() {
-		return;
+		// return;
 
 		if ( ! is_admin() ) {
 			return;
