@@ -77,17 +77,6 @@ class Shortcode
 		$output  = self::staticScript( $args );
 		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '-root"></div>';
 
-		$output .= "</p><strong>00:</strong> " . CP_LIBRARY_PLUGIN_DIR . "</p>";
-		$output .= "</p><strong>01:</strong> " . CP_LIBRARY_PLUGIN_URL . "</p>";
-		$output .= "</p><strong>02:</strong> " . CP_LIBRARY_PLUGIN_FILE . "</p>";
-		$output .= "</p><strong>03:</strong> " . CP_LIBRARY_PLUGIN_VERSION . "</p>";
-		$output .= "</p><strong>04:</strong> " . CP_LIBRARY_INCLUDES . "</p>";
-		$output .= "</p><strong>05:</strong> " . CP_LIBRARY_STORE_URL . "</p>";
-		$output .= "</p><strong>06:</strong> " . CP_LIBRARY_ITEM_NAME . "</p>";
-		$output .= "</p><strong>07:</strong> " . CP_LIBRARY_APP_PATH . "</p>";
-		$output .= "</p><strong>08:</strong> " . CP_LIBRARY_ASSET_MANIFEST . "</p>";
-		$output .= "</p><strong>09:</strong> " . CP_LIBRARY_UPREFIX . "</p>";
-
 		return $output;
 	}
 
