@@ -48,8 +48,6 @@ class Shortcode
 	 */
 	protected static function staticScript( $args = array() ) {
 
-		echo var_export( $args, true ) . "\n";
-
 		$output = '
 		<script>
 			var cplParams = cplParams || {};

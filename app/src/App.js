@@ -1,12 +1,10 @@
-import logo from './logo.svg';
-import './App.css';
+import logo from './images/logo.svg';
+import './css/App.css';
 
 function App() {
 
 	let now = new Date();
 	let showNow = now.toString();
-
-	let showParams = "";
 
 	// normalize input parameters
 	let params = null;
@@ -15,8 +13,6 @@ function App() {
 	} else {
 		params = {};
 	}
-
-
 
 	return (
 		<div className="App">
