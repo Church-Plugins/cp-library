@@ -36,6 +36,11 @@ if( !defined( 'CP_LIBRARY_UPREFIX' ) ) {
 		'cpl'
    );
 }
+if( !defined( 'CP_LIBRARY_TEXT_DOMAIN' ) ) {
+	 define ( 'CP_LIBRARY_TEXT_DOMAIN',
+		'cp_library'
+   );
+}
 
 /**
  * Licensing constants

@@ -38,7 +38,8 @@ class Init {
 	 *
 	 */
 	protected function __construct() {
-		add_action( 'plugins_loaded', array( $this, 'maybe_setup' ), - 9999 );
+		add_action( 'plugins_loaded', [ $this, 'maybe_setup' ], - 9999 );
+		add_action( 'init', [ $this, 'maybe_init' ] );
 	}
 
 	/**
@@ -55,8 +56,16 @@ class Init {
 		$this->actions();
 		$this->app_init();
 
-
 		$this->setup = Setup\Init::get_instance();
+	}
+
+	public function maybe_init() {
+
+		if ( ! $this->check_required_plugins() ) {
+			return;
+		}
+
+		$cpt = Setup\PostTypes\Init::get_instance();
 	}
 
 	/**
@@ -140,7 +149,7 @@ class Init {
 	 *
 	 * @return void
 	 */
-	protected function actions() {}
+	protected function actions() { }
 
 	/** Actions **************************************/
 
