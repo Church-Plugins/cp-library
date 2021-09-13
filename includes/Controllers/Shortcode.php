@@ -54,15 +54,15 @@ class Shortcode
 		$view = Shortcode_View::get_instance();
 		// An array of mappings from `shortcode` => `handler method`
 		$codes = [
-			CPL_APP_PREFIX . '_root'			=> 'render_root',
+			CP_LIBRARY_UPREFIX . '_root'			=> 'render_root',
 
-			CPL_APP_PREFIX . '_item_list'		=> 'render_item_list',
-			CPL_APP_PREFIX . '_item'			=> 'render_item',
+			CP_LIBRARY_UPREFIX . '_item_list'		=> 'render_item_list',
+			CP_LIBRARY_UPREFIX . '_item'			=> 'render_item',
 
-			CPL_APP_PREFIX . '_source_list'		=> 'render_source_list',
-			CPL_APP_PREFIX . '_source'			=> 'render_source',
+			CP_LIBRARY_UPREFIX . '_source_list'		=> 'render_source_list',
+			CP_LIBRARY_UPREFIX . '_source'			=> 'render_source',
 
-			CPL_APP_PREFIX . '_player'			=> 'render_player'
+			CP_LIBRARY_UPREFIX . '_player'			=> 'render_player'
 		];
 
 		foreach( $codes as $shortcode => $handler ) {

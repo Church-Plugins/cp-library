@@ -10,26 +10,9 @@
  * Domain Path: languages
  */
 
- use CP_Library\Init as CP_Init;
-
-if ( !defined( 'CP_LIBRARY_PLUGIN_DIR' ) ) {
-	define( 'CP_LIBRARY_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-}
-if ( !defined( 'CP_LIBRARY_PLUGIN_URL' ) ) {
-	define( 'CP_LIBRARY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-}
-if ( !defined( 'CP_LIBRARY_PLUGIN_FILE' ) ) {
-	define( 'CP_LIBRARY_PLUGIN_FILE', __FILE__ );
-}
-if ( !defined( 'CP_LIBRARY_PLUGIN_VERSION' ) ) {
-	define( 'CP_LIBRARY_PLUGIN_VERSION', '1.0.0' );
-}
-
-// EDD Licensing constants
-define( 'CP_LIBRARY_STORE_URL', 'https://churchplugins.com' );
-define( 'CP_LIBRARY_ITEM_NAME', 'Church Plugins - Library' );
-
+require_once( dirname( __FILE__ ) . "/includes/Constants.php" );
 require_once( CP_LIBRARY_PLUGIN_DIR . 'vendor/autoload.php' );
+use CP_Library\Init as CP_Init;
 
 /**
  * @var CP_Library\Init

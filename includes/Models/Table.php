@@ -52,7 +52,7 @@ abstract class Table {
 		global $wpdb;
 
 		$this->cache_group = $this->type;
-		$this->table_name  = $wpdb->prefix . CPL_APP_PREFIX . '_' . $this->type;
+		$this->table_name  = $wpdb->prefix . CP_LIBRARY_UPREFIX . '_' . $this->type;
 		$this->primary_key = 'id';
 	}
 
