@@ -59,6 +59,12 @@ class Init {
 		$this->setup = Setup\Init::get_instance();
 	}
 
+	/**
+	 * Actions that must run through the `init` hook
+	 *
+	 * @return void
+	 * @author costmo
+	 */
 	public function maybe_init() {
 
 		if ( ! $this->check_required_plugins() ) {
@@ -205,6 +211,11 @@ class Init {
 		return __( 'Church Plugins - Library', 'cp-library' );
 	}
 
+	/**
+	 * Provide a unique ID tag for the plugin
+	 *
+	 * @return string
+	 */
 	public function get_id() {
 		return 'cp-library';
 	}

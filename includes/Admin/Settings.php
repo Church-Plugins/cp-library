@@ -63,6 +63,9 @@ class Settings {
 	/**
 	 * Licensing admin UI
 	 *
+	 * TODO: Move this to an Admin\View class
+	 * TODO: return instead of echo
+	 *
 	 * @return void
 	 */
 	public function settings_page() {
@@ -132,6 +135,9 @@ class Settings {
 
 	/**
 	 * This is a means of catching errors from the activation method above and displaying it to the customer
+	 *
+	 * TODO: Move this to an Admin\View class
+	 * TODO: return instead of echo
 	 *
 	 * @return void
 	 */

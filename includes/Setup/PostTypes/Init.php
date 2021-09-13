@@ -14,10 +14,18 @@ class Init {
 	protected static $_instance;
 
 	/**
-	 * @var Item
+	 * Setup Item CPT
+	 *
+	 * @var CP_Library\Setup\PostTypes\Item
 	 */
 	public $item;
 
+	/**
+	 * Setup Source CPT
+	 *
+	 * @var CP_Library\Setup\PostTypes\Source
+	 * @author costmo
+	 */
 	public $source;
 
 
@@ -37,6 +45,8 @@ class Init {
 	/**
 	 * Class constructor
 	 *
+	 * Run includes and actions on instantiation
+	 *
 	 */
 	protected function __construct() {
 		$this->includes();
@@ -44,7 +54,7 @@ class Init {
 	}
 
 	/**
-	 * Admin init includes
+	 * Plugin init includes
 	 *
 	 * @return void
 	 */
@@ -53,6 +63,12 @@ class Init {
 		$this->source = Source::get_instance();
 	}
 
+	/**
+	 * Plugin init actions
+	 *
+	 * @return void
+	 * @author costmo
+	 */
 	protected function actions() {
 
 		$this->item->register();

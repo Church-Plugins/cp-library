@@ -38,7 +38,14 @@ class Init {
 	 */
 	public $item_meta;
 
+	/**
+	 * @var string
+	 */
 	public $item_type;
+
+	/**
+	 * @var array
+	 */
 	public $options;
 
 	/**

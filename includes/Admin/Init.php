@@ -46,12 +46,25 @@ class Init {
 		Settings::get_instance();
 	}
 
+	/**
+	 * Admin init actions
+	 *
+	 * @return void
+	 */
 	protected function actions() {
 		add_action( 'admin_init', [ $this, 'after_install' ] );
 	}
 
 	/** Actions ***************************************************/
 
+	/**
+	 * Post-install actions
+	 *
+	 * - Make sure database is installed and up-to-date
+	 *
+	 * @return void
+	 * @author costmo
+	 */
 	public function after_install() {
 		// return;
 

@@ -33,6 +33,12 @@ class Item extends PostType  {
 		return self::$_instance;
 	}
 
+	/**
+	 * Setup arguments for this CPT
+	 *
+	 * @return array
+	 * @author costmo
+	 */
 	private static function get_args() {
 
 		$plural = __( 'Items', 'cp_library' );

@@ -1,6 +1,6 @@
 <?php
 /**
- *
+ * Plugin constants
  */
 
 /**
