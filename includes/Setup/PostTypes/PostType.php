@@ -85,11 +85,26 @@ abstract class PostType {
 	}
 
 	/**
-	 * Children provide their own metaboxes
+	 * Register metaboxes for Item admin
+	 *
+	 * Children should provide their own metaboxes
 	 *
 	 * @return void
 	 * @author costmo
 	 */
-	abstract public function register_metaboxes();
+	public function register_metaboxes() {
+
+		return;
+	}
+
+	/**
+	 * Default action-adder for this CPT-descendants of this class
+	 *
+	 * @return void
+	 * @author costmo
+	 */
+	public function add_actions() {
+		return;
+	}
 
 }

@@ -1,5 +1,6 @@
 <?php
 namespace CP_Library\Views\Admin;
+use CP_Library\Util\Convenience as Convenience;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -34,14 +35,15 @@ class Source {
 		$nonce_field = CP_LIBRARY_UPREFIX . "_source_parent_nonce";
 		$nonce_value = wp_create_nonce( $nonce_field );
 
-
 		$wp_query = [
-			'post_type'      => CP_LIBRARY_UPREFIX . "_sources",
-			'posts_per_page' => -1,
+			'post_type'      	=> CP_LIBRARY_UPREFIX . "_sources",
+			'posts_per_page' 	=> -1,
+			'orderby'			=> 'title',
+			'order'				=> 'ASC'
 		];
 		$posts = get_posts( $wp_query );
 		$selected = "";
-		if( empty( $post ) || !is_object( $post ) || empty( $post->ID ) || empty( $post->post_parent ) ) {
+		if( !Convenience::is_post( $post ) || empty( $post->post_parent ) ) {
 			$selected = "selected";
 		}
 
@@ -53,10 +55,18 @@ class Source {
 			foreach( $posts as $loop_post ) {
 
 				$selected = "";
-				if( !empty( $post ) && is_object( $post ) && !empty( $post->ID ) &&
-					!empty( $loop_post->post_parent ) && $loop_post->post_parent == $post->ID ) {
+				if( Convenience::is_post( $post ) &&
+					$loop_post->ID == $post->post_parent ) {
 						$selected = "selected";
 				}
+
+				// // Make sublevels a little more apparent in the drop-down
+				// // We will have to do queries by level, else this will look like mis-parented items in the UI
+				// $show_title = $loop_post->post_title;
+				// if( !empty( $loop_post->post_parent ) ) {
+				// 	$show_title = "&nbsp;&#8212;&nbsp;" . $loop_post->post_title;
+				// }
+
 				if( $loop_post->ID !== $post->ID ) {
 					$select_list .= "
 						<option value='{$loop_post->ID}' {$selected}>&nbsp;{$loop_post->post_title}&nbsp;</option>

@@ -6,6 +6,9 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 use CP_Library\Views\Admin\Source as Source_Admin_View;
 use CP_Library\Views\Admin\Item as Item_Admin_View;
+use CP_Library\Util\Convenience as Convenience;
+
+use CP_Library\Models\Source as Source_Model;
 
 /**
  * Setup for custom post type: Source
@@ -85,7 +88,7 @@ class Source extends PostType {
 	}
 
 	/**
-	 * Add metaboxes for Source admin
+	 * Add metaboxes for this CPT
 	 *
 	 * @return void
 	 * @author costmo
@@ -102,6 +105,25 @@ class Source extends PostType {
 			'side',
 			'high'
 		);
+	}
+
+	/**
+	 * Add actions for this CPT to WP
+	 *
+	 * @return void
+	 * @author costmo
+	 */
+	public function add_actions() {
+
+		$model = new Source_Model();
+
+		add_action(
+			'save_post_' . CP_LIBRARY_UPREFIX . '_sources',
+			[$model, 'save_post'],
+			20, 2
+		);
+
+		return;
 	}
 
 

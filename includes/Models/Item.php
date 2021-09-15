@@ -59,4 +59,15 @@ class Item extends Table  {
 		);
 	}
 
+	/**
+	 * Children must override if they want to have their own actions
+	 *
+	 * @return void
+	 * @author costmo
+	 */
+	public function add_actions() {
+
+		return;
+	}
+
 }

@@ -290,4 +290,17 @@ abstract class Table {
 		return $last_changed;
 	}
 
+	/**
+	 * Default `save_post` action handler for CPT-descendants of this class
+	 *
+	 * @param int $post_id
+	 * @param WP_Post $post
+	 * @return void
+	 * @author costmo
+	 */
+	public function save_post( $post_id, $post ) {
+
+		return;
+	}
+
 }

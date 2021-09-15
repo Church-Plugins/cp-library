@@ -73,6 +73,9 @@ class Init {
 
 		$this->item->register_post_type();
 		$this->source->register_post_type();
+
+		$this->source->add_actions();
+		$this->item->add_actions();
 	}
 
 

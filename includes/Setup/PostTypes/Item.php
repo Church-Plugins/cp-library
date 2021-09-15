@@ -80,19 +80,4 @@ class Item extends PostType  {
 
 	}
 
-	/**
-	 * Add metaboxes for Item admin
-	 *
-	 * @return void
-	 * @author costmo
-	 */
-	public function register_metaboxes() {
-
-
-	}
-
-
-
-
-
 }
