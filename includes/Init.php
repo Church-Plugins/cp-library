@@ -21,6 +21,11 @@ class Init {
 	public $setup;
 
 	/**
+	 * @var API\Init
+	 */
+	public $api;
+
+	/**
 	 * Only make one instance of Init
 	 *
 	 * @return Init
@@ -57,6 +62,7 @@ class Init {
 		$this->app_init();
 
 		$this->setup = Setup\Init::get_instance();
+		$this->api   = API\Init::get_instance();
 	}
 
 	/**
@@ -218,6 +224,18 @@ class Init {
 	 */
 	public function get_id() {
 		return 'cp-library';
+	}
+
+	/**
+	 * Get the API namespace to use
+	 *
+	 * @return string
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_api_namespace() {
+		return $this->get_id() . '/v1';
 	}
 
 }
