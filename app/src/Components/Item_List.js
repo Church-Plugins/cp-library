@@ -134,19 +134,6 @@ class Components_Item_List extends Component {
 			return this.renderList( {listData: this.state.itemList} );
 		}
 	}
-
-	// Below here will probably go away
-	getThumb() {
-		return "THE ITEM THUMB";
-	}
-
-	getDetails() {
-		return "SOME ITEM DETAILS";
-	}
-
-	getActions() {
-		return "SOME ITEM ACTIONS";
-	}
 }
 
 export default Components_Item_List;
