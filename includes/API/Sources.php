@@ -9,13 +9,13 @@ use WP_REST_Response;
 use WP_Error;
 
 /**
- * REST API Controller for Items objects
+ * REST API Controller for Sources objects
  *
  * @since 1.0.0
  *
  * @see WP_REST_Controller
  */
-class Items extends WP_REST_Controller {
+class Sources extends WP_REST_Controller {
 
 	/**
 	 * Constructor.
@@ -25,7 +25,7 @@ class Items extends WP_REST_Controller {
 	 */
 	public function __construct() {
 		$this->namespace = cp_library()->get_api_namespace();
-		$this->rest_base = 'items';
+		$this->rest_base = 'sources';
 	}
 
 	/**
@@ -41,52 +41,28 @@ class Items extends WP_REST_Controller {
 		register_rest_route( $this->namespace, $this->rest_base, array(
 			array(
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_items' ),
+				'callback'            => array( $this, 'get_sources' ),
 				'permission_callback' => array( $this, 'get_permissions_check' ),
 			),
-//			array(
-//				'methods'             => WP_REST_Server::CREATABLE,
-//				'callback'            => array( $this, 'create_item' ),
-//				'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::CREATABLE ),
-//				'permission_callback' => array( $this, 'get_permissions_check' ),
-//			),
-//			array(
-//				'methods'             => WP_REST_Server::DELETABLE,
-//				'callback'            => array( $this, 'delete_all_items' ),
-//				'permission_callback' => array( $this, 'get_permissions_check' ),
-//			),
-			// 'schema' => array( $this, 'get_public_item_schema' ),
+			// 'schema' => array( $this, 'get_public_schema' ),
 		) );
 
-		register_rest_route( $this->namespace, $this->rest_base . '/(?P<item_id>[\d]+)', array(
+		register_rest_route( $this->namespace, $this->rest_base . '/(?P<source_id>[\d]+)', array(
 			'args' => array(
-				'item_id' => array(
-					'description' => __( 'The ID of the item.', 'cp-library' ),
+				'source_id' => array(
+					'description' => __( 'The ID of the source.', 'cp-library' ),
 					'type'        => 'integer',
 					'required'    => true,
 				),
 			),
 			array(
 				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'get_item' ),
+				'callback'            => array( $this, 'get_source' ),
 				'permission_callback' => array( $this, 'get_permissions_check' ),
 			),
-//			array(
-//				'methods'             => WP_REST_Server::DELETABLE,
-//				'callback'            => array( $this, 'delete_item' ),
-//				'permission_callback' => array( $this, 'get_permissions_check' ),
-//			),
-			// 'schema' => array( $this, 'get_public_item_schema' ),
-		) );
 
-//        register_rest_route( $this->namespace, $this->rest_base . '/edit', array(
-//            array(
-//                'methods'             => WP_REST_Server::CREATABLE,
-//                'callback'            => array( $this, 'edit_item' ),
-//                'permission_callback' => array( $this, 'get_permissions_check' ),
-//            ),
-//            'schema' => array( $this, 'get_public_item_schema' ),
-//        ) );
+			// 'schema' => array( $this, 'get_public_schema' ),
+		) );
 
 	}
 
@@ -116,13 +92,13 @@ class Items extends WP_REST_Controller {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return array|WP_Error Array on success, or WP_Error object on failure.
 	 */
-	public function get_items( $request ) {
+	public function get_sources( $request ) {
 
 		return [
 			[
 				'thumb'    => 'https://i.vimeocdn.com/video/1239653387?mw=1100&mh=618&q=70',
-				'title'    => 'For Love or Money',
-				'desc'     => 'A brief description for this talk.',
+				'title'    => 'SOURCE For Love or Money',
+				'desc'     => 'SOURCE A brief description for this talk.',
 				'date'     => date( 'r', time() - rand( 100, 23988 ) ),
 				'category' => [ 'cat 1', 'cat 2' ],
 				'video'    => 'https://vimeo.com/embed-redirect/603403673?embedded=true&source=vimeo_logo&owner=11698061',
@@ -130,8 +106,8 @@ class Items extends WP_REST_Controller {
 			],
 			[
 				'thumb'    => 'https://i.vimeocdn.com/video/1239653387?mw=1100&mh=618&q=70',
-				'title'    => 'Out of Love',
-				'desc'     => 'A different description for this talk.',
+				'title'    => 'SOURCE Out of Love',
+				'desc'     => 'SOURCE A different description for this talk.',
 				'date'     => date( 'r', time() - rand( 100, 23988 ) ),
 				'category' => [ 'cat 1', 'cat 2' ],
 				'video'    => 'https://vimeo.com/embed-redirect/603403673?embedded=true&source=vimeo_logo&owner=11698061',
@@ -148,7 +124,7 @@ class Items extends WP_REST_Controller {
 	 *
 	 * @return array|WP_Error Array on success, or WP_Error object on failure.
 	 */
-	public function get_item( $request ) {
+	public function get_source( $request ) {
 		return [
 			'thumb'    => 'https://i.vimeocdn.com/video/1239653387?mw=1100&mh=618&q=70',
 			'title'    => 'Out of Love',

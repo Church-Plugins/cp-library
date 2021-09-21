@@ -1,10 +1,15 @@
 <?php
-
+// TODO: Undo the structure that's requiring output buffering here
+ob_start();
 $controller = new CP_Library\API\Items();
-$request = new WP_REST_Request( '', '', [] );
-$items = $controller->get_items( $request );
-?>
 
+// $request = new WP_REST_Request( '', '', [] );
+// $items = $controller->get_items( $request );
+
+$request = new WP_REST_Request( 'GET', "/" . $controller->get_namespace() . "/" . $controller->get_rest_base(), [] );
+$response = rest_do_request( $request );
+$items = $response->get_data();
+?>
 <div class="cpl-item-list">
 
 	<?php foreach ( $items as $item ) : ?>
@@ -43,3 +48,5 @@ $items = $controller->get_items( $request );
 	<?php endforeach; ?>
 
 </div>
+<?php
+return ob_get_clean();

@@ -1,7 +1,8 @@
 <?php
 namespace CP_Library\API;
 
-use CP_Library\API\Items;
+use CP_Library\API\Items 	as 	Items_API;
+use CP_Library\API\Sources 	as 	Sources_API;
 
 /**
  * Provides the global $cp_library object
@@ -46,8 +47,15 @@ class Init {
 	 * @author Tanner Moushey
 	 */
 	public function load_api_routes() {
-		$controller = new Items();
-		$controller->register_routes();
+
+		$api_instance = [
+			new Items_API(),
+			new Sources_API()
+		];
+
+		foreach( $api_instance as $api ) {
+			$api->register_routes();
+		}
 	}
 
 	/** Helper Methods **************************************/
