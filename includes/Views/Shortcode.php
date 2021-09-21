@@ -110,6 +110,7 @@ class Shortcode
 
 		$output  = self::staticScript( $args );
 		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '-source_list"></div>';
+		$output .= include( CP_LIBRARY_PLUGIN_DIR . 'templates/source-list.php' );
 
 		return $output;
 
