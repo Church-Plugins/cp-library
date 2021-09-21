@@ -3,8 +3,10 @@ import ReactDOM from 'react-dom';
 import './css/index.css';
 import App from './App';
 
-const root = document.getElementById( 'cpl-root' );
+import SourceList from './Render/SourceList';
 
+// Possible elements that we may find for shortcodes
+const root = document.getElementById( 'cpl-root' );
 const itemList = document.getElementById( 'cpl-item_list' );
 const item = document.getElementById( 'cpl-item' );
 const sourceList = document.getElementById( 'cpl-source_list' );
@@ -23,7 +25,7 @@ if( item ) {
 	ReactDOM.render( <App />, item );
 }
 if( sourceList ) {
-	ReactDOM.render( <App />, sourceList );
+	ReactDOM.render( <SourceList />, sourceList );
 }
 if( source ) {
 	ReactDOM.render( <App />, source );
