@@ -68,6 +68,7 @@ class Source extends PostType {
 			'rewrite'       => [
 				'slug' 		=> strtolower( $single )
 			],
+			'supports' 		=> [ 'title', 'editor', 'thumbnail' ],
 			'labels'        => [
 				'name'               => $plural,
 				'singular_name'      => $single,

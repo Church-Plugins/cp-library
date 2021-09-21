@@ -26,6 +26,7 @@ class Items extends WP_REST_Controller {
 	public function __construct() {
 		$this->namespace = cp_library()->get_api_namespace();
 		$this->rest_base = 'items';
+		$this->post_type	=  CP_LIBRARY_UPREFIX . "_items";
 	}
 
 	/**
@@ -111,34 +112,43 @@ class Items extends WP_REST_Controller {
 	}
 
 	/**
-	 * Retrieves the passwords.
+	 * Retrieves a list of items
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return array|WP_Error Array on success, or WP_Error object on failure.
 	 */
 	public function get_items( $request ) {
 
-		return [
-			[
-				'thumb'    => 'https://i.vimeocdn.com/video/1239653387?mw=1100&mh=618&q=70',
-				'title'    => 'For Love or Money',
-				'desc'     => 'A brief description for this talk.',
-				'date'     => date( 'r', time() - rand( 100, 23988 ) ),
-				'category' => [ 'cat 1', 'cat 2' ],
-				'video'    => 'https://vimeo.com/embed-redirect/603403673?embedded=true&source=vimeo_logo&owner=11698061',
-				'audio'    => 'https://ret.sfo2.cdn.digitaloceanspaces.com/wp-content/uploads/2021/09/re20210915.mp3',
-			],
-			[
-				'thumb'    => 'https://i.vimeocdn.com/video/1239653387?mw=1100&mh=618&q=70',
-				'title'    => 'Out of Love',
-				'desc'     => 'A different description for this talk.',
-				'date'     => date( 'r', time() - rand( 100, 23988 ) ),
-				'category' => [ 'cat 1', 'cat 2' ],
-				'video'    => 'https://vimeo.com/embed-redirect/603403673?embedded=true&source=vimeo_logo&owner=11698061',
-				'audio'    => 'https://ret.sfo2.cdn.digitaloceanspaces.com/wp-content/uploads/2021/09/re20210915.mp3',
-			],
-		];
+		$return_value = [];
 
+		$args = [
+			'post_type'			=> $this->post_type,
+			'post_status'		=> 'publish',
+			'posts_per_page'	=> -1,
+			'orderby’'			=> 'title'
+		];
+		$posts = get_posts( $args );
+
+		if( empty( $posts ) ) {
+			return $return_value;
+		}
+
+		foreach( $posts as $post ) {
+
+			$data = [
+				'thumb'    => get_the_post_thumbnail( $post ),
+				'title'    => $post->post_title,
+				'desc'     => $post->post_content,
+				'date'     => $post->post_modified,
+				'category' => [],
+				'video'    => 'https://vimeo.com/embed-redirect/603403673?embedded=true&source=vimeo_logo&owner=11698061',
+				'audio'    => 'https://ret.sfo2.cdn.digitaloceanspaces.com/wp-content/uploads/2021/09/re20210915.mp3'
+			];
+
+			$return_value[] = $data;
+		}
+
+		return $return_value;
 	}
 
 	/**
