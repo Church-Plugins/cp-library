@@ -58,7 +58,6 @@ class Components_Item_List extends Component {
 					this.forceUpdate();
 				}
 			);
-
 	}
 
 	/**

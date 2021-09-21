@@ -1,14 +1,14 @@
-.SourceList {
+.ItemList {
 	font-size: inherit;
 }
 
-.cpl-source-list--source {
+.cpl-item-list--item {
 	border: 1px solid black;
     border-radius: 5px;
     padding: 8px;
 	margin-bottom: 24px;
 }
 
-.cpl-source-list--source--title {
+.cpl-item-list--item--title {
 	font-weight: bold;
 }
