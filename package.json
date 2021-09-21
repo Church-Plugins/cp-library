@@ -53,6 +53,7 @@
   "scripts": {
     "start": "cd app && PORT=3037 react-scripts start",
     "build": "cd app && react-scripts build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+	"docs": "phpDocumentor --sourcecode -d includes -t docs/php"
   }
 }
