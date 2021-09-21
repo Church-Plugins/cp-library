@@ -4,12 +4,21 @@
   "homepage": "/wp-content/plugins/cp-library/app/build",
   "private": true,
   "dependencies": {
+    "@emotion/react": "^11.4.1",
+    "@emotion/styled": "^11.3.0",
+    "@mui/material": "^5.0.0",
+    "@mui/styled-engine-sc": "^5.0.0",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^11.2.7",
     "@testing-library/user-event": "^12.8.3",
+    "@wordpress/compose": "^5.0.2",
+    "@wordpress/data": "^6.1.0",
+    "async": "^3.2.1",
+    "axios": "^0.21.4",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-	"react-scripts": "^4.0.3",
+    "react-scripts": "^4.0.3",
+    "styled-components": "^5.3.1",
     "web-vitals": "^1.1.2"
   },
   "scripts": {
@@ -35,7 +44,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
   }
 }
