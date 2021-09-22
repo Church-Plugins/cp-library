@@ -14,7 +14,7 @@ abstract class PostType {
 	/**
 	 * @var self
 	 */
-	protected static $_instance = [];
+	protected static $_instance;
 
 	/**
 	 * Single label for CPT
@@ -27,14 +27,6 @@ abstract class PostType {
 	 * @var string
 	 */
 	public $plural_label = '';
-
-	/**
-	 * Input for custom post type registration provided by children
-	 *
-	 * @var array
-	 * @author costmo
-	 */
-	public $cpt_args = null;
 
 	/**
 	 * An array of metabox definitions
@@ -60,11 +52,11 @@ abstract class PostType {
 	public static function get_instance() {
 		$class = get_called_class();
 
-		if ( ! isset( self::$_instance[ $class ] ) || ! self::$_instance[ $class ] instanceof $class ) {
-			self::$_instance[ $class ] = new $class();
+		if ( ! self::$_instance instanceof $class ) {
+			self::$_instance = new $class();
 		}
 
-		return self::$_instance[ $class ];
+		return self::$_instance;
 	}
 
 	/**
