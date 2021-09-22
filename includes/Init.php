@@ -77,7 +77,6 @@ class Init {
 			return;
 		}
 
-		$cpt = Setup\PostTypes\Init::get_instance();
 	}
 
 	/**

@@ -17,26 +17,13 @@ class Item extends PostType  {
 	 *
 	 * @author costmo
 	 */
-	public function __construct() {
-
+	protected function __construct() {
 		$this->post_type = CP_LIBRARY_UPREFIX . "_items";
+
+		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", __( 'Item', 'cp_library' ) );
+		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", __( 'Items', 'cp_library' ) );
+
 		parent::__construct();
-	}
-
-	/**
-	 * Only make one instance
-	 *
-	 * @return self
-	 */
-	public static function get_instance() {
-		$class = get_called_class();
-
-		if ( !self::$_instance instanceof $class ) {
-			self::$_instance = new $class();
-			self::$_instance->cpt_args = self::get_args();
-		}
-
-		return self::$_instance;
 	}
 
 	/**
@@ -45,14 +32,15 @@ class Item extends PostType  {
 	 * @return array
 	 * @author costmo
 	 */
-	private static function get_args() {
+	public function get_args() {
 
-		$plural = __( 'Items', 'cp_library' );
-		$single = __( 'Item', 'cp_library' );
+		$plural = $this->plural_label;
+		$single = $this->single_label;
+		$icon   = apply_filters( "cpl_{$this->post_type}_icon", 'dashicons-album' );
 
-		return [
+		$args = [
 			'public'        => true,
-			'menu_icon'     => 'dashicons-album',
+			'menu_icon'     => $icon,
 			'show_in_menu'  => true,
 			'show_in_rest'  => true,
 			'has_archive'   => CP_LIBRARY_UPREFIX . '-' . $single . '-archive',
@@ -78,6 +66,35 @@ class Item extends PostType  {
 				'parent'             => 'Parent ' . $single
 			]
 		];
+
+		return apply_filters( "cpl_{$this->post_type}_args", $args, $this );
+
+	}
+
+	public function register_metaboxes() {
+
+		$cmb = new_cmb2_box( [
+			'id' => 'item_meta',
+			'title' => $this->single_label . ' ' . __( 'Details', 'cp-library' ),
+			'object_types' => [ $this->post_type ],
+			'context' => 'normal',
+			'priority' => 'high',
+			'show_names' => true,
+		] );
+
+		$cmb->add_field( [
+			'name' => __( 'Video URL', 'cp-library' ),
+			'desc' => __( 'The URL of the video to show, leave blank to hide this field.', 'cp-library' ),
+			'id'   => 'video_url',
+			'type' => 'text',
+		] );
+
+		$cmb->add_field( [
+			'name' => __( 'Audio URL', 'cp-library' ),
+			'desc' => __( 'The URL of the audio to show, leave blank to hide this field.', 'cp-library' ),
+			'id'   => 'audio_url',
+			'type' => 'text',
+		] );
 
 	}
 

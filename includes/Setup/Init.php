@@ -3,6 +3,8 @@
 namespace CP_Library\Setup;
 
 
+use CP_Library\Setup\PostTypes\PostType;
+
 /**
  * Setup plugin initialization
  */
@@ -20,6 +22,11 @@ class Init {
 	 * @author Tanner Moushey
 	 */
 	public $tables;
+
+	/**
+	 * @var PostTypes\Init;
+	 */
+	public $post_types;
 
 	/**
 	 * Only make one instance of Init
@@ -50,6 +57,7 @@ class Init {
 	 */
 	protected function includes() {
 		$this->tables = Tables\Init::get_instance();
+		$this->post_types = PostTypes\Init::get_instance();
 	}
 
 	protected function actions() {}

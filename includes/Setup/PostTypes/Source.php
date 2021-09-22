@@ -23,27 +23,14 @@ class Source extends PostType {
 	 *
 	 * @author costmo
 	 */
-	public function __construct() {
+	protected function __construct() {
 
 		$this->post_type = CP_LIBRARY_UPREFIX . "_sources";
+
+		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", __( 'Source', 'cp_library' ) );
+		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", __( 'Sources', 'cp_library' ) );
+
 		parent::__construct();
-	}
-
-	/**
-	 * Only make one instance
-	 *
-	 * @return self
-	 */
-	public static function get_instance() {
-		$class = get_called_class();
-
-		if ( !self::$_instance instanceof $class ) {
-			self::$_instance = new $class();
-			self::$_instance->cpt_args = self::$_instance->get_args();
-			self::$_instance->metaboxes = self::$_instance->add_metaboxes();
-		}
-
-		return self::$_instance;
 	}
 
 	/**
@@ -52,14 +39,15 @@ class Source extends PostType {
 	 * @return array
 	 * @author costmo
 	 */
-	private function get_args() {
+	public function get_args() {
 
-		$plural = __( 'Sources', 'cp_library' );
-		$single = __( 'Source', 'cp_library' );
+		$plural = $this->plural_label;
+		$single = $this->single_label;
+		$icon   = apply_filters( "cpl_{$this->post_type}_icon", 'dashicons-groups' );
 
-		return [
+		$args = [
 			'public'        => true,
-			'menu_icon'     => 'dashicons-groups',
+			'menu_icon'     => $icon,
 			'show_in_menu'  => true,
 			'show_in_rest'  => true,
 			'has_archive'   => CP_LIBRARY_UPREFIX . '-' . $single . '-archive',
@@ -86,6 +74,8 @@ class Source extends PostType {
 			]
 		];
 
+		return apply_filters( "cpl_{$this->post_type}_args", $args, $this );
+
 	}
 
 	/**
@@ -98,14 +88,6 @@ class Source extends PostType {
 
 		$admin_view = new Source_Admin_View();
 
-		add_meta_box(
-			CP_LIBRARY_UPREFIX . '-parent-source',
-			__( 'Parent Source', 'cp_library' ),
-			[ $admin_view, 'render_parent_source_metabox' ],
-			$this->post_type,
-			'side',
-			'high'
-		);
 	}
 
 	/**
@@ -124,6 +106,7 @@ class Source extends PostType {
 			20, 2
 		);
 
+		parent::add_actions();
 		return;
 	}
 

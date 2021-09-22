@@ -6,7 +6,7 @@
     'aliases' => 
     array (
     ),
-    'reference' => '5bb99a0c4b57c09dcd89e8cd1d8fbb34b342cfad',
+    'reference' => 'c6eaa56a897f7a2e877564a6e4544db6cd0559eb',
     'name' => 'church-plugins/cp-library',
   ),
   'versions' => 
@@ -18,16 +18,25 @@
       'aliases' => 
       array (
       ),
-      'reference' => '5bb99a0c4b57c09dcd89e8cd1d8fbb34b342cfad',
+      'reference' => 'c6eaa56a897f7a2e877564a6e4544db6cd0559eb',
     ),
-    'composer/installers' => 
+    'cmb2/cmb2' => 
     array (
-      'pretty_version' => 'v2.0.0',
-      'version' => '2.0.0.0',
+      'pretty_version' => 'dev-master',
+      'version' => 'dev-master',
       'aliases' => 
       array (
       ),
-      'reference' => '5a546a8cc4607f38cfbd8e20b3de234e45b2110f',
+      'reference' => 'cacbc8cedbfdf8ffe0e840858e6860f9333c33f2',
+    ),
+    'composer/installers' => 
+    array (
+      'pretty_version' => 'v2.0.1',
+      'version' => '2.0.1.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => 'a241e78aaeb09781f5f5b92ac01ffd13ab43e5e8',
     ),
   ),
 );
