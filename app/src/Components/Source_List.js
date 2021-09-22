@@ -131,7 +131,10 @@ class Components_Source_List extends Component {
 		if( !this.state || !this.state.sourceList ) {
 			return this.renderWait();
 		} else {
-			return this.renderList( {listData: this.state.sourceList} );
+
+			let template = require( '../templates/source-list.rt' );
+			return React.createElement( template )
+			// return this.renderList( {listData: this.state.sourceList} );
 		}
 	}
 

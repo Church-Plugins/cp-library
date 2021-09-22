@@ -1,0 +1,19 @@
+<div class='cpl-source-list--source'>
+	<div class='cpl-source-list--source--details'>
+		<div class='cpl-source-list--source--title'> listItem.title </div>
+		<div class='cpl-source-list--source--desc'> listItem.desc </div>
+	</div>
+	<div class='cpl-source-list--source--thumb'>
+		<div class='cpl-source-list--source--thumb'>
+			listItem.thumb
+		</div>
+	</div>
+	<div class='cpl-source-list--source--meta'>
+		<div class='cpl-source-list--source--date'> listItem.date </div>
+		<div class='cpl-source-list--source--category'></div>
+	</div>
+	<div class='cpl-source-list--source--actions'>
+		<div class='cpl-source-list--source--actions--video'><a href='listItem.video'>Download Video</a><br></div>
+		<div class='cpl-source-list--source--actions--audio'><a href='listItem.audio'>Download Audio</a></div>
+	</div>
+</div>
