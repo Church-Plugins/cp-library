@@ -94,14 +94,9 @@ abstract class PostType {
 	 * @return void
 	 * @author costmo
 	 */
-	public function register_metaboxes() {
+	abstract public function register_metaboxes();
 
-		return;
-	}
-
-	public function get_args() {
-		return [];
-	}
+	abstract public function get_args();
 
 	/**
 	 * Default action-adder for this CPT-descendants of this class
