@@ -74,53 +74,6 @@ class Components_Item_List extends Component {
 	}
 
 	/**
-	 * Render an item list
-	 *
-	 * @param Object[] listData 		Data returned from `getData`
-	 * @returns
-	 */
-	renderList( {listData = null} ) {
-
-		if( !listData || listData.length < 1 ) {
-
-			return(
-				<div class='cpl-item-list--item'>This list is empty.</div>
-			);
-		}
-
-		let returnValue = "";
-
-		listData.forEach(
-			(listItem) => {
-
-				returnValue +=
-				"<div class='cpl-item-list--item'>" +
-				"	<div class='cpl-item-list--item--details'>" +
-				"		<div class='cpl-item-list--item--title'>" + listItem.title + "</div>" +
-				"		<div class='cpl-item-list--item--desc'>" + listItem.desc + "</div>" +
-				"	</div>" +
-				"	<div class='cpl-item-list--item--thumb'>" +
-				"		<div class='cpl-item-list--item--thumb'>" +
-							listItem.thumb +
-				"		</div>" +
-				"	</div>" +
-				"	<div class='cpl-item-list--item--meta'>" +
-				"		<div class='cpl-item-list--item--date'>" + listItem.date + "</div>" +
-				"		<div class='cpl-item-list--item--category'></div>" +
-				"	</div>" +
-				"	<div class='cpl-item-list--item--actions'>" +
-				"		<div class='cpl-item-list--item--actions--video'><a href='" + listItem.video + "'>Download Video</a><br></div>" +
-				"		<div class='cpl-item-list--item--actions--audio'><a href='" + listItem.audio + "'>Download Audio</a></div>" +
-				"	</div>" +
-				"</div>";
-
-			}
-		);
-
-		return( <div dangerouslySetInnerHTML={ {__html: returnValue} } /> );
-	}
-
-	/**
 	 * Component DOM renderer
 	 *
 	 * @returns String
@@ -131,7 +84,15 @@ class Components_Item_List extends Component {
 		if( !this.state || !this.state.itemList ) {
 			return this.renderWait();
 		} else {
-			return this.renderList( {listData: this.state.itemList} );
+			let template = require( '../templates/item-list.rt' );
+			// Clear elements that may have "dangerous" HTML
+			this.state.itemList.forEach(
+				(listItem, listIndex) => {
+					this.state.itemList[listIndex].desc	= <div dangerouslySetInnerHTML={ {__html: listItem.desc} } />;
+					this.state.itemList[listIndex].thumb	= <div dangerouslySetInnerHTML={ {__html: listItem.thumb} } />;
+				}
+			);
+			return React.createElement( template, {listData: this.state.itemList} );
 		}
 	}
 }
