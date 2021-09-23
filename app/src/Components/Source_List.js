@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import ReactDOMServer from 'react-dom/server';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 
@@ -133,14 +134,15 @@ class Components_Source_List extends Component {
 			window.listData = [];
 			return this.renderWait();
 		} else {
-			window.listData = this.state.sourceList;
 			let template = require( '../templates/source-list.rt' );
-			// let returnValue = React.createElement.apply( this, [template, {listData: this.state.sourceList}] );
-			let returnValue = React.createElement( template );
-			// // return( <div dangerouslySetInnerHTML={ {__html: returnValue} } /> );
-			return returnValue;
+			this.state.sourceList.forEach(
+				(listItem, listIndex) => {
+					this.state.sourceList[listIndex].desc = <div dangerouslySetInnerHTML={ {__html: listItem.desc} } />;
+				}
+			);
+			return React.createElement( template, {listData: this.state.sourceList} );
 		}
-	}
+	};
 
 }
 

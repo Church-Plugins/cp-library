@@ -18,12 +18,16 @@ module.exports = function (grunt) {
 				expand: true,
 				src: ['templates/**/*.rt.js'],
 				dest: 'src/'
+			},
+			post: {
+				expand: true,
+				src: ['templates/**/*.rt.js'],
+				dest: 'build/'
 			}
 		},
 		clean: {
-			pre: 	['src/templates/', 'templates/**/*.rt.js'],
-			mid:	['templates/**/*.rt.js'],
-			post:	['templates/**/*.rt.js']
+			pre: 	['src/templates/', 'templates/**/*.rt.js', 'build/templates'],
+			post:	['templates/**/*.rt.js', 'src/templates/']
 		}
 	});
 
@@ -32,6 +36,7 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks( 'grunt-contrib-clean' );
 
 	grunt.registerTask( 'rt',					['react-templates:dist'] );
-	grunt.registerTask( 'create-templates',		['clean:pre', 'rt', 'copy:main', 'clean:mid'] );
+	grunt.registerTask( 'create-templates',		['clean:pre', 'rt', 'copy:main'] );
+	grunt.registerTask( 'finish-templates',		['copy:post', 'clean:post'] );
 	grunt.registerTask( 'default',				['create-templates'] );
 };
