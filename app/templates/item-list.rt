@@ -1,27 +1,38 @@
 <div rt-stateless>
 	<div
 		rt-repeat='listItem in props.listData'
-		class='cpl-source-list--source'>
+		class='cpl-item-list--item'>
 
-		<div class='cpl-source-list--source--details'>
-			<div class='cpl-source-list--source--title'>
+		<div class='cpl-item-list--item--details'>
+			<div class='cpl-item-list--item--title'>
 				{listItem.title}
 			</div>
-			<div class='cpl-source-list--source--desc'>
+			<div class='cpl-item-list--item--desc'>
 				{listItem.desc.props.dangerouslySetInnerHTML.__html}
 			</div>
 		</div>
 
-		<div class='cpl-source-list--source--thumb'>
-			<div class='cpl-source-list--source--thumb'>
+		<div class='cpl-item-list--item--thumb'>
+			<div class='cpl-item-list--item--thumb'>
 				{listItem.thumb.props.dangerouslySetInnerHTML.__html}
 			</div>
 		</div>
-		<div class='cpl-source-list--source--meta'>
-			<div class='cpl-source-list--source--date'>
+
+		<div class='cpl-item-list--item--meta'>
+			<div class='cpl-item-list--item--date'>
 				{listItem.date}
 			</div>
-			<div class='cpl-source-list--source--category'></div>
+			<div class='cpl-item-list--item--category'></div>
 		</div>
+
+		<div class='cpl-item-list--item--actions'>
+			<div class='cpl-item-list--item--actions--video'>
+				<a href='{listItem.video}'>Video Link</a>
+			</div>
+			<div class="cpl-item-list--item--actions--audio">
+				<a href='{listItem.audio}'>Audio Link</a>
+			</div>
+		</div>
+
 	</div>
 </div>

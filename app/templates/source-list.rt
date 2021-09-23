@@ -17,11 +17,22 @@
 				{listItem.thumb.props.dangerouslySetInnerHTML.__html}
 			</div>
 		</div>
+
 		<div class='cpl-source-list--source--meta'>
 			<div class='cpl-source-list--source--date'>
 				{listItem.date}
 			</div>
 			<div class='cpl-source-list--source--category'></div>
 		</div>
+
+		<div class='cpl-source-list--source--actions'>
+			<div class='cpl-source-list--source--actions--video'>
+				<a href='{listItem.video}'>Video Link</a>
+			</div>
+			<div class="cpl-source-list--source--actions--audio">
+				<a href='{listItem.audio}'>Audio Link</a>
+			</div>
+		</div>
+
 	</div>
 </div>
