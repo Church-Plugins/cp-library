@@ -1,0 +1,27 @@
+<div rt-stateless>
+	<div
+		rt-repeat='listItem in props.listData'
+		class='cpl-source-list--source'>
+
+		<div class='cpl-source-list--source--details'>
+			<div class='cpl-source-list--source--title'>
+				{listItem.title}
+			</div>
+			<div class='cpl-source-list--source--desc'>
+				{listItem.desc.props.dangerouslySetInnerHTML.__html}
+			</div>
+		</div>
+
+		<div class='cpl-source-list--source--thumb'>
+			<div class='cpl-source-list--source--thumb'>
+				{listItem.thumb.props.dangerouslySetInnerHTML.__html}
+			</div>
+		</div>
+		<div class='cpl-source-list--source--meta'>
+			<div class='cpl-source-list--source--date'>
+				{listItem.date}
+			</div>
+			<div class='cpl-source-list--source--category'></div>
+		</div>
+	</div>
+</div>

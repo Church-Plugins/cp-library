@@ -18,12 +18,14 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-scripts": "^4.0.3",
+    "react-templates": "^0.6.3",
+    "requirejs": "^2.3.6",
     "styled-components": "^5.3.1",
     "web-vitals": "^1.1.2"
   },
   "scripts": {
     "start": "PORT=3037 react-scripts start",
-    "build": "react-scripts build",
+    "build": "grunt create-templates && react-scripts build && grunt finish-templates",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -44,5 +46,13 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "grunt": "^1.4.1",
+    "grunt-contrib-clean": "^2.0.0",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-watch": "^1.1.0",
+    "grunt-eslint": "^23.0.0",
+    "grunt-react-templates": "^0.7.0"
   }
 }
