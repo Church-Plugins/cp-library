@@ -19,6 +19,7 @@ class Components_Source_List extends Component {
 	 */
 	constructor( props ) {
 		super( props );
+		this.listData = null;
 	}
 
 	/**
@@ -129,12 +130,15 @@ class Components_Source_List extends Component {
 
 		// Initial load or no list - show the wait element
 		if( !this.state || !this.state.sourceList ) {
+			window.listData = [];
 			return this.renderWait();
 		} else {
-
+			window.listData = this.state.sourceList;
 			let template = require( '../templates/source-list.rt' );
-			return React.createElement( template )
-			// return this.renderList( {listData: this.state.sourceList} );
+			// let returnValue = React.createElement.apply( this, [template, {listData: this.state.sourceList}] );
+			let returnValue = React.createElement( template );
+			// // return( <div dangerouslySetInnerHTML={ {__html: returnValue} } /> );
+			return returnValue;
 		}
 	}
 

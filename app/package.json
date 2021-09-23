@@ -25,7 +25,7 @@
   },
   "scripts": {
     "start": "PORT=3037 react-scripts start",
-    "build": "grunt create-templates && react-scripts build && grunt clean:post",
+    "build": "grunt create-templates && react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
