@@ -8,12 +8,12 @@ module.exports = {
 	// Used to generate banners on top of compiled stuff
 	bannerConfig: {
 		name: 'cpLibrary',
-		author: '',
-		license: 'UNLICENSED',
-		link: 'UNLICENSED',
+		author: 'Mission Lab',
+		license: 'GPL-3.0',
+		link: 'https://missionlab.dev',
 		version: pkg.version,
 		copyrightText:
-			'This software is released under the UNLICENSED License\nhttps://opensource.org/licenses/UNLICENSED',
+			'This software is released under the GPL-3.0 License\nhttps://opensource.org/licenses/GPL-3.0',
 		credit: true,
 	},
 	// Files we need to compile, and where to put
@@ -47,6 +47,21 @@ module.exports = {
 			name: 'app',
 			entry: {
 				main: ['./app/src/index.js']
+			},
+			webpackConfig: {
+				module: {
+					rules: [
+						{
+							test: /\.rt$/,
+							use: [
+								{
+									loader: 'react-templates-loader?modules=amd',
+								}
+							]
+						}
+
+					]
+				}
 			}
 		}
 	],

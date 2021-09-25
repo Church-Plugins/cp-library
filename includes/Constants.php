@@ -6,19 +6,19 @@
 /**
  * Setup/config constants
  */
+if( !defined( 'CP_LIBRARY_PLUGIN_FILE' ) ) {
+	 define ( 'CP_LIBRARY_PLUGIN_FILE',
+	 	dirname( dirname( __FILE__ ) ) . "/cp-library.php"
+	);
+}
 if( !defined( 'CP_LIBRARY_PLUGIN_DIR' ) ) {
 	 define ( 'CP_LIBRARY_PLUGIN_DIR',
-	 	plugin_dir_path( dirname( dirname( __FILE__  ) ) . "/cp-library.php" )
+	 	plugin_dir_path( CP_LIBRARY_PLUGIN_FILE )
 	);
 }
 if( !defined( 'CP_LIBRARY_PLUGIN_URL' ) ) {
 	 define ( 'CP_LIBRARY_PLUGIN_URL',
-	 	plugin_dir_url( dirname( __FILE__ ) . "/cp-library.php" )
-	);
-}
-if( !defined( 'CP_LIBRARY_PLUGIN_FILE' ) ) {
-	 define ( 'CP_LIBRARY_PLUGIN_FILE',
-	 	dirname( __FILE__ ) . "/cp-library.php"
+	 	plugin_dir_url( CP_LIBRARY_PLUGIN_FILE )
 	);
 }
 if( !defined( 'CP_LIBRARY_PLUGIN_VERSION' ) ) {
@@ -39,6 +39,11 @@ if( !defined( 'CP_LIBRARY_UPREFIX' ) ) {
 if( !defined( 'CP_LIBRARY_TEXT_DOMAIN' ) ) {
 	 define ( 'CP_LIBRARY_TEXT_DOMAIN',
 		'cp_library'
+   );
+}
+if( !defined( 'CP_LIBRARY_DIST' ) ) {
+	 define ( 'CP_LIBRARY_DIST',
+		CP_LIBRARY_PLUGIN_URL . "/dist/"
    );
 }
 
@@ -66,6 +71,6 @@ if( !defined( 'CP_LIBRARY_APP_PATH' ) ) {
 }
 if( !defined( 'CP_LIBRARY_ASSET_MANIFEST' ) ) {
 	 define ( 'CP_LIBRARY_ASSET_MANIFEST',
-	 	plugin_dir_path( dirname( __FILE__ ) ) . 'app/build/asset-manifest.json'
+	 	plugin_dir_path( dirname( __FILE__ ) ) . 'dist/app/manifest.json'
 	);
 }

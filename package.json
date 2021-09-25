@@ -14,6 +14,8 @@
     "archive": "wpackio-scripts pack"
   },
   "dependencies": {
-    "@wpackio/entrypoint": "^6.4.0"
+    "@wpackio/entrypoint": "^6.4.0",
+    "react-templates": "^0.6.3",
+    "react-templates-loader": "^0.6.5"
   }
 }
