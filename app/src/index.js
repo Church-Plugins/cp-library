@@ -5,8 +5,8 @@ import './css/index.css';
 import './css/SourceList.css';
 import './css/ItemList.css';
 
-import Components_Source_list 	from 	'./Components/Source_List'
-import Components_Item_list 	from 	'./Components/Item_List'
+import Components_Source_List 	from 	'./Components/Source_List'
+import Components_Item_List 	from 	'./Components/Item_List'
 
 // Possible elements that we may find for shortcodes
 // const root = document.getElementById( 'cpl-root' );
@@ -17,10 +17,12 @@ const itemList = document.getElementById( 'cpl-item_list' );
 const sourceList = document.getElementById( 'cpl-source_list' );
 
 if( itemList ) {
-	ReactDOM.render( <Components_Item_list />, itemList );
+	ReactDOM.render( <Components_Item_List />, itemList );
 }
 if( sourceList ) {
-	ReactDOM.render( <Components_Source_list />, sourceList );
+	// let template = require( './templates/source-list.rt' );
+	// ReactDOM.render( React.createElement( template ), sourceList );
+	ReactDOM.render( <Components_Source_List />, sourceList );
 }
 
 // if( root ) {
