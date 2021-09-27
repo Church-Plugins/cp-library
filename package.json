@@ -55,5 +55,8 @@
     "build": "cd app && npm run build",
     "test": "echo \"Error: no test specified\" && exit 1",
     "docs": "phpDocumentor --sourcecode -d includes -t docs/php"
+  },
+  "dependencies": {
+    "node-sass": "^6.0.1"
   }
 }
