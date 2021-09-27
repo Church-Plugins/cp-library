@@ -1,14 +1,19 @@
 .ItemList {
-	font-size: inherit;
+  font-size: inherit;
+}
+
+.cpl-item_list {
+  background-color: #0B0B0B;
+  color: #FFFFFF;
 }
 
 .cpl-item-list--item {
-	border: 1px solid black;
-    border-radius: 5px;
-    padding: 8px;
-	margin-bottom: 24px;
+  border: 1px solid black;
+  border-radius: 5px;
+  padding: 8px;
+  margin-bottom: 24px;
 }
 
 .cpl-item-list--item--title {
-	font-weight: bold;
+  font-weight: bold;
 }

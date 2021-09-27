@@ -1,9 +1,8 @@
 import React 		from 'react';
 import ReactDOM 	from 'react-dom';
 
-import './css/index.css';
-import './css/SourceList.css';
-import './css/ItemList.css';
+import './Scss/main.scss';
+
 
 import Components_Source_List 	from 	'./Components/Source_List'
 import Components_Item_List 	from 	'./Components/Item_List'
