@@ -119,30 +119,31 @@ class Init {
 	 */
 	public function app_enqueue() {
 
-		$asset_manifest = json_decode( file_get_contents( CP_LIBRARY_ASSET_MANIFEST ), true )['files'];
+		$asset_manifest = json_decode( file_get_contents( CP_LIBRARY_ASSET_MANIFEST ), true );
 
 		if( isset( $asset_manifest[ 'main.css' ] ) ) {
-			wp_enqueue_style( CP_LIBRARY_UPREFIX, get_site_url() . $asset_manifest[ 'main.css' ] );
+			wp_enqueue_style( CP_LIBRARY_UPREFIX, CP_LIBRARY_DIST . $asset_manifest[ 'main.css' ] );
 		}
 
-		wp_enqueue_script( CP_LIBRARY_UPREFIX . '-runtime', get_site_url() . $asset_manifest[ 'runtime-main.js' ], array(), null, true );
-		wp_enqueue_script( CP_LIBRARY_UPREFIX . '-main', get_site_url() . $asset_manifest[ 'main.js' ], array( CP_LIBRARY_UPREFIX . '-runtime' ), null, true );
+		wp_enqueue_script( CP_LIBRARY_UPREFIX . '-vendors', CP_LIBRARY_DIST . $asset_manifest[ 'vendors~main.js' ], array(), null, true );
+		wp_enqueue_script( CP_LIBRARY_UPREFIX . '-runtime', CP_LIBRARY_DIST . $asset_manifest[ 'runtime.js' ], array(), null, true );
+		wp_enqueue_script( CP_LIBRARY_UPREFIX . '-main', CP_LIBRARY_DIST . $asset_manifest[ 'main.js' ], array( CP_LIBRARY_UPREFIX . '-runtime', CP_LIBRARY_UPREFIX . '-vendors' ), null, true );
 
-		foreach( $asset_manifest as $key => $value ) {
-			if( preg_match( '@static/js/(.*)\.chunk\.js@', $key, $matches ) ) {
-				if( $matches && is_array( $matches ) && count( $matches ) === 2 ) {
-					$name = CP_LIBRARY_UPREFIX . "-" . preg_replace( '/[^A-Za-z0-9_]/', '-', $matches[1] );
-					wp_enqueue_script( $name, get_site_url() . $value, array( CP_LIBRARY_UPREFIX . '-main' ), null, true );
-				}
-			}
-
-			if( preg_match( '@static/css/(.*)\.chunk\.css@', $key, $matches ) ) {
-				if( $matches && is_array( $matches ) && count( $matches ) == 2 ) {
-					$name = CP_LIBRARY_UPREFIX . "-" . preg_replace( '/[^A-Za-z0-9_]/', '-', $matches[1] );
-					wp_enqueue_style( $name, get_site_url() . $value, array( CP_LIBRARY_UPREFIX ), null );
-				}
-			}
-		}
+//		foreach( $asset_manifest as $key => $value ) {
+//			if( preg_match( '@static/js/(.*)\.chunk\.js@', $key, $matches ) ) {
+//				if( $matches && is_array( $matches ) && count( $matches ) === 2 ) {
+//					$name = CP_LIBRARY_UPREFIX . "-" . preg_replace( '/[^A-Za-z0-9_]/', '-', $matches[1] );
+//					wp_enqueue_script( $name, get_site_url() . $value, array( CP_LIBRARY_UPREFIX . '-main' ), null, true );
+//				}
+//			}
+//
+//			if( preg_match( '@static/css/(.*)\.chunk\.css@', $key, $matches ) ) {
+//				if( $matches && is_array( $matches ) && count( $matches ) == 2 ) {
+//					$name = CP_LIBRARY_UPREFIX . "-" . preg_replace( '/[^A-Za-z0-9_]/', '-', $matches[1] );
+//					wp_enqueue_style( $name, get_site_url() . $value, array( CP_LIBRARY_UPREFIX ), null );
+//				}
+//			}
+//		}
 
 	}
 
