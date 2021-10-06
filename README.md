@@ -10,6 +10,7 @@ Church library plugin for sermons, talks, and other media.
 ```
 composer install
 npm install
+npm run build
 cd app
 npm install
 npm run build

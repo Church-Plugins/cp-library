@@ -38,8 +38,8 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks( 'grunt-contrib-clean' );
 
 	grunt.registerTask( 'rt',					['react-templates:dist'] );
-	grunt.registerTask( 'create-templates',		['clean:pre', 'rt', 'copy:main', 'clean:mid'] );
-	grunt.registerTask( 'finish-templates',		['copy:post', 'clean:post'] );
+	grunt.registerTask( 'create-templates',		['clean:pre', 'rt', 'copy:main'] );
+	grunt.registerTask( 'finish-templates',		['copy:post', 'clean:mid', 'clean:post'] );
 	grunt.registerTask( 'clean-sass',			['clean:sass'] );
 	grunt.registerTask( 'default',				['create-templates'] );
 };
