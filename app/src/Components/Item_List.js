@@ -84,7 +84,7 @@ class Components_Item_List extends Component {
 		if( !this.state || !this.state.itemList ) {
 			return this.renderWait();
 		} else {
-			let template = require( '../../templates/item-list.rt' );
+			let template = require( '../templates/item-list.rt' );
 			// Clear elements that may have "dangerous" HTML
 			this.state.itemList.forEach(
 				(listItem, listIndex) => {

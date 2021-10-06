@@ -88,7 +88,7 @@ class Components_Source_List extends Component {
 			window.listData = [];
 			return this.renderWait();
 		} else {
-			let template = require( '../../templates/source-list.rt' );
+			let template = require( '../templates/source-list.rt' );
 			// Clear elements that may have "dangerous" HTML
 			this.state.sourceList.forEach(
 				(listItem, listIndex) => {

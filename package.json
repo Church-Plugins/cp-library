@@ -9,7 +9,7 @@
   },
   "scripts": {
     "bootstrap": "wpackio-scripts bootstrap",
-    "build": "wpackio-scripts build",
+    "build": "wpackio-scripts build && cd app && npm run build",
     "start": "wpackio-scripts start",
     "archive": "wpackio-scripts pack"
   },
