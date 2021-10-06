@@ -71,6 +71,6 @@ if( !defined( 'CP_LIBRARY_APP_PATH' ) ) {
 }
 if( !defined( 'CP_LIBRARY_ASSET_MANIFEST' ) ) {
 	 define ( 'CP_LIBRARY_ASSET_MANIFEST',
-	 	plugin_dir_path( dirname( __FILE__ ) ) . 'dist/app/manifest.json'
+	 	plugin_dir_path( dirname( __FILE__ ) ) . 'app/build/asset-manifest.json'
 	);
 }
