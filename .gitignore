@@ -4,5 +4,6 @@ composer.lock
 /build/
 /node_modules/
 /docs/
+/vendor/
 .phpdoc
 .vscode
