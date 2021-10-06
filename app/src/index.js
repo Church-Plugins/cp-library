@@ -20,8 +20,6 @@ if( itemList ) {
 	ReactDOM.render( <Components_Item_List />, itemList );
 }
 if( sourceList ) {
-	// let template = require( './templates/source-list.rt' );
-	// ReactDOM.render( React.createElement( template ), sourceList );
 	ReactDOM.render( <Components_Source_List />, sourceList );
 }
 

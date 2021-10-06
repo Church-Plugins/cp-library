@@ -5,7 +5,9 @@ import Box from '@mui/material/Box';
 import Components_WP_REST_Request from './WP_REST_Request';
 
 /**
- * Top-level SourceList implementation class
+ * Prepares the content and handles the view for cpl_item_list
+ *
+ * @author costmo
  */
 class Components_Item_List extends Component {
 

@@ -3,12 +3,9 @@ import { Component } from 'react';
 let axios = require( 'axios' );
 
 /**
- * Top-level SourceList implementation class
+ * WordPress REST request getter
  */
 class Components_WP_REST_Request extends Component {
-
-	// urlBase = '';
-	// namespace = '';
 
 	/**
 	 * Class constructor
