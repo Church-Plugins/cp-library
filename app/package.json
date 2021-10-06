@@ -28,7 +28,7 @@
     "build": "grunt create-templates && react-scripts build && grunt finish-templates",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "sass" : "sass src/Scss:src/Css --watch --no-source-map"
+    "sass" : "sass src/scss:src/Css --watch --no-source-map"
 
   },
   "eslintConfig": {
