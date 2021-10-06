@@ -8,3 +8,5 @@ package-lock.json
 /vendor/
 .phpdoc
 .vscode
+app/src/css
+app/src/templates
