@@ -10,3 +10,4 @@ package-lock.json
 .vscode
 app/src/css
 app/src/templates
+app/templates/*.rt.js
