@@ -119,28 +119,38 @@ class Init {
 	 */
 	public function app_enqueue() {
 
-		$asset_manifest = json_decode( file_get_contents( CP_LIBRARY_ASSET_MANIFEST ), true )['files'];
+		$asset_manifest = json_decode( file_get_contents( CP_LIBRARY_ASSET_MANIFEST ), true );
 
-		if( isset( $asset_manifest[ 'main.css' ] ) ) {
-			wp_enqueue_style( CP_LIBRARY_UPREFIX, get_site_url() . $asset_manifest[ 'main.css' ] );
+		// TODO: Calls to `str_replace` need to be less specific
+
+		// App CSS
+		if( isset( $asset_manifest['files'][ 'main.css' ] ) ) {
+			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'main.css' ] );
+			wp_enqueue_style( CP_LIBRARY_UPREFIX, $path );
 		}
 
-		wp_enqueue_script( CP_LIBRARY_UPREFIX . '-runtime', get_site_url() . $asset_manifest[ 'runtime-main.js' ], array(), null, true );
-		wp_enqueue_script( CP_LIBRARY_UPREFIX . '-main', get_site_url() . $asset_manifest[ 'main.js' ], array( CP_LIBRARY_UPREFIX . '-runtime' ), null, true );
+		// App runtime js
+		if( isset( $asset_manifest['files'][ 'runtime-main.js' ] ) ) {
+			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'runtime-main.js' ] );
+			wp_enqueue_script( CP_LIBRARY_UPREFIX . '-runtime', $path, [] );
+		}
 
-		foreach( $asset_manifest as $key => $value ) {
-			if( preg_match( '@static/js/(.*)\.chunk\.js@', $key, $matches ) ) {
+		// App main js
+		if( isset( $asset_manifest['files'][ 'main.js' ] ) ) {
+			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'main.js' ] );
+			wp_enqueue_script( CP_LIBRARY_UPREFIX . '-main', $path, [] );
+		}
+
+		// App static js
+		foreach( $asset_manifest['files'] as $key => $value ) {
+			if( preg_match( '@static/js/(.*)\.chunk\.js$@', $key, $matches ) ) {
+
 				if( $matches && is_array( $matches ) && count( $matches ) === 2 ) {
 					$name = CP_LIBRARY_UPREFIX . "-" . preg_replace( '/[^A-Za-z0-9_]/', '-', $matches[1] );
-					wp_enqueue_script( $name, get_site_url() . $value, array( CP_LIBRARY_UPREFIX . '-main' ), null, true );
+					$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ $key ] );
+					wp_enqueue_script( $name, $path, array( CP_LIBRARY_UPREFIX . '-main' ), null, true );
 				}
-			}
 
-			if( preg_match( '@static/css/(.*)\.chunk\.css@', $key, $matches ) ) {
-				if( $matches && is_array( $matches ) && count( $matches ) == 2 ) {
-					$name = CP_LIBRARY_UPREFIX . "-" . preg_replace( '/[^A-Za-z0-9_]/', '-', $matches[1] );
-					wp_enqueue_style( $name, get_site_url() . $value, array( CP_LIBRARY_UPREFIX ), null );
-				}
 			}
 		}
 
