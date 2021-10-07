@@ -2,12 +2,10 @@ import React, { Component } from 'react';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 
-import Components_WP_REST_Request from './WP_REST_Request';
+import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 
 /**
- * Prepares the content and handles the view for cpl_item_list
- *
- * @author costmo
+ * Top-level ItemList implementation class
  */
 class Components_Item_List extends Component {
 
@@ -40,7 +38,7 @@ class Components_Item_List extends Component {
 	 */
 	getData() {
 
-		let restRequest = new Components_WP_REST_Request();
+		let restRequest = new Controllers_WP_REST_Request();
 		restRequest.get( {endpoint: 'items'} )
 			.then(
 				(restResponse) => {
