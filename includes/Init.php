@@ -121,6 +121,8 @@ class Init {
 
 		$asset_manifest = json_decode( file_get_contents( CP_LIBRARY_ASSET_MANIFEST ), true );
 
+		// TODO: Calls to `str_replace` need to be less specific
+
 		// App CSS
 		if( isset( $asset_manifest['files'][ 'main.css' ] ) ) {
 			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'main.css' ] );
