@@ -3,7 +3,7 @@ import ReactDOMServer from 'react-dom/server';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 
-import Components_WP_REST_Request from './WP_REST_Request';
+import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 
 /**
  * Top-level SourceList implementation class
@@ -40,7 +40,7 @@ class Components_Source_List extends Component {
 	 */
 	getData() {
 
-		let restRequest = new Components_WP_REST_Request();
+		let restRequest = new Controllers_WP_REST_Request();
 		restRequest.get( {endpoint: 'sources'} )
 			.then(
 				(restResponse) => {

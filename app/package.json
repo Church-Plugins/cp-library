@@ -25,7 +25,7 @@
   },
   "scripts": {
     "start": "PORT=3037 react-scripts start",
-    "build": "SKIP_PREFLIGHT_CHECK=true grunt create-templates && grunt clean-sass && npm run sass && react-scripts build && grunt finish-templates",
+    "build": "export SKIP_PREFLIGHT_CHECK=true && grunt create-templates && grunt clean-sass && npm run sass && react-scripts build && grunt finish-templates",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "sass": "sass src/scss:src/css --no-source-map",
