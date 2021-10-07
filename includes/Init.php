@@ -121,20 +121,25 @@ class Init {
 
 		$asset_manifest = json_decode( file_get_contents( CP_LIBRARY_ASSET_MANIFEST ), true );
 
+		// App CSS
 		if( isset( $asset_manifest['files'][ 'main.css' ] ) ) {
-			wp_enqueue_style( CP_LIBRARY_UPREFIX, CP_LIBRARY_DIST . $asset_manifest['files'][ 'main.css' ] );
+			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'main.css' ] );
+			wp_enqueue_style( CP_LIBRARY_UPREFIX, $path );
 		}
 
+		// App runtime js
 		if( isset( $asset_manifest['files'][ 'runtime-main.js' ] ) ) {
 			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'runtime-main.js' ] );
 			wp_enqueue_script( CP_LIBRARY_UPREFIX . '-runtime', $path, [] );
 		}
 
+		// App main js
 		if( isset( $asset_manifest['files'][ 'main.js' ] ) ) {
 			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'main.js' ] );
 			wp_enqueue_script( CP_LIBRARY_UPREFIX . '-main', $path, [] );
 		}
 
+		// App static js
 		foreach( $asset_manifest['files'] as $key => $value ) {
 			if( preg_match( '@static/js/(.*)\.chunk\.js$@', $key, $matches ) ) {
 
