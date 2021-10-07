@@ -10,13 +10,14 @@ Church library plugin for sermons, talks, and other media.
 ```
 composer install
 npm install
-npm run build
 cd app
 npm install
 npm run build
 ```
 
+##### Dev updates  #####
 
+- There is currently no watcher that will update the React app in the WordPress context, so changes are executed through `npm run build` which can be run from either the `cp-plugins` directory or from `cp-plugins/app`
 
 ### Change Log
 
