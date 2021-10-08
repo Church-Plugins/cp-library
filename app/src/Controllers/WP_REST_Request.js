@@ -3,12 +3,10 @@ import { Component } from 'react';
 let axios = require( 'axios' );
 
 /**
- * Top-level SourceList implementation class
+ * Perform REST requests against the WP host
+ *
  */
-class Components_WP_REST_Request extends Component {
-
-	// urlBase = '';
-	// namespace = '';
+class Controllers_WP_REST_Request extends Component {
 
 	/**
 	 * Class constructor
@@ -57,4 +55,4 @@ class Components_WP_REST_Request extends Component {
 	}
 
 }
-export default Components_WP_REST_Request;
+export default Controllers_WP_REST_Request;

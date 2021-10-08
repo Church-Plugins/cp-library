@@ -1,9 +1,9 @@
 import React 		from 'react';
 import ReactDOM 	from 'react-dom';
 
-import './css/index.scss';
-import './css/SourceList.scss';
-import './css/ItemList.scss';
+import './css/index.css';
+import './css/SourceList.css';
+import './css/ItemList.css';
 
 import Components_Source_List 	from 	'./Components/Source_List'
 import Components_Item_List 	from 	'./Components/Item_List'
@@ -20,8 +20,6 @@ if( itemList ) {
 	ReactDOM.render( <Components_Item_List />, itemList );
 }
 if( sourceList ) {
-	// let template = require( './templates/source-list.rt' );
-	// ReactDOM.render( React.createElement( template ), sourceList );
 	ReactDOM.render( <Components_Source_List />, sourceList );
 }
 

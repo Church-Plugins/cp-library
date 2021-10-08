@@ -43,6 +43,7 @@ module.exports = {
 		// 	webpackConfig: undefined,
 		// },
 		// If has more length, then multi-compiler
+		// We need to punt app compiling to `app/package.json`
 		{
 			name: 'app',
 			entry: {

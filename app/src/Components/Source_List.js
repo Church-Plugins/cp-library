@@ -3,10 +3,12 @@ import ReactDOMServer from 'react-dom/server';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 
-import Components_WP_REST_Request from './WP_REST_Request';
+import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 
 /**
- * Top-level SourceList implementation class
+ * Prepares the content and handles the view for cpl_source_list
+ *
+ * @author costmo
  */
 class Components_Source_List extends Component {
 
@@ -40,7 +42,7 @@ class Components_Source_List extends Component {
 	 */
 	getData() {
 
-		let restRequest = new Components_WP_REST_Request();
+		let restRequest = new Controllers_WP_REST_Request();
 		restRequest.get( {endpoint: 'sources'} )
 			.then(
 				(restResponse) => {
@@ -88,7 +90,7 @@ class Components_Source_List extends Component {
 			window.listData = [];
 			return this.renderWait();
 		} else {
-			let template = require( '../../templates/source-list.rt' );
+			let template = require( '../templates/source-list.rt' );
 			// Clear elements that may have "dangerous" HTML
 			this.state.sourceList.forEach(
 				(listItem, listIndex) => {
