@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  *
  * @since 1.0.0
  */
-class ItemMeta extends Table  {
+class ItemMeta extends TableMeta  {
 
 	/**
 	 * Get things started

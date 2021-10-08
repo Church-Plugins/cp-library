@@ -40,7 +40,7 @@ class SourceMeta extends Table  {
 	 *
 	 * @author Tanner Moushey
 	 */
-	protected function get_keys() {
+	public static function get_keys() {
 		return apply_filters( 'cpl_source_meta_keys_enum', [ 'name', 'title', 'url' ] );
 	}
 
@@ -51,7 +51,7 @@ class SourceMeta extends Table  {
 	*/
 	public function get_sql() {
 
-		$keys = "'" . implode( "', '", $this->get_keys() ) . "'";
+		$keys = "'" . implode( "', '", self::get_keys() ) . "'";
 
 		return "CREATE TABLE " . $this->table_name . " (
 			`id` bigint NOT NULL AUTO_INCREMENT,

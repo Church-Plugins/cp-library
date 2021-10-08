@@ -45,6 +45,13 @@ abstract class PostType {
 	public $post_type = null;
 
 	/**
+	 * Gets the modal for the called class
+	 *
+	 * @var null
+	 */
+	public $modal = null;
+
+	/**
 	 * Only make one instance of PostType
 	 *
 	 * @return self
@@ -65,6 +72,7 @@ abstract class PostType {
 	 * @since   1.0
 	 */
 	protected function __construct() {
+		$this->modal = '\CP_Library\Models\\' . get_class( $this );
 		$this->add_actions();
 	}
 

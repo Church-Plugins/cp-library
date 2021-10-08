@@ -20,40 +20,127 @@ abstract class Table {
 	 *
 	 * @since   1.0
 	 */
-	public $table_name;
+	public static $table_name;
+
+	/**
+	 * The name of the meta database table
+	 *
+	 * @var string
+	 */
+	public static $meta_table_name;
 
 	/**
 	 * The name of the primary column
 	 *
 	 * @since   1.0
 	 */
-	public $primary_key;
+	public static $primary_key;
 
 	/**
 	 * Unique string to identify this data type
 	 *
 	 * @var string
 	 */
-	public $type;
+	public static $type;
 
 	/**
 	 * ID of the cache group to use
 	 *
 	 * @var string
 	 */
-	public $cache_group;
+	public static $cache_group;
+
+	/**
+	 * ID of the current post
+	 *
+	 * @var
+	 */
+	public $id = null;
+	public $origin_id = null;
+
+	public static function init() {
+		global $wpdb;
+
+		static::$cache_group = static::$type;
+		static::$table_name  = $wpdb->prefix . CP_LIBRARY_UPREFIX . '_' . static::$type;
+		static::$meta_table_name  = $wpdb->prefix . CP_LIBRARY_UPREFIX . '_' . static::$type . "_meta";
+		static::$primary_key = 'id';
+	}
+
+	/**
+	 * Setup instance using an origin id
+	 * @param $origin_id
+	 *
+	 * @return bool | static
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public static function get_instance_from_origin( $origin_id ) {
+		global $wpdb;
+
+		static::init();
+
+		$origin_id = absint( $origin_id );
+		if ( ! $origin_id ) {
+			return false;
+		}
+
+		$object = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM " . static::$table_name . " WHERE origin_id = %s LIMIT 1;", $origin_id ) );
+
+		if ( ! $object ) {
+			$data = [ 'origin_id' => $origin_id, 'status' => get_post_status( $origin_id ) ];
+			return static::insert( $data );
+		}
+
+		$class = get_called_class();
+		return new $class( $object );
+	}
+
+	/**
+	 * Setup instance using the primary id
+	 * @param $id
+	 *
+	 * @return bool | static
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public static function get_instance( $id ) {
+		global $wpdb;
+
+		static::init();
+
+		$id = absint( $id );
+		if ( ! $id ) {
+			return false;
+		}
+
+		$object = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM " . static::$table_name . " WHERE id = %s LIMIT 1;", $id ) );
+
+		if ( ! $object ) {
+			throw new Exception( 'Could not find object.' );
+		}
+
+		$class = get_called_class();
+		return new $class( $object );
+	}
+
 
 	/**
 	 * Get things started
 	 *
 	 * @since   1.0
 	 */
-	public function __construct() {
-		global $wpdb;
+	public function __construct( $object ) {
+		static::init();
 
-		$this->cache_group = $this->type;
-		$this->table_name  = $wpdb->prefix . CP_LIBRARY_UPREFIX . '_' . $this->type;
-		$this->primary_key = 'id';
+		foreach( get_object_vars( $object ) as $key => $value ) {
+			$this->$key = $value;
+		}
+
 	}
 
 	/**
@@ -62,7 +149,7 @@ abstract class Table {
 	 * @since   1.0
 	 * @return  array
 	 */
-	public function get_columns() {
+	public static function get_columns() {
 		return array();
 	}
 
@@ -72,68 +159,28 @@ abstract class Table {
 	 * @since   1.0
 	 * @return  array
 	 */
-	public function get_column_defaults() {
+	public static function get_column_defaults() {
 		return array();
 	}
 
 	/**
-	 * Retrieve a row by the primary key
-	 *
-	 * @param $row_id
+	 * Whitelist of meta columns
 	 *
 	 * @since   1.0
-	 * @return  object
+	 * @return  array
 	 */
-	public function get( $row_id ) {
-		global $wpdb;
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $this->table_name WHERE $this->primary_key = %s LIMIT 1;", $row_id ) );
+	public static function get_meta_columns() {
+		return array();
 	}
 
 	/**
-	 * Retrieve a row by a specific column / value
-	 *
-	 * @param $column
-	 * @param $row_id
+	 * Default meta column values
 	 *
 	 * @since   1.0
-	 * @return  object
+	 * @return  array
 	 */
-	public function get_by( $column, $row_id ) {
-		global $wpdb;
-		$column = esc_sql( $column );
-		return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $this->table_name WHERE $column = %s LIMIT 1;", $row_id ) );
-	}
-
-	/**
-	 * Retrieve a specific column's value by the primary key
-	 *
-	 * @param $column
-	 * @param $row_id
-	 *
-	 * @since   1.0
-	 * @return  string
-	 */
-	public function get_column( $column, $row_id ) {
-		global $wpdb;
-		$column = esc_sql( $column );
-		return $wpdb->get_var( $wpdb->prepare( "SELECT $column FROM $this->table_name WHERE $this->primary_key = %s LIMIT 1;", $row_id ) );
-	}
-
-	/**
-	 * Retrieve a specific column's value by the the specified column / value
-	 *
-	 * @param $column
-	 * @param $column_where
-	 * @param $column_value
-	 *
-	 * @since   1.0
-	 * @return  string
-	 */
-	public function get_column_by( $column, $column_where, $column_value ) {
-		global $wpdb;
-		$column_where = esc_sql( $column_where );
-		$column       = esc_sql( $column );
-		return $wpdb->get_var( $wpdb->prepare( "SELECT $column FROM $this->table_name WHERE $column_where = %s LIMIT 1;", $column_value ) );
+	public static function get_meta_column_defaults() {
+		return array();
 	}
 
 	/**
@@ -141,23 +188,28 @@ abstract class Table {
 	 *
 	 * @param        $data
 	 *
-	 *
-	 * @return int
+	 * @return bool | object
 	 * @throws Exception
 	 * @since  1.0.0
 	 *
 	 * @author Tanner Moushey
 	 */
-	public function insert( $data ) {
+	public static function insert( $data ) {
+		static::init();
+
 		global $wpdb;
 
-		$data = apply_filters( 'cpl_pre_insert', $data, $this );
+		/**
+		 * @var static
+		 */
+		$class = get_called_class();
+		$data = apply_filters( 'cpl_pre_insert', $data );
 
 		// Set default values
-		$data = wp_parse_args( $data, $this->get_column_defaults() );
+		$data = wp_parse_args( $data, static::get_column_defaults() );
 
 		// Initialise column format array
-		$column_formats = $this->get_columns();
+		$column_formats = static::get_columns();
 
 		// Force fields to lower case
 		$data = array_change_key_case( $data );
@@ -169,21 +221,20 @@ abstract class Table {
 		$data_keys = array_keys( $data );
 		$column_formats = array_merge( array_flip( $data_keys ), $column_formats );
 
-		$wpdb->insert( $this->table_name, $data, $column_formats );
+		$wpdb->insert( static::$table_name, $data, $column_formats );
 
 		if ( ! $wpdb_insert_id = $wpdb->insert_id ) {
 			throw new Exception( 'Could not insert data.' );
 		}
 
-		$this->set_last_changed();
+		static::set_last_changed();
 
-		do_action( 'cpl_post_insert', $wpdb_insert_id, $data, $this );
+		do_action( 'cpl_post_insert', $wpdb_insert_id, $data );
 
-		return $wpdb_insert_id;
+		return static::get_instance( $wpdb_insert_id );
 	}
 
 	/**
-	 * @param        $row_id
 	 * @param array  $data
 	 * @param string $where
 	 *
@@ -194,25 +245,29 @@ abstract class Table {
 	 *
 	 * @author Tanner Moushey
 	 */
-	public function update( $row_id, $data = array(), $where = '' ) {
+	public function update( $data = array() ) {
 
 		global $wpdb;
+
+		if ( empty( $data['updated'] ) ) {
+			$data['updated'] = date( 'Y-m-d H:i:s' );
+		}
 
 		$data = apply_filters( 'cpl_pre_update', $data, $this );
 
 		// Row ID must be positive integer
-		$row_id = absint( $row_id );
+		$row_id = absint( $this->id );
 
 		if ( empty( $row_id ) ) {
 			throw new Exception( 'No row id provided.' );
 		}
 
 		if ( empty( $where ) ) {
-			$where = $this->primary_key;
+			$where = static::$primary_key;
 		}
 
 		// Initialise column format array
-		$column_formats = $this->get_columns();
+		$column_formats = static::get_columns();
 
 		// Force fields to lower case
 		$data = array_change_key_case( $data );
@@ -224,11 +279,11 @@ abstract class Table {
 		$data_keys = array_keys( $data );
 		$column_formats = array_merge( array_flip( $data_keys ), $column_formats );
 
-		if ( false === $wpdb->update( $this->table_name, $data, array( $where => $row_id ), $column_formats ) ) {
+		if ( false === $wpdb->update( static::$table_name, $data, array( $where => $row_id ), $column_formats ) ) {
 			throw new Exception( sprintf( 'The row (%d) was not updated.', absint( $row_id ) ) );
 		}
 
-		$this->set_last_changed();
+		static::set_last_changed();
 
 		do_action( 'cpl_post_update', $data, $this );
 
@@ -236,7 +291,56 @@ abstract class Table {
 	}
 
 	/**
-	 * @param int $row_id
+	 * Insert or update new meta
+	 *
+	 * @param $key
+	 * @param $value
+	 *
+	 * @return false|int
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function update_meta_value( $key, $value ) {
+		global $wpdb;
+
+		$data = [ 'key' => $key, 'value' => $value, 'item_id' => $this->id, 'updated' => date( 'Y-m-d H:i:s' ) ];
+		$data = apply_filters( 'cpl_pre_update_meta', $data, $this );
+
+		// Initialise column format array
+		$column_formats = static::get_meta_columns();
+
+		// Force fields to lower case
+		$data = array_change_key_case( $data );
+
+		// White list columns
+		$data = array_intersect_key( $data, $column_formats );
+
+		// Reorder $column_formats to match the order of columns given in $data
+		$data_keys = array_keys( $data );
+		$column_formats = array_merge( array_flip( $data_keys ), $column_formats );
+
+		if ( $this->get_meta_value( $key ) ) {
+			$result = $wpdb->update( static::$meta_table_name, $data, array( 'item_id' => $this->id, 'key' => $key ), $column_formats );
+		} else {
+			// set default values
+			$data = wp_parse_args( $data, static::get_meta_column_defaults() );
+			$wpdb->insert( static::$meta_table_name, $data, $column_formats );
+			$result = $wpdb->insert_id;
+		}
+
+		static::set_last_changed();
+
+		return $result;
+	}
+
+	public function get_meta_value( $key ) {
+		global $wpdb;
+		return $wpdb->get_var( $wpdb->prepare( "SELECT `value` FROM " . static::$meta_table_name . " WHERE `key` = %s AND item_id = %d LIMIT 1;", $key, $this->id ) );
+	}
+
+	/**
+	 * @param $key
 	 *
 	 * @return bool
 	 * @throws Exception
@@ -244,19 +348,29 @@ abstract class Table {
 	 *
 	 * @author Tanner Moushey
 	 */
-	public function delete( $row_id = 0 ) {
+	public function delete_meta( $key ) {
+		global $wpdb;
+
+		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM " . static::$meta_table_name . " WHERE `item_id` = %d AND `key` = %s", $this->id, $key ) ) ) {
+			throw new Exception( sprintf( 'The row (%d) was not deleted.', absint( $this->id ) ) );
+		}
+
+		return true;
+	}
+
+	/**
+	 * @return bool
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function delete() {
 
 		global $wpdb;
 
-		// Row ID must be positive integer
-		$row_id = absint( $row_id );
-
-		if( empty( $row_id ) ) {
-			throw new Exception( 'No row id provided.' );
-		}
-
-		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM $this->table_name WHERE $this->primary_key = %d", $row_id ) ) ) {
-			throw new Exception( sprintf( 'The row (%d) was not deleted.', absint( $row_id ) ) );
+		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM " . static::$table_name . " WHERE " . static::$primary_key . " = %d", $this->id ) ) ) {
+			throw new Exception( sprintf( 'The row (%d) was not deleted.', absint( $this->id ) ) );
 		}
 
 		return true;
@@ -267,8 +381,8 @@ abstract class Table {
 	 *
 	 * @since  1.0
 	 */
-	public function set_last_changed() {
-		wp_cache_set( 'last_changed', microtime(), $this->cache_group );
+	public static function set_last_changed() {
+		wp_cache_set( 'last_changed', microtime(), static::$cache_group );
 	}
 
 	/**
@@ -276,31 +390,18 @@ abstract class Table {
 	 *
 	 * @since  1.0.0
 	 */
-	public function get_last_changed() {
+	public static function get_last_changed() {
 		if ( function_exists( 'wp_cache_get_last_changed' ) ) {
-			return wp_cache_get_last_changed( $this->cache_group );
+			return wp_cache_get_last_changed( static::$cache_group );
 		}
 
-		$last_changed = wp_cache_get( 'last_changed', $this->cache_group );
+		$last_changed = wp_cache_get( 'last_changed', static::$cache_group );
 		if ( ! $last_changed ) {
 			$last_changed = microtime();
-			wp_cache_set( 'last_changed', $last_changed, $this->cache_group );
+			wp_cache_set( 'last_changed', $last_changed, static::$cache_group );
 		}
 
 		return $last_changed;
-	}
-
-	/**
-	 * Default `save_post` action handler for CPT-descendants of this class
-	 *
-	 * @param int $post_id
-	 * @param WP_Post $post
-	 * @return void
-	 * @author costmo
-	 */
-	public function save_post( $post_id, $post ) {
-
-		return;
 	}
 
 }

@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  *
  * @since 1.0.0
  */
-class SourceMeta extends Table  {
+class SourceMeta extends TableMeta  {
 
 	/**
 	 * Get things started

@@ -30,18 +30,27 @@ class ItemMeta extends Table  {
 		$this->version    = '1.0';
 
 		parent::__construct();
+
+		$enum = get_option( 'cp_library_item_meta_enum' );
+		if ( is_admin() && self::get_keys() != $enum ) {
+			global $wpdb;
+			$keys = "'" . implode( "', '", self::get_keys() ) . "'";
+			$sql  = "ALTER TABLE $this->table_name CHANGE `key` `key` ENUM( $keys ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;";
+			$wpdb->query($sql);
+			update_option( 'cp_library_item_meta_enum', self::get_keys() );
+		}
 	}
 
 	/**
 	 * Keys for key column
+	 * @author Tanner Moushey
 	 *
 	 * @return mixed|void
 	 * @since  1.0.0
 	 *
-	 * @author Tanner Moushey
 	 */
-	protected function get_keys() {
-		return apply_filters( 'cpl_item_meta_keys_enum', [ 'avatar', 'name', 'url' ] );
+	public static function get_keys() {
+		return apply_filters( 'cpl_item_meta_keys_enum', [ 'avatar', 'name', 'video_url', 'audio_url', 'video_id_vimeo', 'video_id_facebook' ] );
 	}
 
 	/**
@@ -51,7 +60,7 @@ class ItemMeta extends Table  {
 	*/
 	public function get_sql() {
 
-		$keys = "'" . implode( "', '", $this->get_keys() ) . "'";
+		$keys = "'" . implode( "', '", self::get_keys() ) . "'";
 
 		return "CREATE TABLE " . $this->table_name . " (
 			`id` bigint NOT NULL AUTO_INCREMENT,

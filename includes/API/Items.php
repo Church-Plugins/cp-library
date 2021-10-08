@@ -17,6 +17,8 @@ use WP_Error;
  */
 class Items extends WP_REST_Controller {
 
+	public $post_type;
+
 	/**
 	 * Constructor.
 	 *
@@ -127,6 +129,7 @@ class Items extends WP_REST_Controller {
 			'posts_per_page'	=> -1,
 			'orderby’'			=> 'title'
 		];
+
 		$posts = get_posts( $args );
 
 		if( empty( $posts ) ) {

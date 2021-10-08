@@ -68,7 +68,6 @@ class Item extends PostType  {
 		];
 
 		return apply_filters( "cpl_{$this->post_type}_args", $args, $this );
-
 	}
 
 	public function register_metaboxes() {
@@ -86,14 +85,26 @@ class Item extends PostType  {
 			'name' => __( 'Video URL', 'cp-library' ),
 			'desc' => __( 'The URL of the video to show, leave blank to hide this field.', 'cp-library' ),
 			'id'   => 'video_url',
-			'type' => 'text',
+			'type' => 'file',
 		] );
 
 		$cmb->add_field( [
 			'name' => __( 'Audio URL', 'cp-library' ),
 			'desc' => __( 'The URL of the audio to show, leave blank to hide this field.', 'cp-library' ),
 			'id'   => 'audio_url',
-			'type' => 'text',
+			'type' => 'file',
+		] );
+
+		$cmb->add_field( [
+			'id'   => 'video_id_facebook',
+			'type' => 'text_medium',
+			'name' => __( 'Facebook video permalink', 'cp-library' ),
+		] );
+
+		$cmb->add_field( [
+			'id'   => 'video_id_vimeo',
+			'type' => 'text_medium',
+			'name' => __( 'Vimeo video id', 'cp-library' ),
 		] );
 
 	}

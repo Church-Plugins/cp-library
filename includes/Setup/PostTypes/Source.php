@@ -97,17 +97,17 @@ class Source extends PostType {
 	 * @author costmo
 	 */
 	public function add_actions() {
-
-		$model = new Source_Model();
-
-		add_action(
-			'save_post_' . CP_LIBRARY_UPREFIX . '_sources',
-			[$model, 'save_post'],
-			20, 2
-		);
-
-		parent::add_actions();
-		return;
+//
+//		$model = new Source_Model();
+//
+//		add_action(
+//			'save_post_' . CP_LIBRARY_UPREFIX . '_sources',
+//			[$model, 'save_post'],
+//			20, 2
+//		);
+//
+//		parent::add_actions();
+//		return;
 	}
 
 
