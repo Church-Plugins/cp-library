@@ -5,27 +5,31 @@ import './css/index.css';
 import './css/SourceList.css';
 import './css/ItemList.css';
 
-import Components_Source_List 	from 	'./Components/Source_List'
-import Components_Item_List 	from 	'./Components/Item_List'
+// In dev mode, we get an error because we require template files in these components. It seems like
+// the path resolution is different in dev vs. in prod builds. 
+// import Components_Source_List 	from 	'./Components/Source_List'
+// import Components_Item_List 	from 	'./Components/Item_List'
+import Talks from "./Components/Talks"
 
 // Possible elements that we may find for shortcodes
-// const root = document.getElementById( 'cpl-root' );
+const root = document.getElementById( 'cpl-root' );
 // const item = document.getElementById( 'cpl-item' );
 // const source = document.getElementById( 'cpl-source' );
 // const player = document.getElementById( 'cpl-player' );
-const itemList = document.getElementById( 'cpl-item_list' );
-const sourceList = document.getElementById( 'cpl-source_list' );
+// const itemList = document.getElementById( 'cpl-item_list' );
+// const sourceList = document.getElementById( 'cpl-source_list' );
 
-if( itemList ) {
-	ReactDOM.render( <Components_Item_List />, itemList );
-}
-if( sourceList ) {
-	ReactDOM.render( <Components_Source_List />, sourceList );
-}
-
-// if( root ) {
-// 	ReactDOM.render( <App />, root );
+//
+// if( itemList ) {
+// 	ReactDOM.render( <Components_Item_List />, itemList );
 // }
+// if( sourceList ) {
+// 	ReactDOM.render( <Components_Source_List />, sourceList );
+// }
+
+if (root) {
+	ReactDOM.render( <Talks />, root );
+}
 // if( itemList ) {
 // 	ReactDOM.render( <App />, itemList );
 // }
@@ -38,4 +42,3 @@ if( sourceList ) {
 // if( player ) {
 // 	ReactDOM.render( <App />, player );
 // }
-
