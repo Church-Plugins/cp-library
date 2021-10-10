@@ -10,6 +10,7 @@ import './css/ItemList.css';
 // import Components_Source_List 	from 	'./Components/Source_List'
 // import Components_Item_List 	from 	'./Components/Item_List'
 import Talks from "./Components/Talks"
+import ItemDetail from "./Components/ItemDetail"
 
 // Possible elements that we may find for shortcodes
 const root = document.getElementById( 'cpl-root' );
@@ -28,7 +29,8 @@ const root = document.getElementById( 'cpl-root' );
 // }
 
 if (root) {
-	ReactDOM.render( <Talks />, root );
+	// ReactDOM.render( <Talks />, root );
+	ReactDOM.render( <ItemDetail />, root );
 }
 // if( itemList ) {
 // 	ReactDOM.render( <App />, itemList );

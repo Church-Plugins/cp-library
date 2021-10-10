@@ -2,9 +2,10 @@ import React from 'react';
 import Box from '@mui/material/Box';
 import ListItem from '@mui/material/ListItem';
 import IconButton from '@mui/material/IconButton';
-import Button from '@mui/material/Button';
-import { ChevronRight, Calendar, Tag, Play, Volume1 } from "react-feather"
-import relativeDate from "tiny-relative-date";
+import { ChevronRight, Play, Volume1 } from "react-feather"
+
+import RectangularButton from './RectangularButton';
+import ItemMeta from "./ItemMeta";
 import useBreakpoints from '../Hooks/useBreakpoints';
 
 export default function Item({
@@ -50,17 +51,8 @@ export default function Item({
           justifyContent={isDesktop ? "space-between" : "center"}
         >
           <span className="item__title">{title}</span>
-          <Box marginTop={1}>
-            <Box className="item__relativeReleaseDate" display="inline-block">
-              <Calendar />
-              <Box component="span" marginLeft={1}>{relativeDate(date)}</Box>
-            </Box>
-            {category && category.length > 0 && (
-              <Box className="item__categories" display="inline-block">
-                <Tag />
-                <Box component="span" marginLeft={1}>{category.join(",")}</Box>
-              </Box>
-            )}
+          <Box marginTop={1} className="item__itemMeta">
+            <ItemMeta date={date} category={category} />
           </Box>
         </Box>
         {!isDesktop && isNew && (
@@ -85,15 +77,15 @@ export function ItemActions({
     return (
       <>
         {video && (
-          <Button variant="contained" startIcon={<Play />}>
+          <RectangularButton variant="contained" leftIcon={<Play />}>
             Play Video
-          </Button>
+          </RectangularButton>
         )}
         {audio && (
           <Box marginLeft={video ? 2 : 0}>
-            <Button variant="outlined" startIcon={<Volume1 />}>
+            <RectangularButton variant="outlined" leftIcon={<Volume1 />}>
               Play Audio
-            </Button>
+            </RectangularButton>
           </Box>
         )}
       </>

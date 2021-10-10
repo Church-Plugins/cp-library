@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
 
 import Item from "./Item";
+import LoadingIndicator from "./LoadingIndicator";
+import ErrorDisplay from "./ErrorDisplay";
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 
 function ItemList({}) {
@@ -27,17 +28,15 @@ function ItemList({}) {
   }, []);
 
   return loading ? (
-    <Box textAlign="center" paddingY={4}>
-      <CircularProgress />
-    </Box>
+    <LoadingIndicator />
   ) : error ? (
-    // Probably want to handle this more gracefully.
-    <Box><pre>{JSON.stringify(error, null, 2)}</pre></Box>
+    <ErrorDisplay error={error} />
   ) : items.length === 0 ? (
     <Box>No items</Box>
   ) : (
     <List className="itemList__root">
       {items.map((item, index) => (
+        // "isNew" assumes the items are sorted by creation date descendingly.
         <Item key={item.title} item={item} isNew={index === 0}/>
       ))}
     </List>
