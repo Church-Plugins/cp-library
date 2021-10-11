@@ -11,6 +11,7 @@ import LoadingIndicator from './LoadingIndicator';
 import ErrorDisplay from './ErrorDisplay';
 import AudioPlayer from './AudioPlayer';
 import ItemMeta from './ItemMeta';
+import SearchInput from './SearchInput';
 import RectangularButton from './RectangularButton';
 
 const TESTING_ID = 123;
@@ -67,6 +68,20 @@ export default function ItemDetail({
     // Margin bottom is to account for audio player. Making sure all content is still visible with
     // the player is up.
     <Box className="itemDetail__root" padding={2} marginBottom={mode === "audio" ? 10 : 0}>
+      {isDesktop && (
+        <>
+          {/* TODO: Real href to "Talks" */}
+          <a href="#">{"<"} Back to talks</a>
+          <Box display="flex" justifyContent="space-between">
+            <h1 className="itemDetail__header">Talks</h1>
+            {/* TODO: Think about who's responsible for search, e.g. here or a global search provider */}
+            <Box className="itemDetail__search" marginLeft={1} display="flex" alignItems="center">
+              <SearchInput onValueChange={console.log} />
+            </Box>
+          </Box>
+          <Divider className="itemDetail__divider" />
+        </>
+      )}
       <Box display="flex" flexDirection={isDesktop ? "row" : "column"}>
         <Box className="itemDetail__leftContent" flex={1} flexBasis="40%" marginRight={isDesktop ? 2 : 0}>
           <h1 className="itemDetail__title">{item.title}</h1>

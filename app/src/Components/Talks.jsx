@@ -43,8 +43,8 @@ export default function Talks() {
   };
 
   // TODO: Wire-up
-  const handleSearchInputChange = debounce((event) => {
-    console.log(event.target.value);
+  const handleSearchInputChange = debounce((value) => {
+    console.log(value);
   }, 500);
 
   return (
