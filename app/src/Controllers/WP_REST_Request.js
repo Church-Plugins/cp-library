@@ -16,6 +16,9 @@ class Controllers_WP_REST_Request extends Component {
 
 		super( props );
 
+		// In dev mode, we need the whole URL. Otherwise, it'll hit localhost:<port>/page/wp-json/...
+		// which results in 404.
+		// this.urlBase = 'http://churchplugin.local/wp-json';
 		this.urlBase = '/wp-json';
 		this.namespace = 'cp-library/v1';
 	}
@@ -26,32 +29,14 @@ class Controllers_WP_REST_Request extends Component {
 	 * @returns
 	 */
 	get( {endpoint = null} ) {
-
-		return new Promise(
-			(resolve, reject) => {
-
-				let returnValue = {};
-
-				axios.get( this.urlBase + "/" + this.namespace + "/" + endpoint )
-				.then(
-					(response) => { // Initial response
-						returnValue = response.data;
-					}
-				 )
-				 .catch(
-					 (error) => { // Got an error
-						return resolve( returnValue ); // should probably reject here
-					 }
-				  )
-				  .then(
-					  () => { // Request complete
-						return resolve( returnValue );
-					  }
-				  );
-
-			}
-		);
-
+		return axios
+			.get( this.urlBase + "/" + this.namespace + "/" + endpoint )
+			.then(response => response.data)
+			.catch(error => {
+				// Usually consumers want to handle the error themselves. If there's any global error
+				// handler (e.g reporting to a monitoring tool) we can run it here before we throw it.
+				throw error;
+			})
 	}
 
 }
