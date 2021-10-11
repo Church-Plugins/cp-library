@@ -139,6 +139,7 @@ class Items extends WP_REST_Controller {
 			'count' => $posts->post_count,
 			'total' => $posts->found_posts,
 			'pages' => $posts->max_num_pages,
+			'items' => [],
 		];
 
 		if( empty( $posts->post_count ) ) {
