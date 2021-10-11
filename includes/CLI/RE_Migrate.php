@@ -2,18 +2,18 @@
 
 use CP_Library\Models\Item;
 
-// Make the `sllang` command available to WP-CLI
+// Make the `cp` command available to WP-CLI
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'cp', 'RE_Migrate' );
 }
 
 /**
- * Provides the wp-cli 'sllang' command
+ * Provides the wp-cli 'cp' command
  *
- * For more info, use: sllang [command] --help
+ * For more info, use: cp [command] --help
  *
  * Example:
- * wp sllang migrate
+ * wp cp migrate
  *
  * @author Tanner Moushey
  */
@@ -47,7 +47,12 @@ class RE_Migrate {
 			'posts_per_page' => -1
 		] );
 
+		$total = count( $talks ) + count( $sermons );
+
+		$progress = WP_CLI\Utils\make_progress_bar( "Migrating " . $total . " items", $total );
+
 		foreach( $talks as $talk ) {
+			$progress->tick();
 			$talk->post_type = 'cpl_items';
 			$audio = get_post_meta( $talk->ID, 'talk_file', true );
 
@@ -71,6 +76,7 @@ class RE_Migrate {
 		}
 
 		foreach( $sermons as $sermon ) {
+			$progress->tick();
 			$sermon->post_type = 'cpl_items';
 			$vimeo = get_post_meta( $sermon->ID, 'vimeo_video_id', true );
 			$facebook = get_post_meta( $sermon->ID, 'facebook_video_id', true );
@@ -91,6 +97,8 @@ class RE_Migrate {
 				WP_CLI::warning( $e->getMessage() );
 			}
 		}
+
+		$progress->finish();
 
 		WP_CLI::log( 'Finished' );
 

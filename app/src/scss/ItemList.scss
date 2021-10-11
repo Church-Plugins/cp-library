@@ -2,7 +2,7 @@
 	font-size: inherit;
 }
 
-#cpl-item_list {
+#cpl_item_list {
    background-color: #0B0B0B;
    color: #FFFFFF;
 }
@@ -19,7 +19,7 @@
 		align-items: right;
 		display: flex;
 		justify-content: flex-end;
-		
+
 
 		&--video {
 			color: white;
@@ -44,5 +44,5 @@
 
 .cpl-item-list--item--title {
 	font-weight: bold;
- 
+
 }

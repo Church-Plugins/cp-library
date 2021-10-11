@@ -75,7 +75,7 @@ class Shortcode
 	public function render_root( $args ) {
 
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '-root"></div>';
+		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_root"></div>';
 
 		return $output;
 	}
@@ -83,7 +83,7 @@ class Shortcode
 	public function render_item_list( $args ) {
 
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '-item_list"></div>';
+		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_item_list"></div>';
 
 		return $output;
 	}
@@ -91,7 +91,7 @@ class Shortcode
 	public function render_item( $args ) {
 
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '-item"></div>';
+		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_item"></div>';
 
 		return $output;
 
@@ -100,7 +100,7 @@ class Shortcode
 	public function render_source_list( $args ) {
 
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '-source_list"></div>';
+		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_source_list"></div>';
 
 		return $output;
 
@@ -109,7 +109,7 @@ class Shortcode
 	public function render_source( $args ) {
 
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '-source"></div>';
+		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_source"></div>';
 
 		return $output;
 
@@ -118,7 +118,7 @@ class Shortcode
 	public function render_player( $args ) {
 
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '-player"></div>';
+		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_player"></div>';
 
 		return $output;
 	}
