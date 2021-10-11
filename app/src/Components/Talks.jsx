@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import { ChevronLeft } from 'react-feather';
 
 import ItemList from "./ItemList";
 import Filter from "./Filter";
+import RoundButton from "./RoundButton";
 
 import useBreakpoints from '../Hooks/useBreakpoints';
 import debounce from '@mui/utils/debounce';
@@ -61,9 +61,9 @@ export default function Talks() {
       >
         <Box className="talks__header" marginY={2}>
           {!isDesktop && activeFilters.length > 0 ? (
-            <Button variant="contained" startIcon={<ChevronLeft />} onClick={() => clearFilters()}>
+            <RoundButton variant="contained" leftIcon={<ChevronLeft />} onClick={() => clearFilters()}>
               Back
-            </Button>
+            </RoundButton>
           ) : (
             <h1 className="talks__title">Talks</h1>
           )}
