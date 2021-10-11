@@ -11,6 +11,8 @@ import FilterDrawer from './FilterDrawer';
 import useBreakpoints from '../Hooks/useBreakpoints';
 import { noop } from '../utils/noop';
 
+import FilterAccordionFormat from './FilterAccordionFormat';
+
 export default function Filter ({
   activeFilters = [],
   onRemoveFilter = noop,
@@ -31,6 +33,9 @@ export default function Filter ({
               >
                 Filter
               </Button>
+            </Box>
+			<Box className="filter__accordion filter__format" flex={0}>
+            	<FilterAccordionFormat />
             </Box>
             <Box className="filter__search" flex={0}>
               <InputBase placeholder="Search" sx={{ width: 250 }} startAdornment={<Search />} onChange={onSearchInputChange} />
