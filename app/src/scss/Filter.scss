@@ -3,4 +3,10 @@
 	color: white;
 	text-decoration: none;
 
+	.MuiAccordion-root,
+	.MuiAccordionSummary-expandIconWrapper {
+		background-color: transparent;
+		color: white;
+	}
+
 }

@@ -11,6 +11,9 @@ import './css/SourceList.css';
 import './css/ItemList.css';
 import './css/Filter.css';
 
+import Talks from "./Components/Talks";
+import ItemDetail from "./Components/ItemDetail";
+
 // TODO: combine and minify generated CSS
 
 // In dev mode, we get an error because we require template files in these components. It seems like
@@ -35,11 +38,9 @@ const item = document.getElementById( 'cpl_item' );
 // }
 
 if (root) {
-	import Talks from "./Components/Talks"
 	ReactDOM.render( <Talks />, root );
 }
 if( item ) {
-	import ItemDetail from "./Components/ItemDetail"
 	ReactDOM.render( <ItemDetail />, root );
 }
 // if( itemList ) {
