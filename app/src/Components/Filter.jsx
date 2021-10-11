@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Chip from '@mui/material/Chip';
-import Divider from '@mui/material/Divider';
 
-import FilterDrawer from './FilterDrawer';
 import SearchInput from './SearchInput';
 import useBreakpoints from '../Hooks/useBreakpoints';
 import { noop } from '../utils/noop';
 
 import FilterAccordionFormat from './FilterAccordionFormat';
+import FilterAccordionPopular from './FilterAccordionPopular';
 
 export default function Filter ({
   activeFilters = [],
@@ -25,15 +23,15 @@ export default function Filter ({
         {isDesktop ? (
           <>
             <Box className="filter__button" flex={0}>
-              <Button
-                variant="contained"
-                onClick={() => setFilterDrawerIsOpen(!filterDrawerIsOpen)}
-              >
+              <Button variant="contained">
                 Filter
               </Button>
             </Box>
 			<Box className="filter__accordion filter__format" flex={0}>
             	<FilterAccordionFormat />
+            </Box>
+			<Box className="filter__accordion filter__popular" flex={0}>
+            	<FilterAccordionPopular />
             </Box>
             <Box className="filter__search" flex={0}>
               <SearchInput onValueChange={onSearchInputChange} />
@@ -45,10 +43,7 @@ export default function Filter ({
               <SearchInput width="full" onValueChange={onSearchInputChange} />
             </Box>
             <Box className="filter__button" flex={0} marginLeft={2}>
-              <Button
-                variant="contained"
-                onClick={() => setFilterDrawerIsOpen(!filterDrawerIsOpen)}
-              >
+              <Button variant="contained">
                 Filter
               </Button>
             </Box>
@@ -56,33 +51,6 @@ export default function Filter ({
         )}
       </Box>
 
-      {isDesktop ? <Divider className="filter__divider" sx={{ marginY: 3 }} /> : null}
-
-      <Box
-        component="ul"
-        className="filter__activeFilterList"
-        display="flex"
-        flexWrap="wrap"
-        padding={0}
-        marginBottom={0}
-        // Offset for the most-left and most-right chips
-        marginX={-0.5}
-      >
-        {activeFilters.map(filter => (
-          <Chip
-            component="li"
-            className="filter__activeFilter"
-            // TODO: Needs a unique key
-            key={filter}
-            label={filter}
-            variant="outlined"
-            onDelete={() => onRemoveFilter(filter)}
-            sx={{ margin: 0.5 }}
-          />
-        ))}
-      </Box>
-
-      <FilterDrawer open={filterDrawerIsOpen} onClose={() => setFilterDrawerIsOpen(false)} />
     </Box>
   );
 }

@@ -9,7 +9,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import { noop } from "../utils/noop";
 
-export default function FilterAccordionFormat({
+export default function FilterAccordionPopular({
   open = false,
   onClose = noop,
 }) {
@@ -18,15 +18,18 @@ export default function FilterAccordionFormat({
 		<AccordionSummary
 			expandIcon={<ExpandMoreIcon />}
 			aria-controls="panel-format-content"
-			id="panel-format-header"
+			id="panel-popular-header"
 		>
-			<Typography>FORMAT</Typography>
+			<Typography>POPULAR TOPICS</Typography>
 		</AccordionSummary>
 		<AccordionDetails>
 			<FormGroup>
-				<FormControlLabel control={<Checkbox defaultChecked />} label="Audio" />
-				<FormControlLabel control={<Checkbox defaultChecked />} label="Video" />
-				<FormControlLabel control={<Checkbox defaultChecked />} label="All" />
+				<FormControlLabel control={<Checkbox />} label="Worry" />
+				<FormControlLabel control={<Checkbox />} label="Doubt" />
+				<FormControlLabel control={<Checkbox />} label="Fear" />
+				<FormControlLabel control={<Checkbox />} label="Anxiety" />
+				<FormControlLabel control={<Checkbox />} label="Depression" />
+				<FormControlLabel control={<Checkbox />} label="Encouragement" />
 			</FormGroup>
 		</AccordionDetails>
 	</Accordion>

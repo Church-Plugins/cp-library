@@ -7,6 +7,59 @@
 	.MuiAccordionSummary-expandIconWrapper {
 		background-color: transparent;
 		color: white;
+
+		&.Mui-expanded {
+			color: black;
+		}
+
+		.MuiAccordionSummary-root {
+			max-width: 80%;
+			border-top-left-radius: 5px;
+			border-top-right-radius: 5px;
+			height: 42px;
+			border: 1px solid transparent;
+
+			&.Mui-expanded {
+				background-color: #E5E5E5;
+				border: 1px solid #F0F0F0;
+				min-height: 42px;
+			}
+		}
 	}
 
-}
+	.MuiCollapse-entered {
+		color: black;
+
+		> .MuiCollapse-vertical {
+			background-color: white;
+			width: 210px;
+			border-bottom-left-radius: 5px;
+			border-bottom-right-radius: 5px;
+			border-top-right-radius: 5px;
+		}
+
+	} // .MuiCollapse-entered
+
+	.filter__popular {
+
+		.MuiAccordion-root,
+		.MuiAccordionSummary-expandIconWrapper {
+
+			.MuiAccordionSummary-root {
+				max-width: 100%;
+				white-space: nowrap;
+			}
+
+		}
+
+		.MuiCollapse-entered {
+
+			> .MuiCollapse-vertical {
+				width: calc( 100% + 84px );
+			}
+
+		}
+
+	}
+
+} // .filter__root
