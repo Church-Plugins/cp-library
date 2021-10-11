@@ -133,6 +133,8 @@ class Items extends WP_REST_Controller {
 			$args['paged'] = absint( $page );
 		}
 
+		$args = apply_filters( 'cpl_api_get_items_args', $args, $request );
+
 		$posts = new \WP_Query( $args );
 
 		$return_value = [
