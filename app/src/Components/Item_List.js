@@ -44,7 +44,7 @@ class Components_Item_List extends Component {
 				(restResponse) => {
 					// Set the Component state member
 					this.setState(
-						{itemList: restResponse}
+						{itemList: restResponse.items}
 					);
 				}
 			)

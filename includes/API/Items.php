@@ -123,27 +123,37 @@ class Items extends WP_REST_Controller {
 	 */
 	public function get_items( $request ) {
 
-		$return_value = [];
-
 		$args = [
 			'post_type'      => $this->post_type,
 			'post_status'    => 'publish',
 			'posts_per_page' => 10,
-			'orderby’'       => 'title'
 		];
 
-		$posts = get_posts( $args );
+		if ( $page = $request->get_param( 'page' ) ) {
+			$args['paged'] = absint( $page );
+		}
 
-		if( empty( $posts ) ) {
+		$posts = new \WP_Query( $args );
+
+		$return_value = [
+			'count' => $posts->post_count,
+			'total' => $posts->found_posts,
+			'pages' => $posts->max_num_pages,
+		];
+
+		if( empty( $posts->post_count ) ) {
 			return $return_value;
 		}
 
-		foreach( $posts as $post ) {
+		foreach( $posts->posts as $post ) {
 
 			try {
 				$item = new Item( $post->ID );
 
 				$data = [
+					'id'       => $item->model->id,
+					'postID'   => $item->post->ID,
+					'permalink' => $item->get_permalink(),
 					'thumb'    => $item->get_thumbnail(),
 					'title'    => $item->get_title(),
 					'desc'     => $item->get_content(),
@@ -153,7 +163,7 @@ class Items extends WP_REST_Controller {
 					'audio'    => $item->get_audio(),
 				];
 
-				$return_value[] = $data;
+				$return_value['items'][] = $data;
 			} catch ( Exception $e ) {
 				error_log( $e->getMessage() );
 			}

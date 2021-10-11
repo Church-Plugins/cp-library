@@ -41,6 +41,10 @@ class Item {
 		return $this->filter( get_the_title( $this->post->ID ), __FUNCTION__ );
 	}
 
+	public function get_permalink() {
+		return $this->filter( get_permalink( $this->post->ID ), __FUNCTION__ );
+	}
+
 	public function get_thumbnail() {
 		return $this->filter( get_the_post_thumbnail_url( $this->post->ID ), __FUNCTION__ );
 	}
