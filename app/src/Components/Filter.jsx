@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import Box from '@mui/material/Box';
-import InputBase from '@mui/material/InputBase';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
-import { Search } from 'react-feather';
-
 
 import FilterDrawer from './FilterDrawer';
+import SearchInput from './SearchInput';
 import useBreakpoints from '../Hooks/useBreakpoints';
 import { noop } from '../utils/noop';
 
@@ -33,13 +31,13 @@ export default function Filter ({
               </Button>
             </Box>
             <Box className="filter__search" flex={0}>
-              <InputBase placeholder="Search" sx={{ width: 250 }} startAdornment={<Search />} onChange={onSearchInputChange} />
+              <SearchInput onValueChange={onSearchInputChange} />
             </Box>
           </>
         ) : (
           <>
             <Box className="filter__search" flex={1}>
-              <InputBase placeholder="Search" fullWidth startAdornment={<Search />} />
+              <SearchInput width="full" onValueChange={onSearchInputChange} />
             </Box>
             <Box className="filter__button" flex={0} marginLeft={2}>
               <Button
