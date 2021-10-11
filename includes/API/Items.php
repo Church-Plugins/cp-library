@@ -2,6 +2,8 @@
 
 namespace CP_Library\API;
 
+use CP_Library\Controllers\Item;
+use CP_Library\Exception;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -124,10 +126,10 @@ class Items extends WP_REST_Controller {
 		$return_value = [];
 
 		$args = [
-			'post_type'			=> $this->post_type,
-			'post_status'		=> 'publish',
-			'posts_per_page'	=> -1,
-			'orderby’'			=> 'title'
+			'post_type'      => $this->post_type,
+			'post_status'    => 'publish',
+			'posts_per_page' => 10,
+			'orderby’'       => 'title'
 		];
 
 		$posts = get_posts( $args );
@@ -138,17 +140,24 @@ class Items extends WP_REST_Controller {
 
 		foreach( $posts as $post ) {
 
-			$data = [
-				'thumb'    => get_the_post_thumbnail( $post ),
-				'title'    => $post->post_title,
-				'desc'     => $post->post_content,
-				'date'     => $post->post_modified,
-				'category' => [],
-				'video'    => 'https://vimeo.com/embed-redirect/603403673?embedded=true&source=vimeo_logo&owner=11698061',
-				'audio'    => 'https://ret.sfo2.cdn.digitaloceanspaces.com/wp-content/uploads/2021/09/re20210915.mp3'
-			];
+			try {
+				$item = new Item( $post->ID );
 
-			$return_value[] = $data;
+				$data = [
+					'thumb'    => $item->get_thumbnail(),
+					'title'    => $item->get_title(),
+					'desc'     => $item->get_content(),
+					'date'     => $item->get_publish_date(),
+					'category' => $item->get_categories(),
+					'video'    => $item->get_video(),
+					'audio'    => $item->get_audio(),
+				];
+
+				$return_value[] = $data;
+			} catch ( Exception $e ) {
+				error_log( $e->getMessage() );
+			}
+
 		}
 
 		return $return_value;
