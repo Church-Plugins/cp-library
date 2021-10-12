@@ -11,21 +11,20 @@ import debounce from '@mui/utils/debounce';
 
 export default function Talks() {
   const { isDesktop } = useBreakpoints();
-  // TODO: Dummy content to see the active filter chips. Put real active filters here.
-  const [activeFilters, setActiveFilters] = useState([
-    "Video Talks",
-    "Something Else",
-    "Audio",
-    "Grace",
-    "God",
-    "Worry",
-    "Popular",
-    "Latest",
-    "Audio Only",
-    "Archived",
-    "Short",
-    "Long",
-  ]);
+  const [activeFilters, setActiveFilters] = useState([]);
+
+  const toggleFilter = (label) => {
+    // TODO: This data structure assumes the value is a string.
+    // TODO: This data structure is not performant for large list. Consider an object/map/dict
+    // instead.
+    const index = activeFilters.findIndex(activeFilter => activeFilter === label);
+
+    if (index === -1) {
+      addFilter(label)
+    } else {
+      removeFilter(label)
+    }
+  }
 
   // TODO: Wire-up
   const addFilter = (label) => {
@@ -73,10 +72,11 @@ export default function Talks() {
           activeFilters={activeFilters}
           onRemoveFilter={removeFilter}
           onSearchInputChange={handleSearchInputChange}
+          onFilterChange={toggleFilter}
         />
       </Box>
       <Box className="talks__itemListContainer" paddingY={1} paddingX={1}>
-        <ItemList className="talks__itemList"/>
+        <ItemList activeFilters={activeFilters} className="talks__itemList"/>
       </Box>
     </>
   );

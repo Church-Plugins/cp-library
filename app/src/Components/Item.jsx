@@ -38,7 +38,7 @@ export default function Item({
         <Box className="item__thumb" flex={0} display="flex" alignItems="center">
           <Box sx={{ backgroundColor: "#C4C4C4" }} borderRadius={1} width={isDesktop ? 184 : 57} height={isDesktop ? 111 : 47}>
             {video && (
-              <video width="100%" height="100%" poster={thumb}></video>
+              <video width="100%" height="100%" poster={thumb || undefined}></video>
             )}
           </Box>
         </Box>
