@@ -7,7 +7,9 @@ import LoadingIndicator from "./LoadingIndicator";
 import ErrorDisplay from "./ErrorDisplay";
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 
-function ItemList({}) {
+function ItemList({
+  activeFilters,
+}) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
@@ -17,7 +19,7 @@ function ItemList({}) {
       try {
         setLoading(true);
         const restRequest = new Controllers_WP_REST_Request();
-        const data = await restRequest.get( {endpoint: 'items', params: 'topic=doubt,fear&count=3'} );
+        const data = await restRequest.get( {endpoint: 'items', params: `topic=${activeFilters.join(",")}`} );
         setItems(data.items);
       } catch (error) {
         setError(error);
@@ -25,7 +27,7 @@ function ItemList({}) {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [activeFilters]);
 
   return loading ? (
     <LoadingIndicator />

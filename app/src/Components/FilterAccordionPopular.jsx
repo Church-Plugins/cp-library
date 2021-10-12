@@ -9,10 +9,8 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import { noop } from "../utils/noop";
 
-import Controllers_Filter from "../Controllers/Filter";
-
 export default function FilterAccordionPopular({
-	FilterController = new Controllers_Filter()
+	onFilterChange = noop,
 }) {
   return (
 	<Accordion>
@@ -25,12 +23,12 @@ export default function FilterAccordionPopular({
 		</AccordionSummary>
 		<AccordionDetails>
 			<FormGroup>
-				<FormControlLabel control={<Checkbox value="worry" onChange={FilterController.handleTopicSelection} />} label="Worry" />
-				<FormControlLabel control={<Checkbox value="doubt" onChange={FilterController.handleTopicSelection}/>} label="Doubt" />
-				<FormControlLabel control={<Checkbox value="fear" onChange={FilterController.handleTopicSelection}/>} label="Fear" />
-				<FormControlLabel control={<Checkbox value="anxiety" onChange={FilterController.handleTopicSelection}/>} label="Anxiety" />
-				<FormControlLabel control={<Checkbox value="depression" onChange={FilterController.handleTopicSelection}/>} label="Depression" />
-				<FormControlLabel control={<Checkbox value="encouragement" onChange={FilterController.handleTopicSelection}/>} label="Encouragement" />
+				<FormControlLabel control={<Checkbox value="worry" onChange={() => onFilterChange("worry")} />} label="Worry" />
+				<FormControlLabel control={<Checkbox value="doubt" onChange={() => onFilterChange("doubt")}/>} label="Doubt" />
+				<FormControlLabel control={<Checkbox value="fear" onChange={() => onFilterChange("fear")}/>} label="Fear" />
+				<FormControlLabel control={<Checkbox value="anxiety" onChange={() => onFilterChange("anxiety")}/>} label="Anxiety" />
+				<FormControlLabel control={<Checkbox value="depression" onChange={() => onFilterChange("depression")}/>} label="Depression" />
+				<FormControlLabel control={<Checkbox value="encouragement" onChange={() => onFilterChange("encouragement")}/>} label="Encouragement" />
 			</FormGroup>
 		</AccordionDetails>
 	</Accordion>

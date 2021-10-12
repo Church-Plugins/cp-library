@@ -30,7 +30,7 @@ export default function Item({
       sx={{
         padding: isDesktop ? 2 : 1,
         borderRadius: 2,
-        background: isNew ? 'linear-gradient(180deg, rgba(77, 108, 250, 0.5) 0%, rgba(196, 196, 196, 0) 109.68%)' : 'transparent',
+        background: !isDesktop && isNew ? 'linear-gradient(180deg, rgba(77, 108, 250, 0.5) 0%, rgba(196, 196, 196, 0) 109.68%)' : 'transparent',
         '&:hover': {
           background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(196, 196, 196, 0) 109.68%)'
         }
@@ -40,7 +40,7 @@ export default function Item({
         <Box className="item__thumb" flex={0} display="flex" alignItems="center">
           <Box sx={{ backgroundColor: "#C4C4C4" }} borderRadius={1} width={isDesktop ? 184 : 57} height={isDesktop ? 111 : 47}>
             {video && (
-              <video width="100%" height="100%" poster={thumb}></video>
+              <video width="100%" height="100%" poster={thumb || undefined}></video>
             )}
           </Box>
         </Box>
@@ -58,7 +58,14 @@ export default function Item({
           </Box>
         </Box>
         {!isDesktop && isNew && (
-          <Box className="item__new" flex={0} display="flex" alignItems="center" marginLeft={1}>
+          <Box
+            className="item__new"
+            flex={0}
+            display="flex"
+            alignItems="center"
+            marginLeft={1}
+            sx={{ textTransform: "uppercase" }}
+          >
             New
           </Box>
         )}

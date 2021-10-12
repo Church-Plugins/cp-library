@@ -79,7 +79,7 @@ export default function ItemDetail({
               <SearchInput onValueChange={console.log} />
             </Box>
           </Box>
-          <Divider className="itemDetail__divider" />
+          <Divider className="itemDetail__divider" sx={{ marginY: 2 }} />
         </>
       )}
       <Box display="flex" flexDirection={isDesktop ? "row" : "column"}>
@@ -88,16 +88,19 @@ export default function ItemDetail({
           <h2 className="itemDetail__series">Series Name</h2>
           {isDesktop ? (
             <>
-              <Box className="itemDetail__itemMeta" marginTop={3}>
+              <Box className="itemDetail__itemMeta" marginTop={4}>
                 <ItemMeta date={item.date} category={item.category} />
               </Box>
 
-              <Box className="itemDetail__description" marginTop={3}>
+              <Box className="itemDetail__description" marginTop={4}>
                 <p>{item.desc}</p>
               </Box>
             </>
           ) : (
-            <Divider className="itemDetail__divider" color="#4D6CFA" sx={{ width: 58, height: 6 }} />
+            <Divider
+              className="itemDetail__divider itemDetail__shortDivider"
+              sx={{ width: 58, height: 6, marginY: 2 }}
+            />
           )}
         </Box>
 
@@ -107,7 +110,7 @@ export default function ItemDetail({
             className="itemDetail__featureImage"
             position="relative"
             paddingTop="56.26%"
-            backgroundColor="#C4C4C4"
+            backgroundColor={mode === "audio" ? "#C4C4C4" : "transparent"}
             marginTop={isDesktop ? 0 : 1}
           > 
             {mode === "video" ? (
@@ -134,7 +137,8 @@ export default function ItemDetail({
               >
                 <img
                   alt="Richard Ellis Talks logo"
-                  src="http://churchplugin.local/wp-content/themes/rer/library/images/re-icon.svg"
+                  // TODO: Parameterize this URL
+                  src="http://re.local/wp-content/themes/rer/library/images/re-icon.svg"
                 />
               </Box>
             )}
@@ -172,8 +176,6 @@ export default function ItemDetail({
               className="itemDetail__share"
               flex={0}
               marginLeft={1}
-              display="flex"
-              alignItems="stretch"
             >
               <RectangularButton variant="outlined">
                 <Share2 />
