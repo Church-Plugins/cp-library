@@ -133,6 +133,7 @@ class Items extends WP_REST_Controller {
 		];
 
 		if( !empty( $request->get_param( 'topic' ) ) ) {
+			$topic_string = preg_replace( "/\,$/", "", trim( $request->get_param( 'topic' ) ) );
 			$taxonomies = explode( ",", $request->get_param( 'topic' ) );
 		}
 
