@@ -66,9 +66,10 @@ class Shortcode
 		];
 
 		foreach( $codes as $shortcode => $handler ) {
-
 			add_shortcode( $shortcode, [$view, $handler] );
 		}
+
+		add_action( 'wp_footer', [ $view, 'render_persistent_player' ] );
 	}
 
 

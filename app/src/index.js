@@ -13,6 +13,7 @@ import './css/Filter.css';
 
 import Talks from "./Components/Talks";
 import ItemDetail from "./Components/ItemDetail";
+import ItemList from './Components/ItemList';
 
 // TODO: combine and minify generated CSS
 
@@ -26,7 +27,7 @@ const root = document.getElementById( 'cpl_root' );
 const item = document.getElementById( 'cpl_item' );
 // const source = document.getElementById( 'cpl_source' );
 // const player = document.getElementById( 'cpl_player' );
-// const itemList = document.getElementById( 'cpl_item_list' );
+const itemList = document.getElementById( 'cpl_item_list' );
 // const sourceList = document.getElementById( 'cpl_source_list' );
 
 //
@@ -40,12 +41,12 @@ const item = document.getElementById( 'cpl_item' );
 if (root) {
 	ReactDOM.render( <Talks />, root );
 }
-if( item ) {
-	ReactDOM.render( <ItemDetail />, root );
+//if( root ) {
+//	ReactDOM.render( <ItemDetail />, root );
+//}
+if (itemList) {
+	ReactDOM.render(<ItemList/>, itemList);
 }
-// if( itemList ) {
-// 	ReactDOM.render( <App />, itemList );
-// }
 // if( source ) {
 // 	ReactDOM.render( <App />, source );
 // }

@@ -123,5 +123,9 @@ class Shortcode
 		return $output;
 	}
 
+	public function render_persistent_player() {
+		echo '<div id="' . CP_LIBRARY_UPREFIX . '_persistent_player"></div>';
+	}
+
 
 }

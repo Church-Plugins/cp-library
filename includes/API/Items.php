@@ -136,6 +136,10 @@ class Items extends WP_REST_Controller {
 			$taxonomies = explode( ",", $request->get_param( 'topic' ) );
 		}
 
+		if( !empty( $request->get_param( 'count' ) ) ) {
+			$args['posts_per_page'] = absint( $request->get_param( 'count' ) );
+		}
+
 		if( !empty( $taxonomies ) ) {
 			$args['tax_query'] =
 			[

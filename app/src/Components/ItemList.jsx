@@ -17,7 +17,7 @@ function ItemList({}) {
       try {
         setLoading(true);
         const restRequest = new Controllers_WP_REST_Request();
-        const data = await restRequest.get( {endpoint: 'items', params: 'topic=doubt,fear'} );
+        const data = await restRequest.get( {endpoint: 'items', params: 'topic=doubt,fear&count=3'} );
         setItems(data.items);
       } catch (error) {
         setError(error);

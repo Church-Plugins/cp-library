@@ -3,10 +3,12 @@ import Box from '@mui/material/Box';
 import ListItem from '@mui/material/ListItem';
 import IconButton from '@mui/material/IconButton';
 import { ChevronRight, Play, Volume1 } from "react-feather"
+import ReactDOM from 'react-dom';
 
 import RectangularButton from './RectangularButton';
 import ItemMeta from "./ItemMeta";
 import useBreakpoints from '../Hooks/useBreakpoints';
+import PersistentPlayer from './PersistentPlayer';
 
 export default function Item({
   item: {
@@ -73,17 +75,30 @@ export function ItemActions({
   audio,
   video,
 }) {
+
+	const playVideo = () => {
+		let player = document.getElementById('cpl_persistent_player');
+		ReactDOM.unmountComponentAtNode(player);
+		ReactDOM.render(<PersistentPlayer item={ { video } }/>, player);
+	};
+
+	const playAudio = () => {
+		let player = document.getElementById('cpl_persistent_player');
+		ReactDOM.unmountComponentAtNode(player);
+		ReactDOM.render(<PersistentPlayer item={ { audio } }/>, player);
+	};
+
   if (isDesktop) {
     return (
       <>
-        {video && (
-          <RectangularButton variant="contained" leftIcon={<Play />}>
+        {video.value && (
+          <RectangularButton variant="contained" leftIcon={<Play />} onClick={playVideo}>
             Play Video
           </RectangularButton>
         )}
         {audio && (
           <Box marginLeft={video ? 2 : 0}>
-            <RectangularButton variant="outlined" leftIcon={<Volume1 />}>
+            <RectangularButton variant="outlined" leftIcon={<Volume1 />} onClick={playAudio}>
               Play Audio
             </RectangularButton>
           </Box>
