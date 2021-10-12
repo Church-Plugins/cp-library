@@ -63,7 +63,7 @@ export default function Filter ({
 
       {isDesktop ? <Divider className="filter__divider" sx={{ marginY: 3 }} /> : null}
 
-      {activeFilters.length > 0 && (
+      {activeFilters.topics.length > 0 && (
         <Box
           component="ul"
           className="filter__activeFilterList"
@@ -74,7 +74,7 @@ export default function Filter ({
           // Offset for the most-left and most-right chips
           marginX={-0.5}
         >
-          {activeFilters.map(filter => (
+          {activeFilters.topics.map(filter => (
             <Chip
               component="li"
               className="filter__activeFilter"

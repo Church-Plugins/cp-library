@@ -4,8 +4,11 @@ import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 import async from 'async';
 
 /**
- * Perform REST requests against the WP host
+ * Initial Filter controller
  *
+ * Functionality moved and needs to be refactored
+ *
+ * @deprecated		Remove this once we know it is no longer in use
  */
 class Controllers_Filter extends Component {
 

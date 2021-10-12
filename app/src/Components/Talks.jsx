@@ -11,34 +11,52 @@ import debounce from '@mui/utils/debounce';
 
 export default function Talks() {
   const { isDesktop } = useBreakpoints();
-  const [activeFilters, setActiveFilters] = useState([]);
+  const [activeFilters, setActiveFilters] = useState(
+	  	{
+	  		'topics': [],
+			'formats': []
+		}
+	);
 
   const toggleFilter = (label) => {
     // TODO: This data structure assumes the value is a string.
     // TODO: This data structure is not performant for large list. Consider an object/map/dict
     // instead.
-    const index = activeFilters.findIndex(activeFilter => activeFilter === label);
+    const index = activeFilters.topics.findIndex(activeFilter => activeFilter === label);
 
     if (index === -1) {
-      addFilter(label)
+      addFilter( label )
     } else {
-      removeFilter(label)
+      removeFilter( label )
     }
   }
 
   // TODO: Wire-up
   const addFilter = (label) => {
-    setActiveFilters([...activeFilters, label]);
+
+	setActiveFilters(
+		{
+			'topics': [...activeFilters.topics, label],
+			'formats': [...activeFilters.formats]
+		}
+	);
   }
 
   // TODO: Wire-up
   const removeFilter = (label) => {
-    setActiveFilters(activeFilters.filter(f => f !== label));
+    setActiveFilters(
+		{
+			'topics': activeFilters.topics.filter( f => f !== label ),
+			'formats': [...activeFilters.formats]
+	 	});
   }
 
   // TODO: Wire-up
   const clearFilters = () => {
-    setActiveFilters([]);
+    setActiveFilters({
+		'topics': [],
+		'formats': [...activeFilters.formats]
+  	});
   };
 
   // TODO: Wire-up

@@ -27,22 +27,22 @@ export default function FilterAccordionFormat({
 				<FormControlLabel
 					control={
 						<Checkbox
-							name = "filter__audio"
-							onChange={() => onFilterChange("audio")} />
+							name = "format__audio"
+							onChange={() => onFilterChange("format__audio")} />
 					}
 					label="Audio" />
 				<FormControlLabel
 					control={
 						<Checkbox
-							name = "filter__video"
-							onChange={() => onFilterChange("video")} />
+							name = "format__video"
+							onChange={() => onFilterChange("format__video")} />
 					}
 					label="Video" />
 				<FormControlLabel
 					control={
 						<Checkbox
-							name = "filter__all"
-							onChange={() => onFilterChange("label")} />
+							name = "format__all"
+							onChange={() => onFilterChange("format__video")} />
 					}
 					label="All" />
 			</FormGroup>
