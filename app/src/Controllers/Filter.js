@@ -65,6 +65,7 @@ class Controllers_Filter extends Component {
 	/**
 	 * Event handler for checkbox selection of the "Topic" filter
 	 *
+	 * @deprecated		Remove this once we know it is no longer in use
 	 * @param DOMevent event
 	 * @returns void
 	 */
