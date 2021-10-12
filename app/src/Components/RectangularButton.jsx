@@ -17,7 +17,7 @@ export default function RectangularButton({
       fullWidth={fullWidth}
       onClick={onClick}
       disabled={disabled}
-      sx={{ height: 55 }}
+      sx={{ height: 55, borderRadius: 2 }}
     >
       {children}
     </Button>
