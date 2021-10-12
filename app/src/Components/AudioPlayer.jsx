@@ -26,7 +26,7 @@ export default function AudioPlayer({
           className="audioPlayer__controls"
           paddingX={2}
           paddingY={1}
-          sx={{ pointerEvents: "auto" }}
+          sx={{ backgroundColor: "black", pointerEvents: "auto" }}
         >
           {open ? (
             <CardMedia component="audio" controls src={src} sx={{ width: "100%" }}>
