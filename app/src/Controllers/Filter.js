@@ -75,6 +75,10 @@ class Controllers_Filter extends Component {
 			return
 		}
 
+		// TODO: Load the wait spinner
+		console.log( "REQUEST" );
+		// ItemList.jsx::setLoading( true );
+
 		let topics = [];
 
 		let parent = $( event.target ).parents( '.MuiFormControlLabel-root' )[0];
@@ -91,7 +95,7 @@ class Controllers_Filter extends Component {
 		let topicString = topics.join();
 
 		const restRequest = new Controllers_WP_REST_Request();
-		let data = '';
+		let data = {};
 		if( topicString.length > 0 ) {
 	        data = await restRequest.get( {endpoint: 'items', params: 'topic=' + topicString} );
 		} else {
@@ -99,6 +103,7 @@ class Controllers_Filter extends Component {
 		}
 
 		// TODO: Load the data into our view
+		// ItemList.jsx::setItems( data.items);
 
 		console.log( "RESPONSE" );
 		console.log( data );
