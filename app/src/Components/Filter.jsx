@@ -26,6 +26,7 @@ export default function Filter ({
       <Box display="flex" justifyContent={isDesktop ? "space-between" : "initial"}>
         {isDesktop ? (
           <>
+		  	{/*
             <Box className="filter__button" flex={0} display="flex" alignItems="center">
               <RoundButton
                 variant="contained"
@@ -34,6 +35,7 @@ export default function Filter ({
                 Filter
               </RoundButton>
             </Box>
+			*/}
 			      <Box className="filter__accordion filter__format" flex={0}>
             	<FilterAccordionFormat onFilterChange={onFilterChange} />
             </Box>
@@ -63,7 +65,7 @@ export default function Filter ({
 
       {isDesktop ? <Divider className="filter__divider" sx={{ marginY: 3 }} /> : null}
 
-      {activeFilters.length > 0 && (
+      {activeFilters.topics.length > 0 && (
         <Box
           component="ul"
           className="filter__activeFilterList"
@@ -74,7 +76,7 @@ export default function Filter ({
           // Offset for the most-left and most-right chips
           marginX={-0.5}
         >
-          {activeFilters.map(filter => (
+          {activeFilters.topics.map(filter => (
             <Chip
               component="li"
               className="filter__activeFilter"

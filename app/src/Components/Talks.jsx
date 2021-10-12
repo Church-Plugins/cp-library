@@ -11,34 +11,73 @@ import debounce from '@mui/utils/debounce';
 
 export default function Talks() {
   const { isDesktop } = useBreakpoints();
-  const [activeFilters, setActiveFilters] = useState([]);
+  const [activeFilters, setActiveFilters] = useState(
+	  	{
+	  		'topics': [],
+			'formats': []
+		}
+	);
 
   const toggleFilter = (label) => {
-    // TODO: This data structure assumes the value is a string.
+
+	// TODO: This data structure assumes the value is a string.
     // TODO: This data structure is not performant for large list. Consider an object/map/dict
     // instead.
-    const index = activeFilters.findIndex(activeFilter => activeFilter === label);
 
-    if (index === -1) {
-      addFilter(label)
-    } else {
-      removeFilter(label)
-    }
+	let index = 0;
+	let filterType = '';
+	if( label.startsWith( 'format__' ) ) {
+		index = activeFilters.formats.findIndex(activeFilter => activeFilter === label);
+		filterType = 'format';
+	} else {
+		index = activeFilters.topics.findIndex(activeFilter => activeFilter === label);
+		filterType = 'topic';
+	}
+
+	if (index === -1) {
+		addFilter( label, filterType )
+	} else {
+		removeFilter( label, filterType )
+	}
   }
 
   // TODO: Wire-up
-  const addFilter = (label) => {
-    setActiveFilters([...activeFilters, label]);
+  const addFilter = (label, filterType) => {
+
+	let topicInput 	= ('topic' === filterType) ? [...activeFilters.topics, label] : [...activeFilters.topics];
+	let formatInput	= ('format' === filterType) ? [...activeFilters.formats, label] : [...activeFilters.formats];
+
+	setActiveFilters(
+		{
+			'topics': topicInput,
+			'formats': formatInput
+		}
+	);
   }
 
   // TODO: Wire-up
-  const removeFilter = (label) => {
-    setActiveFilters(activeFilters.filter(f => f !== label));
+  const removeFilter = (label, filterType) => {
+
+	let topicInput 	= ('topic' === filterType) ? activeFilters.topics.filter( f => f !== label ) : [...activeFilters.topics];
+	let formatInput	= ('format' === filterType) ? activeFilters.formats.filter( f => f !== label ) : [...activeFilters.formats];
+
+    setActiveFilters(
+		{
+			'topics': topicInput,
+			'formats': formatInput
+	 	});
   }
 
   // TODO: Wire-up
-  const clearFilters = () => {
-    setActiveFilters([]);
+  const clearFilters = (filterType) => {
+
+	let topicInput 	= ('topic' === filterType) ? [] : [...activeFilters.topics];
+	let formatInput	= ('format' === filterType) ? [] : [...activeFilters.formats];
+
+    setActiveFilters({
+		'topics': topicInput,
+		'formats': formatInput
+  	});
   };
 
   // TODO: Wire-up
