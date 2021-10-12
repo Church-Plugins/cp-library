@@ -1,5 +1,7 @@
 import { Component } from 'react';
 import $ from 'jquery';
+import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
+import async from 'async';
 
 /**
  * Perform REST requests against the WP host
@@ -60,7 +62,13 @@ class Controllers_Filter extends Component {
 		// TODO: Load the data
 	}
 
-	handleTopicSelection( event ) {
+	/**
+	 * Event handler for checkbox selection of the "Topic" filter
+	 *
+	 * @param DOMevent event
+	 * @returns void
+	 */
+	async handleTopicSelection( event ) {
 
 		// Simple sanity check
 		if( !event || !event.target || ! event.target.value ) {
@@ -80,10 +88,20 @@ class Controllers_Filter extends Component {
 			}
 		);
 
-		console.log( "CHECKED ITEMS" );
-		console.log( topics );
+		let topicString = topics.join();
 
-		// TODO: Load the data
+		const restRequest = new Controllers_WP_REST_Request();
+		let data = '';
+		if( topicString.length > 0 ) {
+	        data = await restRequest.get( {endpoint: 'items', params: 'topic=' + topicString} );
+		} else {
+			data = await restRequest.get( {endpoint: 'items'} );
+		}
+
+		// TODO: Load the data into our view
+
+		console.log( "RESPONSE" );
+		console.log( data );
 	}
 
 }
