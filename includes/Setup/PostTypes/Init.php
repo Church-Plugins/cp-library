@@ -61,10 +61,7 @@ class Init {
 	 *
 	 * @return void
 	 */
-	protected function includes() {
-		$this->item = Item::get_instance();
-		$this->source = Source::get_instance();
-	}
+	protected function includes() {}
 
 	public function in_post_types( $type ) {
 		return in_array( $type, $this->get_post_types() );
@@ -109,6 +106,13 @@ class Init {
 		add_action( 'init', function() {
 			register_taxonomy_for_object_type( 'talk_categories', 'cpl_items' );
 		}, 20 );
+
+		add_action( 'init', [ $this, 'register_post_types' ] );
+	}
+
+	public function register_post_types() {
+		$this->item = Item::get_instance();
+		$this->source = Source::get_instance();
 	}
 
 	public function meta_save_override( $return, $data_args, $field_args, $field ) {

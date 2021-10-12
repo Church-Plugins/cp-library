@@ -73,6 +73,7 @@ abstract class PostType {
 	 */
 	protected function __construct() {
 		$this->modal = '\CP_Library\Models\\' . get_class( $this );
+		$this->register_post_type();
 		$this->add_actions();
 	}
 
@@ -114,8 +115,6 @@ abstract class PostType {
 	 */
 	public function add_actions() {
 		add_action( 'cmb2_admin_init', [ $this, 'register_metaboxes' ] );
-		add_action( 'init', [ $this, 'register_post_type' ] );
-
 		return;
 	}
 

@@ -89,5 +89,36 @@ class Item extends Table  {
 		);
 	}
 
+	/**
+	 * Get columns and formats
+	 *
+	 * @since   1.0
+	*/
+	public static function get_type_columns() {
+		return array(
+			'id'        => '%d',
+			'title'     => '%s',
+			'parent_id' => '%d',
+			'published' => '%s',
+			'updated'   => '%s',
+		);
+	}
+
+	/**
+	 * Get default column values
+	 *
+	 * @since   1.0
+	*/
+	public static function get_type_column_defaults() {
+		return array(
+			'id'        => 0,
+			'title'     => '',
+			'parent_id' => 0,
+			'published' => date( 'Y-m-d H:i:s' ),
+			'updated'   => date( 'Y-m-d H:i:s' ),
+		);
+	}
+
+
 
 }

@@ -2,6 +2,8 @@
 
 namespace CP_Library\API;
 
+use CP_Library\Controllers\Item;
+use CP_Library\Exception;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -124,16 +126,15 @@ class Items extends WP_REST_Controller {
 		$return_value = [];
 		$taxonomies = [];
 
-		if( !empty( $_REQUEST ) && is_array( $_REQUEST ) && !empty( $_REQUEST['topic'] ) ) {
-			$taxonomies = explode( ",", $_REQUEST['topic'] );
-		}
-
 		$args = [
-			'post_type'			=> $this->post_type,
-			'post_status'		=> 'publish',
-			'posts_per_page'	=> -1,
-			'orderby’'			=> 'title'
+			'post_type'      => $this->post_type,
+			'post_status'    => 'publish',
+			'posts_per_page' => 10,
 		];
+
+		if( !empty( $request->get_param( 'topic' ) ) ) {
+			$taxonomies = explode( ",", $request->get_param( 'topic' ) );
+		}
 
 		if( !empty( $taxonomies ) ) {
 			$args['tax_query'] =
@@ -146,25 +147,48 @@ class Items extends WP_REST_Controller {
 				];
 		}
 
-		$posts = get_posts( $args );
+		// $posts = get_posts( $args );
+		if ( $page = $request->get_param( 'page' ) ) {
+			$args['paged'] = absint( $page );
+		}
+		$args = apply_filters( 'cpl_api_get_items_args', $args, $request );
 
-		if( empty( $posts ) ) {
+		$posts = new \WP_Query( $args );
+
+		$return_value = [
+			'count' => $posts->post_count,
+			'total' => $posts->found_posts,
+			'pages' => $posts->max_num_pages,
+			'items' => [],
+		];
+
+		if( empty( $posts->post_count ) ) {
 			return $return_value;
 		}
 
-		foreach( $posts as $post ) {
+		foreach( $posts->posts as $post ) {
 
-			$data = [
-				'thumb'    => get_the_post_thumbnail( $post ),
-				'title'    => $post->post_title,
-				'desc'     => $post->post_content,
-				'date'     => $post->post_modified,
-				'category' => [],
-				'video'    => 'https://vimeo.com/embed-redirect/603403673?embedded=true&source=vimeo_logo&owner=11698061',
-				'audio'    => 'https://ret.sfo2.cdn.digitaloceanspaces.com/wp-content/uploads/2021/09/re20210915.mp3'
-			];
+			try {
+				$item = new Item( $post->ID );
 
-			$return_value[] = $data;
+				$data = [
+					'id'       => $item->model->id,
+					'postID'   => $item->post->ID,
+					'permalink' => $item->get_permalink(),
+					'thumb'    => $item->get_thumbnail(),
+					'title'    => $item->get_title(),
+					'desc'     => $item->get_content(),
+					'date'     => $item->get_publish_date(),
+					'category' => $item->get_categories(),
+					'video'    => $item->get_video(),
+					'audio'    => $item->get_audio(),
+				];
+
+				$return_value['items'][] = $data;
+			} catch ( Exception $e ) {
+				error_log( $e->getMessage() );
+			}
+
 		}
 
 		return $return_value;
