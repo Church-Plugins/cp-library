@@ -26,11 +26,18 @@ class Controllers_WP_REST_Request extends Component {
 	/**
 	 * Simple WP REST API endpoint getter
 	 * @param String endpoint			The name of the endpoint
+	 * @param String params				Query parameters
 	 * @returns
 	 */
-	get( {endpoint = null} ) {
+	get( {endpoint = null, params = null} ) {
+		let url = this.urlBase + "/" + this.namespace + "/" + endpoint;
+
+		if( params ) {
+			url = url + "?" + params;
+		}
+
 		return axios
-			.get( this.urlBase + "/" + this.namespace + "/" + endpoint )
+			.get( url )
 			.then(response => response.data)
 			.catch(error => {
 				// Usually consumers want to handle the error themselves. If there's any global error

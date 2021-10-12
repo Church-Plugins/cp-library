@@ -60,5 +60,19 @@ class Controllers_Filter extends Component {
 		// TODO: Load the data
 	}
 
+	handleTopicSelection( event ) {
+
+		console.log( "HANDLING TOPIC SELECTION" );
+
+		// Simple sanity check
+		if( !event || !event.target || !event.target.name ) {
+			return
+		}
+
+		// Gather selected items
+		let parent = $( event.target ).parents( '.MuiFormGroup-root' )[0];
+
+	}
+
 }
 export default Controllers_Filter;
