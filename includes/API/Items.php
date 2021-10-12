@@ -122,6 +122,11 @@ class Items extends WP_REST_Controller {
 	public function get_items( $request ) {
 
 		$return_value = [];
+		$taxonomies = [];
+
+		if( !empty( $_REQUEST ) && is_array( $_REQUEST ) && !empty( $_REQUEST['topic'] ) ) {
+			$taxonomies = explode( ",", $_REQUEST['topic'] );
+		}
 
 		$args = [
 			'post_type'			=> $this->post_type,
@@ -129,6 +134,17 @@ class Items extends WP_REST_Controller {
 			'posts_per_page'	=> -1,
 			'orderby’'			=> 'title'
 		];
+
+		if( !empty( $taxonomies ) ) {
+			$args['tax_query'] =
+			[
+				array (
+					'taxonomy' => 'talk_categories',
+					'field' => 'slug',
+					'terms' => $taxonomies,
+				)
+				];
+		}
 
 		$posts = get_posts( $args );
 
