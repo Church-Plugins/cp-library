@@ -28,7 +28,7 @@ export default function Item({
       sx={{
         padding: isDesktop ? 2 : 1,
         borderRadius: 2,
-        background: isNew ? 'linear-gradient(180deg, rgba(77, 108, 250, 0.5) 0%, rgba(196, 196, 196, 0) 109.68%)' : 'transparent',
+        background: !isDesktop && isNew ? 'linear-gradient(180deg, rgba(77, 108, 250, 0.5) 0%, rgba(196, 196, 196, 0) 109.68%)' : 'transparent',
         '&:hover': {
           background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(196, 196, 196, 0) 109.68%)'
         }
@@ -56,7 +56,14 @@ export default function Item({
           </Box>
         </Box>
         {!isDesktop && isNew && (
-          <Box className="item__new" flex={0} display="flex" alignItems="center" marginLeft={1}>
+          <Box
+            className="item__new"
+            flex={0}
+            display="flex"
+            alignItems="center"
+            marginLeft={1}
+            sx={{ textTransform: "uppercase" }}
+          >
             New
           </Box>
         )}
