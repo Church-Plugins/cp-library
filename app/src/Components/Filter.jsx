@@ -16,6 +16,7 @@ export default function Filter ({
   activeFilters = [],
   onRemoveFilter = noop,
   onSearchInputChange = noop,
+  onFilterChange = noop,
 }) {
   const { isDesktop } = useBreakpoints();
   const [filterDrawerIsOpen, setFilterDrawerIsOpen] = useState(false);
@@ -33,11 +34,11 @@ export default function Filter ({
                 Filter
               </RoundButton>
             </Box>
-            <Box className="filter__accordion filter__format" flex={0}>
-            	<FilterAccordionFormat />
+			      <Box className="filter__accordion filter__format" flex={0}>
+            	<FilterAccordionFormat onFilterChange={onFilterChange} />
             </Box>
 			      <Box className="filter__accordion filter__popular" flex={0}>
-            	<FilterAccordionPopular />
+            	<FilterAccordionPopular onFilterChange={onFilterChange} />
             </Box>
             <Box className="filter__search" flex={0} display="flex" alignItems="center">
               <SearchInput onValueChange={onSearchInputChange} />
@@ -56,7 +57,7 @@ export default function Filter ({
                 Filter
               </RoundButton>
             </Box>
-            </>
+          </>
         )}
       </Box>
 
