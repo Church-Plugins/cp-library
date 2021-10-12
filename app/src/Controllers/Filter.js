@@ -3,12 +3,12 @@ import $ from 'jquery';
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 import async from 'async';
 
+let mutating = false;
+
 /**
- * Initial Filter controller
+ * Handle the UX part of front-end interactions
  *
- * Functionality moved and needs to be refactored
- *
- * @deprecated		Remove this once we know it is no longer in use
+ * TODO: This functionality should not be in Controllers, nor should it be a Component
  */
 class Controllers_Filter extends Component {
 
@@ -29,19 +29,22 @@ class Controllers_Filter extends Component {
 	handleFormatChange( event ) {
 
 		// Simple sanity check
-		if( !event || !event.target || !event.target.name ) {
+		// Also, do not continue if the click event originated from another JS action
+		if( !event || !event.target || !event.target.name || mutating ) {
 			return
 		}
 
 		let parent = $( event.target ).parents( '.MuiFormGroup-root' )[0];
 
-		let audio = $( parent ).find( 'input[name="filter__audio"]' );
-		let video = $( parent ).find( 'input[name="filter__video"]' );
+		let audio = $( parent ).find( 'input[name="format__audio"]' );
+		let video = $( parent ).find( 'input[name="format__video"]' );
+		let all = $( parent ).find( 'input[name="format__all"]' );
 		let audio_target = $( audio ).parents( 'span.MuiCheckbox-root' )[0];
 		let video_target = $( video ).parents( 'span.MuiCheckbox-root' )[0];
+		// let all_target = $( all ).parents( 'span.MuiCheckbox-root' )[0];
 
 		// Set checkbox state
-		if( 'filter__all' === event.target.name ) {
+		if( 'format__all' === event.target.name ) {
 
 			if( event.target.checked ) {
 
@@ -60,9 +63,20 @@ class Controllers_Filter extends Component {
 					$( video_target ).trigger( 'click' );
 				}
 			}
+		} else {
+			mutating = true;
+			if( $( audio ).prop( 'checked' ) && $( video ).prop( 'checked' ) ) {
+				if( !$( all ).prop( 'checked' ) ) {
+					// TODO: See why this isn't working as expected
+					// $( all_target ).trigger( 'click' );
+				}
+			} else {
+				if( $( all ).prop( 'checked' ) ) {
+					// $( all_target ).trigger( 'click' );
+				}
+			}
+			mutating = false;
 		}
-
-		// TODO: Load the data
 	}
 
 	/**

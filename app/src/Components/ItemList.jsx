@@ -19,7 +19,7 @@ function ItemList({
       try {
         setLoading(true);
         const restRequest = new Controllers_WP_REST_Request();
-		let inputParams 	=	'topic=' +
+		let inputParams 	=	't=' +
 								activeFilters.topics.join(",") + '&' +
 								'f=' +
 								activeFilters.formats.join(",");

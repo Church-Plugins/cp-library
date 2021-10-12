@@ -9,9 +9,11 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import { noop } from "../utils/noop";
 
+import Controllers_Filter from '../Controllers/Filter';
 
 export default function FilterAccordionFormat({
   onFilterChange = noop,
+  filterController = new Controllers_Filter()
 }) {
   return (
 	<Accordion>
@@ -28,21 +30,24 @@ export default function FilterAccordionFormat({
 					control={
 						<Checkbox
 							name = "format__audio"
-							onChange={() => onFilterChange("format__audio")} />
+							onChange={() => onFilterChange("format__audio")}
+							onClick={filterController.handleFormatChange} />
 					}
 					label="Audio" />
 				<FormControlLabel
 					control={
 						<Checkbox
 							name = "format__video"
-							onChange={() => onFilterChange("format__video")} />
+							onChange={() => onFilterChange("format__video")}
+							onClick={filterController.handleFormatChange} />
 					}
 					label="Video" />
 				<FormControlLabel
 					control={
 						<Checkbox
 							name = "format__all"
-							onChange={() => onFilterChange("format__video")} />
+							onChange={() => onFilterChange("format__all")}
+							onClick={filterController.handleFormatChange} />
 					}
 					label="All" />
 			</FormGroup>

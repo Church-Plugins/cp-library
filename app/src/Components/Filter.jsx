@@ -26,6 +26,7 @@ export default function Filter ({
       <Box display="flex" justifyContent={isDesktop ? "space-between" : "initial"}>
         {isDesktop ? (
           <>
+		  	{/*
             <Box className="filter__button" flex={0} display="flex" alignItems="center">
               <RoundButton
                 variant="contained"
@@ -34,6 +35,7 @@ export default function Filter ({
                 Filter
               </RoundButton>
             </Box>
+			*/}
 			      <Box className="filter__accordion filter__format" flex={0}>
             	<FilterAccordionFormat onFilterChange={onFilterChange} />
             </Box>
