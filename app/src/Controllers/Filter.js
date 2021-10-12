@@ -75,10 +75,6 @@ class Controllers_Filter extends Component {
 			return
 		}
 
-		// TODO: Load the wait spinner
-		console.log( "REQUEST" );
-		// ItemList.jsx::setLoading( true );
-
 		let topics = [];
 
 		let parent = $( event.target ).parents( '.MuiFormControlLabel-root' )[0];
@@ -101,12 +97,6 @@ class Controllers_Filter extends Component {
 		} else {
 			data = await restRequest.get( {endpoint: 'items'} );
 		}
-
-		// TODO: Load the data into our view
-		// ItemList.jsx::setItems( data.items);
-
-		console.log( "RESPONSE" );
-		console.log( data );
 	}
 
 }
