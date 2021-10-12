@@ -62,16 +62,28 @@ class Controllers_Filter extends Component {
 
 	handleTopicSelection( event ) {
 
-		console.log( "HANDLING TOPIC SELECTION" );
-
 		// Simple sanity check
-		if( !event || !event.target || !event.target.name ) {
+		if( !event || !event.target || ! event.target.value ) {
 			return
 		}
 
-		// Gather selected items
-		let parent = $( event.target ).parents( '.MuiFormGroup-root' )[0];
+		let topics = [];
 
+		let parent = $( event.target ).parents( '.MuiFormControlLabel-root' )[0];
+		let grandParent = $( parent ).parents( '.MuiFormGroup-root' )[0];
+
+		$( grandParent ).find( 'label span input[type="checkbox"]' ).each(
+			(index, element) => {
+				if( $( element ).is( ':checked' ) ) {
+					topics.push( $( element ).val() );
+				}
+			}
+		);
+
+		console.log( "CHECKED ITEMS" );
+		console.log( topics );
+
+		// TODO: Load the data
 	}
 
 }
