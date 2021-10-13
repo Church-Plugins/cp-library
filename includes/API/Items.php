@@ -132,8 +132,8 @@ class Items extends WP_REST_Controller {
 			'posts_per_page' => 10,
 		];
 
-		if( !empty( $request->get_param( 'topic' ) ) ) {
-			$topic_string = preg_replace( "/\,$/", "", trim( $request->get_param( 'topic' ) ) );
+		if( !empty( $request->get_param( 't' ) ) ) {
+			$topic_string = preg_replace( "/\,$/", "", trim( $request->get_param( 't' ) ) );
 			$taxonomies = explode( ",", $topic_string );
 		}
 
