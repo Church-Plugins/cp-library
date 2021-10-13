@@ -11,7 +11,7 @@ import './css/SourceList.css';
 import './css/ItemList.css';
 import './css/Filter.css';
 
-import Talks from "./Components/Talks";
+import App from "./Components/App";
 import ItemDetail from "./Components/ItemDetail";
 import ItemList from './Components/ItemList';
 import ItemWidget from './Components/ItemWidget';
@@ -41,8 +41,9 @@ const itemWidget = document.getElementById( 'cpl_item_widget' );
 // }
 
 if (root) {
-	ReactDOM.render( <Talks />, root );
+	ReactDOM.render(<App />, root );
 }
+<<<<<<< HEAD
 //if( root ) {
 //	ReactDOM.render( <ItemDetail />, root );
 //}
@@ -51,6 +52,11 @@ if (itemList) {
 }
 if (itemWidget) {
 	ReactDOM.render(<ItemWidget/>, itemWidget);
+=======
+
+if( item ) {
+	ReactDOM.render( <ItemDetail />, root );
+>>>>>>> 590c7c3 (Implement routing between item list and item detail)
 }
 // if( source ) {
 // 	ReactDOM.render( <App />, source );

@@ -4,6 +4,7 @@ import ListItem from '@mui/material/ListItem';
 import IconButton from '@mui/material/IconButton';
 import { ChevronRight, Play, Volume1 } from "react-feather"
 import ReactDOM from 'react-dom';
+import { useHistory } from "react-router-dom";
 
 import RectangularButton from './RectangularButton';
 import ItemMeta from "./ItemMeta";
@@ -12,6 +13,7 @@ import PersistentPlayer from './PersistentPlayer';
 
 export default function Item({
   item: {
+    id,
     title,
     desc,
     thumb,
@@ -70,7 +72,7 @@ export default function Item({
           </Box>
         )}
         <Box className="item__actions" display="flex" alignItems="center" marginLeft={1}>
-          <ItemActions isDesktop={isDesktop} video={video} audio={audio} />
+          <ItemActions isDesktop={isDesktop} video={video} audio={audio} id={id} />
         </Box>
       </Box>
     </ListItem>
@@ -79,6 +81,7 @@ export default function Item({
 
 export function ItemActions({
   isDesktop = false,
+  id,
   audio,
   video,
 }) {
@@ -94,6 +97,8 @@ export function ItemActions({
 		ReactDOM.unmountComponentAtNode(player);
 		ReactDOM.render(<PersistentPlayer item={ { audio } }/>, player);
 	};
+
+  const history = useHistory();
 
   if (isDesktop) {
     return (
@@ -115,7 +120,7 @@ export function ItemActions({
   }
 
   return (
-    <IconButton onClick={() => console.log(`go to item`)}>
+    <IconButton onClick={() => history.push(`/talks/${id}`)}>
       <ChevronRight/>
     </IconButton>
   );
