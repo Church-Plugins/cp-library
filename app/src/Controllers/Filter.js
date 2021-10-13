@@ -28,6 +28,8 @@ class Controllers_Filter extends Component {
 	 */
 	handleFormatChange( event ) {
 
+		return;
+
 		// Simple sanity check
 		// Also, do not continue if the click event originated from another JS action
 		if( !event || !event.target || !event.target.name || mutating ) {

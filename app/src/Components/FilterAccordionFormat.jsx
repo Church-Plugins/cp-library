@@ -12,8 +12,10 @@ import { noop } from "../utils/noop";
 import Controllers_Filter from '../Controllers/Filter';
 
 export default function FilterAccordionFormat({
-  onFilterChange = noop
+  onFilterChange = noop,
+  activeFilters = noop
 }) {
+
   return (
 	<Accordion>
 		<AccordionSummary
@@ -30,6 +32,7 @@ export default function FilterAccordionFormat({
 						<Checkbox
 							name = "format__audio"
 							onChange={() => onFilterChange("format__audio")}
+							checked={activeFilters && activeFilters.formats && activeFilters.formats.includes( "format__audio" )}
 							/>
 					}
 					label="Audio" />
@@ -38,6 +41,7 @@ export default function FilterAccordionFormat({
 						<Checkbox
 							name = "format__video"
 							onChange={() => onFilterChange("format__video")}
+							checked={activeFilters && activeFilters.formats && activeFilters.formats.includes( "format__video" )}
 							/>
 					}
 					label="Video" />
