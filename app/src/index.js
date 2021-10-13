@@ -43,7 +43,6 @@ const itemWidget = document.getElementById( 'cpl_item_widget' );
 if (root) {
 	ReactDOM.render(<App />, root );
 }
-<<<<<<< HEAD
 //if( root ) {
 //	ReactDOM.render( <ItemDetail />, root );
 //}
@@ -52,11 +51,9 @@ if (itemList) {
 }
 if (itemWidget) {
 	ReactDOM.render(<ItemWidget/>, itemWidget);
-=======
-
+}
 if( item ) {
 	ReactDOM.render( <ItemDetail />, root );
->>>>>>> 590c7c3 (Implement routing between item list and item detail)
 }
 // if( source ) {
 // 	ReactDOM.render( <App />, source );
