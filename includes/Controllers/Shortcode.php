@@ -58,6 +58,7 @@ class Shortcode
 
 			CP_LIBRARY_UPREFIX . '_item_list'		=> 'render_item_list',
 			CP_LIBRARY_UPREFIX . '_item'			=> 'render_item',
+			CP_LIBRARY_UPREFIX . '_item_widget'		=> 'render_item_widget',
 
 			CP_LIBRARY_UPREFIX . '_source_list'		=> 'render_source_list',
 			CP_LIBRARY_UPREFIX . '_source'			=> 'render_source',

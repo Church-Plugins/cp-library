@@ -14,6 +14,7 @@ import './css/Filter.css';
 import Talks from "./Components/Talks";
 import ItemDetail from "./Components/ItemDetail";
 import ItemList from './Components/ItemList';
+import ItemWidget from './Components/ItemWidget';
 
 // TODO: combine and minify generated CSS
 
@@ -28,6 +29,7 @@ const item = document.getElementById( 'cpl_item' );
 // const source = document.getElementById( 'cpl_source' );
 // const player = document.getElementById( 'cpl_player' );
 const itemList = document.getElementById( 'cpl_item_list' );
+const itemWidget = document.getElementById( 'cpl_item_widget' );
 // const sourceList = document.getElementById( 'cpl_source_list' );
 
 //
@@ -46,6 +48,9 @@ if (root) {
 //}
 if (itemList) {
 	ReactDOM.render(<ItemList/>, itemList);
+}
+if (itemWidget) {
+	ReactDOM.render(<ItemWidget/>, itemWidget);
 }
 // if( source ) {
 // 	ReactDOM.render( <App />, source );
