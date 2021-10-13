@@ -32,18 +32,6 @@ export default function FilterBoxPopular({
 				checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( "fear" )} />
 			<FormControlLabel
 				control={<Checkbox
-				value="anxiety"
-				onChange={() => onFilterChange("anxiety")}/>}
-				label="Anxiety"
-				checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( "anxiety" )} />
-			<FormControlLabel
-				control={<Checkbox
-				value="depression"
-				onChange={() => onFilterChange("depression")}/>}
-				label="Depression"
-				checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( "depression" )} />
-			<FormControlLabel
-				control={<Checkbox
 				value="encouragement"
 				onChange={() => onFilterChange("encouragement")}/>}
 				label="Encouragement"
