@@ -121,6 +121,8 @@ class Init {
 	 */
 	public function app_enqueue() {
 
+		wp_enqueue_script( 'cpl_persistent_player', CP_LIBRARY_PLUGIN_URL . '/assets/js/main.js', ['jquery'] );
+
 		$asset_manifest = json_decode( file_get_contents( CP_LIBRARY_ASSET_MANIFEST ), true );
 
 		// TODO: Calls to `str_replace` need to be less specific
