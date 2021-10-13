@@ -11,6 +11,8 @@ import { noop } from '../utils/noop';
 
 import FilterAccordionFormat from './FilterAccordionFormat';
 import FilterAccordionPopular from './FilterAccordionPopular';
+import FilterBoxFormat from './FilterBoxFormat';
+import FilterBoxPopular from './FilterBoxPopular';
 
 export default function Filter ({
   activeFilters = [],
@@ -20,6 +22,23 @@ export default function Filter ({
 }) {
   const { isDesktop } = useBreakpoints();
   const [filterDrawerIsOpen, setFilterDrawerIsOpen] = useState(false);
+
+  const RenderAccordionFormats = () => {
+	return <FilterAccordionFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />
+  }
+
+  const RenderAccordionPopular = () => {
+	return <FilterAccordionPopular onFilterChange={onFilterChange} activeFilters={activeFilters} />
+  }
+
+  const RenderBoxFormats = () => {
+	return <FilterBoxFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />
+
+  }
+
+  const RenderBoxPopular = () => {
+	return <FilterBoxPopular onFilterChange={onFilterChange} activeFilters={activeFilters} />
+  }
 
   return (
     <Box className="filter__root">
@@ -36,11 +55,11 @@ export default function Filter ({
               </RoundButton>
             </Box>
 			*/}
-			      <Box className="filter__accordion filter__format" flex={0}>
-            	<FilterAccordionFormat onFilterChange={onFilterChange} />
+			<Box className="filter__accordion filter__format" flex={0}>
+				<RenderAccordionFormats />
             </Box>
-			      <Box className="filter__accordion filter__popular" flex={0}>
-            	<FilterAccordionPopular onFilterChange={onFilterChange} />
+			<Box className="filter__accordion filter__popular" flex={0}>
+            	<RenderAccordionPopular />
             </Box>
             <Box className="filter__search" flex={0} display="flex" alignItems="center">
               <SearchInput onValueChange={onSearchInputChange} />
@@ -59,6 +78,13 @@ export default function Filter ({
                 Filter
               </RoundButton>
             </Box>
+			<FilterDrawer
+				open={filterDrawerIsOpen}
+				onClose={() => setFilterDrawerIsOpen(false)}
+				onFilterChange={onFilterChange}
+				FormatFilter={RenderBoxFormats}
+				TopicFilter={RenderBoxPopular}
+				/>
           </>
         )}
       </Box>

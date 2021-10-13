@@ -14,7 +14,8 @@ export default function Talks() {
   const [activeFilters, setActiveFilters] = useState(
 	  	{
 	  		'topics': [],
-			'formats': []
+			'formats': [],
+			'page': 1
 		}
 	);
 
@@ -50,7 +51,8 @@ export default function Talks() {
 	setActiveFilters(
 		{
 			'topics': topicInput,
-			'formats': formatInput
+			'formats': formatInput,
+			'page': 1
 		}
 	);
   }
@@ -64,7 +66,8 @@ export default function Talks() {
     setActiveFilters(
 		{
 			'topics': topicInput,
-			'formats': formatInput
+			'formats': formatInput,
+			'page': 1
 	 	});
   }
 
@@ -76,7 +79,8 @@ export default function Talks() {
 
     setActiveFilters({
 		'topics': topicInput,
-		'formats': formatInput
+		'formats': formatInput,
+		'page': 1
   	});
   };
 
@@ -112,6 +116,7 @@ export default function Talks() {
           onRemoveFilter={removeFilter}
           onSearchInputChange={handleSearchInputChange}
           onFilterChange={toggleFilter}
+		  autoFocus={true}
         />
       </Box>
       <Box className="talks__itemListContainer" paddingY={1} paddingX={1}>

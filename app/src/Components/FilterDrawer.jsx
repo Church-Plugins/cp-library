@@ -1,5 +1,6 @@
 import React from "react";
 import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import Portal from '@mui/material/Portal';
@@ -9,6 +10,9 @@ import { noop } from "../utils/noop";
 export default function FilterDrawer({
   open = false,
   onClose = noop,
+  onFilterChange = noop,
+  FormatFilter = noop,
+  TopicFilter = noop
 }) {
   return (
     <Portal>
@@ -26,8 +30,24 @@ export default function FilterDrawer({
           <Box flex={0} className="filterDrawer__close" display="flex" alignItems="center">
             <IconButton onClick={onClose}><XCircle /></IconButton>
           </Box>
-          {/* TODO: Put filter criteria */}
-        </Box>
+		</Box>
+		{/* TODO: Put filter criteria */}
+		<Box flex={1} className="filterDrawer__format">
+			<Box className="format__title">
+				<Typography>FORMAT</Typography>
+			</Box>
+			<Box className="format__items">
+				<FormatFilter />
+			</Box>
+		</Box>
+		<Box flex={1} className="filterDrawer__topic">
+			<Box className="format__title">
+				<Typography>POPULAR TOPICS</Typography>
+			</Box>
+			<Box className="format__items">
+				<TopicFilter />
+			</Box>
+		</Box>
       </Drawer>
     </Portal>
   );
