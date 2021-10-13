@@ -26,6 +26,8 @@ export default function Item({
 }) {
   const { isDesktop } = useBreakpoints();
 
+  title = title.replace( "&#8217;", "'" );
+
   return (
     <ListItem
       className="item__root"

@@ -31,7 +31,7 @@ export default function FilterAccordionFormat({
 						<Checkbox
 							name = "format__audio"
 							onChange={() => onFilterChange("format__audio")}
-							onClick={filterController.handleFormatChange} />
+							/>
 					}
 					label="Audio" />
 				<FormControlLabel
@@ -39,17 +39,9 @@ export default function FilterAccordionFormat({
 						<Checkbox
 							name = "format__video"
 							onChange={() => onFilterChange("format__video")}
-							onClick={filterController.handleFormatChange} />
+							/>
 					}
 					label="Video" />
-				<FormControlLabel
-					control={
-						<Checkbox
-							name = "format__all"
-							onChange={() => onFilterChange("format__all")}
-							onClick={filterController.handleFormatChange} />
-					}
-					label="All" />
 			</FormGroup>
 		</AccordionDetails>
 	</Accordion>

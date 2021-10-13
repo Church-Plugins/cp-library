@@ -25,6 +25,9 @@ export default function Talks() {
     // TODO: This data structure is not performant for large list. Consider an object/map/dict
     // instead.
 
+	console.log( "TOGGLE FILTER" );
+	console.log( label );
+
 	let index = 0;
 	let filterType = '';
 	if( label.startsWith( 'format__' ) ) {
@@ -45,6 +48,8 @@ export default function Talks() {
   // TODO: Wire-up
   const addFilter = (label, filterType) => {
 
+	console.log( "ADD " + label );
+
 	let topicInput 	= ('topic' === filterType) ? [...activeFilters.topics, label] : [...activeFilters.topics];
 	let formatInput	= ('format' === filterType) ? [...activeFilters.formats, label] : [...activeFilters.formats];
 
@@ -60,6 +65,8 @@ export default function Talks() {
   // TODO: Wire-up
   const removeFilter = (label, filterType) => {
 
+	console.log( "REMOVE " + label );
+
 	let topicInput 	= ('topic' === filterType) ? activeFilters.topics.filter( f => f !== label ) : [...activeFilters.topics];
 	let formatInput	= ('format' === filterType) ? activeFilters.formats.filter( f => f !== label ) : [...activeFilters.formats];
 
@@ -73,6 +80,8 @@ export default function Talks() {
 
   // TODO: Wire-up
   const clearFilters = (filterType) => {
+
+	console.log( "CLEAR " + filterType );
 
 	let topicInput 	= ('topic' === filterType) ? [] : [...activeFilters.topics];
 	let formatInput	= ('format' === filterType) ? [] : [...activeFilters.formats];
@@ -116,6 +125,7 @@ export default function Talks() {
           onRemoveFilter={removeFilter}
           onSearchInputChange={handleSearchInputChange}
           onFilterChange={toggleFilter}
+		  autoFocus={true}
         />
       </Box>
       <Box className="talks__itemListContainer" paddingY={1} paddingX={1}>
