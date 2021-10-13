@@ -153,7 +153,7 @@ class Items extends WP_REST_Controller {
 		}
 
 		// $posts = get_posts( $args );
-		if ( $page = $request->get_param( 'page' ) ) {
+		if( $page = $request->get_param( 'p' ) ) {
 			$args['paged'] = absint( $page );
 		}
 		$args = apply_filters( 'cpl_api_get_items_args', $args, $request );
