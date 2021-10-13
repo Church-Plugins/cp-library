@@ -59,6 +59,7 @@ export default function Filter ({
                 Filter
               </RoundButton>
             </Box>
+			<FilterDrawer open={filterDrawerIsOpen} onClose={() => setFilterDrawerIsOpen(false)} />
           </>
         )}
       </Box>

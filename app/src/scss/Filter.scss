@@ -63,3 +63,12 @@
 	}
 
 } // .filter__root
+
+.filterDrawer__format,
+.filterDrawer__topic {
+	.format__title {
+		p {
+			font-weight: 600;
+		}
+	}
+}

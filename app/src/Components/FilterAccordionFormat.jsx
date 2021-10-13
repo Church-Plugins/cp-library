@@ -12,8 +12,7 @@ import { noop } from "../utils/noop";
 import Controllers_Filter from '../Controllers/Filter';
 
 export default function FilterAccordionFormat({
-  onFilterChange = noop,
-  filterController = new Controllers_Filter()
+  onFilterChange = noop
 }) {
   return (
 	<Accordion>
