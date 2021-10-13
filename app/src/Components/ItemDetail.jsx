@@ -3,7 +3,6 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import { Play, Volume1, Share2 } from "react-feather"
 import * as VideoPlayer from "react-player/vimeo";
-import { Link } from 'react-router-dom';
 
 import useBreakpoints from '../Hooks/useBreakpoints';
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
@@ -15,8 +14,11 @@ import ItemMeta from './ItemMeta';
 import SearchInput from './SearchInput';
 import RectangularButton from './RectangularButton';
 
+const TESTING_ID = 123;
+
 export default function ItemDetail({
-  itemId,
+  // TODO: How to get the id? Can we pass it in to the React component?
+  itemId = TESTING_ID,
 }) {
   const { isDesktop } = useBreakpoints();
   const [item, setItem] = useState();
@@ -26,11 +28,19 @@ export default function ItemDetail({
   const [mode, setMode] = useState();
 
   useEffect(() => {
+    let itemIdToFetch = itemId;
+
+    if (itemIdToFetch === undefined) {
+      // TODO: Parse the URL to get the real item id?
+      const urlSearchParams = new URLSearchParams(window.location.search);
+      itemIdToFetch = urlSearchParams.get("itemId");
+    }
+
     (async () => {
       try {
         setLoading(true);
         const restRequest = new Controllers_WP_REST_Request();
-        const data = await restRequest.get( {endpoint: `items/${itemId}`} );
+        const data = await restRequest.get( {endpoint: `items/${itemIdToFetch}`} );
         setItem(data);
       } catch (error) {
         setError(error);
@@ -58,9 +68,10 @@ export default function ItemDetail({
     // Margin bottom is to account for audio player. Making sure all content is still visible with
     // the player is up.
     <Box className="itemDetail__root" padding={2} marginBottom={mode === "audio" ? 10 : 0}>
-      <Link to="/talks">{"<"} Back to talks</Link>
       {isDesktop && (
         <>
+          {/* TODO: Real href to "Talks" */}
+          <a href="#">{"<"} Back to talks</a>
           <Box display="flex" justifyContent="space-between">
             <h1 className="itemDetail__header">Talks</h1>
             {/* TODO: Think about who's responsible for search, e.g. here or a global search provider */}

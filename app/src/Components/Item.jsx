@@ -3,7 +3,6 @@ import Box from '@mui/material/Box';
 import ListItem from '@mui/material/ListItem';
 import IconButton from '@mui/material/IconButton';
 import { ChevronRight, Play, Volume1 } from "react-feather"
-import { useHistory } from "react-router-dom";
 
 import RectangularButton from './RectangularButton';
 import ItemMeta from "./ItemMeta";
@@ -11,7 +10,6 @@ import useBreakpoints from '../Hooks/useBreakpoints';
 
 export default function Item({
   item: {
-    id,
     title,
     desc,
     thumb,
@@ -70,7 +68,7 @@ export default function Item({
           </Box>
         )}
         <Box className="item__actions" display="flex" alignItems="center" marginLeft={1}>
-          <ItemActions isDesktop={isDesktop} video={video} audio={audio} id={id} />
+          <ItemActions isDesktop={isDesktop} video={video} audio={audio} />
         </Box>
       </Box>
     </ListItem>
@@ -79,12 +77,9 @@ export default function Item({
 
 export function ItemActions({
   isDesktop = false,
-  id,
   audio,
   video,
 }) {
-  const history = useHistory();
-
   if (isDesktop) {
     return (
       <>
@@ -105,7 +100,7 @@ export function ItemActions({
   }
 
   return (
-    <IconButton onClick={() => history.push(`/talks/${id}`)}>
+    <IconButton onClick={() => console.log(`go to item`)}>
       <ChevronRight/>
     </IconButton>
   );

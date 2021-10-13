@@ -11,7 +11,7 @@ import './css/SourceList.css';
 import './css/ItemList.css';
 import './css/Filter.css';
 
-import App from "./Components/App";
+import Talks from "./Components/Talks";
 import ItemDetail from "./Components/ItemDetail";
 
 // TODO: combine and minify generated CSS
@@ -38,9 +38,8 @@ const item = document.getElementById( 'cpl_item' );
 // }
 
 if (root) {
-	ReactDOM.render(<App />, root );
+	ReactDOM.render( <Talks />, root );
 }
-
 if( item ) {
 	ReactDOM.render( <ItemDetail />, root );
 }
