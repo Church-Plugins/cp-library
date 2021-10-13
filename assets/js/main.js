@@ -9,14 +9,13 @@
 			SELF.$iframe = false;
 			SELF.isIframe = (window !== window.parent);
 			SELF.messageAction = 'cpl_iframe_link';
-			SELF.persistentClass = 'persistent-player';
 
 			SELF.$body.on('click', 'a', SELF.handleLinkClick);
 			window.addEventListener("message", SELF.iframeMessage);
 		};
 
 		SELF.isActive = function() {
-			return SELF.$body.hasClass('persistent-player');
+			return SELF.$body.hasClass('cpl-persistent-player');
 		};
 
 		SELF.handleLinkClick = function(e) {

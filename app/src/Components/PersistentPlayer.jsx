@@ -28,7 +28,7 @@ export default function PersistentPlayer( propItem ) {
   useEffect(() => {
     if (!item) return;
 
-    document.body.classList.add('persistent-player');
+    document.body.classList.add('cpl-persistent-player');
 
     if (item.video) {
       setMode("video");
