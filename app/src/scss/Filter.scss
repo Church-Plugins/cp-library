@@ -66,9 +66,16 @@
 
 .filterDrawer__format,
 .filterDrawer__topic {
+
+	margin-left: 64px;
+
 	.format__title {
 		p {
 			font-weight: 600;
 		}
 	}
+}
+
+.filterDrawer__format {
+	max-height: 160px;
 }

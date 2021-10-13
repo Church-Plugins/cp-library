@@ -7,6 +7,10 @@ import Portal from '@mui/material/Portal';
 import { XCircle } from 'react-feather';
 import { noop } from "../utils/noop";
 
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+
 export default function FilterDrawer({
   open = false,
   onClose = noop,
@@ -35,7 +39,22 @@ export default function FilterDrawer({
 				<Typography>FORMAT</Typography>
 			</Box>
 			<Box className="format__items">
-				<Typography>ITEMS</Typography>
+			<FormGroup>
+				<FormControlLabel
+					control={
+						<Checkbox
+							name = "format__audio"
+							/>
+					}
+					label="Audio" />
+				<FormControlLabel
+					control={
+						<Checkbox
+							name = "format__video"
+							/>
+					}
+					label="Video" />
+			</FormGroup>
 				{/* <FilterAccordionFormat onFilterChange={onFilterChange} /> */}
 			</Box>
 		</Box>
@@ -44,7 +63,14 @@ export default function FilterDrawer({
 				<Typography>POPULAR TOPICS</Typography>
 			</Box>
 			<Box className="format__items">
-				<Typography>ITEMS</Typography>
+				<FormGroup>
+					<FormControlLabel control={<Checkbox value="worry" />} label="Worry" />
+					<FormControlLabel control={<Checkbox value="doubt" />} label="Doubt" />
+					<FormControlLabel control={<Checkbox value="fear" />} label="Fear" />
+					<FormControlLabel control={<Checkbox value="anxiety" />} label="Anxiety" />
+					<FormControlLabel control={<Checkbox value="depression" />} label="Depression" />
+					<FormControlLabel control={<Checkbox value="encouragement" />} label="Encouragement" />
+				</FormGroup>
 				{/* <FilterAccordionPopular onFilterChange={onFilterChange} /> */}
 			</Box>
 		</Box>
