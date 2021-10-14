@@ -13,6 +13,7 @@ import LoadingIndicator from './LoadingIndicator';
 import ErrorDisplay from './ErrorDisplay';
 import ItemMeta from './ItemMeta';
 import RoundButton from './RoundButton';
+import formatDuration from '../utils/formatDuration';
 
 export default function PersistentPlayer(props) {
   const { isDesktop } = useBreakpoints();
@@ -69,8 +70,8 @@ export default function PersistentPlayer(props) {
   useEffect(() => {
     if (!item) return;
 
-    if (!window.top.document.body.classList.contains("cpl-persistent-player")) {
-      window.top.document.body.classList.add('cpl-persistent-player');
+    if (!document.body.classList.contains("cpl-persistent-player")) {
+      document.body.classList.add('cpl-persistent-player');
     }
 
     window.top.postMessage({
@@ -91,8 +92,15 @@ export default function PersistentPlayer(props) {
 
 		    <Box className="persistentPlayer__info" flex={1} display="flex" flexDirection="column" marginLeft={2}>
 			    <span>{item.title}</span>
-          <Box display="flex" flexDirection="row">
-            {Math.round(playedSeconds)}
+          <Box display="flex" flexDirection="row" alignItems="center">
+            <Box
+              className="persistentPlayer__progress"
+              width={72}
+              display="flex"
+              justifyContent="flex-start"
+            >
+              {formatDuration(playedSeconds)}
+            </Box>
             <Slider
               min={0}
               defaultValue={0}
@@ -108,8 +116,16 @@ export default function PersistentPlayer(props) {
                 playerInstance.current.seekTo(playedSeconds);
                 setPlayedSeconds(value);
               }}
+              sx={{ marginX: 2 }}
             />
-            {Math.round(duration)}
+            <Box
+              className="persistentPlayer__duration"
+              width={72}
+              display="flex"
+              justifyContent="flex-end"
+            >
+              {formatDuration(duration)}
+            </Box>
           </Box>
 		    </Box>
 
