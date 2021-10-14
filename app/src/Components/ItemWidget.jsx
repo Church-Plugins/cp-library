@@ -43,8 +43,8 @@ export default function ItemWidget ({
 				try {
 					setLoading(true);
 					const restRequest = new Controllers_WP_REST_Request();
-					const data = await restRequest.get({endpoint: `items/${itemIdToFetch}`});
-					setItem(data);
+					const data = await restRequest.get({endpoint: `items/?count=1&media-type=audio`});
+					setItem(data.items[0]);
 				} catch (error) {
 					setError(error);
 				} finally {
@@ -69,13 +69,13 @@ export default function ItemWidget ({
 	const playVideo = () => {
 		let player = document.getElementById('cpl_persistent_player');
 		ReactDOM.unmountComponentAtNode(player);
-		ReactDOM.render(<PersistentPlayer item={{video: item.video}}/>, player);
+		ReactDOM.render(<PersistentPlayer item={item}/>, player);
 	};
 
 	const playAudio = () => {
 		let player = document.getElementById('cpl_persistent_player');
 		ReactDOM.unmountComponentAtNode(player);
-		ReactDOM.render(<PersistentPlayer item={{audio: item.audio}}/>, player);
+		ReactDOM.render(<PersistentPlayer item={item}/>, player);
 	};
 
 	return loading ? (

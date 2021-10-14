@@ -219,8 +219,8 @@ class Items extends WP_REST_Controller {
 				$item = new Item( $post->ID );
 
 				$data = [
-					'id'       => $item->model->id,
-					'postID'   => $item->post->ID,
+					'id'        => $item->post->ID,
+					'cplItemID' => $item->model->id,
 					'permalink' => $item->get_permalink(),
 					'thumb'    => $item->get_thumbnail(),
 					'title'    => htmlspecialchars_decode( $item->get_title(), ENT_QUOTES | ENT_HTML401 ),
@@ -233,6 +233,7 @@ class Items extends WP_REST_Controller {
 
 				$return_value['items'][] = $data;
 			} catch ( Exception $e ) {
+				$return_value['error'] = $e->getMessage();
 				error_log( $e->getMessage() );
 			}
 
@@ -249,15 +250,34 @@ class Items extends WP_REST_Controller {
 	 * @return array|WP_Error Array on success, or WP_Error object on failure.
 	 */
 	public function get_item( $request ) {
-		return [
-			'thumb'    => 'https://i.vimeocdn.com/video/1239653387?mw=1100&mh=618&q=70',
-			'title'    => 'Out of Love',
-			'desc'     => 'A different description for this talk.',
-			'date'     => date( 'r', time() - rand( 100, 23988 ) ),
-			'category' => [ 'cat 1', 'cat 2' ],
-			'video'    => 'https://vimeo.com/embed-redirect/603403673?embedded=true&source=vimeo_logo&owner=11698061',
-			'audio'    => 'https://ret.sfo2.cdn.digitaloceanspaces.com/wp-content/uploads/2021/09/re20210915.mp3',
-		];
+		$item_id = $request->get_param( 'item_id' );
+		try {
+			$item = new Item( $item_id );
+
+			$data = [
+				'id'        => $item->post->ID,
+				'cplItemID' => $item->model->id,
+				'permalink' => $item->get_permalink(),
+				'thumb'     => $item->get_thumbnail(),
+				'title'     => htmlspecialchars_decode( $item->get_title(), ENT_QUOTES | ENT_HTML401 ),
+				'desc'      => $item->get_content(),
+				'date'      => $item->get_publish_date(),
+				'category'  => $item->get_categories(),
+				'video'     => $item->get_video(),
+				'audio'     => $item->get_audio(),
+			];
+
+			$return_value['items'][] = $data;
+		} catch ( Exception $e ) {
+			$data = [
+				'id' => $item_id,
+				'error' => $e->getMessage(),
+			];
+
+			error_log( $e->getMessage() );
+		}
+
+		return $data;
 	}
 
 	/**

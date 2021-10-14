@@ -20,6 +20,7 @@ class Item extends Table  {
 
 	public static function init() {
 		self::$type = 'item';
+		self::$post_type = 'cpl_items';
 
 		parent::init();
 	}

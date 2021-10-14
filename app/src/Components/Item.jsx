@@ -91,13 +91,13 @@ export function ItemActions({
 	const playVideo = () => {
 		let player = document.getElementById('cpl_persistent_player');
 		ReactDOM.unmountComponentAtNode(player);
-		ReactDOM.render(<PersistentPlayer item={ { video } }/>, player);
+		ReactDOM.render(<PersistentPlayer item={ { id, video } }/>, player);
 	};
 
 	const playAudio = () => {
 		let player = document.getElementById('cpl_persistent_player');
 		ReactDOM.unmountComponentAtNode(player);
-		ReactDOM.render(<PersistentPlayer item={ { audio } }/>, player);
+		ReactDOM.render(<PersistentPlayer item={ { id, audio } }/>, player);
 	};
 
   const history = useHistory();
