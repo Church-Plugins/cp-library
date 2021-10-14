@@ -87,47 +87,44 @@ export function ItemWidgetContent ({
 	) : (
 		// Margin bottom is to account for audio player. Making sure all content is still visible with
 		// the player is up.
-    <PersistentPlayerProvider>
-			<Box className="itemWidget__root">
-				<Box className="itemWidget__content">
-					<Box className="itemWidget__itemMeta">
-						<ItemMeta date={item.date} category={[]}/>
-					</Box>
-					<h1 className="itemWidget__title">{item.title}</h1>
-					<Box className="itemWidget__description">
-						<p>{item.desc}</p>
-					</Box>
+		<Box className="itemWidget__root">
+			<Box className="itemWidget__content">
+				<Box className="itemWidget__itemMeta">
+					<ItemMeta date={item.date.date} category={[]}/>
+				</Box>
+				<h1 className="itemWidget__title">{item.title}</h1>
+				<Box className="itemWidget__description">
+					<p>{item.desc}</p>
+				</Box>
 
-					<Box className="itemWidget__actions" display="flex" alignItems="flex-start">
+				<Box className="itemWidget__actions" display="flex" alignItems="flex-start">
 
-						{item.video.value &&
-						 <Box className="itemWidget__playVideo" marginRight={1}>
-							 <RectangularButton
-								 leftIcon={<Play/>}
-								 onClick={playVideo}
-							 >
-								 Play Video
-							 </RectangularButton>
-						 </Box>
-						}
+					{item.video &&
+					 <Box className="itemWidget__playVideo">
+						 <RectangularButton
+							 leftIcon={<Play/>}
+							 onClick={playVideo}
+						 >
+							 Play Video
+						 </RectangularButton>
+					 </Box>
+					}
 
-						{item.audio &&
-						 <Box className="itemWidget__playAudio">
-							 <RectangularButton
-								 variant="outlined"
-								 leftIcon={<Volume1/>}
-								 onClick={playAudio}
-							 >
-								 Play Audio
-							 </RectangularButton>
-						 </Box>
-						}
-
-					</Box>
+					{item.audio &&
+					 <Box className="itemWidget__playAudio" marginLeft={1}>
+						 <RectangularButton
+							 variant="outlined"
+							 leftIcon={<Volume1/>}
+							 onClick={playAudio}
+						 >
+							 Play Audio
+						 </RectangularButton>
+					 </Box>
+					}
 
 				</Box>
 
 			</Box>
-    </PersistentPlayerProvider>
+		</Box>
 	);
 }
