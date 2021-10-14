@@ -162,7 +162,7 @@ export default function ItemDetail({
 
           {isDesktop ? null : (
             <Box className="itemDetail__category" marginTop={1}>
-              <span>CATEGORIES: {item.category.join(", ")}</span>
+              <span>CATEGORIES: {(item.category || []).join(", ")}</span>
             </Box>
           )}
 
