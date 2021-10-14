@@ -64,18 +64,60 @@
 
 } // .filter__root
 
+.MuiDrawer-root {
+	//  > .MuiPaper-root {
+	// 	 padding: 24px;
+	//  }
+
+	 &.filterDrawer__popular {
+
+		.filterDrawer__header {
+
+			background-color: black;
+			color: white;
+
+			.filterDrawer__close {
+				> button {
+					color: white;
+					padding-right: 18px;
+				}
+			}
+
+			.filterDrawer__title {
+				font-size: 1.5rem;
+				margin: 18px;
+				font-weight: normal;
+				padding-left: 36px;
+			}
+
+		}
+
+	 } // &.filterDrawer__popular
+
+
+} // .MuiDrawer-root {
+
 .filterDrawer__format,
 .filterDrawer__topic {
 
 	margin-left: 64px;
+	background-color: white;
+	color: black;
 
 	.format__title {
 		p {
-			font-weight: 600;
+			// font-weight: 600;
+			letter-spacing: 3px;
+    		padding-bottom: 22px;
 		}
 	}
 }
 
 .filterDrawer__format {
 	max-height: 160px;
+	margin-top: 38px;
+}
+
+.filterDrawer__topic {
+	margin-top: 18px;
 }

@@ -17,7 +17,7 @@ export default function FilterDrawer({
   return (
     <Portal>
       <Drawer
-        className="filterDrawer"
+        className="filterDrawer__popular"
         anchor="right"
         open={open}
         onClose={onClose}
@@ -25,8 +25,8 @@ export default function FilterDrawer({
         sx={{ zIndex: 6000 }}
         PaperProps={{ sx: { width: "100%" } }}
       >
-        <Box display="flex">
-          <Box flex={1} className="filterDrawer__title"><h1>Filter</h1></Box>
+        <Box display="flex" className="filterDrawer__header">
+          <Box flex={1} className="filterDrawer__title">FILTER</Box>
           <Box flex={0} className="filterDrawer__close" display="flex" alignItems="center">
             <IconButton onClick={onClose}><XCircle /></IconButton>
           </Box>
