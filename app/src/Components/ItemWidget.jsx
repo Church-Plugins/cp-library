@@ -88,7 +88,7 @@ export default function ItemWidget ({
 		<Box className="itemWidget__root">
 			<Box className="itemWidget__content">
 				<Box className="itemWidget__itemMeta">
-					<ItemMeta date={item.date} category={[]}/>
+					<ItemMeta date={item.date.date} category={[]}/>
 				</Box>
 				<h1 className="itemWidget__title">{item.title}</h1>
 				<Box className="itemWidget__description">
