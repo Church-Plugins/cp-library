@@ -70,8 +70,8 @@ export default function PersistentPlayer(props) {
   useEffect(() => {
     if (!item) return;
 
-    if (!document.body.classList.contains("cpl-persistent-player")) {
-      document.body.classList.add('cpl-persistent-player');
+    if (!window.top.document.body.classList.contains("cpl-persistent-player")) {
+      window.top.document.body.classList.add('cpl-persistent-player');
     }
 
     window.top.postMessage({
