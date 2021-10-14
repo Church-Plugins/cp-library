@@ -105,7 +105,7 @@ export default function ItemDetail({
           {isDesktop ? (
             <>
               <Box className="itemDetail__itemMeta" marginTop={4}>
-                <ItemMeta date={item.date} category={item.category} />
+                <ItemMeta date={item.date.date} category={item.category} />
               </Box>
 
               <Box className="itemDetail__description" marginTop={4}>
