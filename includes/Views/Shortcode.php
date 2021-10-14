@@ -127,7 +127,9 @@ class Shortcode
 		return '<div id="' . CP_LIBRARY_UPREFIX . '_persistent_player"></div>';
 	}
 
-	public function render_item_widget() {
+	public function render_item_widget( $args ) {
+		$output  = self::staticScript( $args );
+		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_player"></div>';
 		return '<div id="' . CP_LIBRARY_UPREFIX . '_item_widget"></div>';
 	}
 
