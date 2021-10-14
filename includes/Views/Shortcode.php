@@ -129,7 +129,7 @@ class Shortcode
 
 	public function render_item_widget( $args ) {
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_player"></div>';
+		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_item_widget"></div>';
 		return $output;
 	}
 
