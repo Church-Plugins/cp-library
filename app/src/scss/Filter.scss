@@ -106,7 +106,10 @@
 
 		.format__less {
 			float: left;
-			margin-left: 36px;
+
+			.less__label {
+				margin-left: 12px;
+			}
 		}
 
 		.filterDrawer__topic_container {

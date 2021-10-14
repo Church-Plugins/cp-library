@@ -36,9 +36,16 @@ export default function FilterDrawerTopic({
 			<Grid container spacing={2}>
 				<Grid item xs={10} className="topic__column_left">
 					<Grid container spacing={2}>
-						<Grid item xs={4}>
-							1
+
+						<Grid item xs={12}>
+							<Box className="format__less">
+								<IconButton onClick={onClose} aria-label="Back">
+									<ArrowBackIcon />
+									<Typography className="less__label">BACK</Typography>
+								</IconButton>
+							</Box>
 						</Grid>
+
 						<Grid item xs={4}>
 							2
 						</Grid>
