@@ -7,6 +7,7 @@ import Portal from '@mui/material/Portal';
 import { XCircle } from 'react-feather';
 import { noop } from "../utils/noop";
 import Grid from '@mui/material/Grid';
+import Link from '@mui/material/Link';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
@@ -18,6 +19,14 @@ export default function FilterDrawerTopic({
   TopicFilter = noop,
   activeFilters = noop
 }) {
+
+const alphabet = [
+	'A', 'B', 'C', 'D', 'E', 'F', 'G',
+	'H', 'I', 'J', 'K', 'L', 'M', 'N',
+	'O', 'P', 'Q', 'R', 'S', 'T', 'U',
+	'V', 'W', 'X', 'Y', 'Z'
+];
+
   return (
     <Portal>
       <Drawer
@@ -123,60 +132,24 @@ export default function FilterDrawerTopic({
 					</Grid>
 				</Grid>
 				<Grid item xs={2} className="topic__column_right">
-					<Box className="toc__alph_select">A</Box>
-					<Box className="toc__alph_select selected">B</Box>
-					<Box className="toc__alph_select">C</Box>
-					<Box className="toc__alph_select">D</Box>
-					<Box className="toc__alph_select">E</Box>
-					<Box className="toc__alph_select">F</Box>
-					<Box className="toc__alph_select">G</Box>
-					<Box className="toc__alph_select">H</Box>
-					<Box className="toc__alph_select">I</Box>
-					<Box className="toc__alph_select">J</Box>
-					<Box className="toc__alph_select">K</Box>
-					<Box className="toc__alph_select">L</Box>
-					<Box className="toc__alph_select">M</Box>
-					<Box className="toc__alph_select">N</Box>
-					<Box className="toc__alph_select">O</Box>
-					<Box className="toc__alph_select">P</Box>
-					<Box className="toc__alph_select">Q</Box>
-					<Box className="toc__alph_select">R</Box>
-					<Box className="toc__alph_select">S</Box>
-					<Box className="toc__alph_select">T</Box>
-					<Box className="toc__alph_select">U</Box>
-					<Box className="toc__alph_select">V</Box>
-					<Box className="toc__alph_select">W</Box>
-					<Box className="toc__alph_select">X</Box>
-					<Box className="toc__alph_select">Y</Box>
-					<Box className="toc__alph_select">Z</Box>
+					{alphabet.map(
+						(letter, index) => {
+							return <Box
+								className={`toc__alph_select select__${letter}`}
+							>
+									<Link
+										className="filterDrawer__alph_link"
+										underline="none"
+										href={`#${letter}`}
+									>
+										{letter}
+									</Link>
+							</Box>
+						}
+					)}
 				</Grid>
 			</Grid>
 		</Box>
-		{/*
-		<Box flex={1} className="filterDrawer__format">
-			<Box className="format__less">
-				<IconButton aria-label="Back">
-					<ArrowBackIcon />
-					<Typography className="less__label">BACK</Typography>
-
-				</IconButton>
-			</Box>
-			<Box className="format__title">
-				<Typography>FOO FORMAT</Typography>
-			</Box>
-			<Box className="format__items">
-				<FormatFilter />
-			</Box>
-		</Box>
-		<Box flex={1} className="filterDrawer__topic">
-			<Box className="format__title">
-				<Typography>POPULAR TOPICS</Typography>
-			</Box>
-			<Box className="format__items">
-				<TopicFilter />
-			</Box>
-		</Box>
-		*/}
       </Drawer>
     </Portal>
   );

@@ -138,6 +138,10 @@
 					border-bottom: 2px solid #CECECE;
 					line-height: 3.5rem;
 
+					> a {
+						color: inherit;
+					}
+
 					&.selected {
 						font-weight: 400;
 					}
