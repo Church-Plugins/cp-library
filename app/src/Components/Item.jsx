@@ -6,27 +6,19 @@ import { ChevronRight, Play, Volume1 } from "react-feather"
 import ReactDOM from 'react-dom';
 import { useHistory } from "react-router-dom";
 
+import useBreakpoints from '../Hooks/useBreakpoints';
+import { usePersistentPlayer } from '../Contexts/PersistentPlayerContext';
 import RectangularButton from './RectangularButton';
 import ItemMeta from "./ItemMeta";
-import useBreakpoints from '../Hooks/useBreakpoints';
 import PersistentPlayer from './PersistentPlayer';
 
 export default function Item({
-  item: {
-    id,
-    title,
-    desc,
-    thumb,
-    date,
-    video,
-    audio,
-    category = [],
-  },
+  item,
   isNew,
 }) {
   const { isDesktop } = useBreakpoints();
 
-  title = title.replace( "&#8217;", "'" );
+  const displayTitle = item.title.replace( "&#8217;", "'" );
 
   return (
     <ListItem
@@ -43,8 +35,8 @@ export default function Item({
       <Box className="item__content" display="flex" flexDirection="row" width="100%">
         <Box className="item__thumb" flex={0} display="flex" alignItems="center">
           <Box sx={{ backgroundColor: "#C4C4C4" }} borderRadius={1} width={isDesktop ? 184 : 57} height={isDesktop ? 111 : 47}>
-            {video && (
-              <video width="100%" height="100%" poster={thumb || undefined}></video>
+            {item.video && (
+              <video width="100%" height="100%" poster={item.thumb || undefined}></video>
             )}
           </Box>
         </Box>
@@ -56,9 +48,9 @@ export default function Item({
           marginLeft={2}
           justifyContent={isDesktop ? "space-between" : "center"}
         >
-          <span className="item__title">{title}</span>
+          <span className="item__title">{displayTitle}</span>
           <Box marginTop={1} className="item__itemMeta">
-            <ItemMeta date={date} category={category} />
+            <ItemMeta date={item.date} category={item.category || []} />
           </Box>
         </Box>
         {!isDesktop && isNew && (
@@ -74,7 +66,7 @@ export default function Item({
           </Box>
         )}
         <Box className="item__actions" display="flex" alignItems="center" marginLeft={1}>
-          <ItemActions isDesktop={isDesktop} video={video} audio={audio} id={id} />
+          <ItemActions isDesktop={isDesktop} item={item} />
         </Box>
       </Box>
     </ListItem>
@@ -83,21 +75,24 @@ export default function Item({
 
 export function ItemActions({
   isDesktop = false,
-  id,
-  audio,
-  video,
+  item,
 }) {
+  const { passToPersistentPlayer } = usePersistentPlayer();
 
-	const playVideo = () => {
+  const playVideo = () => {
 		let player = document.getElementById('cpl_persistent_player');
+    console.log("player", player);
 		ReactDOM.unmountComponentAtNode(player);
-		ReactDOM.render(<PersistentPlayer item={ { id, video } }/>, player);
+		ReactDOM.render(<PersistentPlayer item={item}/>, player);
 	};
 
 	const playAudio = () => {
-		let player = document.getElementById('cpl_persistent_player');
-		ReactDOM.unmountComponentAtNode(player);
-		ReactDOM.render(<PersistentPlayer item={ { id, audio } }/>, player);
+		passToPersistentPlayer({
+      item,
+      mode: "audio",
+      isPlaying: true,
+      playedSeconds: 0.0,
+    });
 	};
 
   const history = useHistory();
@@ -105,13 +100,13 @@ export function ItemActions({
   if (isDesktop) {
     return (
       <>
-        {video.value && (
+        {item.video.value && (
           <RectangularButton variant="contained" leftIcon={<Play />} onClick={playVideo}>
             Play Video
           </RectangularButton>
         )}
-        {audio && (
-          <Box marginLeft={video ? 2 : 0}>
+        {item.audio && (
+          <Box marginLeft={item.video ? 2 : 0}>
             <RectangularButton variant="outlined" leftIcon={<Volume1 />} onClick={playAudio}>
               Play Audio
             </RectangularButton>
@@ -122,7 +117,7 @@ export function ItemActions({
   }
 
   return (
-    <IconButton onClick={() => history.push(`/talks/${id}`)}>
+    <IconButton onClick={() => history.push(`/talks/${item.id}`)}>
       <ChevronRight/>
     </IconButton>
   );
