@@ -10,7 +10,6 @@ import useBreakpoints from '../Hooks/useBreakpoints';
 import { usePersistentPlayer } from '../Contexts/PersistentPlayerContext';
 import RectangularButton from './RectangularButton';
 import ItemMeta from "./ItemMeta";
-import PersistentPlayer from './PersistentPlayer';
 
 export default function Item({
   item,
@@ -79,11 +78,13 @@ export function ItemActions({
 }) {
   const { passToPersistentPlayer } = usePersistentPlayer();
 
-  const playVideo = () => {
-		let player = document.getElementById('cpl_persistent_player');
-    console.log("player", player);
-		ReactDOM.unmountComponentAtNode(player);
-		ReactDOM.render(<PersistentPlayer item={item}/>, player);
+	const playVideo = () => {
+		passToPersistentPlayer({
+			item,
+			mode         : 'video',
+			isPlaying    : true,
+			playedSeconds: 0.0,
+		});
 	};
 
 	const playAudio = () => {

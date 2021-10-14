@@ -14,20 +14,28 @@ import AudioPlayer from './AudioPlayer';
 import ItemMeta from './ItemMeta';
 import SearchInput from './SearchInput';
 import RectangularButton from './RectangularButton';
-import PersistentPlayer from './PersistentPlayer';
+import { usePersistentPlayer, PersistentPlayerProvider } from '../Contexts/PersistentPlayerContext';
 
 const TESTING_ID = 123;
 
-export default function ItemWidget ({
+export default function ItemWidget() {
+
+  return (
+    <PersistentPlayerProvider>
+      <ItemWidgetContent />
+    </PersistentPlayerProvider>
+  );
+};
+
+export function ItemWidgetContent ({
 	// TODO: How to get the id? Can we pass it in to the React component?
 	itemId = TESTING_ID,
 }) {
+  const { passToPersistentPlayer } = usePersistentPlayer();
 	const {isDesktop} = useBreakpoints();
 	const [item, setItem] = useState();
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState();
-	// Video or audio
-	const [mode, setMode] = useState();
 
 	useEffect(() => {
 		let itemIdToFetch = itemId;
@@ -54,28 +62,22 @@ export default function ItemWidget ({
 		)();
 	}, []);
 
-	useEffect(() => {
-		if (!item) {
-			return;
-		}
-
-		if (item.video) {
-			setMode('video');
-		} else if (item.audio) {
-			setMode('audio');
-		}
-	}, [item]);
-
 	const playVideo = () => {
-		let player = document.getElementById('cpl_persistent_player');
-		ReactDOM.unmountComponentAtNode(player);
-		ReactDOM.render(<PersistentPlayer item={item}/>, player);
+		passToPersistentPlayer({
+			item,
+			mode         : 'video',
+			isPlaying    : true,
+			playedSeconds: 0.0,
+		});
 	};
 
 	const playAudio = () => {
-		let player = document.getElementById('cpl_persistent_player');
-		ReactDOM.unmountComponentAtNode(player);
-		ReactDOM.render(<PersistentPlayer item={item}/>, player);
+		passToPersistentPlayer({
+      item,
+      mode: "audio",
+      isPlaying: true,
+      playedSeconds: 0.0,
+    });
 	};
 
 	return loading ? (
@@ -85,46 +87,47 @@ export default function ItemWidget ({
 	) : (
 		// Margin bottom is to account for audio player. Making sure all content is still visible with
 		// the player is up.
-		<Box className="itemWidget__root">
-			<Box className="itemWidget__content">
-				<Box className="itemWidget__itemMeta">
-					<ItemMeta date={item.date} category={[]}/>
-				</Box>
-				<h1 className="itemWidget__title">{item.title}</h1>
-				<Box className="itemWidget__description">
-					<p>{item.desc}</p>
-				</Box>
+    <PersistentPlayerProvider>
+			<Box className="itemWidget__root">
+				<Box className="itemWidget__content">
+					<Box className="itemWidget__itemMeta">
+						<ItemMeta date={item.date} category={[]}/>
+					</Box>
+					<h1 className="itemWidget__title">{item.title}</h1>
+					<Box className="itemWidget__description">
+						<p>{item.desc}</p>
+					</Box>
 
-				<Box className="itemWidget__actions" display="flex" alignItems="flex-start">
+					<Box className="itemWidget__actions" display="flex" alignItems="flex-start">
 
-					{item.video &&
-					 <Box className="itemWidget__playVideo">
-						 <RectangularButton
-							 leftIcon={<Play/>}
-							 onClick={playVideo}
-						 >
-							 Play Video
-						 </RectangularButton>
-					 </Box>
-					}
+						{item.video.value &&
+						 <Box className="itemWidget__playVideo" marginRight={1}>
+							 <RectangularButton
+								 leftIcon={<Play/>}
+								 onClick={playVideo}
+							 >
+								 Play Video
+							 </RectangularButton>
+						 </Box>
+						}
 
-					{item.audio &&
-					 <Box className="itemWidget__playAudio" marginLeft={1}>
-						 <RectangularButton
-							 variant="outlined"
-							 leftIcon={<Volume1/>}
-							 onClick={playAudio}
-						 >
-							 Play Audio
-						 </RectangularButton>
-					 </Box>
-					}
+						{item.audio &&
+						 <Box className="itemWidget__playAudio">
+							 <RectangularButton
+								 variant="outlined"
+								 leftIcon={<Volume1/>}
+								 onClick={playAudio}
+							 >
+								 Play Audio
+							 </RectangularButton>
+						 </Box>
+						}
+
+					</Box>
 
 				</Box>
 
 			</Box>
-
-			<AudioPlayer open={mode === 'audio'} src={item.audio}/>
-		</Box>
+    </PersistentPlayerProvider>
 	);
 }
