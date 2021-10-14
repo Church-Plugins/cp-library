@@ -84,6 +84,7 @@ export default function Filter ({
 				onFilterChange={onFilterChange}
 				FormatFilter={RenderBoxFormats}
 				TopicFilter={RenderBoxPopular}
+				activeFilters={activeFilters}
 				/>
           </>
         )}

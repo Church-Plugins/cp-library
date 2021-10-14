@@ -23,6 +23,7 @@ class Controllers_Filter extends Component {
 	/**
 	 * Event handler for checkbox selection of the "Format" filter
 	 *
+	 * @deprecated
 	 * @param DOMevent event
 	 * @returns void
 	 */

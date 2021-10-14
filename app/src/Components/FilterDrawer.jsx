@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Drawer from '@mui/material/Drawer';
@@ -7,13 +7,32 @@ import Portal from '@mui/material/Portal';
 import { XCircle } from 'react-feather';
 import { noop } from "../utils/noop";
 
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+
+import FilterDrawerTopic from './FilterDrawerTopic';
+import FilterBoxFormat from './FilterBoxFormat';
+import FilterBoxPopular from './FilterBoxPopular';
+
 export default function FilterDrawer({
   open = false,
   onClose = noop,
   onFilterChange = noop,
   FormatFilter = noop,
-  TopicFilter = noop
+  TopicFilter = noop,
+  activeFilters = noop
 }) {
+
+  const [topicDrawerIsOpen, setTopicDrawerIsOpen] = useState( false );
+
+  const RenderBoxFormats = () => {
+	return <FilterBoxFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />
+
+  }
+
+  const RenderBoxPopular = () => {
+	return <FilterBoxPopular onFilterChange={onFilterChange} activeFilters={activeFilters} />
+  }
+
   return (
     <Portal>
       <Drawer
@@ -47,7 +66,24 @@ export default function FilterDrawer({
 			<Box className="format__items">
 				<TopicFilter />
 			</Box>
+			<Box className="format__more">
+				<IconButton
+					aria-label="View All"
+					onClick={() => setTopicDrawerIsOpen(!topicDrawerIsOpen)} >
+
+						<Typography className="more__label">VIEW ALL</Typography>
+						<ArrowForwardIcon />
+				</IconButton>
+			</Box>
 		</Box>
+		<FilterDrawerTopic
+				open={topicDrawerIsOpen}
+				onClose={() => setTopicDrawerIsOpen(false)}
+				onFilterChange={onFilterChange}
+				FormatFilter={RenderBoxFormats}
+				TopicFilter={RenderBoxPopular}
+				activeFilters={activeFilters}
+				/>
       </Drawer>
     </Portal>
   );

@@ -92,6 +92,55 @@
 
 		}
 
+		.format__more,
+		.format__less
+		 {
+			margin-top: 12px;
+			float: right;
+    		margin-right: 36px;
+
+			.more__label {
+				margin-right: 12px;
+			}
+		}
+
+		.format__less {
+			float: left;
+			margin-left: 36px;
+		}
+
+		.filterDrawer__topic_container {
+
+			>.MuiGrid-container {
+				margin-top: 8px;
+			}
+
+			.MuiGrid-container {
+				margin-left: 0px;
+				width: 100%;
+			}
+
+			.topic__column_right {
+
+				text-align: center;
+				font-size: 1.3rem;
+
+				.toc__alph_select {
+
+					max-width: 40%;
+					margin-left: auto;
+					margin-right: auto;
+					border-bottom: 2px solid #CECECE;
+					line-height: 3.5rem;
+
+					&.selected {
+						font-weight: 400;
+					}
+				}
+
+			}
+		}
+
 	 } // &.filterDrawer__popular
 
 
