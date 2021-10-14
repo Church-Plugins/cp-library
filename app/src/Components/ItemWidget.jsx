@@ -85,17 +85,17 @@ export default function ItemWidget ({
 	) : (
 		// Margin bottom is to account for audio player. Making sure all content is still visible with
 		// the player is up.
-		<Box className="itemWidget__root" padding={2}>
+		<Box className="itemWidget__root">
 			<Box className="itemWidget__content">
-				<Box className="itemWidget__itemMeta" marginTop={4}>
+				<Box className="itemWidget__itemMeta">
 					<ItemMeta date={item.date} category={[]}/>
 				</Box>
 				<h1 className="itemWidget__title">{item.title}</h1>
-				<Box className="itemWidget__description" marginTop={4}>
+				<Box className="itemWidget__description">
 					<p>{item.desc}</p>
 				</Box>
 
-				<Box className="itemWidget__actions" display="flex" alignItems="flex-start" marginTop={2}>
+				<Box className="itemWidget__actions" display="flex" alignItems="flex-start">
 
 					{item.video &&
 					 <Box className="itemWidget__playVideo">
