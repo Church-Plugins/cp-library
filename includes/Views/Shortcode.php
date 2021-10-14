@@ -124,11 +124,11 @@ class Shortcode
 	}
 
 	public function render_persistent_player() {
-		echo '<div id="' . CP_LIBRARY_UPREFIX . '_persistent_player"></div>';
+		return '<div id="' . CP_LIBRARY_UPREFIX . '_persistent_player"></div>';
 	}
 
 	public function render_item_widget() {
-		echo '<div id="' . CP_LIBRARY_UPREFIX . '_item_widget"></div>';
+		return '<div id="' . CP_LIBRARY_UPREFIX . '_item_widget"></div>';
 	}
 
 
