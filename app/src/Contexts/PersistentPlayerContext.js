@@ -14,8 +14,11 @@ const defaultState = {
 
 function reducer(state, action) {
   switch (action.type) {
+    case "PLAYER_ALREADY_ACTIVE": {
+      return { ...state, isActive: true };
+    }
     case "PLAYER_MOUNTED": {
-      return { ...state, item: action.item, isActive: Boolean(action.item) };
+      return { ...state, item: action.item, isActive: state.isActive || Boolean(action.item) };
     }
     case "PLAYER_UNMOUNTED": {
       return { ...state, item: undefined, isActive: false };
@@ -34,6 +37,14 @@ function reducer(state, action) {
 
 function PersistentPlayerProvider({children}) {
   const [state, dispatch] = useReducer(reducer, defaultState);
+
+  useEffect(() => {
+    const alreadyActive = window.top.document.body.classList.contains("cpl-persistent-player");
+
+    if (alreadyActive) {
+      dispatch(({ type: "PLAYER_ALREADY_ACTIVE" }))
+    }
+  }, [])
 
   useEffect(() => {
     function handleMessage(event) {
@@ -56,7 +67,7 @@ function PersistentPlayerProvider({children}) {
   }, [])
 
   const passToPersistentPlayer = useCallback(({ item, mode, isPlaying, playedSeconds }) => {
-    if (state.isActive !== true) {
+    if (!state.isActive) {
       const player = window.top.document.getElementById('cpl_persistent_player');
       ReactDOM.render(<PersistentPlayer />, player);
     }
