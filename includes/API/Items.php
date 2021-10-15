@@ -168,9 +168,18 @@ class Items extends WP_REST_Controller {
 		return $return_value;
 	}
 
+	/**
+	 * Get search results from WP's search REST endpoint
+	 *
+	 * TODO: Figure out how to overrid the 100 post maximum for this endpoint
+	 *
+	 * @param String $find				The string/terms to find
+	 * @return Array
+	 * @author costmo
+	 */
 	public function get_search_results( $find ) {
 
-		$find = rawurlencode( $find );
+		$find = rawurlencode( rawurldecode( $find ) );
 		$return_value = [];
 
 		$address = get_site_url() . '/wp-json/wp/v2/search?search=' . $find . '&subtype=cpl_items&per_page=100&';
