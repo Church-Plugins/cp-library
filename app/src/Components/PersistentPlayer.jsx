@@ -126,7 +126,7 @@ export default function PersistentPlayer(props) {
 			     <Box className="persistentPlayer__video__controls">
 
 				     <Box display="flex" alignItems="center" justifyContent="space-around" height="100%" width="100%" position="absolute" zIndex={50} top={0} right={0} >
-					     <ButtonPlay size="small" flex={0} padding={2} isPlaying={isPlaying}
+					     <ButtonPlay size={48} flex={0} padding={2} isPlaying={isPlaying}
 					                 onClick={() => setIsPlaying(!isPlaying)}/>
 				     </Box>
 
@@ -145,16 +145,16 @@ export default function PersistentPlayer(props) {
 		     </Box>
 	    }
 
-	    <Box className="persistentPlayer__controls" display="flex" flexDirection="row" padding={2}>
+	    <Box className="persistentPlayer__controls" display="flex" flexDirection="row" padding={1}>
 
 		    <Box display="flex" alignItems="center">
-			    <ButtonPlay size="small" flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)} />
+			    <ButtonPlay flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)} />
 		    </Box>
 
 		    <Box className="persistentPlayer__info" flex={1} display="flex" flexDirection="column" marginLeft={2}>
 			    <Box display="flex" flexDirection="row" alignItems="center" fontSize={14} >
 				    <Box marginRight={1} maxWidth={"1.5em"}><Logo /></Box>
-				    <Box>{item.title}</Box>
+				    <Box dangerouslySetInnerHTML = {{ __html: item.title }}></Box>
 			    </Box>
           <Box display="flex" flexDirection="row" alignItems="center">
 

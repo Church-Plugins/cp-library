@@ -46,7 +46,24 @@ class Item {
 	}
 
 	public function get_thumbnail() {
-		return $this->filter( get_the_post_thumbnail_url( $this->post->ID ), __FUNCTION__ );
+		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID ) ) {
+			return $this->filter( $thumb, __FUNCTION__ );
+		}
+
+		$thumb = $this->maybeGetVimeoThumb();
+
+		return $this->filter( $thumb, __FUNCTION__ );
+	}
+
+	protected function maybeGetVimeoThumb() {
+		if ( ! $id = $this->model->get_meta_value( 'video_id_vimeo' ) ) {
+			return false;
+		}
+
+		$data = file_get_contents( "http://vimeo.com/api/v2/video/$id.json" );
+		$data = json_decode( $data );
+
+		return $data[0]->thumbnail_large;
 	}
 
 	public function get_publish_date() {

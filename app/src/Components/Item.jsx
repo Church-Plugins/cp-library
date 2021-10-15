@@ -1,8 +1,9 @@
 import React from 'react';
 import Box from '@mui/material/Box';
+import { PlayArrow, PlayCircleOutline } from "@mui/icons-material"
 import ListItem from '@mui/material/ListItem';
 import IconButton from '@mui/material/IconButton';
-import { ChevronRight, Play, Volume1 } from "react-feather"
+import { ChevronRight, Volume1 } from "react-feather"
 import ReactDOM from 'react-dom';
 import { useHistory } from "react-router-dom";
 
@@ -19,6 +20,7 @@ export default function Item({
   const { isDesktop } = useBreakpoints();
 
   const displayTitle = item.title.replace( "&#8217;", "'" );
+  const displayBg    = item.thumb ? { background: "url(" + item.thumb + ")", backgroundSize: "cover" } : {backgroundColor: "#C4C4C4"};
 
   return (
     <ListItem
@@ -35,7 +37,7 @@ export default function Item({
       <Box className="item__content" display="flex" flexDirection="row" width="100%">
         <Box className="item__thumb" flex={0} display="flex" alignItems="center">
           <Box
-            sx={{ backgroundColor: "#C4C4C4" }}
+            sx={displayBg}
             borderRadius={1}
             width={isDesktop ? 184 : 57}
             height={isDesktop ? 111 : 47}
@@ -43,11 +45,11 @@ export default function Item({
             alignItems="center"
             justifyContent="center"
           >
-            {item.video && item.thumb ? (
-              <video width="100%" height="100%" poster={item.thumb}></video>
+            {item.thumb ? (
+            	<PlayCircleOutline sx={{fontSize: 40}} />
             ) : (
               <Logo height="50%"/>
-            )}
+	            )}
           </Box>
         </Box>
         <Box
@@ -113,7 +115,7 @@ export function ItemActions({
     return (
       <>
         {item.video.value && (
-          <RectangularButton variant="contained" leftIcon={<Play />} onClick={playVideo}>
+          <RectangularButton variant="contained" leftIcon={<PlayArrow />} onClick={playVideo}>
             Play Video
           </RectangularButton>
         )}
