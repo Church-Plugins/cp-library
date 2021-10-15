@@ -79,18 +79,13 @@ class Item {
 
 		if ( ! $url ) {
 			if ( $id = $this->model->get_meta_value( 'video_id_vimeo' ) ) {
-				$return['value'] = '<iframe src="https://player.vimeo.com/video/' . $id . '" width="500" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>';
+				$return['type']  = 'vimeo';
+				$return['id']    = $id;
+				$return['value'] = 'https://vimeo.com/' . $id;
 			} else if ( $id = $this->model->get_meta_value( 'video_id_facebook' ) )  {
-				$return['value'] =
-					'<div id="fb-root"></div>
-        			<script async defer src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v3.2"></script>
-
-			        <div class="fb-video"
-			             data-href="https://www.facebook.com' . $id . '"
-			             data-width="500"
-			             data-show-text="true"
-			             data-lazy="true">
-			        </div>';
+				$return['type']  = 'facebook';
+				$return['id']    = $id;
+				$return['value'] = 'https://www.facebook.com' . $id;
 			}
 		}
 
