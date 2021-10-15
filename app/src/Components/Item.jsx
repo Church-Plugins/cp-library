@@ -62,7 +62,7 @@ export default function Item({
         >
           <span className="item__title">{displayTitle}</span>
           <Box marginTop={1} className="item__itemMeta">
-            <ItemMeta date={item.date.date} category={item.category || []} />
+            <ItemMeta date={item.date.date} category={Object.values(item.category) || []} />
           </Box>
         </Box>
         {!isDesktop && isNew && (

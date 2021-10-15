@@ -129,7 +129,7 @@ export default function ItemDetail({
             paddingTop="56.26%"
             backgroundColor={mode === "audio" ? "#C4C4C4" : "transparent"}
             marginTop={isDesktop ? 0 : 1}
-          > 
+          >
             {mode === "video" ? (
               <VideoPlayer
                 className="itemDetail__video"
@@ -159,7 +159,7 @@ export default function ItemDetail({
 
           {isDesktop ? null : (
             <Box className="itemDetail__category" marginTop={1}>
-              <span>CATEGORIES: {(item.category || []).join(", ")}</span>
+              <span>CATEGORIES: {Object.values(item.category).join(", ")}</span>
             </Box>
           )}
 
@@ -207,7 +207,7 @@ export default function ItemDetail({
             </Box>
           </Box>
         </Box>
-      </Box>  
+      </Box>
 
       {isDesktop ? null : (
         <Box className="itemDetail__description" marginTop={2}>
