@@ -84,6 +84,14 @@ class Items extends WP_REST_Controller {
 			// 'schema' => array( $this, 'get_public_item_schema' ),
 		) );
 
+		register_rest_route( $this->namespace, $this->rest_base . '/dictionary', array(
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_topic_dictionary' ),
+				'permission_callback' => array( $this, 'get_permissions_check' ),
+			),
+		) );
+
 //        register_rest_route( $this->namespace, $this->rest_base . '/edit', array(
 //            array(
 //                'methods'             => WP_REST_Server::CREATABLE,
@@ -113,6 +121,51 @@ class Items extends WP_REST_Controller {
 	 */
 	public function create_permissions_check( $request ) {
 		return is_user_logged_in();
+	}
+
+	/**
+	 * Get an associative array of item topics (terms) by first letter
+	 *
+	 * @return Array
+	 * @author costmo
+	 */
+	public function get_topic_dictionary() {
+
+		$return_value = [
+			'count'		=> 0,
+			'items'		=> []
+		];
+
+		$args = [
+			'orderby'		=> 'name',
+			'orderby'		=> 'asc',
+			'hide_empty'	=> true
+		];
+		$terms = get_terms( [ 'talk_categories' ], $args );
+		if( !empty( $terms ) && is_array( $terms ) ) {
+
+			$return_value['count'] = count( $terms );
+
+			foreach( $terms as $term ) {
+				if( !empty( $term ) || is_object( $term ) && !empty( $term->term_id ) ) {
+
+					$first_leter = substr( strtolower( trim( $term->name ) ), 0, 1 );
+
+					if( !array_key_exists( $first_leter, $return_value['items'] ) ) {
+						$return_value['items'][ $first_leter ] = [];
+					}
+					// Return as a normalized array
+					$return_value['items'][ $first_leter ][] = [
+						'id' 		=> $term->term_id,
+						'name' 		=> $term->name,
+						'slug' 		=> $term->slug,
+						'count' 	=> $term->count
+					];
+				}
+			}
+		}
+
+		return $return_value;
 	}
 
 	/**
