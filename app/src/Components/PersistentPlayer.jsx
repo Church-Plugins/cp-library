@@ -46,6 +46,7 @@ export default function PersistentPlayer(props) {
 	};
 
   const playerInstance = useRef();
+	const desktopClass   = isDesktop ? ' is_desktop' : '';
 
   useEffect(() => {
     window.top.postMessage({
@@ -100,7 +101,7 @@ export default function PersistentPlayer(props) {
   ) : error ? (
     <ErrorDisplay error={error} />
   ) : item ? (
-    <Box className="persistentPlayer__root">
+    <Box className={"persistentPlayer__root persistentPlayer__mode__" + mode + desktopClass }>
 
 	    {mode === 'video' &&
 		     <Box className="persistentPlayer__video">
@@ -147,11 +148,14 @@ export default function PersistentPlayer(props) {
 
 	    <Box className="persistentPlayer__controls" display="flex" flexDirection="row" padding={1}>
 
-		    <Box display="flex" alignItems="center">
-			    <ButtonPlay flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)} />
-		    </Box>
 
-		    <Box className="persistentPlayer__info" flex={1} display="flex" flexDirection="column" marginLeft={2}>
+		    {isDesktop || 'audio' === mode && (
+			    <Box display="flex" alignItems="center">
+				    <ButtonPlay flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
+			    </Box>
+		    )}
+
+		    <Box className="persistentPlayer__info" flex={1} display="flex" flexDirection="column" marginLeft={1} marginRight={1}>
 			    <Box display="flex" flexDirection="row" alignItems="center" fontSize={14} >
 				    <Box marginRight={1} maxWidth={"1.5em"}><Logo /></Box>
 				    <Box dangerouslySetInnerHTML = {{ __html: item.title }}></Box>
@@ -165,6 +169,7 @@ export default function PersistentPlayer(props) {
               step={.01}
               size="small"
               value={playedSeconds}
+              sx={{padding: "10px 0 !important"}}
               onChange={(_, value) => {
                 setIsPlaying(false);
                 setPlayedSeconds(value)
@@ -193,7 +198,7 @@ export default function PersistentPlayer(props) {
 			    </Box>
 		    </Box>
 
-		    <Box flex={0} display="flex" flexDirection="column" marginLeft={2}>
+		    <Box flex={0} display="flex" flexDirection="column" marginLeft={1}>
 		    </Box>
 
         {mode === "audio" &&

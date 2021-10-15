@@ -23,6 +23,7 @@ export default function ButtonPlay({
       fullWidth={fullWidth}
       onClick={onClick}
       disabled={disabled}
+      sx={{padding: 0}}
     >
       {isPlaying ? <PauseCircle color="primary" sx={{fontSize: size}} /> : <PlayCircle color="primary" sx={{fontSize: size}} />}
     </IconButton>
