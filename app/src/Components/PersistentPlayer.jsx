@@ -68,7 +68,9 @@ export default function PersistentPlayer(props) {
   }, [])
 
   useEffect(() => {
-    if (!item) return;
+    // Since item and mode are different pieces of state that are set separately, we wait until both
+    // are set.
+    if (!item || !mode) return;
 
     if (!window.top.document.body.classList.contains("cpl-persistent-player")) {
       window.top.document.body.classList.add('cpl-persistent-player');
@@ -77,8 +79,9 @@ export default function PersistentPlayer(props) {
     window.top.postMessage({
       action: "CPL_PERSISTENT_RECEIVED_ITEM",
       item,
+      mode,
     });
-  }, [item]);
+  }, [item, mode]);
 
   return loading ? (
     <LoadingIndicator />
@@ -88,7 +91,9 @@ export default function PersistentPlayer(props) {
     <Box className="persistentPlayer__root" padding={2}>
 	    <Box className="persistentPlayer__controls" display="flex" flexDirection="row">
 
-		    <RoundButton flex={0} onClick={() => setIsPlaying(!isPlaying)}>{isPlaying ? <Pause/> : <Play/>}</RoundButton>
+        <RoundButton flex={0} onClick={() => setIsPlaying(!isPlaying)}>
+          {isPlaying ? <Pause/> : <Play/>}
+        </RoundButton>
 
 		    <Box className="persistentPlayer__info" flex={1} display="flex" flexDirection="column" marginLeft={2}>
 			    <span>{item.title}</span>
@@ -153,8 +158,10 @@ export default function PersistentPlayer(props) {
             playing={isPlaying}
             onDuration={duration => {
               setDuration(duration);
-              playerInstance.current.seekTo(playedSeconds, "seconds");
-              setIsPlaying(true);
+              if (playedSeconds > 0) {
+                playerInstance.current.seekTo(playedSeconds, "seconds");
+                setIsPlaying(true);
+              }
             }}
             onProgress={progress => setPlayedSeconds(progress.playedSeconds)}
             progressInterval={100}
