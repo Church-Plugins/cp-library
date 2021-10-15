@@ -77,6 +77,7 @@
 			top: 0;
 			background-color: black;
 			color: white;
+			z-index: 1;
 
 			.filterDrawer__close {
 				> button {
@@ -116,6 +117,18 @@
 
 		.filterDrawer__topic_container {
 
+			.topic__column_right {
+				position: sticky;
+			    align-self: flex-start;
+    			top: -840px;
+			}
+
+			.format__less_container {
+				position: sticky;
+				top: 80px;
+				z-index: 1;
+			}
+
 			>.MuiGrid-container {
 				margin-top: 8px;
 			}
@@ -147,6 +160,19 @@
 					}
 				}
 
+			}
+
+			.topic__letter_header {
+				font-size: 2rem;
+				font-weight: 400;
+				margin-bottom: 16px;
+			}
+
+			.topic__letter_item {
+
+				.topic__letter_item_label {
+					margin-left: 12px;
+				}
 			}
 		}
 

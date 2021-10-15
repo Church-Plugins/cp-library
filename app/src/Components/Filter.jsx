@@ -33,7 +33,6 @@ export default function Filter ({
 
   const RenderBoxFormats = () => {
 	return <FilterBoxFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />
-
   }
 
   const RenderBoxPopular = () => {

@@ -80,10 +80,8 @@ export default function FilterDrawer({
 				open={topicDrawerIsOpen}
 				onClose={() => setTopicDrawerIsOpen(false)}
 				onFilterChange={onFilterChange}
-				FormatFilter={RenderBoxFormats}
-				TopicFilter={RenderBoxPopular}
 				activeFilters={activeFilters}
-				/>
+			/>
       </Drawer>
     </Portal>
   );
