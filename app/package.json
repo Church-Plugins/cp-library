@@ -35,6 +35,7 @@
   },
   "scripts": {
     "start": "SKIP_PREFLIGHT_CHECK=true PORT=3037 react-scripts start",
+    "start:local": "env-cmd -f .env.local npm run start",
     "build": "SKIP_PREFLIGHT_CHECK=true && grunt clean-sass && npm run sass && react-scripts build",
     "build:staging": "env-cmd -f .env.staging npm run build",
     "build:production": "env-cmd -f .env.production npm run build",
