@@ -37,6 +37,8 @@
     "start": "SKIP_PREFLIGHT_CHECK=true PORT=3037 react-scripts start",
     "build": "SKIP_PREFLIGHT_CHECK=true && grunt clean-sass && npm run sass && react-scripts build",
     "build:staging": "env-cmd -f .env.staging npm run build",
+    "build:production": "env-cmd -f .env.production npm run build",
+    "build:local": "env-cmd -f .env.local npm run build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "sass": "sass src/scss:src/css --no-source-map",
