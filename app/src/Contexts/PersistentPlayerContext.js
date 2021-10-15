@@ -18,7 +18,7 @@ function reducer(state, action) {
       return { ...state, isActive: true };
     }
     case "PLAYER_MOUNTED": {
-      return { ...state, item: action.item, isActive: state.isActive || Boolean(action.item) };
+      return { ...state, item: action.item, isActive: true };
     }
     case "PLAYER_UNMOUNTED": {
       return { ...state, item: undefined, isActive: false };
@@ -27,7 +27,7 @@ function reducer(state, action) {
       return { ...state, item: undefined, isActive: false };
     }
     case "ITEM_PERSISTED": {
-      return { ...state, item: action.item, isActive: true };
+      return { ...state, item: action.item, isActive: true, mode: action.mode };
     }
     default: {
       throw new Error(`Unhandled action type: ${action.type}`)
@@ -55,7 +55,7 @@ function PersistentPlayerProvider({children}) {
       } else if (event.data.action === "CPL_PERSISTENT_PLAYER_CLOSED") {
         dispatch({ type: "PLAYER_CLOSED" })
       } else if (event.data.action === "CPL_PERSISTENT_RECEIVED_ITEM") {
-        dispatch({ type: "ITEM_PERSISTED", item: event.data.item })
+        dispatch({ type: "ITEM_PERSISTED", item: event.data.item, mode: event.data.mode })
       } 
     }
 
@@ -79,7 +79,7 @@ function PersistentPlayerProvider({children}) {
       isPlaying,
       playedSeconds,
     });
-  }, [])
+  }, [state.isActive])
 
   // NOTE: you *might* need to memoize this value
   // Learn more in http://kcd.im/optimize-context
