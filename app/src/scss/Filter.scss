@@ -64,18 +64,144 @@
 
 } // .filter__root
 
+.MuiDrawer-root {
+	//  > .MuiPaper-root {
+	// 	 padding: 24px;
+	//  }
+
+	 &.filterDrawer__popular {
+
+		.filterDrawer__header {
+
+			position: sticky;
+			top: 0;
+			background-color: black;
+			color: white;
+			z-index: 1;
+
+			.filterDrawer__close {
+				> button {
+					color: white;
+					padding-right: 18px;
+				}
+			}
+
+			.filterDrawer__title {
+				font-size: 1.5rem;
+				margin: 18px;
+				font-weight: normal;
+				padding-left: 36px;
+			}
+
+		}
+
+		.format__more,
+		.format__less
+		 {
+			margin-top: 12px;
+			float: right;
+    		margin-right: 36px;
+
+			.more__label {
+				margin-right: 12px;
+			}
+		}
+
+		.format__less {
+			float: left;
+
+			.less__label {
+				margin-left: 12px;
+			}
+		}
+
+		.filterDrawer__topic_container {
+
+			.topic__column_right {
+				position: sticky;
+			    align-self: flex-start;
+    			top: -840px;
+			}
+
+			.format__less_container {
+				position: sticky;
+				top: 80px;
+				z-index: 1;
+			}
+
+			>.MuiGrid-container {
+				margin-top: 8px;
+			}
+
+			.MuiGrid-container {
+				margin-left: 0px;
+				width: 100%;
+			}
+
+			.topic__column_right {
+
+				text-align: center;
+				font-size: 1.3rem;
+
+				.toc__alph_select {
+
+					max-width: 40%;
+					margin-left: auto;
+					margin-right: auto;
+					border-bottom: 2px solid #CECECE;
+					line-height: 3.5rem;
+
+					> a {
+						color: inherit;
+					}
+
+					&.selected {
+						font-weight: 400;
+					}
+				}
+
+			}
+
+			.topic__letter_header {
+				font-size: 2rem;
+				font-weight: 400;
+				margin-bottom: 16px;
+			}
+
+			.topic__letter_item {
+
+				.topic__letter_item_label {
+					margin-left: 12px;
+				}
+			}
+		}
+
+	 } // &.filterDrawer__popular
+
+
+} // .MuiDrawer-root {
+
 .filterDrawer__format,
 .filterDrawer__topic {
 
 	margin-left: 64px;
+	background-color: white;
+	color: black;
 
 	.format__title {
 		p {
-			font-weight: 600;
+			// font-weight: 600;
+			letter-spacing: 3px;
+    		padding-bottom: 22px;
 		}
 	}
 }
 
 .filterDrawer__format {
 	max-height: 160px;
+	margin-top: 38px;
+}
+
+.filterDrawer__topic {
+	margin-top: 18px;
 }
