@@ -30,10 +30,7 @@ export default function FilterDrawerTopic({
 	const [topicsItems, setTopicsItems] = useState([]);
 	const [topicsLoading, setTopicsLoading] = useState( false );
 	const [topicsError, setTopicsError] = useState();
-
 	let [topicsLoaded, setTopicsLoaded] = useState( false );
-
-	let refs = [];
 
 	useEffect(() => {
 		(async () => {
@@ -161,6 +158,7 @@ export default function FilterDrawerTopic({
 										(letter, index) => {
 											const lower = letter.toLowerCase();
 											const upper = letter.toUpperCase();
+
 											return (
 												<Grid item xs={12}>
 													<Box id={`letter__${lower}`} className="topic__letter_header" >
@@ -176,10 +174,10 @@ export default function FilterDrawerTopic({
 																			control={
 																				<Checkbox
 																					value={item.slug}
-																					onChange={() => onFilterChange( item.slug )} />}
+																					onChange={() => onFilterChange( item.slug )} />
+																			}
 																					label={item.name}
-																					checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( item.slug )
-																				} />
+																					checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( item.slug )} />
 															}
 														)}
 														</FormGroup>
@@ -203,7 +201,6 @@ export default function FilterDrawerTopic({
 													className="filterDrawer__alph_link"
 													underline="none"
 													data-goto={lowerLetter}
-													onClick={executeScroll}
 													href={`#letter_${lowerLetter}`}
 												>
 													{letter}

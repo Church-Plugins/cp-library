@@ -25,7 +25,7 @@ export default function FilterAccordionPopular({
 		>
 			<Typography>POPULAR TOPICS</Typography>
 		</AccordionSummary>
-		<AccordionDetails>
+		<AccordionDetails className="format__browse_details">
 			<Box className="format__browse_container">
 				<IconButton className="format__browse_all" aria-label="View All">
 					<Box className="format__browse_content">

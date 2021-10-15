@@ -62,6 +62,10 @@ export default function Talks() {
   // TODO: Wire-up
   const removeFilter = (label, filterType) => {
 
+	if( !filterType ) {
+		filterType = 'topic';
+	}
+
 	let topicInput 	= ('topic' === filterType) ? activeFilters.topics.filter( f => f !== label ) : [...activeFilters.topics];
 	let formatInput	= ('format' === filterType) ? activeFilters.formats.filter( f => f !== label ) : [...activeFilters.formats];
 
@@ -102,8 +106,7 @@ export default function Talks() {
   return (
     <>
       <Box
-        className="talks__stickyContainer"
-        position="sticky"
+        className="talks__headerContainer"
         top={0}
         padding={2}
         // So that itemlist tucks underneath when scrolled up.

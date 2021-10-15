@@ -29,6 +29,8 @@
 
 	.MuiCollapse-entered {
 		color: black;
+		position: absolute;
+		z-index: 1;
 
 		> .MuiCollapse-vertical {
 			background-color: white;
@@ -207,6 +209,21 @@
 }
 
 .format__browse_desktop {
+
+	.MuiCollapse-hidden {
+		.format__browse_details {
+			position: absolute;
+			max-height: 0px !important;
+			// transition-delay: 0.5s;
+		}
+	}
+
+	.MuiCollapse-entered {
+		.format__browse_details {
+			position: static;
+			max-height: unset;
+		}
+	}
 
 	.format__browse_all {
 		width: 100%;
