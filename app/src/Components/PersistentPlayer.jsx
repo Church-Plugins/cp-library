@@ -197,27 +197,33 @@ export default function PersistentPlayer(props) {
 		    </Box>
 
         {mode === "audio" &&
-          <FilePlayer
-            ref={playerInstance}
-            controls={false}
-            url={item.audio}
-            width="0"
-            height="0"
-            playing={isPlaying}
-            onPlay={() => setIsPlaying(true)}
-            onPause={() => setIsPlaying(false)}
-            onDuration={duration => {
-              setDuration(duration);
-              if (playedSeconds > 0) {
-                playerInstance.current.seekTo(playedSeconds, "seconds");
-                setIsPlaying(true);
-              }
-            }}
-            onProgress={progress => setPlayedSeconds(progress.playedSeconds)}
-            progressInterval={100}
-          >
-            Your browser does not support the audio element.
-          </FilePlayer>
+         <Box>
+	         <FilePlayer
+		         ref={playerInstance}
+		         controls={false}
+		         url={item.audio}
+		         width="0"
+		         height="0"
+		         playing={isPlaying}
+		         onPlay={() => setIsPlaying(true)}
+		         onPause={() => setIsPlaying(false)}
+		         onDuration={duration => {
+			         setDuration(duration);
+			         if (playedSeconds > 0) {
+				         playerInstance.current.seekTo(playedSeconds, 'seconds');
+				         setIsPlaying(true);
+			         }
+		         }}
+		         onProgress={progress => setPlayedSeconds(progress.playedSeconds)}
+		         progressInterval={100}
+	         >
+		         Your browser does not support the audio element.
+	         </FilePlayer>
+
+	         <Box position='absolute' zIndex={50} top={0} right={0} className='persistentPlayer__close'>
+		         <IconButton onClick={closePlayer}><Cancel/></IconButton>
+	         </Box>
+         </Box>
         }
 	    </Box>
     </Box>
