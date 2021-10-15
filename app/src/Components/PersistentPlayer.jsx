@@ -11,13 +11,14 @@ import screenful from 'screenfull';
 
 import useBreakpoints from '../Hooks/useBreakpoints';
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
+import formatDuration from '../utils/formatDuration';
 
 import LoadingIndicator from './LoadingIndicator';
 import ErrorDisplay from './ErrorDisplay';
 import ItemMeta from './ItemMeta';
 import RoundButton from './RoundButton';
 import ButtonPlay from './ButtonPlay';
-import formatDuration from '../utils/formatDuration';
+import Logo from './Logo';
 
 export default function PersistentPlayer(props) {
   const { isDesktop } = useBreakpoints();
@@ -152,7 +153,7 @@ export default function PersistentPlayer(props) {
 
 		    <Box className="persistentPlayer__info" flex={1} display="flex" flexDirection="column" marginLeft={2}>
 			    <Box display="flex" flexDirection="row" alignItems="center" fontSize={14} >
-				    <Box marginRight={1} maxWidth={"1.5em"}><img src={window.cplParams.logo} /></Box>
+				    <Box marginRight={1} maxWidth={"1.5em"}><Logo /></Box>
 				    <Box>{item.title}</Box>
 			    </Box>
           <Box display="flex" flexDirection="row" alignItems="center">
