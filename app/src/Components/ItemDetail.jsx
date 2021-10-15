@@ -15,6 +15,7 @@ import AudioPlayer from './AudioPlayer';
 import ItemMeta from './ItemMeta';
 import SearchInput from './SearchInput';
 import RectangularButton from './RectangularButton';
+import Logo from './Logo';
 
 export default function ItemDetail({
   itemId,
@@ -151,11 +152,7 @@ export default function ItemDetail({
                 top={0}
                 left={0}
               >
-                <img
-                  alt="Richard Ellis Talks logo"
-                  // TODO: Parameterize this URL
-                  src="http://re.local/wp-content/themes/rer/library/images/re-icon.svg"
-                />
+                <Logo />
               </Box>
             )}
           </Box>
