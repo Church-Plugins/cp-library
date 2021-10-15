@@ -10,6 +10,7 @@ import useBreakpoints from '../Hooks/useBreakpoints';
 import { usePersistentPlayer } from '../Contexts/PersistentPlayerContext';
 import RectangularButton from './RectangularButton';
 import ItemMeta from "./ItemMeta";
+import Logo from "./Logo";
 
 export default function Item({
   item,
@@ -33,9 +34,19 @@ export default function Item({
     >
       <Box className="item__content" display="flex" flexDirection="row" width="100%">
         <Box className="item__thumb" flex={0} display="flex" alignItems="center">
-          <Box sx={{ backgroundColor: "#C4C4C4" }} borderRadius={1} width={isDesktop ? 184 : 57} height={isDesktop ? 111 : 47}>
-            {item.video && (
-              <video width="100%" height="100%" poster={item.thumb || undefined}></video>
+          <Box
+            sx={{ backgroundColor: "#C4C4C4" }}
+            borderRadius={1}
+            width={isDesktop ? 184 : 57}
+            height={isDesktop ? 111 : 47}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+          >
+            {item.video && item.thumb ? (
+              <video width="100%" height="100%" poster={item.thumb}></video>
+            ) : (
+              <Logo height="50%"/>
             )}
           </Box>
         </Box>
