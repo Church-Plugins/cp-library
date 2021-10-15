@@ -15,7 +15,8 @@ export default function Talks() {
 	  	{
 	  		'topics': [],
 			'formats': [],
-			'page': 1
+			'page': 1,
+			'search': ''
 		}
 	);
 
@@ -52,7 +53,8 @@ export default function Talks() {
 		{
 			'topics': topicInput,
 			'formats': formatInput,
-			'page': 1
+			'page': 1,
+			'search': activeFilters.search
 		}
 	);
   }
@@ -67,7 +69,8 @@ export default function Talks() {
 		{
 			'topics': topicInput,
 			'formats': formatInput,
-			'page': 1
+			'page': 1,
+			'search': activeFilters.search
 	 	});
   }
 
@@ -80,14 +83,21 @@ export default function Talks() {
     setActiveFilters({
 		'topics': topicInput,
 		'formats': formatInput,
-		'page': 1
+		'page': 1,
+		'search': ''
   	});
   };
 
   // TODO: Wire-up
   const handleSearchInputChange = debounce((value) => {
-    console.log(value);
-  }, 500);
+	setActiveFilters(
+		{
+			'topics': [...activeFilters.topics],
+			'formats': [...activeFilters.formats],
+			'page': 1,
+			'search': value
+	 	});
+  }, 1000 );
 
   return (
     <>
