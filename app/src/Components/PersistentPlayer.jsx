@@ -149,7 +149,7 @@ export default function PersistentPlayer(props) {
 	    <Box className="persistentPlayer__controls" display="flex" flexDirection="row" padding={1}>
 
 
-		    {isDesktop || 'audio' === mode && (
+		    {(isDesktop || 'audio' === mode) && (
 			    <Box display="flex" alignItems="center">
 				    <ButtonPlay flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
 			    </Box>
