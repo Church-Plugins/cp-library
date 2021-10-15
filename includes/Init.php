@@ -139,6 +139,10 @@ class Init {
 			wp_enqueue_script( CP_LIBRARY_UPREFIX . '-runtime', $path, [] );
 		}
 
+		wp_localize_script( CP_LIBRARY_UPREFIX . '-runtime', 'cplParams', [
+			'logo' => get_stylesheet_directory_uri() . '/library/images/re-icon.svg',
+		] );
+
 		// App main js
 		if( isset( $asset_manifest['files'][ 'main.js' ] ) ) {
 			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'main.js' ] );

@@ -5,7 +5,7 @@ import relativeDate from "tiny-relative-date";
 
 export default function ItemMeta({
   date,
-  category,
+  category = [],
 }) {
   return (
     <>
@@ -13,7 +13,7 @@ export default function ItemMeta({
         <Calendar />
         <Box component="span" marginLeft={1}>{relativeDate(date)}</Box>
       </Box>
-      {category && category.length > 0 && (
+      {category.length > 0 && (
         <Box
           className="itemMeta__categories"
           display="inline-flex"
