@@ -23,12 +23,15 @@ export default function FilterDrawerTopic({
   open = false,
   onClose = noop,
   onFilterChange = noop,
-  activeFilters = noop
+  activeFilters = noop,
+  whichView = noop
 }) {
 
 	const [topicsItems, setTopicsItems] = useState([]);
 	const [topicsLoading, setTopicsLoading] = useState( false );
 	const [topicsError, setTopicsError] = useState();
+
+	let [topicsLoaded, setTopicsLoaded] = useState( false );
 
 	let refs = [];
 
@@ -60,6 +63,7 @@ export default function FilterDrawerTopic({
 				setTopicsError( error );
 			} finally {
 				setTopicsLoading( false );
+				setTopicsLoaded( true );
 			}
 
 		})();
@@ -89,100 +93,133 @@ export default function FilterDrawerTopic({
 		}, 500 );
 	}
 
+	const desktopView = () => {
 
-  return topicsLoading ? (
-		<Portal>
-			<LoadingIndicator />
-		</Portal>
-	) : topicsError ? (
-		<Portal>
-			<ErrorDisplay error={topicsError} />
-		</Portal>
-	) : (
-		<Portal>
-			<Drawer
-				className="filterDrawer__popular"
-				anchor="right"
-				open={open}
-				onClose={onClose}
-				// So it shows on top of header/nav
-				sx={{ zIndex: 6000 }}
-				PaperProps={{ sx: { width: "100%" } }}
-			>
-				<Box display="flex" className="filterDrawer__header">
-				<Box flex={1} className="filterDrawer__title">ALL TOPICS</Box>
+		return topicsLoading && !topicsLoaded ? (
+			<Portal>
+				<LoadingIndicator />
+			</Portal>
+		) : topicsError ? (
+			<Portal>
+				<ErrorDisplay error={topicsError} />
+			</Portal>
+		) : (
+
+			<Portal>
+
+				<Box>
+					<Typography>
+						This is desktop
+					</Typography>
 				</Box>
-				<Box className="filterDrawer__topic_container" sx={{ flexGrow: 1 }}>
 
-					<Grid container spacing={2}>
-						<Grid item xs={10} className="topic__column_left">
-							<Grid container spacing={2}>
+			</Portal>
+		);
 
-								<Grid item xs={12} className="format__less_container">
-									<Box className="format__less">
-										<IconButton onClick={onClose} aria-label="Back">
-											<ArrowBackIcon />
-											<Typography className="less__label">BACK</Typography>
-										</IconButton>
-									</Box>
+	}
+
+	const mobileView = () => {
+
+		return topicsLoading && !topicsLoaded ? (
+			<Portal>
+				<LoadingIndicator />
+			</Portal>
+		) : topicsError ? (
+			<Portal>
+				<ErrorDisplay error={topicsError} />
+			</Portal>
+		) : (
+			<Portal>
+				<Drawer
+					className="filterDrawer__popular"
+					anchor="right"
+					open={open}
+					onClose={onClose}
+					// So it shows on top of header/nav + another drawer that's beneath this one
+					sx={{ zIndex: 6010 }}
+					PaperProps={{ sx: { width: "100%" } }}
+				>
+					<Box display="flex" className="filterDrawer__header">
+					<Box flex={1} className="filterDrawer__title">ALL TOPICS</Box>
+					</Box>
+					<Box className="filterDrawer__topic_container" sx={{ flexGrow: 1 }}>
+
+						<Grid container spacing={2}>
+							<Grid item xs={10} className="topic__column_left">
+								<Grid container spacing={2}>
+
+									<Grid item xs={12} className="format__less_container">
+										<Box className="format__less">
+											<IconButton onClick={onClose} aria-label="Back">
+												<ArrowBackIcon />
+												<Typography className="less__label">BACK</Typography>
+											</IconButton>
+										</Box>
+									</Grid>
+
+									{Object.keys( topicsItems ).map(
+										(letter, index) => {
+											const lower = letter.toLowerCase();
+											const upper = letter.toUpperCase();
+											return (
+												<Grid item xs={12}>
+													<Box id={`letter__${lower}`} className="topic__letter_header" >
+														{upper}
+													</Box>
+													<Box className="topic__letter_item" >
+														<FormGroup>
+														{topicsItems[ letter ].map(
+															(item, itemIndex) => {
+
+																return <FormControlLabel
+																			className="topic__letter_item_label"
+																			control={
+																				<Checkbox
+																					value={item.slug}
+																					onChange={() => onFilterChange( item.slug )} />}
+																					label={item.name}
+																					checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( item.slug )
+																				} />
+															}
+														)}
+														</FormGroup>
+													</Box>
+
+												</Grid>
+											);
+										}
+									)}
+
 								</Grid>
-
-								{Object.keys( topicsItems ).map(
+							</Grid>
+							<Grid item xs={2} className="topic__column_right">
+								{alphabet.map(
 									(letter, index) => {
-										const lower = letter.toLowerCase();
-										const upper = letter.toUpperCase();
-										return (
-											<Grid item xs={12}>
-												<Box id={`letter__${lower}`} className="topic__letter_header" >
-													{upper}
-												</Box>
-												<Box className="topic__letter_item" >
-													<FormGroup>
-													{topicsItems[ letter ].map(
-														(item, itemIndex) => {
-
-															return <FormControlLabel
-																		className="topic__letter_item_label"
-																		control={<Checkbox
-																		value={item.slug}
-																		onChange={() => onFilterChange( item.slug )} />}
-																		label={item.name}
-																		checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( item.slug )} />
-														}
-													)}
-													</FormGroup>
-												</Box>
-
-											</Grid>
-										);
+										let lowerLetter = letter.toLowerCase();
+										return <Box
+											className={`toc__alph_select select__${lowerLetter}`}
+										>
+												<Link
+													className="filterDrawer__alph_link"
+													underline="none"
+													data-goto={lowerLetter}
+													onClick={executeScroll}
+													href={`#letter_${lowerLetter}`}
+												>
+													{letter}
+												</Link>
+										</Box>
 									}
 								)}
-
 							</Grid>
 						</Grid>
-						<Grid item xs={2} className="topic__column_right">
-							{alphabet.map(
-								(letter, index) => {
-									let lowerLetter = letter.toLowerCase();
-									return <Box
-										className={`toc__alph_select select__${lowerLetter}`}
-									>
-											<Link
-												className="filterDrawer__alph_link"
-												underline="none"
-												data-goto={lowerLetter}
-												onClick={executeScroll}
-												href={`#letter_${lowerLetter}`}
-											>
-												{letter}
-											</Link>
-									</Box>
-								}
-							)}
-						</Grid>
-					</Grid>
-				</Box>
-			</Drawer>
-		</Portal>
-	);
+					</Box>
+				</Drawer>
+			</Portal>
+		);
+
+	}
+
+	return ('mobile' === whichView) ? mobileView() : desktopView();
+
 }

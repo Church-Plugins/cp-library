@@ -81,6 +81,7 @@ export default function FilterDrawer({
 				onClose={() => setTopicDrawerIsOpen(false)}
 				onFilterChange={onFilterChange}
 				activeFilters={activeFilters}
+				whichView="mobile"
 			/>
       </Drawer>
     </Portal>

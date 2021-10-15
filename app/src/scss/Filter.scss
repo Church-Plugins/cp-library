@@ -205,3 +205,35 @@
 .filterDrawer__topic {
 	margin-top: 18px;
 }
+
+.format__browse_desktop {
+
+	.format__browse_all {
+		width: 100%;
+	}
+
+	.format__browse_control {
+		float: right;
+		width: 100%;
+
+		> svg {
+			float: right;
+		}
+	}
+
+	.format__browse_content {
+		float: left;
+		width: 100%;
+
+		.more__label {
+			float: left;
+			margin-left: -8px;
+		}
+	}
+
+	.format__item_list {
+		float: left;
+		margin-bottom: 12px;
+	}
+
+}
