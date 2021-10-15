@@ -8,8 +8,10 @@
 
 		&.is_desktop {
 			.persistentPlayer__video__controls {
-				&:not(:hover) {
-					opacity: 0;
+				opacity: 0;
+
+				&:hover {
+					opacity: 1;
 				}
 			}
 		}
