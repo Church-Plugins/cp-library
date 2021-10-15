@@ -122,7 +122,7 @@ export default function PersistentPlayer(props) {
 				     progressInterval={100}
 			     />
 
-			     <Box className="persistentPlayer__video__controls" onClick={() => setIsPlaying(!isPlaying)}>
+			     <Box className="persistentPlayer__video__controls">
 
 				     <Box display="flex" alignItems="center" justifyContent="space-around" height="100%" width="100%" position="absolute" zIndex={50} top={0} right={0} >
 					     <ButtonPlay size="small" flex={0} padding={2} isPlaying={isPlaying}

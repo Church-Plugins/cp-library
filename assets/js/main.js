@@ -25,7 +25,7 @@
 		/**
 		 * Invoked whenever a link (<a />) is clicked anywhere in the body. If it's a first-party link,
 		 * we hijack the event.
-		 * @param {MouseEvent} e 
+		 * @param {MouseEvent} e
 		 * @returns false
 		 */
 		SELF.handleLinkClick = function(e) {
@@ -67,6 +67,7 @@
 
 			SELF.$iframe.on('load', SELF.iframeLoaded);
 			SELF.$iframe.attr('src', SELF.url);
+			window.history.pushState({}, '', url);
 
 			return false;
 		};
@@ -77,8 +78,6 @@
 		 * player persist. A SPA-like experience as far the end-user is concerned.
 		 */
 		SELF.iframeLoaded = function() {
-
-			window.history.pushState({}, '', url);
 
 			$('body > *').each(function () {
 				var $this = $(this);
@@ -93,7 +92,7 @@
 
 		/**
 		 * Invoked whenever someone post a message to this window.
-		 * @param {MessageEvent} e 
+		 * @param {MessageEvent} e
 		 * @returns undefined
 		 */
 		SELF.iframeMessage = function(e) {
@@ -104,6 +103,7 @@
 
 			if (SELF.isActive()) {
 				SELF.$iframe.attr('src', e.data.url);
+				window.history.pushState({}, '', url);
 			} else {
 				window.location.href = e.data.url;
 			}
