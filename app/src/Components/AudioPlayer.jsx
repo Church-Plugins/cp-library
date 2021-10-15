@@ -1,12 +1,20 @@
-import CardMedia from '@mui/material/CardMedia';
+import { useRef } from "react";
 import Portal from '@mui/material/Portal';
 import Drawer from '@mui/material/Drawer';
 import Box from '@mui/material/Box';
+import ReactPlayer from 'react-player';
 
 export default function AudioPlayer({
   open = false,
   src,
+  onStart,
+  onPlay,
+  onProgress,
+  onPause,
+  onEnded,
 }) {
+  const player = useRef();
+
   return (
     <Portal>
       <Drawer
@@ -27,11 +35,25 @@ export default function AudioPlayer({
           paddingX={2}
           paddingY={1}
           sx={{ backgroundColor: "black", pointerEvents: "auto" }}
+          height={66}
         >
           {open ? (
-            <CardMedia component="audio" controls src={src} sx={{ width: "100%" }}>
+            <ReactPlayer
+              ref={player}
+              controls
+              url={src}
+              width="100%"
+              height="100%"
+              onStart={onStart}
+              onPlay={onPlay}
+              onProgress={onProgress}
+              onPause={onPause}
+              onEnded={onEnded}
+              stopOnUnmount={true}
+              progressInterval={50}
+            >
               Your browser does not support the audio element.
-            </CardMedia>
+            </ReactPlayer>
           ) : null}
         </Box>
       </Drawer>

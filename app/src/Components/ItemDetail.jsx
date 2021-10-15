@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import { Play, Volume1, Share2 } from "react-feather"
@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 
 import useBreakpoints from '../Hooks/useBreakpoints';
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
+import { usePersistentPlayer } from '../Contexts/PersistentPlayerContext';
 
 import LoadingIndicator from './LoadingIndicator';
 import ErrorDisplay from './ErrorDisplay';
@@ -24,7 +25,12 @@ export default function ItemDetail({
   const [error, setError] = useState();
   // Video or audio
   const [mode, setMode] = useState();
+  // Keep frequently-updated states (mainly the progress from the media player) as a ref so they
+  // don't trigger re-render.
+  const mediaState = useRef({});
+  const { isActive: persistentPlayerIsActive, passToPersistentPlayer } = usePersistentPlayer();
 
+  // Fetch the individual item when mounted.
   useEffect(() => {
     (async () => {
       try {
@@ -40,6 +46,27 @@ export default function ItemDetail({
     })();
   }, []);
 
+  // Sync some states to be possibly passed to the persistent player. These states could be gone by
+  // the time the clean up function is done during unmounting.
+  useEffect(() => {
+    mediaState.current = { ...mediaState.current, item, mode };
+  }, [item, mode])
+
+  // When unmounted, if media is still playing, hand it off to the persistent player.
+  useEffect(() => {
+    return () => {
+      if (mediaState.current.isPlaying) {
+        passToPersistentPlayer({
+          item: mediaState.current.item,
+          mode: mediaState.current.mode,
+          isPlaying: true,
+          playedSeconds: mediaState.current.playedSeconds,
+        });
+      }
+    }
+  }, [])
+
+  // If item has both video and audio, prefer video.
   useEffect(() => {
     if (!item) return;
 
@@ -78,7 +105,7 @@ export default function ItemDetail({
           {isDesktop ? (
             <>
               <Box className="itemDetail__itemMeta" marginTop={4}>
-                <ItemMeta date={item.date} category={item.category} />
+                <ItemMeta date={item.date.date} category={item.category} />
               </Box>
 
               <Box className="itemDetail__description" marginTop={4}>
@@ -135,7 +162,7 @@ export default function ItemDetail({
 
           {isDesktop ? null : (
             <Box className="itemDetail__category" marginTop={1}>
-              <span>CATEGORIES: {item.category.join(", ")}</span>
+              <span>CATEGORIES: {(item.category || []).join(", ")}</span>
             </Box>
           )}
 
@@ -144,7 +171,7 @@ export default function ItemDetail({
               <RectangularButton
                 leftIcon={<Play />}
                 onClick={() => setMode("video")}
-                disabled={!item.video || mode === "video"}
+                // disabled={!item.video || mode === "video"}
                 fullWidth
               >
                 Play Video
@@ -154,8 +181,19 @@ export default function ItemDetail({
               <RectangularButton
                 variant="outlined"
                 leftIcon={<Volume1 />}
-                onClick={() => setMode("audio")}
-                disabled={!item.audio || mode === "audio"}
+                onClick={() => {
+                  if (persistentPlayerIsActive) {
+                    passToPersistentPlayer({
+                      item: mediaState.current.item,
+                      mode: "audio",
+                      isPlaying: true,
+                      playedSeconds: 0.0,
+                    });
+                  } else {
+                    setMode("audio");
+                  }
+                }}
+                // disabled={!item.audio || mode === "audio"}
                 fullWidth
               >
                 Play Audio
@@ -180,7 +218,27 @@ export default function ItemDetail({
         </Box>
       )}
 
-      <AudioPlayer open={mode === "audio"} src={item.audio} />
+      {!persistentPlayerIsActive && (
+        <AudioPlayer
+          open={mode === "audio"}
+          src={item.audio}
+          onStart={() => {
+            mediaState.current = { ...mediaState.current, isPlaying: true };
+          }}
+          onPlay={() => {
+            mediaState.current = { ...mediaState.current, isPlaying: true };
+          }}
+          onPause={() => {
+            mediaState.current = { ...mediaState.current, isPlaying: false };
+          }}
+          onEnded={() => {
+            mediaState.current = { ...mediaState.current, isPlaying: false, isFinished: true };
+          }}
+          onProgress={progress => {
+            mediaState.current = { ...mediaState.current, playedSeconds: progress.playedSeconds };
+          }}
+        />
+      )}
     </Box>
   );
 }
