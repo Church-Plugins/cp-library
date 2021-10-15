@@ -95,6 +95,17 @@ abstract class PostType {
 		register_post_type( $this->post_type, $cpt_args );
 	}
 
+	// This is currently not being fired
+	public function rest_request_limit( $params ) {
+
+		if( !empty( $params )  && is_array( $params ) && !empty( $params[ 'per_page' ] ) ) {
+			$params[ 'per_page' ][ 'maximum' ] = 9999;
+			$params[ 'per_page' ][ 'minimum' ] = -1;
+		}
+		return $params;
+
+	}
+
 	/**
 	 * Register metaboxes for Item admin
 	 *
@@ -115,6 +126,8 @@ abstract class PostType {
 	 */
 	public function add_actions() {
 		add_action( 'cmb2_admin_init', [ $this, 'register_metaboxes' ] );
+		// add_action( 'rest_cpl_items_params', [ $this, 'rest_request_limit' ], 10, 1 );
+		add_action( 'rest_cpl_items_query', [ $this, 'rest_request_limit' ], 10, 1 );
 		return;
 	}
 

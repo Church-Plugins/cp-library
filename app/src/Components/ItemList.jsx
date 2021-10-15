@@ -40,7 +40,8 @@ function ItemList({
 		let inputParams 	=	't=' +
 								activeFilters.topics.join(",") + '&' +
 								'f=' +
-								activeFilters.formats.join(",");
+								activeFilters.formats.join(",") + '&' +
+								's=' + encodeURIComponent( activeFilters.search ).replace( " ", "+" );
         const data = await restRequest.get( {endpoint: 'items', params: inputParams} );
 		data.page = 1;
         setItems( data );
@@ -61,7 +62,8 @@ function ItemList({
 								activeFilters.topics.join(",") + '&' +
 								'f=' +
 								activeFilters.formats.join(",") + '&' +
-								'p=' + value;
+								'p=' + value + '&' +
+								's=' + activeFilters.search;
 		const data = await restRequest.get( {endpoint: 'items', params: inputParams} );
 		data.page = value;
 		setItems( data );

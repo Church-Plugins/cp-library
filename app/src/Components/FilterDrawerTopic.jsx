@@ -59,7 +59,6 @@ export default function FilterDrawerTopic({
 			} catch ( error ) {
 				setTopicsError( error );
 			} finally {
-				console.log( "UNSET TOPICS LOADING" );
 				setTopicsLoading( false );
 			}
 

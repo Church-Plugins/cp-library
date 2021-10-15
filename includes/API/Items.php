@@ -168,6 +168,28 @@ class Items extends WP_REST_Controller {
 		return $return_value;
 	}
 
+	public function get_search_results( $find ) {
+
+		$find = rawurlencode( $find );
+		$return_value = [];
+
+		$address = get_site_url() . '/wp-json/wp/v2/search?search=' . $find . '&subtype=cpl_items&per_page=100&';
+		$request = wp_remote_get( $address, ['sslverify' => false] );
+		if( is_wp_error( $request ) ) {
+			return [];
+		}
+
+		$result = wp_remote_retrieve_body( $request );
+		$data = @json_decode( $result );
+		if( !empty( $data ) ) {
+			foreach( $data as $item ) {
+				$return_value[] = $item->id;
+			}
+		}
+
+		return $return_value;
+	}
+
 	/**
 	 * Retrieves a list of items
 	 *
@@ -185,6 +207,20 @@ class Items extends WP_REST_Controller {
 			'post_status'    => 'publish',
 			'posts_per_page' => 10,
 		];
+
+		$search_filter_ids = [];
+		$filter_search = false;
+
+		// If there are search terms, parse them first
+		if( !empty( $request->get_param( 's' ) ) ) {
+			$search_filter_ids = $this->get_search_results( $request->get_param( 's' ) );
+			$filter_search = true;
+
+			// If the user searched and nothing matches, return "empty" instead of "all"
+			if( empty( $search_filter_ids ) ) {
+				return $return_value;
+			}
+		}
 
 		if( !empty( $request->get_param( 't' ) ) ) {
 			$topic_string = preg_replace( "/\,$/", "", trim( $request->get_param( 't' ) ) );
@@ -243,7 +279,15 @@ class Items extends WP_REST_Controller {
 				];
 		}
 
-		if( !empty( $format_filter_ids ) ) {
+		// If the user has typed-in search parameters...
+		if( $filter_search ) {
+			// ...and there are filtrs applied
+			if( !empty( $format_filter_ids ) ) {
+				$args['post__in'] = array_intersect(  $format_filter_ids, $search_filter_ids  );
+			} else { // ...no filters are applied
+				$args['post__in'] = $search_filter_ids;
+			}
+		} else if( !empty( $format_filter_ids ) ) { // No user-supplied search
 			$args['post__in'] = $format_filter_ids;
 		}
 
@@ -252,9 +296,7 @@ class Items extends WP_REST_Controller {
 			$args['paged'] = absint( $page );
 		}
 		$args = apply_filters( 'cpl_api_get_items_args', $args, $request );
-
 		$posts = new \WP_Query( $args );
-
 		$return_value = [
 			'count' => $posts->post_count,
 			'total' => $posts->found_posts,
