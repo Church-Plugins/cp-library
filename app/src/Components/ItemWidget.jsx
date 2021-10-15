@@ -99,8 +99,8 @@ export function ItemWidgetContent ({
 
 				<Box className="itemWidget__actions" display="flex" alignItems="flex-start">
 
-					{item.video &&
-					 <Box className="itemWidget__playVideo">
+					{item.video.value &&
+					 <Box className="itemWidget__playVideo" marginRight={1}>
 						 <RectangularButton
 							 leftIcon={<Play/>}
 							 onClick={playVideo}
@@ -111,7 +111,7 @@ export function ItemWidgetContent ({
 					}
 
 					{item.audio &&
-					 <Box className="itemWidget__playAudio" marginLeft={1}>
+					 <Box className="itemWidget__playAudio">
 						 <RectangularButton
 							 variant="outlined"
 							 leftIcon={<Volume1/>}
