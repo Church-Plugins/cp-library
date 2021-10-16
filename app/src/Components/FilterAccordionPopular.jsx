@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -11,11 +11,20 @@ import { noop } from "../utils/noop";
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import IconButton from '@mui/material/IconButton';
 import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+
+import FilterAccordionTopic from './FilterAccordionTopic';
 
 export default function FilterAccordionPopular({
 	onFilterChange = noop,
-	activeFilters = noop
+	activeFilters = noop,
+	open = false,
+	onClose = noop
 }) {
+
+  const [topicViewIsOpen, setTopicViewIsOpen] = useState( false );
+
   return (
 	<Accordion className="format__browse_desktop topic__view">
 		<AccordionSummary
@@ -26,46 +35,65 @@ export default function FilterAccordionPopular({
 			<Typography>POPULAR TOPICS</Typography>
 		</AccordionSummary>
 		<AccordionDetails className="format__browse_details">
-			<Box className="format__browse_container">
-				<IconButton className="format__browse_all" aria-label="View All">
-					<Box className="format__browse_content">
-						<Typography className="more__label">VIEW ALL</Typography>
-					</Box>
-					<Box className="format__browse_control">
-						<ArrowForwardIcon />
-					</Box>
-				</IconButton>
+			<Box>
+				{topicViewIsOpen ? (
+					<>
+						<FilterAccordionTopic
+							className="format__filter_topic"
+							open={true}
+							onClose={() => setTopicViewIsOpen( !topicViewIsOpen )}
+							onFilterChange={onFilterChange}
+							activeFilters={activeFilters}
+						/>
+						<Box>HELLO</Box>
+					</>
+				) : (
+					<>
+						<IconButton
+							onClick={() => setTopicViewIsOpen( !topicViewIsOpen )}
+							className="format__browse_all"
+							aria-label="View All">
+							<Box className="format__browse_content">
+								<Typography className="more__label">VIEW ALL</Typography>
+							</Box>
+							<Box className="format__browse_control">
+								<ArrowForwardIcon />
+							</Box>
+						</IconButton>
+
+						<FormGroup className="format__item_list">
+							<FormControlLabel
+								className="format__item"
+								control={<Checkbox
+								value="worry"
+								onChange={() => onFilterChange("worry")} />}
+								label="Worry"
+								checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( "worry" )} />
+							<FormControlLabel
+								className="format__item"
+								control={<Checkbox
+								value="doubt"
+								onChange={() => onFilterChange("doubt")}/>}
+								label="Doubt"
+								checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( "doubt" )} />
+							<FormControlLabel
+								className="format__item"
+								control={<Checkbox
+								value="fear"
+								onChange={() => onFilterChange("fear")}/>}
+								label="Fear"
+								checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( "fear" )} />
+							<FormControlLabel
+								className="format__item"
+								control={<Checkbox
+								value="encouragement"
+								onChange={() => onFilterChange("encouragement")}/>}
+								label="Encouragement"
+								checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( "encouragement" )} />
+						</FormGroup>
+					</>
+				)}
 			</Box>
-			<FormGroup className="format__item_list">
-				<FormControlLabel
-					className="format__item"
-					control={<Checkbox
-					value="worry"
-					onChange={() => onFilterChange("worry")} />}
-					label="Worry"
-					checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( "worry" )} />
-				<FormControlLabel
-					className="format__item"
-					control={<Checkbox
-					value="doubt"
-					onChange={() => onFilterChange("doubt")}/>}
-					label="Doubt"
-					checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( "doubt" )} />
-				<FormControlLabel
-					className="format__item"
-					control={<Checkbox
-					value="fear"
-					onChange={() => onFilterChange("fear")}/>}
-					label="Fear"
-					checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( "fear" )} />
-				<FormControlLabel
-					className="format__item"
-					control={<Checkbox
-					value="encouragement"
-					onChange={() => onFilterChange("encouragement")}/>}
-					label="Encouragement"
-					checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( "encouragement" )} />
-			</FormGroup>
 		</AccordionDetails>
 	</Accordion>
   );

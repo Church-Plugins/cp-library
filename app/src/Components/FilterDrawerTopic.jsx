@@ -79,6 +79,8 @@ export default function FilterDrawerTopic({
 	/**
 	 * Scroll to a ref in the DOM and perform UX alterations
 	 *
+	 * @todo When the target is not present, we're scrolling to the end. This is OK for RET
+	 *         since all lettrs with no contnt are conincidentally at the end of the alphabet
 	 * @param DomEvent event
 	 * @param String letter 			The letter to which we are scrolling
 	 * @returns void
@@ -95,36 +97,6 @@ export default function FilterDrawerTopic({
 		}
 
 		$( origin ).addClass( 'selected' );
-	}
-
-	/**
-	 * Provide the desktop view for All Topics
-	 *
-	 * @returns JSX
-	 */
-	const desktopView = () => {
-
-		return topicsLoading && !topicsLoaded ? (
-			<Portal>
-				<LoadingIndicator />
-			</Portal>
-		) : topicsError ? (
-			<Portal>
-				<ErrorDisplay error={topicsError} />
-			</Portal>
-		) : (
-
-			<Portal>
-
-				<Box>
-					<Typography>
-						This is desktop
-					</Typography>
-				</Box>
-
-			</Portal>
-		);
-
 	}
 
 	/**
@@ -257,6 +229,6 @@ export default function FilterDrawerTopic({
 
 	}
 
-	return ('mobile' === whichView) ? mobileView() : desktopView();
+	return mobileView()
 
 }

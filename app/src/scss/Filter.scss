@@ -118,13 +118,9 @@
 			}
 		}
 
-		.filterDrawer__topic_container {
+		.filterDrawer__topic_container,
+		.filterAccordion__topic_container {
 
-			.topic__column_right {
-				position: sticky;
-			    align-self: flex-start;
-    			top: -840px;
-			}
 
 			.format__less_container {
 				position: sticky;
@@ -143,6 +139,9 @@
 
 			.topic__column_right {
 
+				position: sticky;
+			    align-self: flex-start;
+    			top: -840px;
 				text-align: center;
 				font-size: 1.2rem;
 
@@ -169,7 +168,7 @@
 					}
 				}
 
-			}
+			} // .topic__column_right {
 
 			.topic__letter_ref {
 				scroll-margin: 60px;
@@ -187,7 +186,7 @@
 					margin-left: 12px;
 				}
 			}
-		}
+		} // .filterDrawer__topic_container, .filterAccordion__topic_container
 
 	 } // &.filterDrawer__popular
 
@@ -273,6 +272,7 @@
 		}
 	}
 
+	// TODO: These rules should only be applied when the "All Topics" list is open
 	&.topic__view {
 		.MuiCollapse-root.MuiCollapse-entered {
 
@@ -285,4 +285,8 @@
 		}
 	}
 
-}
+	// .filter__accordion {
+
+	// }
+
+} // .format__browse_desktop

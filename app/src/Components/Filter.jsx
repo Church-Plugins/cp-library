@@ -22,13 +22,18 @@ export default function Filter ({
 }) {
   const { isDesktop } = useBreakpoints();
   const [filterDrawerIsOpen, setFilterDrawerIsOpen] = useState(false);
+  const [topicDrawerIsOpen, setTopicDrawerIsOpen] = useState(false);
 
   const RenderAccordionFormats = () => {
 	return <FilterAccordionFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />
   }
 
   const RenderAccordionPopular = () => {
-	return <FilterAccordionPopular onFilterChange={onFilterChange} activeFilters={activeFilters} />
+	return <FilterAccordionPopular
+		onClose={() => setTopicDrawerIsOpen(false)}
+		open={filterDrawerIsOpen}
+		onFilterChange={onFilterChange}
+		activeFilters={activeFilters} />
   }
 
   const RenderBoxFormats = () => {
