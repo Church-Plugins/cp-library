@@ -31,6 +31,8 @@
 		color: black;
 		position: absolute;
 		z-index: 1;
+		width: calc(100% + 84px);
+		transition-duration: 300ms;
 
 		> .MuiCollapse-vertical {
 			background-color: white;
@@ -57,10 +59,28 @@
 		.MuiCollapse-entered {
 
 			> .MuiCollapse-vertical {
-				width: calc( 100% + 84px );
+				// width: calc( 100% + 84px ); // TODO: Re-add this for mobile view
+				width: 100%;
 				height: 100%;
 			}
 
+		}
+
+		.format__browse_details {
+			background-color: white;
+
+			.topic__column_back,
+			.topic__column_nav {
+				position: sticky;
+				top: 0;
+			}
+
+			.topic__column_nav {
+				background-color: white;
+				z-index: 1;
+				box-shadow: 6px 12px 12px rgb(255 255 255);
+				padding-left: 0px;
+			}
 		}
 
 	}
@@ -186,6 +206,7 @@
 					margin-left: 12px;
 				}
 			}
+
 		} // .filterDrawer__topic_container, .filterAccordion__topic_container
 
 	 } // &.filterDrawer__popular
@@ -272,21 +293,81 @@
 		}
 	}
 
-	// TODO: These rules should only be applied when the "All Topics" list is open
+	.topic__letter_container,
+	.topic__letter_item_list {
+		width: 100%;
+		margin-left: 0px;
+
+		> .MuiGrid-root.MuiGrid-container {
+			> .MuiGrid-root.MuiGrid-item {
+				padding-top: 0px;
+			}
+		}
+	}
+
+	.topic__letter_header {
+		font-size: 1.5rem;
+		font-weight: 400;
+		margin-top: 28px;
+	}
+
+	.topic__letter_item_label {
+
+		max-height: 32px;
+
+		> span {
+			font-size: 0.9rem;
+    		font-weight: lighter;
+		}
+
+	}
+
+	// These rules are only applied when the "All Topics" list is open
 	&.topic__view {
 		.MuiCollapse-root.MuiCollapse-entered {
-
 			width: 738px;
 			margin-left: -110%;
 			height: 320px !important;
 			overflow-y: scroll;
 			border-radius: 5px;
-
+			transition-duration: 300ms;
 		}
-	}
 
-	// .filter__accordion {
+		.topic__letter_scroll {
+			scroll-margin: 60px;
+		}
 
-	// }
+		.topic__column_nav_container {
+
+			margin-top: 0px;
+
+			> button {
+				color: rgba( 0, 0, 0, 0.8 );
+				font-size: 1rem;
+				margin-left: 0px;
+				width: 18px;
+				max-width: 18px;
+				min-width: 18px;
+
+				&.selected {
+					font-weight: 600;
+					background-color: rgba(0, 0, 0, 0.1);
+				}
+			}
+		}
+
+		.format__less {
+			> button {
+				margin-left: -16px;
+				background-color: rgba(255, 255, 255, 0.8);
+
+				p {
+					margin-left: 12px;
+					font-size: 0.9rem;
+					font-weight: 600;
+				}
+			}
+		}
+	} // &.topic__view {
 
 } // .format__browse_desktop

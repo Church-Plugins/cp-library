@@ -13,6 +13,7 @@ import IconButton from '@mui/material/IconButton';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import $ from 'jquery';
 
 import FilterAccordionTopic from './FilterAccordionTopic';
 
@@ -25,8 +26,12 @@ export default function FilterAccordionPopular({
 
   const [topicViewIsOpen, setTopicViewIsOpen] = useState( false );
 
+  const expandTopicView = () => {
+	$( '.format__browse_desktop' ).addClass( 'topic__view' );
+  }
+
   return (
-	<Accordion className="format__browse_desktop topic__view">
+	<Accordion className="format__browse_desktop">
 		<AccordionSummary
 			expandIcon={<ExpandMoreIcon />}
 			aria-controls="panel-format-content"
@@ -41,16 +46,15 @@ export default function FilterAccordionPopular({
 						<FilterAccordionTopic
 							className="format__filter_topic"
 							open={true}
-							onClose={() => setTopicViewIsOpen( !topicViewIsOpen )}
+							onClose={() => {setTopicViewIsOpen( !topicViewIsOpen );} }
 							onFilterChange={onFilterChange}
 							activeFilters={activeFilters}
 						/>
-						<Box>HELLO</Box>
 					</>
 				) : (
 					<>
 						<IconButton
-							onClick={() => setTopicViewIsOpen( !topicViewIsOpen )}
+							onClick={() => {setTopicViewIsOpen( !topicViewIsOpen ); expandTopicView();} }
 							className="format__browse_all"
 							aria-label="View All">
 							<Box className="format__browse_content">

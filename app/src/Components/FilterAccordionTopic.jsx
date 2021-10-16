@@ -14,6 +14,7 @@ import Portal from '@mui/material/Portal';
 import LoadingIndicator from "./LoadingIndicator";
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 import Button from '@mui/material/Button';
+import $ from 'jquery';
 
 // TODO: Refactor; There's a lot of repeated code between here and FilterTopic.jsx
 
@@ -91,42 +92,152 @@ export default function FilterAccordionTopic({
 
 	createViewRefs();
 
+	const closeTopicView = () => {
+		$( '.format__browse_desktop' ).removeClass( 'topic__view' );
+	}
+
+		/**
+	 * Scroll to a ref in the DOM and perform UX alterations
+	 *
+	 * @todo When the target is not present, we're scrolling to the end. This is OK for RET
+	 *         since all lettrs with no contnt are conincidentally at the end of the alphabet
+	 * @param DomEvent event
+	 * @param String letter 			The letter to which we are scrolling
+	 * @returns void
+	 */
+	const executeScroll = ( event, letter ) => {
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		let origin = $( event.target );
+		$( '.toc__alph_select_button' ).removeClass( 'selected' );
+
+		if( refs[letter] && refs[letter].current ) {
+			refs[letter].current.scrollIntoView({behavior: "smooth", block: "start"});
+		} else {
+			refs['end'].current.scrollIntoView({behavior: "smooth", block: "start"});
+		}
+
+		$( origin ).addClass( 'selected' );
+	}
+
 	const NavView = () => {
 
-		console.log( "NAV VIEW" );
+		// onClick={(event) => { executeScroll( event, lowerLetter ); }}
+
 		return (
 			<>
 				<Grid item xs={2} className="topic__column_back">
 					<Box className="format__less">
-						<IconButton onClick={() => setTopicViewIsOpen( false )} aria-label="Back">
+						<IconButton onClick={() => { setTopicViewIsOpen( false ); closeTopicView(); }} aria-label="Back">
 							<ArrowBackIcon />
 							<Typography className="less__label">BACK</Typography>
 						</IconButton>
 					</Box>
 				</Grid>
-				<Grid item xs={10} className="topic__column_back">
-					<Box>
+				<Grid item xs={10} className="topic__column_nav">
+					<Grid container spacing={2} className="topic__column_nav_container">
 						{alphabet.map(
 							(letter) => {
 								const lower = letter.toLowerCase();
 								const upper = letter.toUpperCase();
 
-								return ( <Typography> {upper} |</Typography> )
+								return (
+									<>
+										<Button
+											style={{maxWidth: '18px', minWidth: '18px', width: '18px'}}
+											className="toc__alph_select_button"
+											onClick={(event) => { executeScroll( event, lower ); }}
+										>
+											{upper}
+										</Button>
+										<Divider className="toc__alph_select_divider" orientation="vertical" variant="middle" flexItem />
+									</>
+								)
 							}
 						)}
-					</Box>
+					</Grid>
 				</Grid>
 			</>
 		)
 
 	}
 
-	const MainView = () => {
+	const ItemListView = ( {letter = null} ) => {
 
-		console.log( "MAN VIEW" );
+		const lower = letter.toLowerCase();
+		const upper = letter.toUpperCase();
+
+		const items = topicsFullItems[ lower ];
+		if( !items || items.length < 1 ) {
+			return ( <></> )
+		}
+
 		return (
 			<>
-				<Typography>CONTENT HERE</Typography>
+				{items.map(
+					(item, itemIndex) => {
+
+						return <Grid
+									className="topic__letter_item"
+									item xs={3}
+									id={`letter__item_container_${lower}`}
+								>
+									<FormControlLabel
+										className="topic__letter_item_label"
+										control={
+											<Checkbox
+												value={item.slug}
+												onChange={() => onFilterChange( item.slug )}
+											/>
+										}
+										label={item.name}
+										checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( item.slug )}
+									/>
+								</Grid>
+					}
+				)}
+			</>
+		)
+	}
+
+	const MainView = () => {
+
+		return (
+			<>
+				<Grid container spacing={2} className="topic__letter_container">
+					{Object.keys( topicsFullItems ).map(
+						(letter, index) => {
+							const lower = letter.toLowerCase();
+							const upper = letter.toUpperCase();
+
+							let loopRef = refs[lower];
+
+							return (
+								<>
+									<Grid
+										ref={loopRef}
+										item xs={12}
+										id={`letter__${lower}`}
+										className="topic__letter_header topic__letter_scroll"
+									>
+										{upper}
+									</Grid>
+									<Grid
+										item xs={12}
+										id={`letter__container_${lower}`}
+										className="topic__letter_item_list"
+									>
+										<Grid container spacing={2}>
+											<ItemListView letter={lower}/>
+										</Grid>
+									</Grid>
+								</>
+							)
+						} // {Object.keys( topicsFullItems ).map
+					)}
+				</Grid>
 			</>
 		)
 
@@ -134,23 +245,20 @@ export default function FilterAccordionTopic({
 
 	return (
 		<>
-			<Box className="filterAccordion__topic_container">
+			<Box className="filterAccordion__topic_container" open={open}>
 				<Grid container spacing={2} className="filterAccordion__topic_grid_header">
 					<NavView />
 					{topicsFullLoading && !topicsFullLoaded ? (
 						<>
 							<LoadingIndicator />
-							{console.log( "LOADING" )}
 						</>
 					) : topicsFullError ? (
 						<>
-						<ErrorDisplay error={topicsFullError} />
-						{console.log( "ERROR" )}
+							<ErrorDisplay error={topicsFullError} />
 						</>
 					) : (
 						<>
-						<Box>BODY</Box>
-						{console.log( "MAIN" )}
+							<MainView />
 						</>
 					)}
 				</Grid>
