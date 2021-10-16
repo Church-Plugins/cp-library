@@ -9,8 +9,8 @@ export default function ItemMeta({
 }) {
   return (
     <>
-      <Box className="itemMeta__relativeReleaseDate" display="inline-flex" alignItems="center">
-        <Calendar />
+      <Box className="itemMeta__relativeReleaseDate" display="inline-flex" alignItems="center" marginRight={2}>
+        <Calendar size="1em" />
         <Box component="span" marginLeft={1}>{relativeDate(date)}</Box>
       </Box>
       {category.length > 0 && (
@@ -18,9 +18,8 @@ export default function ItemMeta({
           className="itemMeta__categories"
           display="inline-flex"
           alignItems="center"
-          marginLeft={2}
         >
-          <Tag />
+          <Tag size="1em" />
           <Box component="span" marginLeft={1}>{category.join(",")}</Box>
         </Box>
       )}

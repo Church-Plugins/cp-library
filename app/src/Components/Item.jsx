@@ -24,7 +24,7 @@ export default function Item({
 
   return (
     <ListItem
-      className="item__root"
+      className="cplItem__root"
       sx={{
         padding: isDesktop ? 2 : 1,
         borderRadius: 2,
@@ -34,8 +34,8 @@ export default function Item({
         }
       }}
     >
-      <Box className="item__content" display="flex" flexDirection="row" width="100%">
-        <Box className="item__thumb" flex={0} display="flex" alignItems="center">
+      <Box className="cplItem__content" display="flex" flexDirection="row" width="100%">
+        <Box className="cplItem__thumb" flex={0} display="flex" alignItems="center">
           <Box
             sx={displayBg}
             borderRadius={1}
@@ -53,21 +53,21 @@ export default function Item({
           </Box>
         </Box>
         <Box
-          className="item__details"
+          className="cplItem__details"
           flex={1}
           display="flex"
           flexDirection="column"
           marginLeft={2}
           justifyContent={isDesktop ? "space-between" : "center"}
         >
-          <span className="item__title">{displayTitle}</span>
-          <Box marginTop={1} className="item__itemMeta">
+          <h3 className="cplItem__title">{displayTitle}</h3>
+          <Box marginTop={1} className="cplItem__itemMeta">
             <ItemMeta date={item.date.date} category={Object.values(item.category) || []} />
           </Box>
         </Box>
         {!isDesktop && isNew && (
           <Box
-            className="item__new"
+            className="cplItem__new"
             flex={0}
             display="flex"
             alignItems="center"
@@ -77,7 +77,7 @@ export default function Item({
             New
           </Box>
         )}
-        <Box className="item__actions" display="flex" alignItems="center" marginLeft={1}>
+        <Box className="cplItem__actions" display="flex" alignItems="center" marginLeft={1}>
           <ItemActions isDesktop={isDesktop} item={item} />
         </Box>
       </Box>
