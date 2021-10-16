@@ -20,7 +20,6 @@ export default function ButtonPlay({
     <IconButton
       className={`roundButton__root roundButton__${variant} button__play`}
       variant={variant}
-      fullWidth={fullWidth}
       onClick={onClick}
       disabled={disabled}
       sx={{padding: 0}}

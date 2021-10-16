@@ -19,6 +19,8 @@ import ItemMeta from './ItemMeta';
 import RoundButton from './RoundButton';
 import ButtonPlay from './ButtonPlay';
 import Logo from './Logo';
+import { ThemeProvider } from '@mui/material/styles';
+import theme from "../Components/Theme";
 
 export default function PersistentPlayer(props) {
   const { isDesktop } = useBreakpoints();
@@ -101,6 +103,7 @@ export default function PersistentPlayer(props) {
   ) : error ? (
     <ErrorDisplay error={error} />
   ) : item ? (
+  	<ThemeProvider theme={theme}>
     <Box className={"persistentPlayer__root persistentPlayer__mode__" + mode + desktopClass }>
 
 	    {mode === 'video' &&
@@ -232,5 +235,6 @@ export default function PersistentPlayer(props) {
         }
 	    </Box>
     </Box>
+	  </ThemeProvider>
   ) : null;
 }

@@ -178,9 +178,21 @@ class Init {
 	 *
 	 * @return void
 	 */
-	protected function actions() { }
+	protected function actions() {
+		add_action( 'wp_head', [ $this, 'global_css_vars' ] );
+	}
 
 	/** Actions **************************************/
+
+	public function global_css_vars() {
+		?>
+		<style>
+			:root {
+				--cpl-primary: #4D6CFA;
+			}
+		</style>
+		<?php
+	}
 
 	/**
 	 * Required Plugins notice

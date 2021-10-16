@@ -121,7 +121,7 @@ export function ItemActions({
         )}
         {item.audio && (
           <Box marginLeft={item.video ? 2 : 0}>
-            <RectangularButton variant="outlined" leftIcon={<Volume1 />} onClick={playAudio}>
+            <RectangularButton variant="outlined" sx={{height: 55, borderRadius: 2, color: "#fff", borderColor: "#fff"}} leftIcon={<Volume1 />} onClick={playAudio}>
               Play Audio
             </RectangularButton>
           </Box>

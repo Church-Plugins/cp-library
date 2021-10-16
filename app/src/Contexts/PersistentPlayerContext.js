@@ -1,7 +1,9 @@
 import { createContext, useReducer, useContext, useEffect, useCallback } from "react";
 import ReactDOM from 'react-dom';
+import { ThemeProvider } from '@mui/material/styles';
 
 import PersistentPlayer from "../Components/PersistentPlayer";
+import theme from "../Components/Theme";
 
 const PersistentPlayerContext = createContext()
 
@@ -56,7 +58,7 @@ function PersistentPlayerProvider({children}) {
         dispatch({ type: "PLAYER_CLOSED" })
       } else if (event.data.action === "CPL_PERSISTENT_RECEIVED_ITEM") {
         dispatch({ type: "ITEM_PERSISTED", item: event.data.item, mode: event.data.mode })
-      } 
+      }
     }
 
     window.top.addEventListener("message", handleMessage);
@@ -71,7 +73,7 @@ function PersistentPlayerProvider({children}) {
       const player = window.top.document.getElementById('cpl_persistent_player');
       ReactDOM.render(<PersistentPlayer />, player);
     }
-    
+
     window.top.postMessage({
       action: "CPL_HANDOVER_TO_PERSISTENT",
       item,
@@ -88,7 +90,7 @@ function PersistentPlayerProvider({children}) {
     passToPersistentPlayer,
   }
 
-  return <PersistentPlayerContext.Provider value={value}>{children}</PersistentPlayerContext.Provider>
+  return <PersistentPlayerContext.Provider value={value}><ThemeProvider theme={theme}>{children}</ThemeProvider></PersistentPlayerContext.Provider>
 }
 
 function usePersistentPlayer() {

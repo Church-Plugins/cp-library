@@ -15,15 +15,19 @@ import ItemMeta from './ItemMeta';
 import SearchInput from './SearchInput';
 import RectangularButton from './RectangularButton';
 import { usePersistentPlayer, PersistentPlayerProvider } from '../Contexts/PersistentPlayerContext';
+import { ThemeProvider } from '@mui/material/styles';
+import theme from "../Components/Theme";
 
 const TESTING_ID = 123;
 
 export default function ItemWidget() {
 
   return (
-    <PersistentPlayerProvider>
-      <ItemWidgetContent />
-    </PersistentPlayerProvider>
+  	<ThemeProvider theme={theme}>
+	    <PersistentPlayerProvider>
+	      <ItemWidgetContent />
+	    </PersistentPlayerProvider>
+	  </ThemeProvider>
   );
 };
 
