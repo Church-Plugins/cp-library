@@ -58,6 +58,7 @@
 
 			> .MuiCollapse-vertical {
 				width: calc( 100% + 84px );
+				height: 100%;
 			}
 
 		}
@@ -143,25 +144,35 @@
 			.topic__column_right {
 
 				text-align: center;
-				font-size: 1.3rem;
+				font-size: 1.2rem;
 
 				.toc__alph_select {
 
-					max-width: 40%;
-					margin-left: auto;
-					margin-right: auto;
+					max-width: 80%;
+					margin-left: 0px;
 					border-bottom: 2px solid #CECECE;
 					line-height: 3.5rem;
+
+					> button {
+						color: rgba( 0, 0, 0, 0.8 );
+						font-size: 1.2rem;
+						margin-left: 0px;
+
+						&.selected {
+							font-weight: 600;
+							background-color: rgba(0, 0, 0, 0.1);
+						}
+					}
 
 					> a {
 						color: inherit;
 					}
-
-					&.selected {
-						font-weight: 400;
-					}
 				}
 
+			}
+
+			.topic__letter_ref {
+				scroll-margin: 60px;
 			}
 
 			.topic__letter_header {
@@ -210,6 +221,7 @@
 
 .format__browse_desktop {
 
+
 	.MuiCollapse-hidden {
 		.format__browse_details {
 			position: absolute;
@@ -226,7 +238,7 @@
 	}
 
 	.format__browse_all {
-		width: 100%;
+		width: 90%;
 	}
 
 	.format__browse_control {
@@ -251,6 +263,26 @@
 	.format__item_list {
 		float: left;
 		margin-bottom: 12px;
+
+		.format__item {
+
+			span.MuiTypography-root {
+				font-size: 0.9rem;
+				font-weight:lighter;
+			}
+		}
+	}
+
+	&.topic__view {
+		.MuiCollapse-root.MuiCollapse-entered {
+
+			width: 738px;
+			margin-left: -110%;
+			height: 320px !important;
+			overflow-y: scroll;
+			border-radius: 5px;
+
+		}
 	}
 
 }

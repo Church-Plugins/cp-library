@@ -17,7 +17,7 @@ export default function FilterAccordionPopular({
 	activeFilters = noop
 }) {
   return (
-	<Accordion className="format__browse_desktop">
+	<Accordion className="format__browse_desktop topic__view">
 		<AccordionSummary
 			expandIcon={<ExpandMoreIcon />}
 			aria-controls="panel-format-content"

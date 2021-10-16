@@ -14,6 +14,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import async from 'async';
 import $ from 'jquery';
+import Button from '@mui/material/Button';
 
 import LoadingIndicator from "./LoadingIndicator";
 import ErrorDisplay from "./ErrorDisplay";
@@ -31,6 +32,8 @@ export default function FilterDrawerTopic({
 	const [topicsLoading, setTopicsLoading] = useState( false );
 	const [topicsError, setTopicsError] = useState();
 	let [topicsLoaded, setTopicsLoaded] = useState( false );
+
+	let mobileRefs = [];
 
 	useEffect(() => {
 		(async () => {
@@ -73,23 +76,32 @@ export default function FilterDrawerTopic({
 		'V', 'W', 'X', 'Y', 'Z'
 	];
 
-	const executeScroll = ( event ) => {
+	/**
+	 * Scroll to a ref in the DOM and perform UX alterations
+	 *
+	 * @param DomEvent event
+	 * @param String letter 			The letter to which we are scrolling
+	 * @returns void
+	 */
+	const executeScroll = ( event, letter ) => {
 
 		let origin = $( event.target );
-		let letter = $( origin ).attr( 'data-goto' );
+		$( '.toc__alph_select >button' ).removeClass( 'selected' );
 
-		let targetString = 'letter__' + letter;
-		let target = $( '#' + targetString );
+		if( mobileRefs[letter] && mobileRefs[letter].current ) {
+			mobileRefs[letter].current.scrollIntoView({behavior: "smooth", block: "start"});
+		} else {
+			mobileRefs['end'].current.scrollIntoView({behavior: "smooth", block: "start"});
+		}
 
-		console.log( "WILL SCROLL TO" );
-		console.log( targetString );
-		console.log( $( target ) );
-
-		$('html, body').animate({
-			scrollTop: $( target ).offset().top
-		}, 500 );
+		$( origin ).addClass( 'selected' );
 	}
 
+	/**
+	 * Provide the desktop view for All Topics
+	 *
+	 * @returns JSX
+	 */
 	const desktopView = () => {
 
 		return topicsLoading && !topicsLoaded ? (
@@ -115,7 +127,35 @@ export default function FilterDrawerTopic({
 
 	}
 
+	/**
+	 * Generate usable internal document references
+	 * @param String which 			Either 'mobile' or 'desktop'
+	 *
+	 * @returns void
+	 */
+	const createViewRefs = ( which ) => {
+		let saveRefs = [];
+		Object.keys( topicsItems ).map(
+			(letter) => {
+				const lower = letter.toLowerCase();
+				saveRefs[lower] = React.createRef();
+			}
+		);
+		saveRefs['end'] = React.createRef();
+
+		if( 'mobile' === which ) {
+			mobileRefs = saveRefs;
+		}
+	}
+
+	/**
+	 * Provide the mobile view for All Topics
+	 *
+	 * @returns JSX
+	 */
 	const mobileView = () => {
+
+		createViewRefs( 'mobile' );
 
 		return topicsLoading && !topicsLoaded ? (
 			<Portal>
@@ -159,8 +199,10 @@ export default function FilterDrawerTopic({
 											const lower = letter.toLowerCase();
 											const upper = letter.toUpperCase();
 
+											let loopRef = mobileRefs[letter];
+
 											return (
-												<Grid item xs={12}>
+												<Grid className="topic__letter_ref" ref={loopRef} item xs={12}>
 													<Box id={`letter__${lower}`} className="topic__letter_header" >
 														{upper}
 													</Box>
@@ -181,31 +223,29 @@ export default function FilterDrawerTopic({
 															}
 														)}
 														</FormGroup>
+														<Box ref={mobileRefs['end']} />
 													</Box>
 
 												</Grid>
 											);
 										}
 									)}
-
 								</Grid>
 							</Grid>
 							<Grid item xs={2} className="topic__column_right">
 								{alphabet.map(
 									(letter, index) => {
 										let lowerLetter = letter.toLowerCase();
-										return <Box
-											className={`toc__alph_select select__${lowerLetter}`}
-										>
-												<Link
-													className="filterDrawer__alph_link"
-													underline="none"
-													data-goto={lowerLetter}
-													href={`#letter_${lowerLetter}`}
+										return (
+											<Box className={`toc__alph_select select__${lowerLetter}`} >
+												<Button
+													className="toc__alph_select_button"
+													onClick={(event) => { executeScroll( event, lowerLetter ); }}
 												>
 													{letter}
-												</Link>
-										</Box>
+												</Button>
+											</Box>
+										)
 									}
 								)}
 							</Grid>
