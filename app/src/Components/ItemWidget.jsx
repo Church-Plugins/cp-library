@@ -120,6 +120,7 @@ export function ItemWidgetContent ({
 							 variant="outlined"
 							 leftIcon={<Volume1/>}
 							 onClick={playAudio}
+							 sx={{height: 55, borderRadius: 2, color: "#fff", borderColor: "#fff"}}
 						 >
 							 Play Audio
 						 </RectangularButton>
