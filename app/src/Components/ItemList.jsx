@@ -9,6 +9,7 @@ import Item from "./Item";
 import LoadingIndicator from "./LoadingIndicator";
 import ErrorDisplay from "./ErrorDisplay";
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
+import useBreakpoints from '../Hooks/useBreakpoints';
 
 function ItemList({
   activeFilters,
@@ -16,6 +17,7 @@ function ItemList({
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
+  const { isDesktop } = useBreakpoints();
 
   const useStyles = makeStyles(() => ({
 	ul: {
@@ -91,7 +93,7 @@ function ItemList({
 		<Box className="talks__paginationContainer" paddingY={1} paddingX={1}>
 			<Pagination
 				classes={{ ul: classes.ul }}
-				size="large"
+				size={isDesktop ? "large" : "small" }
 				count={items.pages}
 				defaultPage={items.page}
 				boundaryCount={2}
