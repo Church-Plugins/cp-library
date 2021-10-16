@@ -1,0 +1,29 @@
+.itemPlayer {
+	&__controlsWrapper {
+		padding-top: 2rem;
+
+		@media (max-width: 760px) {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			width: 100%;
+			background: linear-gradient(0deg, black 80%, transparent 100%);
+		}
+
+	}
+
+	&__controls {
+		button {
+			color: white;
+		}
+	}
+}
+
+.itemDetail {
+	&__root {
+		padding-bottom: 5rem;
+	}
+	&__audio {
+		background: #ccc;
+	}
+}

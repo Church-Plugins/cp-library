@@ -131,7 +131,7 @@ export function ItemActions({
   }
 
   return (
-    <IconButton onClick={() => history.push(`/talks/${item.id}`)}>
+    <IconButton className="cplItem__toItem" onClick={() => history.push(`/talks/${item.id}`)}>
       <ChevronRight/>
     </IconButton>
   );
