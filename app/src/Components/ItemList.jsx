@@ -90,7 +90,7 @@ function ItemList({
 				<Item key={item.title} item={item} isNew={index === 0}/>
 			))}
 		</List>
-		<Box className="talks__paginationContainer" paddingY={1} paddingX={1}>
+		<Box className="talks__paginationContainer" paddingY={1}>
 			<Pagination
 				classes={{ ul: classes.ul }}
 				size={isDesktop ? "large" : "small" }

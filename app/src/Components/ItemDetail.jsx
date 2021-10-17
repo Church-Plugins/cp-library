@@ -60,6 +60,7 @@ export default function ItemDetail({
 		mediaState.current = { ...mediaState.current, playedSeconds: playedSeconds };
 
 		setIsPlaying( false );
+		setMode( null );
 		passToPersistentPlayer({
 			item         : mediaState.current.item,
 			mode         : mediaState.current.mode,
@@ -146,7 +147,7 @@ export default function ItemDetail({
   ) : (
     // Margin bottom is to account for audio player. Making sure all content is still visible with
     // the player is up.
-    <Box className={"itemDetail__root" + playingClass} marginBottom={mode === "audio" ? 10 : 0}>
+    <Box className={"itemDetail__root" + playingClass}>
       <Link to="/talks">{"<"} Back to talks</Link>
       {isDesktop && (
         <>
@@ -265,38 +266,55 @@ export default function ItemDetail({
           )}
 
           <Box className="itemDetail__actions" display="flex" alignItems="stretch" marginTop={2}>
-            <Box className="itemDetail__playVideo" flex={1}>
-              <RectangularButton
-                leftIcon={<Play />}
-                onClick={() => {updateMode("video")}}
-                // disabled={!item.video || mode === "video"}
-                fullWidth
-              >
-                Play Video
-              </RectangularButton>
-            </Box>
-            <Box className="itemDetail__playAudio" flex={1} marginLeft={1}>
-              <RectangularButton
-                variant="outlined"
-                leftIcon={<Volume1 />}
-                onClick={() => {
-                  if (persistentPlayerIsActive) {
-                    passToPersistentPlayer({
-                      item: mediaState.current.item,
-                      mode: "audio",
-                      isPlaying: true,
-                      playedSeconds: 0.0,
-                    });
-                  } else {
-                    updateMode("audio");
-                  }
-                }}
-                // disabled={!item.audio || mode === "audio"}
-                fullWidth
-              >
-                Play Audio
-              </RectangularButton>
-            </Box>
+
+	          {item.video.value && (
+		          <Box className="itemDetail__playVideo" flex={1}>
+			          <RectangularButton
+				          leftIcon={<Play/>}
+				          onClick={() => {
+					          if (persistentPlayerIsActive) {
+						          passToPersistentPlayer({
+							          item         : mediaState.current.item,
+							          mode         : 'video',
+							          isPlaying    : true,
+							          playedSeconds: 0.0,
+						          });
+					          } else {
+						          updateMode('video');
+					          }
+				          }}
+				          fullWidth
+			          >
+				          Play Video
+			          </RectangularButton>
+		          </Box>
+	          )}
+
+	          {item.audio && (
+		          <Box className="itemDetail__playAudio" flex={1} marginLeft={1}>
+			          <RectangularButton
+				          variant="outlined"
+				          leftIcon={<Volume1/>}
+				          onClick={() => {
+					          if (persistentPlayerIsActive) {
+						          passToPersistentPlayer({
+							          item         : mediaState.current.item,
+							          mode         : 'audio',
+							          isPlaying    : true,
+							          playedSeconds: 0.0,
+						          });
+					          } else {
+						          updateMode('audio');
+					          }
+				          }}
+				          // disabled={!item.audio || mode === "audio"}
+				          fullWidth
+			          >
+				          Play Audio
+			          </RectangularButton>
+		          </Box>
+	          )}
+
             <Box
               className="itemDetail__share"
               flex={0}

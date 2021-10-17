@@ -6,7 +6,8 @@
 			position: fixed;
 			bottom: 0;
 			left: 0;
-			width: calc( 100% - 2rem );
+			width: 100%;
+			z-index: 450;
 			background: linear-gradient(0deg, black 80%, transparent 100%);
 		}
 
@@ -21,7 +22,7 @@
 
 		button {
 			color: white;
-			background-color: transparent;
+			background-color: transparent !important;
 		}
 	}
 }
@@ -42,5 +43,9 @@
 	}
 	&__audio {
 		background: #ccc;
+	}
+
+	&__playAudio, &__playVideo {
+		max-width: 300px;
 	}
 }

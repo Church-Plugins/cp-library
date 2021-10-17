@@ -105,7 +105,6 @@ export default function Talks() {
         className="talks__stickyContainer"
         position="sticky"
         top={0}
-        padding={2}
         // So that itemlist tucks underneath when scrolled up.
         zIndex={1}
         // TODO: To get this right, give the root element a background color that matches the host's
