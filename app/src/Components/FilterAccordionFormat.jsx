@@ -17,7 +17,7 @@ export default function FilterAccordionFormat({
 }) {
 
   return (
-	<Accordion>
+	<Accordion className="format__browse_desktop">
 		<AccordionSummary
 			expandIcon={<ExpandMoreIcon />}
 			aria-controls="panel-format-content"
@@ -25,7 +25,7 @@ export default function FilterAccordionFormat({
 		>
 			<Typography>FORMAT</Typography>
 		</AccordionSummary>
-		<AccordionDetails>
+		<AccordionDetails className="format__browse_details">
 			<FormGroup>
 				<FormControlLabel
 					control={

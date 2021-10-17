@@ -22,13 +22,18 @@ export default function Filter ({
 }) {
   const { isDesktop } = useBreakpoints();
   const [filterDrawerIsOpen, setFilterDrawerIsOpen] = useState(false);
+  const [topicDrawerIsOpen, setTopicDrawerIsOpen] = useState(false);
 
   const RenderAccordionFormats = () => {
 	return <FilterAccordionFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />
   }
 
   const RenderAccordionPopular = () => {
-	return <FilterAccordionPopular onFilterChange={onFilterChange} activeFilters={activeFilters} />
+	return <FilterAccordionPopular
+		onClose={() => setTopicDrawerIsOpen(false)}
+		open={filterDrawerIsOpen}
+		onFilterChange={onFilterChange}
+		activeFilters={activeFilters} />
   }
 
   const RenderBoxFormats = () => {
@@ -44,16 +49,6 @@ export default function Filter ({
       <Box display="flex" justifyContent={isDesktop ? "space-between" : "initial"}>
         {isDesktop ? (
           <>
-		  	{/*
-            <Box className="filter__button" flex={0} display="flex" alignItems="center">
-              <RoundButton
-                variant="contained"
-                onClick={() => setFilterDrawerIsOpen(!filterDrawerIsOpen)}
-              >
-                Filter
-              </RoundButton>
-            </Box>
-			*/}
 			<Box className="filter__accordion filter__format" flex={0}>
 				<RenderAccordionFormats />
             </Box>

@@ -14,6 +14,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import async from 'async';
 import $ from 'jquery';
+import Button from '@mui/material/Button';
 
 import LoadingIndicator from "./LoadingIndicator";
 import ErrorDisplay from "./ErrorDisplay";
@@ -23,14 +24,16 @@ export default function FilterDrawerTopic({
   open = false,
   onClose = noop,
   onFilterChange = noop,
-  activeFilters = noop
+  activeFilters = noop,
+  whichView = noop
 }) {
 
 	const [topicsItems, setTopicsItems] = useState([]);
 	const [topicsLoading, setTopicsLoading] = useState( false );
 	const [topicsError, setTopicsError] = useState();
+	let [topicsLoaded, setTopicsLoaded] = useState( false );
 
-	let refs = [];
+	let mobileRefs = [];
 
 	useEffect(() => {
 		(async () => {
@@ -60,6 +63,7 @@ export default function FilterDrawerTopic({
 				setTopicsError( error );
 			} finally {
 				setTopicsLoading( false );
+				setTopicsLoaded( true );
 			}
 
 		})();
@@ -72,117 +76,159 @@ export default function FilterDrawerTopic({
 		'V', 'W', 'X', 'Y', 'Z'
 	];
 
-	const executeScroll = ( event ) => {
+	/**
+	 * Scroll to a ref in the DOM and perform UX alterations
+	 *
+	 * @todo When the target is not present, we're scrolling to the end. This is OK for RET
+	 *         since all lettrs with no contnt are conincidentally at the end of the alphabet
+	 * @param DomEvent event
+	 * @param String letter 			The letter to which we are scrolling
+	 * @returns void
+	 */
+	const executeScroll = ( event, letter ) => {
 
 		let origin = $( event.target );
-		let letter = $( origin ).attr( 'data-goto' );
+		$( '.toc__alph_select >button' ).removeClass( 'selected' );
 
-		let targetString = 'letter__' + letter;
-		let target = $( '#' + targetString );
+		if( mobileRefs[letter] && mobileRefs[letter].current ) {
+			mobileRefs[letter].current.scrollIntoView({behavior: "smooth", block: "start"});
+		} else {
+			mobileRefs['end'].current.scrollIntoView({behavior: "smooth", block: "start"});
+		}
 
-		console.log( "WILL SCROLL TO" );
-		console.log( targetString );
-		console.log( $( target ) );
-
-		$('html, body').animate({
-			scrollTop: $( target ).offset().top
-		}, 500 );
+		$( origin ).addClass( 'selected' );
 	}
 
+	/**
+	 * Generate usable internal document references
+	 * @param String which 			Either 'mobile' or 'desktop'
+	 *
+	 * @returns void
+	 */
+	const createViewRefs = ( which ) => {
+		let saveRefs = [];
+		Object.keys( topicsItems ).map(
+			(letter) => {
+				const lower = letter.toLowerCase();
+				saveRefs[lower] = React.createRef();
+			}
+		);
+		saveRefs['end'] = React.createRef();
 
-  return topicsLoading ? (
-		<Portal>
-			<LoadingIndicator />
-		</Portal>
-	) : topicsError ? (
-		<Portal>
-			<ErrorDisplay error={topicsError} />
-		</Portal>
-	) : (
-		<Portal>
-			<Drawer
-				className="filterDrawer__popular"
-				anchor="right"
-				open={open}
-				onClose={onClose}
-				// So it shows on top of header/nav
-				sx={{ zIndex: 6000 }}
-				PaperProps={{ sx: { width: "100%" } }}
-			>
-				<Box display="flex" className="filterDrawer__header">
-				<Box flex={1} className="filterDrawer__title">ALL TOPICS</Box>
-				</Box>
-				<Box className="filterDrawer__topic_container" sx={{ flexGrow: 1 }}>
+		if( 'mobile' === which ) {
+			mobileRefs = saveRefs;
+		}
+	}
 
-					<Grid container spacing={2}>
-						<Grid item xs={10} className="topic__column_left">
-							<Grid container spacing={2}>
+	/**
+	 * Provide the mobile view for All Topics
+	 *
+	 * @returns JSX
+	 */
+	const mobileView = () => {
 
-								<Grid item xs={12} className="format__less_container">
-									<Box className="format__less">
-										<IconButton onClick={onClose} aria-label="Back">
-											<ArrowBackIcon />
-											<Typography className="less__label">BACK</Typography>
-										</IconButton>
-									</Box>
+		createViewRefs( 'mobile' );
+
+		return topicsLoading && !topicsLoaded ? (
+			<Portal>
+				<LoadingIndicator />
+			</Portal>
+		) : topicsError ? (
+			<Portal>
+				<ErrorDisplay error={topicsError} />
+			</Portal>
+		) : (
+			<Portal>
+				<Drawer
+					className="filterDrawer__popular"
+					anchor="right"
+					open={open}
+					onClose={onClose}
+					// So it shows on top of header/nav + another drawer that's beneath this one
+					sx={{ zIndex: 6010 }}
+					PaperProps={{ sx: { width: "100%" } }}
+				>
+					<Box display="flex" className="filterDrawer__header">
+					<Box flex={1} className="filterDrawer__title">ALL TOPICS</Box>
+					</Box>
+					<Box className="filterDrawer__topic_container" sx={{ flexGrow: 1 }}>
+
+						<Grid container spacing={2}>
+							<Grid item xs={10} className="topic__column_left">
+								<Grid container spacing={2}>
+
+									<Grid item xs={12} className="format__less_container">
+										<Box className="format__less">
+											<IconButton onClick={onClose} aria-label="Back">
+												<ArrowBackIcon />
+												<Typography className="less__label">BACK</Typography>
+											</IconButton>
+										</Box>
+									</Grid>
+
+									{Object.keys( topicsItems ).map(
+										(letter, index) => {
+											const lower = letter.toLowerCase();
+											const upper = letter.toUpperCase();
+
+											let loopRef = mobileRefs[letter];
+
+											return (
+												<Grid className="topic__letter_ref" ref={loopRef} item xs={12}>
+													<Box id={`letter__${lower}`} className="topic__letter_header" >
+														{upper}
+													</Box>
+													<Box className="topic__letter_item" >
+														<FormGroup>
+														{topicsItems[ letter ].map(
+															(item, itemIndex) => {
+
+																return <FormControlLabel
+																			className="topic__letter_item_label"
+																			control={
+																				<Checkbox
+																					value={item.slug}
+																					onChange={() => onFilterChange( item.slug )} />
+																			}
+																					label={item.name}
+																					checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( item.slug )} />
+															}
+														)}
+														</FormGroup>
+														<Box ref={mobileRefs['end']} />
+													</Box>
+
+												</Grid>
+											);
+										}
+									)}
 								</Grid>
-
-								{Object.keys( topicsItems ).map(
+							</Grid>
+							<Grid item xs={2} className="topic__column_right">
+								{alphabet.map(
 									(letter, index) => {
-										const lower = letter.toLowerCase();
-										const upper = letter.toUpperCase();
+										let lowerLetter = letter.toLowerCase();
 										return (
-											<Grid item xs={12}>
-												<Box id={`letter__${lower}`} className="topic__letter_header" >
-													{upper}
-												</Box>
-												<Box className="topic__letter_item" >
-													<FormGroup>
-													{topicsItems[ letter ].map(
-														(item, itemIndex) => {
-
-															return <FormControlLabel
-																		className="topic__letter_item_label"
-																		control={<Checkbox
-																		value={item.slug}
-																		onChange={() => onFilterChange( item.slug )} />}
-																		label={item.name}
-																		checked={activeFilters && activeFilters.topics && activeFilters.topics.includes( item.slug )} />
-														}
-													)}
-													</FormGroup>
-												</Box>
-
-											</Grid>
-										);
+											<Box className={`toc__alph_select select__${lowerLetter}`} >
+												<Button
+													className="toc__alph_select_button"
+													onClick={(event) => { executeScroll( event, lowerLetter ); }}
+												>
+													{letter}
+												</Button>
+											</Box>
+										)
 									}
 								)}
-
 							</Grid>
 						</Grid>
-						<Grid item xs={2} className="topic__column_right">
-							{alphabet.map(
-								(letter, index) => {
-									let lowerLetter = letter.toLowerCase();
-									return <Box
-										className={`toc__alph_select select__${lowerLetter}`}
-									>
-											<Link
-												className="filterDrawer__alph_link"
-												underline="none"
-												data-goto={lowerLetter}
-												onClick={executeScroll}
-												href={`#letter_${lowerLetter}`}
-											>
-												{letter}
-											</Link>
-									</Box>
-								}
-							)}
-						</Grid>
-					</Grid>
-				</Box>
-			</Drawer>
-		</Portal>
-	);
+					</Box>
+				</Drawer>
+			</Portal>
+		);
+
+	}
+
+	return mobileView()
+
 }
