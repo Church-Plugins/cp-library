@@ -10,13 +10,10 @@ import ReactDOM from 'react-dom';
 import screenful from 'screenfull';
 
 import useBreakpoints from '../Hooks/useBreakpoints';
-import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 import formatDuration from '../utils/formatDuration';
 
 import LoadingIndicator from './LoadingIndicator';
 import ErrorDisplay from './ErrorDisplay';
-import ItemMeta from './ItemMeta';
-import RoundButton from './RoundButton';
 import ButtonPlay from './ButtonPlay';
 import Logo from './Logo';
 import { ThemeProvider } from '@mui/material/styles';
@@ -67,9 +64,12 @@ export default function PersistentPlayer(props) {
     function handleMessage(event) {
       if (event.data.action === "CPL_HANDOVER_TO_PERSISTENT") {
         setItem(event.data.item);
-        console.log( item );
-        console.log( event.data );
 				setMode(event.data.mode);
+
+				if ( event.data.playedSeconds ) {
+					playerInstance.current.seekTo(event.data.playedSeconds, 'seconds');
+				}
+
         setPlayedSeconds(event.data.playedSeconds);
         setIsPlaying(event.data.playedSeconds > 0 ? false : event.data.isPlaying);
       }

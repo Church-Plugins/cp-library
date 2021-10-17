@@ -58,7 +58,7 @@ if( item ) {
 	ReactDOM.render( <ItemDetail />, root );
 }
 if (window === window.top && persistentPlayer) {
-	ReactDOM.render(<PersistentPlayer />, persistentPlayer);
+//	ReactDOM.render(<PersistentPlayer />, persistentPlayer);
 }
 // if( source ) {
 // 	ReactDOM.render( <App />, source );
