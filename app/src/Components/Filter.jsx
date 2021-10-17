@@ -33,12 +33,12 @@ export default function Filter ({
             <Box className="filter__accordion filter__format" flex={0}>
               <FilterAccordionFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />
             </Box>
-		      	<Box className="filter__accordion filter__popular" flex={0}>
-              <FilterAccordionPopular
+            <Box className="filter__popular" flex={0}>
+              <TopicFilter
                 onClose={() => setTopicDrawerIsOpen(false)}
                 open={topicDrawerIsOpen}
                 onFilterChange={onFilterChange}
-                activeFilters={activeFilters}
+                activeFilters={activeFilters.topics}
               />
             </Box>
             <Box className="filter__search" flex={0} display="flex" alignItems="center">
