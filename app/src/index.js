@@ -43,7 +43,13 @@ const persistentPlayer = document.getElementById( 'cpl_persistent_player' );
 // }
 
 if (root) {
-	ReactDOM.render(<App />, root );
+	let itemId = root.getAttribute( 'data-item-id' );
+
+	if ( 0 < itemId ) {
+		ReactDOM.render(<App itemId={itemId} />, root );
+	} else {
+		ReactDOM.render(<App />, root );
+	}
 }
 //if( root ) {
 //	ReactDOM.render( <ItemDetail />, root );

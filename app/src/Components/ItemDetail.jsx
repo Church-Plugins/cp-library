@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+
 import { Play, Volume1, Share2 } from "react-feather"
 import VideoPlayer from "react-player";
 import { Link } from 'react-router-dom';
@@ -17,7 +20,7 @@ import RectangularButton from './RectangularButton';
 import Logo from './Logo';
 
 import { ExternalLink } from "react-feather"
-import { Cancel, Forward30, Replay10, Share, PlayCircleOutline } from "@mui/icons-material"
+import { Cancel, Forward30, Replay10, Share, PlayCircleOutline, Facebook, Twitter, Download, Link as LinkIcon } from "@mui/icons-material"
 import Slider from '@mui/material/Slider';
 import IconButton from '@mui/material/IconButton';
 import ReactDOM from 'react-dom';
@@ -48,6 +51,17 @@ export default function ItemDetail({
   const { isActive: persistentPlayerIsActive, passToPersistentPlayer } = usePersistentPlayer();
   const playerInstance = useRef();
 	const playingClass   = isPlaying ? ' is_playing' : '';
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+	const copyLinkRef = useRef(null);
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
 	const handleClickFullscreen = () => {
 		const instance = ReactDOM.findDOMNode(playerInstance.current);
@@ -67,6 +81,47 @@ export default function ItemDetail({
 			isPlaying    : true,
 			playedSeconds: mediaState.current.playedSeconds,
 		});
+	};
+
+	const handleFBShare = () => {
+		window.open('http://www.facebook.com/sharer.php?u='+encodeURIComponent( item.permalink )+'&t='+encodeURIComponent( item.title ),'sharer','toolbar=0,status=0,width=626,height=436');
+    setAnchorEl(null);
+	};
+
+	const handleTwitterShare = () => {
+		window.open( "http://twitter.com/intent/tweet?text=" + encodeURIComponent( item.title + ' ' + item.permalink ),'sharer','toolbar=0,status=0,width=626,height=436');
+    setAnchorEl(null);
+	};
+
+	const handleFileDownload = () => {
+		const link = document.createElement('a');
+    link.href = item.audio;
+    link.setAttribute(
+      'download',
+      item.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3',
+    );
+
+		link.setAttribute(
+			'target',
+			'_blank',
+		);
+
+    // Append to html link element page
+    document.body.appendChild(link);
+
+    // Start download
+    link.click();
+
+    // Clean up and remove the link
+    link.parentNode.removeChild(link);
+    setAnchorEl(null);
+	};
+
+	const handleCopyLink = (e) => {
+		copyLinkRef.current.select();
+		document.execCommand('copy');
+		e.target.focus();
+    setAnchorEl(null);
 	};
 
 	const updateMode = (mode) => {
@@ -167,7 +222,7 @@ export default function ItemDetail({
           {isDesktop ? (
             <>
               <Box className="itemDetail__itemMeta" marginTop={4}>
-                <ItemMeta date={item.date.date} category={item.category} />
+                <ItemMeta date={item.date.date} category={Object.values(item.category)} />
               </Box>
 
               <Box className="itemDetail__description" marginTop={4}>
@@ -268,7 +323,7 @@ export default function ItemDetail({
           <Box className="itemDetail__actions" display="flex" alignItems="stretch" marginTop={2}>
 
 	          {item.video.value && (
-		          <Box className="itemDetail__playVideo" flex={1}>
+		          <Box className="itemDetail__playVideo" flex={1} marginRight={1}>
 			          <RectangularButton
 				          leftIcon={<Play/>}
 				          onClick={() => {
@@ -291,7 +346,7 @@ export default function ItemDetail({
 	          )}
 
 	          {item.audio && (
-		          <Box className="itemDetail__playAudio" flex={1} marginLeft={1}>
+		          <Box className="itemDetail__playAudio" flex={1} >
 			          <RectangularButton
 				          variant="outlined"
 				          leftIcon={<Volume1/>}
@@ -320,9 +375,37 @@ export default function ItemDetail({
               flex={0}
               marginLeft={1}
             >
-              <RectangularButton variant="outlined">
+              <RectangularButton
+	              aria-controls="itemDetail__share"
+	              aria-haspopup="true"
+	              aria-expanded={open ? 'true' : undefined}
+	              onClick={handleClick}
+	              variant="outlined">
                 <Share2 />
               </RectangularButton>
+	            <Menu
+		            id="itemDetail__share__menu"
+		            className="itemDetail__share__menu"
+		            aria-labelledby="demo-positioned-button"
+		            anchorEl={anchorEl}
+		            open={open}
+		            onClose={handleClose}
+		            anchorOrigin={{
+			            vertical  : 'bottom',
+			            horizontal: 'right',
+		            }}
+		            transformOrigin={{
+			            vertical  : 'top',
+			            horizontal: 'right',
+		            }}
+	            >
+		            <MenuItem onClick={handleFBShare}><Facebook /> Share on Facebook</MenuItem>
+		            <MenuItem onClick={handleTwitterShare}><Twitter /> Share on Twitter</MenuItem>
+		            {item.audio && (
+			            <MenuItem onClick={handleFileDownload}><Download /> Download Audio</MenuItem>
+		            )}
+		            <MenuItem onClick={handleCopyLink}><LinkIcon /> Copy Link <textarea ref={copyLinkRef} value={item.permalink} className="cpl-sr-only" /></MenuItem>
+	            </Menu>
             </Box>
           </Box>
 

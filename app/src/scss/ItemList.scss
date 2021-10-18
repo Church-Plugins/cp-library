@@ -52,6 +52,10 @@
 }
 
 .cplItem {
+	&__root {
+		cursor: pointer;
+	}
+
 	&__content {
 		font-size: 1rem;
 
@@ -79,7 +83,7 @@
 	}
 
 	&__itemMeta {
-		font-size: .75em;
+		font-size: max( 9px, .75em );
 	}
 
 	&__relativeReleaseDate {

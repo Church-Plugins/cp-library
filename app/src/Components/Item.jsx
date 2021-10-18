@@ -21,6 +21,7 @@ export default function Item({
 
   const displayTitle = item.title.replace( "&#8217;", "'" );
   const displayBg    = item.thumb ? { background: "url(" + item.thumb + ")", backgroundSize: "cover" } : {backgroundColor: "#C4C4C4"};
+  const history      = useHistory();
 
   return (
     <ListItem
@@ -33,6 +34,7 @@ export default function Item({
           background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(196, 196, 196, 0) 109.68%)'
         }
       }}
+      onClick={() => history.push(`/talks/${item.id}`)}
     >
       <Box className="cplItem__content" display="flex" flexDirection="row" width="100%">
         <Box className="cplItem__thumb" flex={0} display="flex" alignItems="center">
@@ -91,7 +93,8 @@ export function ItemActions({
 }) {
   const { passToPersistentPlayer } = usePersistentPlayer();
 
-	const playVideo = () => {
+	const playVideo = (e) => {
+		e.stopPropagation();
 		passToPersistentPlayer({
 			item,
 			mode         : 'video',
@@ -100,7 +103,8 @@ export function ItemActions({
 		});
 	};
 
-	const playAudio = () => {
+	const playAudio = (e) => {
+		e.stopPropagation();
 		passToPersistentPlayer({
       item,
       mode: "audio",

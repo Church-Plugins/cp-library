@@ -48,4 +48,10 @@
 	&__playAudio, &__playVideo {
 		max-width: 300px;
 	}
+
+	&__share__menu {
+		svg {
+			margin-right: 1rem;
+		}
+	}
 }
