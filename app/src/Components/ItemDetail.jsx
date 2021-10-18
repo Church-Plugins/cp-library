@@ -218,16 +218,14 @@ export default function ItemDetail({
       )}
       <Box display="flex" flexDirection={isDesktop ? "row" : "column"}>
         <Box className="itemDetail__leftContent" flex={1} flexBasis="40%" marginRight={isDesktop ? 2 : 0}>
-          <h1 className="itemDetail__title">{item.title}</h1>
+          <h1 className="itemDetail__title" dangerouslySetInnerHTML={{ __html: item.title }} />
           {isDesktop ? (
             <>
               <Box className="itemDetail__itemMeta" marginTop={4}>
                 <ItemMeta date={item.date.date} category={Object.values(item.category)} />
               </Box>
 
-              <Box className="itemDetail__description" marginTop={4}>
-                <p>{item.desc}</p>
-              </Box>
+              <Box className="itemDetail__description" marginTop={4} dangerouslySetInnerHTML={{ __html: item.title }} />
             </>
           ) : (
             <Divider
@@ -481,9 +479,7 @@ export default function ItemDetail({
       </Box>
 
       {isDesktop ? null : (
-        <Box className="itemDetail__description" marginTop={2}>
-          <p>{item.desc}</p>
-        </Box>
+        <Box className="itemDetail__description" marginTop={2} dangerouslySetInnerHTML={{ __html: item.desc }} />
       )}
 
     </Box>
