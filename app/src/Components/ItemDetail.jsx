@@ -204,7 +204,7 @@ export default function ItemDetail({
     // the player is up.
     <Box className={"itemDetail__root" + playingClass}>
       <Link to="/talks">{"<"} Back to talks</Link>
-      {isDesktop && (
+      {false && isDesktop && (
         <>
           <Box display="flex" justifyContent="space-between">
             <h1 className="itemDetail__header">Talks</h1>
