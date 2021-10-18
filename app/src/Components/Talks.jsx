@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import { ChevronLeft } from 'react-feather';
 
@@ -102,6 +102,15 @@ export default function Talks() {
 			'search': value
 	 	});
   }, 1000 );
+
+  useEffect( () => {
+  	const urlParams = new URLSearchParams(window.location.search);
+		const format    = urlParams.get('format');
+
+		if (format) {
+			addFilter( 'format__' + format, 'format' );
+		}
+  }, []);
 
   return (
     <>
