@@ -225,7 +225,7 @@ export default function ItemDetail({
                 <ItemMeta date={item.date.date} category={Object.values(item.category)} />
               </Box>
 
-              <Box className="itemDetail__description" marginTop={4} dangerouslySetInnerHTML={{ __html: item.title }} />
+              <Box className="itemDetail__description" marginTop={4} dangerouslySetInnerHTML={{ __html: item.desc }} />
             </>
           ) : (
             <Divider
