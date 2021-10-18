@@ -13,9 +13,10 @@ import FilterAccordionFormat from './FilterAccordionFormat';
 import FilterAccordionPopular from './FilterAccordionPopular';
 import FilterBoxFormat from './FilterBoxFormat';
 import FilterBoxPopular from './FilterBoxPopular';
+import TopicFilter from './TopicFilter';
 
 export default function Filter ({
-  activeFilters = [],
+  activeFilters = {},
   onRemoveFilter = noop,
   onSearchInputChange = noop,
   onFilterChange = noop,
@@ -24,36 +25,21 @@ export default function Filter ({
   const [filterDrawerIsOpen, setFilterDrawerIsOpen] = useState(false);
   const [topicDrawerIsOpen, setTopicDrawerIsOpen] = useState(false);
 
-  const RenderAccordionFormats = () => {
-	return <FilterAccordionFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />
-  }
-
-  const RenderAccordionPopular = () => {
-	return <FilterAccordionPopular
-		onClose={() => setTopicDrawerIsOpen(false)}
-		open={filterDrawerIsOpen}
-		onFilterChange={onFilterChange}
-		activeFilters={activeFilters} />
-  }
-
-  const RenderBoxFormats = () => {
-	return <FilterBoxFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />
-  }
-
-  const RenderBoxPopular = () => {
-	return <FilterBoxPopular onFilterChange={onFilterChange} activeFilters={activeFilters} />
-  }
-
   return (
     <Box className="filter__root">
       <Box display="flex" justifyContent={isDesktop ? "space-between" : "initial"}>
         {isDesktop ? (
           <>
-			<Box className="filter__accordion filter__format" flex={0}>
-				<RenderAccordionFormats />
+            <Box className="filter__accordion filter__format" flex={0}>
+              <FilterAccordionFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />
             </Box>
-			<Box className="filter__accordion filter__popular" flex={0}>
-            	<RenderAccordionPopular />
+            <Box className="filter__popular" flex={0}>
+              <TopicFilter
+                onClose={() => setTopicDrawerIsOpen(false)}
+                open={topicDrawerIsOpen}
+                onFilterChange={onFilterChange}
+                activeFilters={activeFilters.topics}
+              />
             </Box>
             <Box className="filter__search" flex={0} display="flex" alignItems="center">
               <SearchInput onValueChange={onSearchInputChange} />
@@ -72,14 +58,14 @@ export default function Filter ({
                 Filter
               </RoundButton>
             </Box>
-			<FilterDrawer
-				open={filterDrawerIsOpen}
-				onClose={() => setFilterDrawerIsOpen(false)}
-				onFilterChange={onFilterChange}
-				FormatFilter={RenderBoxFormats}
-				TopicFilter={RenderBoxPopular}
-				activeFilters={activeFilters}
-				/>
+            <FilterDrawer
+              open={filterDrawerIsOpen}
+              onClose={() => setFilterDrawerIsOpen(false)}
+              onFilterChange={onFilterChange}
+              FormatFilter={() => <FilterBoxFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />}
+              TopicFilter={() => <FilterBoxPopular onFilterChange={onFilterChange} activeFilters={activeFilters} />}
+              activeFilters={activeFilters}
+              />
           </>
         )}
       </Box>

@@ -30,6 +30,10 @@ export default function FilterAccordionPopular({
 	$( '.format__browse_desktop' ).addClass( 'topic__view' );
   }
 
+	const closeTopicView = () => {
+		$( '.format__browse_desktop' ).removeClass( 'topic__view' );
+	}
+
   return (
 	<Accordion className="format__browse_desktop">
 		<AccordionSummary
@@ -46,7 +50,7 @@ export default function FilterAccordionPopular({
 						<FilterAccordionTopic
 							className="format__filter_topic"
 							open={true}
-							onClose={() => {setTopicViewIsOpen( !topicViewIsOpen );} }
+							onClose={() => {setTopicViewIsOpen( !topicViewIsOpen ); closeTopicView();} }
 							onFilterChange={onFilterChange}
 							activeFilters={activeFilters}
 						/>

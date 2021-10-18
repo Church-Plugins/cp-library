@@ -29,7 +29,6 @@ export default function FilterAccordionTopic({
 	const [topicsFullLoading, setTopicsFullLoading] = useState( false );
 	const [topicsFullError, setTopicsFullError] = useState();
 	let [topicsFullLoaded, setTopicsFullLoaded] = useState( false );
-	const [topicViewIsOpen, setTopicViewIsOpen] = useState( false )
 	let refs = [];
 
 	useEffect(() => {
@@ -92,10 +91,6 @@ export default function FilterAccordionTopic({
 
 	createViewRefs();
 
-	const closeTopicView = () => {
-		$( '.format__browse_desktop' ).removeClass( 'topic__view' );
-	}
-
 		/**
 	 * Scroll to a ref in the DOM and perform UX alterations
 	 *
@@ -130,7 +125,7 @@ export default function FilterAccordionTopic({
 			<>
 				<Grid item xs={2} className="topic__column_back">
 					<Box className="format__less">
-						<IconButton onClick={() => { setTopicViewIsOpen( false ); closeTopicView(); }} aria-label="Back">
+						<IconButton onClick={onClose} aria-label="Back">
 							<ArrowBackIcon />
 							<Typography className="less__label">BACK</Typography>
 						</IconButton>
