@@ -69,6 +69,7 @@ class RE_Migrate {
 					WP_CLI::warning( 'no audio' );
 				} else {
 					$item->update_meta_value( 'audio_url', $audio['url'] );
+					wp_set_object_terms( $talk->ID, 'audio', 're_media_type' );
 				}
 			} catch ( Exception $e ) {
 				WP_CLI::warning( $e->getMessage() );
@@ -93,6 +94,9 @@ class RE_Migrate {
 				if ( $vimeo ) {
 					$item->update_meta_value( 'video_id_vimeo', $vimeo );
 				}
+
+				wp_set_object_terms( $sermon->ID, 'video', 're_media_type' );
+
 			} catch ( Exception $e ) {
 				WP_CLI::warning( $e->getMessage() );
 			}

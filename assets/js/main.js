@@ -14,10 +14,20 @@
 			window.addEventListener("message", SELF.iframeMessage);
 		};
 
+		/**
+		 * Indicates whether the persistent player component has been mounted or not.
+		 * @returns boolean
+		 */
 		SELF.isActive = function() {
 			return SELF.$body.hasClass('cpl-persistent-player');
 		};
 
+		/**
+		 * Invoked whenever a link (<a />) is clicked anywhere in the body. If it's a first-party link,
+		 * we hijack the event.
+		 * @param {MouseEvent} e
+		 * @returns false
+		 */
 		SELF.handleLinkClick = function(e) {
 			SELF.url = e.currentTarget.href;
 
@@ -29,6 +39,10 @@
 			return SELF.isIframe ? SELF.handleIframeClick() : SELF.handleClick();
 		};
 
+		/**
+		 * Invoked when we're in an iframe. Sends a message to the top-most iframe.
+		 * @returns false
+		 */
 		SELF.handleIframeClick = function() {
 			window.top.postMessage({
 				'action': SELF.messageAction,
@@ -38,6 +52,11 @@
 			return false;
 		};
 
+		/**
+		 * Invoked when we're the top-level window. Attach a new iframe to the body whose `src` is the
+		 * destination URL.
+		 * @returns boolean
+		 */
 		SELF.handleClick = function() {
 			if ( !SELF.isActive() ) {
 				return true;
@@ -48,12 +67,17 @@
 
 			SELF.$iframe.on('load', SELF.iframeLoaded);
 			SELF.$iframe.attr('src', SELF.url);
+			window.history.pushState({}, '', url);
 
 			return false;
 		};
 
+		/**
+		 * Invoked when the newly-attached iframe loaded. Remove everything outside the iframe but the
+		 * persistent player. This makes it look like the page has successfully navigated while the
+		 * player persist. A SPA-like experience as far the end-user is concerned.
+		 */
 		SELF.iframeLoaded = function() {
-			window.history.pushState({}, '', url);
 
 			$('body > *').each(function () {
 				var $this = $(this);
@@ -66,13 +90,20 @@
 			});
 		};
 
+		/**
+		 * Invoked whenever someone post a message to this window.
+		 * @param {MessageEvent} e
+		 * @returns undefined
+		 */
 		SELF.iframeMessage = function(e) {
+			// Filter out anything that we don't care about
 			if (SELF.messageAction !== e.data.action) {
 				return;
 			}
 
 			if (SELF.isActive()) {
 				SELF.$iframe.attr('src', e.data.url);
+				window.history.pushState({}, '', url);
 			} else {
 				window.location.href = e.data.url;
 			}

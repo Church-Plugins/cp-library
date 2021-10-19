@@ -13,10 +13,11 @@ import Controllers_Filter from '../Controllers/Filter';
 
 export default function FilterAccordionFormat({
   onFilterChange = noop,
-  filterController = new Controllers_Filter()
+  activeFilters = noop
 }) {
+
   return (
-	<Accordion>
+	<Accordion className="format__browse_desktop">
 		<AccordionSummary
 			expandIcon={<ExpandMoreIcon />}
 			aria-controls="panel-format-content"
@@ -24,14 +25,15 @@ export default function FilterAccordionFormat({
 		>
 			<Typography>FORMAT</Typography>
 		</AccordionSummary>
-		<AccordionDetails>
+		<AccordionDetails className="format__browse_details">
 			<FormGroup>
 				<FormControlLabel
 					control={
 						<Checkbox
 							name = "format__audio"
 							onChange={() => onFilterChange("format__audio")}
-							onClick={filterController.handleFormatChange} />
+							checked={activeFilters && activeFilters.formats && activeFilters.formats.includes( "format__audio" )}
+							/>
 					}
 					label="Audio" />
 				<FormControlLabel
@@ -39,17 +41,10 @@ export default function FilterAccordionFormat({
 						<Checkbox
 							name = "format__video"
 							onChange={() => onFilterChange("format__video")}
-							onClick={filterController.handleFormatChange} />
+							checked={activeFilters && activeFilters.formats && activeFilters.formats.includes( "format__video" )}
+							/>
 					}
 					label="Video" />
-				<FormControlLabel
-					control={
-						<Checkbox
-							name = "format__all"
-							onChange={() => onFilterChange("format__all")}
-							onClick={filterController.handleFormatChange} />
-					}
-					label="All" />
 			</FormGroup>
 		</AccordionDetails>
 	</Accordion>

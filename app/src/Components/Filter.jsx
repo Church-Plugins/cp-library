@@ -11,36 +11,35 @@ import { noop } from '../utils/noop';
 
 import FilterAccordionFormat from './FilterAccordionFormat';
 import FilterAccordionPopular from './FilterAccordionPopular';
+import FilterBoxFormat from './FilterBoxFormat';
+import FilterBoxPopular from './FilterBoxPopular';
+import TopicFilter from './TopicFilter';
 
 export default function Filter ({
-  activeFilters = [],
+  activeFilters = {},
   onRemoveFilter = noop,
   onSearchInputChange = noop,
   onFilterChange = noop,
 }) {
   const { isDesktop } = useBreakpoints();
   const [filterDrawerIsOpen, setFilterDrawerIsOpen] = useState(false);
+  const [topicDrawerIsOpen, setTopicDrawerIsOpen] = useState(false);
 
   return (
     <Box className="filter__root">
       <Box display="flex" justifyContent={isDesktop ? "space-between" : "initial"}>
         {isDesktop ? (
           <>
-		  	{/*
-            <Box className="filter__button" flex={0} display="flex" alignItems="center">
-              <RoundButton
-                variant="contained"
-                onClick={() => setFilterDrawerIsOpen(!filterDrawerIsOpen)}
-              >
-                Filter
-              </RoundButton>
+            <Box className="filter__accordion filter__format" flex={0}>
+              <FilterAccordionFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />
             </Box>
-			*/}
-			      <Box className="filter__accordion filter__format" flex={0}>
-            	<FilterAccordionFormat onFilterChange={onFilterChange} />
-            </Box>
-			      <Box className="filter__accordion filter__popular" flex={0}>
-            	<FilterAccordionPopular onFilterChange={onFilterChange} />
+            <Box className="filter__popular" flex={0}>
+              <TopicFilter
+                onClose={() => setTopicDrawerIsOpen(false)}
+                open={topicDrawerIsOpen}
+                onFilterChange={onFilterChange}
+                activeFilters={activeFilters.topics}
+              />
             </Box>
             <Box className="filter__search" flex={0} display="flex" alignItems="center">
               <SearchInput onValueChange={onSearchInputChange} />
@@ -59,6 +58,14 @@ export default function Filter ({
                 Filter
               </RoundButton>
             </Box>
+            <FilterDrawer
+              open={filterDrawerIsOpen}
+              onClose={() => setFilterDrawerIsOpen(false)}
+              onFilterChange={onFilterChange}
+              FormatFilter={() => <FilterBoxFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />}
+              TopicFilter={() => <FilterBoxPopular onFilterChange={onFilterChange} activeFilters={activeFilters} />}
+              activeFilters={activeFilters}
+              />
           </>
         )}
       </Box>

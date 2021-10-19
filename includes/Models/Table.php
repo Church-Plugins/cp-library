@@ -44,6 +44,13 @@ abstract class Table {
 	public static $type;
 
 	/**
+	 * The post type associated with this object
+	 *
+	 * @var
+	 */
+	public static $post_type;
+
+	/**
 	 * ID of the cache group to use
 	 *
 	 * @var string
@@ -85,6 +92,14 @@ abstract class Table {
 		$origin_id = absint( $origin_id );
 		if ( ! $origin_id ) {
 			return false;
+		}
+
+		if ( ! get_post( $origin_id ) ) {
+			throw new Exception( 'That post does not exist.' );
+		}
+
+		if ( static::$post_type !== get_post_type( $origin_id ) ) {
+			throw new Exception( 'The post type for the provided ID is not correct.' );
 		}
 
 		$object = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM " . static::$table_name . " WHERE origin_id = %s LIMIT 1;", $origin_id ) );

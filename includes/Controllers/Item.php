@@ -46,7 +46,24 @@ class Item {
 	}
 
 	public function get_thumbnail() {
-		return $this->filter( get_the_post_thumbnail_url( $this->post->ID ), __FUNCTION__ );
+		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID ) ) {
+			return $this->filter( $thumb, __FUNCTION__ );
+		}
+
+		$thumb = $this->maybeGetVimeoThumb();
+
+		return $this->filter( $thumb, __FUNCTION__ );
+	}
+
+	protected function maybeGetVimeoThumb() {
+		if ( ! $id = $this->model->get_meta_value( 'video_id_vimeo' ) ) {
+			return false;
+		}
+
+		$data = file_get_contents( "http://vimeo.com/api/v2/video/$id.json" );
+		$data = json_decode( $data );
+
+		return $data[0]->thumbnail_large;
 	}
 
 	public function get_publish_date() {
@@ -79,18 +96,13 @@ class Item {
 
 		if ( ! $url ) {
 			if ( $id = $this->model->get_meta_value( 'video_id_vimeo' ) ) {
-				$return['value'] = '<iframe src="https://player.vimeo.com/video/' . $id . '" width="500" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>';
+				$return['type']  = 'vimeo';
+				$return['id']    = $id;
+				$return['value'] = 'https://vimeo.com/' . $id;
 			} else if ( $id = $this->model->get_meta_value( 'video_id_facebook' ) )  {
-				$return['value'] =
-					'<div id="fb-root"></div>
-        			<script async defer src="https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v3.2"></script>
-
-			        <div class="fb-video"
-			             data-href="https://www.facebook.com' . $id . '"
-			             data-width="500"
-			             data-show-text="true"
-			             data-lazy="true">
-			        </div>';
+				$return['type']  = 'facebook';
+				$return['id']    = $id;
+				$return['value'] = 'https://www.facebook.com' . $id;
 			}
 		}
 

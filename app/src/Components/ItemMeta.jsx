@@ -5,22 +5,21 @@ import relativeDate from "tiny-relative-date";
 
 export default function ItemMeta({
   date,
-  category,
+  category = [],
 }) {
   return (
     <>
-      <Box className="itemMeta__relativeReleaseDate" display="inline-flex" alignItems="center">
-        <Calendar />
+      <Box className="itemMeta__relativeReleaseDate" display="inline-flex" alignItems="center" marginRight={2}>
+        <Calendar size="1em" />
         <Box component="span" marginLeft={1}>{relativeDate(date)}</Box>
       </Box>
-      {category && category.length > 0 && (
+      {category.length > 0 && (
         <Box
           className="itemMeta__categories"
           display="inline-flex"
           alignItems="center"
-          marginLeft={2}
         >
-          <Tag />
+          <Tag size="1em" />
           <Box component="span" marginLeft={1}>{category.join(",")}</Box>
         </Box>
       )}

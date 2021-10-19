@@ -73,9 +73,14 @@ class Shortcode
 	 * @author costmo
 	 */
 	public function render_root( $args ) {
+		$item_id = 0;
+		$path = get_query_var( 'item' );
+		if ( $path && $item = get_page_by_path( $path, OBJECT, 'cpl_items' ) ) {
+			$item_id = $item->ID;
+		}
 
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_root"></div>';
+		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_root" data-item-id="' . $item_id . '"></div>';
 
 		return $output;
 	}
@@ -127,8 +132,10 @@ class Shortcode
 		echo '<div id="' . CP_LIBRARY_UPREFIX . '_persistent_player"></div>';
 	}
 
-	public function render_item_widget() {
-		echo '<div id="' . CP_LIBRARY_UPREFIX . '_item_widget"></div>';
+	public function render_item_widget( $args ) {
+		$output  = self::staticScript( $args );
+		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_item_widget"></div>';
+		return $output;
 	}
 
 

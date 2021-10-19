@@ -2,6 +2,10 @@
 	font-size: inherit;
 }
 
+.topic__popper {
+	color: black;
+}
+
 #cpl_item_list {
    background-color: #0B0B0B;
    color: #FFFFFF;
@@ -45,4 +49,56 @@
 .cpl-item-list--item--title {
 	font-weight: bold;
 
+}
+
+.cplItem__itemMeta {
+	font-size: .75rem;
+}
+
+.cplItem {
+	&__root {
+		cursor: pointer;
+	}
+
+	&__content {
+		font-size: 1rem;
+
+		@media (max-width: 760px) {
+			font-size: 2.15vw;
+		}
+	}
+
+	&__details {
+		padding: 1em 0;
+	}
+
+	&__title {
+		margin-top: 0;
+		font-size: 1.5em;
+	}
+
+	&__thumb {
+		> div {
+			@media (max-width: 760px) {
+				width: 7em;
+				height: 5.83em;
+			}
+		}
+	}
+
+	&__itemMeta {
+		font-size: max( 9px, .75em );
+	}
+
+	&__relativeReleaseDate {
+		margin-right: 2em;
+	}
+
+	&__content .cplItem__toItem {
+		color: white;
+	}
+}
+
+.talks__paginationContainer {
+	font-size: 1rem;
 }

@@ -37,10 +37,34 @@
 }
 
 #cpl_root {
-	background-color: #000000;
+	background: linear-gradient(140deg, #2c2a2b, black 40%);
+	color: #ffffff;
+	min-height: 500px;
+}
 
-	> .talks__stickyContainer.MuiBox-root {
-		background-color: #000000c4;
+div.cplItems__topNav {
+	background: transparent;
+	padding: 1rem 0;
+	height: auto;
+
+	button {
+		color: white;
 	}
+
+	svg {
+		margin-bottom: .5rem;
+	}
+}
+
+.cpl-sr-only {
+	position: absolute;
+	top: -10000em;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
 }
 

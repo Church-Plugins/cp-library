@@ -47,7 +47,7 @@ class Item extends PostType  {
 			'hierarchical'  => true,
 			'label'         => $single,
 			'rewrite'       => [
-				'slug' 		=> strtolower( $single )
+				'slug' 		=> strtolower( $plural )
 			],
 			'supports' 		=> [ 'title', 'editor', 'thumbnail' ],
 			'labels'        => [

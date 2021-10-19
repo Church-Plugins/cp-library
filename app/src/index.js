@@ -15,6 +15,7 @@ import App from "./Components/App";
 import ItemDetail from "./Components/ItemDetail";
 import ItemList from './Components/ItemList';
 import ItemWidget from './Components/ItemWidget';
+import PersistentPlayer from './Components/PersistentPlayer';
 
 // TODO: combine and minify generated CSS
 
@@ -30,6 +31,7 @@ const item = document.getElementById( 'cpl_item' );
 // const player = document.getElementById( 'cpl_player' );
 const itemList = document.getElementById( 'cpl_item_list' );
 const itemWidget = document.getElementById( 'cpl_item_widget' );
+const persistentPlayer = document.getElementById( 'cpl_persistent_player' );
 // const sourceList = document.getElementById( 'cpl_source_list' );
 
 //
@@ -41,7 +43,20 @@ const itemWidget = document.getElementById( 'cpl_item_widget' );
 // }
 
 if (root) {
-	ReactDOM.render(<App />, root );
+	let itemId = root.getAttribute( 'data-item-id' );
+	const urlParams = new URLSearchParams(window.location.search);
+	const talkID = urlParams.get('talk_id');
+
+	if ( 0 < talkID ) {
+		itemId = talkID;
+	}
+
+	if ( 0 < itemId ) {
+		ReactDOM.render(<App itemId={itemId} />, root );
+	} else {
+
+		ReactDOM.render(<App />, root );
+	}
 }
 //if( root ) {
 //	ReactDOM.render( <ItemDetail />, root );
@@ -54,6 +69,9 @@ if (itemWidget) {
 }
 if( item ) {
 	ReactDOM.render( <ItemDetail />, root );
+}
+if (window === window.top && persistentPlayer) {
+//	ReactDOM.render(<PersistentPlayer />, persistentPlayer);
 }
 // if( source ) {
 // 	ReactDOM.render( <App />, source );

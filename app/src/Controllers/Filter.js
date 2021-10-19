@@ -23,10 +23,13 @@ class Controllers_Filter extends Component {
 	/**
 	 * Event handler for checkbox selection of the "Format" filter
 	 *
+	 * @deprecated
 	 * @param DOMevent event
 	 * @returns void
 	 */
 	handleFormatChange( event ) {
+
+		return;
 
 		// Simple sanity check
 		// Also, do not continue if the click event originated from another JS action
@@ -48,30 +51,30 @@ class Controllers_Filter extends Component {
 
 			if( event.target.checked ) {
 
-				if( !$( audio ).prop( 'checked' ) ) {
+				if( !$( audio ).is( ':checked' ) ) {
 					$( audio_target ).trigger( 'click' );
 				}
-				if( !$( video ).prop( 'checked' ) ) {
+				if( !$( video ).is( ':checked' ) ) {
 					$( video_target ).trigger( 'click' );
 				}
 			} else {
 
-				if( $( audio ).prop( 'checked' ) ) {
+				if( $( audio ).is( ':checked' ) ) {
 					$( audio_target ).trigger( 'click' );
 				}
-				if( $( video ).prop( 'checked' ) ) {
+				if( $( video ).is( ':checked' ) ) {
 					$( video_target ).trigger( 'click' );
 				}
 			}
 		} else {
 			mutating = true;
-			if( $( audio ).prop( 'checked' ) && $( video ).prop( 'checked' ) ) {
-				if( !$( all ).prop( 'checked' ) ) {
+			if( $( audio ).is( ':checked' ) && $( video ).is( ':checked' ) ) {
+				if( !$( all ).is( ':checked' ) ) {
 					// TODO: See why this isn't working as expected
 					// $( all_target ).trigger( 'click' );
 				}
 			} else {
-				if( $( all ).prop( 'checked' ) ) {
+				if( $( all ).is( ':checked' ) ) {
 					// $( all_target ).trigger( 'click' );
 				}
 			}

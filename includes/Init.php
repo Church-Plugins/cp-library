@@ -90,9 +90,17 @@ class Init {
 	protected function app_init() {
 		add_filter( 'script_loader_tag', [ $this, 'app_load_scripts' ], 10, 3 );
 		add_action( 'wp_enqueue_scripts', [ $this, 'app_enqueue' ] );
+		add_action( 'init', [ $this, 'rewrite_rules' ] );
+		add_action( 'init', [ $this, 'rewrite_rules' ] );
 
 		$shortcode = Shortcode_Controller::get_instance();
 		$shortcode->add_shortcodes();
+	}
+
+	public function rewrite_rules() {
+		add_rewrite_tag( '%item%', '([^&]+)' );
+		add_rewrite_rule('^talks/([^/]*)/?','index.php?item=$matches[1]&pagename=talks','top');
+//		flush_rewrite_rules(true);
 	}
 
 	/**
@@ -139,6 +147,10 @@ class Init {
 			wp_enqueue_script( CP_LIBRARY_UPREFIX . '-runtime', $path, [] );
 		}
 
+		wp_localize_script( CP_LIBRARY_UPREFIX . '-runtime', 'cplParams', [
+			'logo' => get_stylesheet_directory_uri() . '/library/images/re-icon.svg',
+		] );
+
 		// App main js
 		if( isset( $asset_manifest['files'][ 'main.js' ] ) ) {
 			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'main.js' ] );
@@ -174,9 +186,21 @@ class Init {
 	 *
 	 * @return void
 	 */
-	protected function actions() { }
+	protected function actions() {
+		add_action( 'wp_head', [ $this, 'global_css_vars' ] );
+	}
 
 	/** Actions **************************************/
+
+	public function global_css_vars() {
+		?>
+		<style>
+			:root {
+				--cpl-primary: #4D6CFA;
+			}
+		</style>
+		<?php
+	}
 
 	/**
 	 * Required Plugins notice

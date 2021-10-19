@@ -1,0 +1,57 @@
+.itemPlayer {
+	&__controlsWrapper {
+		padding: 2rem 1rem;
+
+		@media (max-width: 760px) {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			width: 100%;
+			z-index: 450;
+			background: linear-gradient(0deg, black 80%, transparent 100%);
+		}
+
+	}
+
+	&__video__controls {
+		opacity: 0.25;
+	}
+
+	&__controls {
+		padding: 1rem .5rem 0;
+
+		button {
+			color: white;
+			background-color: transparent !important;
+		}
+	}
+}
+
+.itemDetail {
+	&__root {
+		padding-bottom: 10rem;
+
+		&.is_desktop {
+			.itemPlayer__video__controls {
+				opacity: 0;
+
+				&:hover {
+					opacity: 1;
+				}
+			}
+		}
+	}
+	&__audio {
+		background: #ccc;
+	}
+
+	&__playAudio, &__playVideo {
+		max-width: 300px;
+	}
+
+	&__share__menu {
+		svg {
+			margin-right: 1rem;
+		}
+	}
+}

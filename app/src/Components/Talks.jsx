@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import { ChevronLeft } from 'react-feather';
 
@@ -14,7 +14,9 @@ export default function Talks() {
   const [activeFilters, setActiveFilters] = useState(
 	  	{
 	  		'topics': [],
-			'formats': []
+			'formats': [],
+			'page': 1,
+			'search': ''
 		}
 	);
 
@@ -50,7 +52,9 @@ export default function Talks() {
 	setActiveFilters(
 		{
 			'topics': topicInput,
-			'formats': formatInput
+			'formats': formatInput,
+			'page': 1,
+			'search': activeFilters.search
 		}
 	);
   }
@@ -58,13 +62,19 @@ export default function Talks() {
   // TODO: Wire-up
   const removeFilter = (label, filterType) => {
 
+	if( !filterType ) {
+		filterType = 'topic';
+	}
+
 	let topicInput 	= ('topic' === filterType) ? activeFilters.topics.filter( f => f !== label ) : [...activeFilters.topics];
 	let formatInput	= ('format' === filterType) ? activeFilters.formats.filter( f => f !== label ) : [...activeFilters.formats];
 
     setActiveFilters(
 		{
 			'topics': topicInput,
-			'formats': formatInput
+			'formats': formatInput,
+			'page': 1,
+			'search': activeFilters.search
 	 	});
   }
 
@@ -76,22 +86,37 @@ export default function Talks() {
 
     setActiveFilters({
 		'topics': topicInput,
-		'formats': formatInput
+		'formats': formatInput,
+		'page': 1,
+		'search': ''
   	});
   };
 
   // TODO: Wire-up
   const handleSearchInputChange = debounce((value) => {
-    console.log(value);
-  }, 500);
+	setActiveFilters(
+		{
+			'topics': [...activeFilters.topics],
+			'formats': [...activeFilters.formats],
+			'page': 1,
+			'search': value
+	 	});
+  }, 1000 );
+
+  useEffect( () => {
+  	const urlParams = new URLSearchParams(window.location.search);
+		const format    = urlParams.get('format');
+
+		if (format) {
+			addFilter( 'format__' + format, 'format' );
+		}
+  }, []);
 
   return (
     <>
       <Box
-        className="talks__stickyContainer"
-        position="sticky"
+        className="talks__headerContainer"
         top={0}
-        padding={2}
         // So that itemlist tucks underneath when scrolled up.
         zIndex={1}
         // TODO: To get this right, give the root element a background color that matches the host's
@@ -112,6 +137,7 @@ export default function Talks() {
           onRemoveFilter={removeFilter}
           onSearchInputChange={handleSearchInputChange}
           onFilterChange={toggleFilter}
+		  autoFocus={true}
         />
       </Box>
       <Box className="talks__itemListContainer" paddingY={1} paddingX={1}>
