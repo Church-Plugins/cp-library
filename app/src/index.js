@@ -44,10 +44,17 @@ const persistentPlayer = document.getElementById( 'cpl_persistent_player' );
 
 if (root) {
 	let itemId = root.getAttribute( 'data-item-id' );
+	const urlParams = new URLSearchParams(window.location.search);
+	const talkID = urlParams.get('talk_id');
+
+	if ( 0 < talkID ) {
+		itemId = talkID;
+	}
 
 	if ( 0 < itemId ) {
 		ReactDOM.render(<App itemId={itemId} />, root );
 	} else {
+
 		ReactDOM.render(<App />, root );
 	}
 }
