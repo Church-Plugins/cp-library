@@ -30,7 +30,7 @@ const item = document.getElementById( 'cpl_item' );
 // const source = document.getElementById( 'cpl_source' );
 // const player = document.getElementById( 'cpl_player' );
 const itemList = document.getElementById( 'cpl_item_list' );
-const itemWidget = document.getElementById( 'cpl_item_widget' );
+const itemWidget = document.querySelectorAll( '.cpl_item_widget' );
 const persistentPlayer = document.getElementById( 'cpl_persistent_player' );
 // const sourceList = document.getElementById( 'cpl_source_list' );
 

@@ -19,8 +19,7 @@ import SearchInput from './SearchInput';
 import RectangularButton from './RectangularButton';
 import Logo from './Logo';
 
-import { ExternalLink } from "react-feather"
-import { Cancel, Forward30, Replay10, Share, PlayCircleOutline, Facebook, Twitter, Download, Link as LinkIcon } from "@mui/icons-material"
+import { PictureInPicture, Forward30, Replay10, Fullscreen, PlayCircleOutline, Facebook, Twitter, Download, Link as LinkIcon } from "@mui/icons-material"
 import Slider from '@mui/material/Slider';
 import IconButton from '@mui/material/IconButton';
 import ReactDOM from 'react-dom';
@@ -276,7 +275,7 @@ export default function ItemDetail({
 
 				          <Box position="absolute" zIndex={50} top={0} left={0} className="itemPlayer__fullscreen">
 					          <IconButton sx={{color: '#ffffff', transform: 'scalex(-1)'}}
-					                      onClick={handleClickFullscreen}><ExternalLink/></IconButton>
+					                      onClick={handleClickFullscreen}><Fullscreen/></IconButton>
 				          </Box>
 
 			          </Box>
@@ -451,22 +450,22 @@ export default function ItemDetail({
 		         <Box className="itemPlayer__controls" display="flex" flexDirection="row"
 		              justifyContent="space-around" margin="auto">
 
-			         <Box display="flex" alignItems="center" onClick={updatePlaybackRate}>
+			         <Box className="itemPlayer__controls__rate" display="flex" alignItems="center" onClick={updatePlaybackRate}>
 				         <span>{playbackRate}x</span>
 			         </Box>
 
-			         <IconButton onClick={() => playerInstance.current.seekTo(playedSeconds - 10, 'seconds')}>
-				         <Replay10/>
+			         <IconButton size="large" onClick={() => playerInstance.current.seekTo(playedSeconds - 10, 'seconds')}>
+				         <Replay10 fontSize="inherit"/>
 			         </IconButton>
 
 			         <Box display="flex" alignItems="center">
 				         <ButtonPlay flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
 			         </Box>
-			         <IconButton onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')}>
-				         <Forward30/>
+			         <IconButton size='large' onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')}>
+				         <Forward30 fontSize="inherit"/>
 			         </IconButton>
-			         <IconButton sx={{color: '#ffffff', transform: 'scaley(-1)'}}
-			                     onClick={handleClickPersistent}><ExternalLink/></IconButton>
+			         <IconButton size="large" sx={{color: '#ffffff', transform: 'scaley(-1)'}}
+			                     onClick={handleClickPersistent}><PictureInPicture fontSize="inherit"/></IconButton>
 
 		         </Box>
 

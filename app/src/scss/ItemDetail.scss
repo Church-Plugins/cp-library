@@ -20,6 +20,10 @@
 	&__controls {
 		padding: 1rem .5rem 0;
 
+		&__rate {
+			cursor: pointer;
+		}
+
 		button {
 			color: white;
 			background-color: transparent !important;

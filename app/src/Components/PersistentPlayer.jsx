@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
-import { ExternalLink } from "react-feather"
-import { Cancel } from "@mui/icons-material"
+import { Cancel, Fullscreen } from "@mui/icons-material"
 import VideoPlayer from "react-player";
 import FilePlayer from 'react-player/file';
 import Slider from '@mui/material/Slider';
@@ -140,7 +139,7 @@ export default function PersistentPlayer(props) {
 
 				     <Box position="absolute" zIndex={50} top={0} left={0} className="persistentPlayer__fullscreen">
 					     <IconButton sx={{color: '#ffffff', transform: 'scalex(-1)'}}
-					                 onClick={handleClickFullscreen}><ExternalLink/></IconButton>
+					                 onClick={handleClickFullscreen}><Fullscreen/></IconButton>
 				     </Box>
 
 			     </Box>
