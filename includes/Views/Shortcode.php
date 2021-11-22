@@ -138,5 +138,11 @@ class Shortcode
 		return $output;
 	}
 
+	public function render_video_widget( $args ) {
+		$output  = self::staticScript( $args );
+		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_video_widget"></div>';
+		return $output;
+	}
+
 
 }
