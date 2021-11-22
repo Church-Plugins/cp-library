@@ -15,6 +15,7 @@ import App from "./Components/App";
 import ItemDetail from "./Components/ItemDetail";
 import ItemList from './Components/ItemList';
 import ItemWidget from './Components/ItemWidget';
+import VideoWidget from './Components/VideoWidget';
 import PersistentPlayer from './Components/PersistentPlayer';
 
 // TODO: combine and minify generated CSS
@@ -30,7 +31,8 @@ const item = document.getElementById( 'cpl_item' );
 // const source = document.getElementById( 'cpl_source' );
 // const player = document.getElementById( 'cpl_player' );
 const itemList = document.getElementById( 'cpl_item_list' );
-const itemWidget = document.querySelectorAll( '.cpl_item_widget' );
+const itemWidget = document.getElementById( 'cpl_item_widget' );
+const videoWidget = document.getElementById( 'cpl_video_widget' );
 const persistentPlayer = document.getElementById( 'cpl_persistent_player' );
 // const sourceList = document.getElementById( 'cpl_source_list' );
 
@@ -66,6 +68,9 @@ if (itemList) {
 }
 if (itemWidget) {
 	ReactDOM.render(<ItemWidget/>, itemWidget);
+}
+if (videoWidget) {
+	ReactDOM.render(<VideoWidget/>, videoWidget);
 }
 if( item ) {
 	ReactDOM.render( <ItemDetail />, root );

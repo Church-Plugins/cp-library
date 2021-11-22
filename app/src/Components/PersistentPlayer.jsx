@@ -160,7 +160,7 @@ export default function PersistentPlayer(props) {
 		    <Box className="persistentPlayer__info" flex={1} display="flex" flexDirection="column" marginLeft={1} marginRight={1}>
 			    <Box display="flex" flexDirection="row" alignItems="center" fontSize={14} >
 				    <Box marginRight={1} maxWidth={"1.5em"}><Logo /></Box>
-				    <Box dangerouslySetInnerHTML = {{ __html: item.title }}></Box>
+				    <Box><a href={item.permalink} dangerouslySetInnerHTML = {{ __html: item.title }} style={{ color: 'inherit' }}></a></Box>
 			    </Box>
           <Box display="flex" flexDirection="row" alignItems="center">
 

@@ -13,12 +13,14 @@ import ErrorDisplay from './ErrorDisplay';
 import AudioPlayer from './AudioPlayer';
 import ItemMeta from './ItemMeta';
 import SearchInput from './SearchInput';
+import { PlayCircleOutline } from "@mui/icons-material"
 import RectangularButton from './RectangularButton';
 import { usePersistentPlayer, PersistentPlayerProvider } from '../Contexts/PersistentPlayerContext';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../Components/Theme";
+import Logo from './Logo';
 
-const TESTING_ID = 123;
+const TESTING_ID = 30219;
 
 export default function ItemWidget() {
 
@@ -40,6 +42,7 @@ export function ItemWidgetContent ({
 	const [item, setItem] = useState();
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState();
+	const [displayBg, setDisplayBG]   = useState( {backgroundColor: "#C4C4C4"} );
 
 	useEffect(() => {
 		(
@@ -47,8 +50,10 @@ export function ItemWidgetContent ({
 				try {
 					setLoading(true);
 					const restRequest = new Controllers_WP_REST_Request();
-					const data = await restRequest.get({endpoint: `items/?count=1&media-type=audio`});
+					const data = await restRequest.get({endpoint: `items/?count=1&media-type=video`});
 					setItem(data.items[0]);
+
+
 				} catch (error) {
 					setError(error);
 				} finally {
@@ -58,6 +63,15 @@ export function ItemWidgetContent ({
 		)();
 	}, []);
 
+  useEffect(() => {
+    if (!item) return;
+
+    if ( item.thumb ) {
+    	setDisplayBG( { background: "url(" + item.thumb + ")", backgroundSize: "cover" } );
+    }
+
+  }, [item]);
+
 	const playVideo = () => {
 		passToPersistentPlayer({
 			item,
@@ -65,15 +79,6 @@ export function ItemWidgetContent ({
 			isPlaying    : true,
 			playedSeconds: 0.0,
 		});
-	};
-
-	const playAudio = () => {
-		passToPersistentPlayer({
-      item,
-      mode: "audio",
-      isPlaying: true,
-      playedSeconds: 0.0,
-    });
 	};
 
 	return loading ? (
@@ -85,39 +90,43 @@ export function ItemWidgetContent ({
 		// the player is up.
 		<Box className="itemWidget__root">
 			<Box className="itemWidget__content">
-				<Box className="itemWidget__itemMeta">
-					<ItemMeta date={item.date.date} category={[]}/>
-				</Box>
-				<h1 className="itemWidget__title">{item.title}</h1>
-				<Box className="itemWidget__description">
-					<p>{item.desc}</p>
-				</Box>
 
-				<Box className="itemWidget__actions" display="flex" alignItems="flex-start">
+          <Box
+            className="itemDetail__featureImage"
+            position="relative"
+            paddingTop="56.26%"
+            backgroundColor={"transparent"}
+            marginTop={isDesktop ? 0 : 1}
+            onClick={playVideo}
+            style={{cursor: 'pointer'}}
+          >
+	          <Box className="itemPlayer__video"
+	               position="absolute"
+	               top={0}
+	               left={0}
+	               width="100%"
+	               height="100%"
+	          >
+		          <Box
+			          className="itemDetail__audio"
+			          sx={displayBg}
+			          display="flex"
+			          alignItems="center"
+			          justifyContent="center"
+			          height="100%"
+			          width="100%"
+			          position="absolute"
+			          top={0}
+			          left={0}
+		          >
+			          {item.thumb ? (
+				          <PlayCircleOutline sx={{fontSize: 56, color: "white"}}/>
+			          ) : (
+				          <Logo height="50%"/>
+			          )}
+		          </Box>
 
-					{item.video.value &&
-					 <Box className="itemWidget__playVideo" marginRight={1}>
-						 <RectangularButton
-							 leftIcon={<Play/>}
-							 onClick={playVideo}
-						 >
-							 Play Video
-						 </RectangularButton>
-					 </Box>
-					}
-
-					{item.audio &&
-					 <Box className="itemWidget__playAudio">
-						 <RectangularButton
-							 variant="outlined"
-							 leftIcon={<Volume1/>}
-							 onClick={playAudio}
-							 sx={{height: 55, borderRadius: 2, color: "#fff", borderColor: "#fff"}}
-						 >
-							 Play Audio
-						 </RectangularButton>
-					 </Box>
-					}
+          </Box>
 
 				</Box>
 
