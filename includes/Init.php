@@ -148,7 +148,7 @@ class Init {
 		}
 
 		wp_localize_script( CP_LIBRARY_UPREFIX . '-runtime', 'cplParams', [
-			'logo' => get_stylesheet_directory_uri() . '/library/images/re-icon.svg',
+			'logo' => get_stylesheet_directory_uri() . '/library/images/re-icon-sound.png',
 		] );
 
 		// App main js

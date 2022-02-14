@@ -23,7 +23,7 @@ import { PictureInPicture, Forward30, Replay10, Fullscreen, PlayCircleOutline, F
 import Slider from '@mui/material/Slider';
 import IconButton from '@mui/material/IconButton';
 import ReactDOM from 'react-dom';
-import screenful from 'screenfull';
+import screenfull from 'screenfull';
 
 import formatDuration from '../utils/formatDuration';
 import ButtonPlay from './ButtonPlay';
@@ -37,13 +37,15 @@ export default function ItemDetail({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState();
   // Video or audio
-  const [mode, setMode] = useState();
+  const [mode, setMode] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playedSeconds, setPlayedSeconds] = useState(0.0);
   const [duration, setDuration] = useState(0.0);
   const [playingURL, setPlayingURL] = useState('');
   const [playbackRate, setPlaybackRate] = useState(1 );
 	const [displayBg, setDisplayBG]   = useState( {backgroundColor: "#C4C4C4"} );
+	const [showFSControls, setShowFSControls]   = useState( false );
+
   // Keep frequently-updated states (mainly the progress from the media player) as a ref so they
   // don't trigger re-render.
   const mediaState = useRef({});
@@ -53,6 +55,13 @@ export default function ItemDetail({
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 	const copyLinkRef = useRef(null);
+
+	const onMouseMove = (e) => {
+		if (showFSControls || ! screenfull.isFullscreen ) return;
+
+		setShowFSControls( true );
+		setTimeout(() => setShowFSControls( false ), 3500 );
+	};
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -64,7 +73,8 @@ export default function ItemDetail({
 
 	const handleClickFullscreen = () => {
 		const instance = ReactDOM.findDOMNode(playerInstance.current);
-		screenful.request( instance )
+		screenfull.request( instance.parentElement );
+		return false;
 	};
 
 	const handleClickPersistent = () => {
@@ -249,6 +259,7 @@ export default function ItemDetail({
 	               left={0}
 	               width="100%"
 	               height="100%"
+	               onMouseMove={onMouseMove}
 	          >
 		          <VideoPlayer
 			          ref={playerInstance}
@@ -269,6 +280,80 @@ export default function ItemDetail({
 			          onProgress={progress => setPlayedSeconds(progress.playedSeconds)}
 			          progressInterval={100}
 		          />
+
+
+		          {!mode ? null : (
+			          <Box className="itemPlayer__video__playWrap" onClick={() => setIsPlaying(!isPlaying)}></Box>
+		          )}
+
+		          {!showFSControls ? null : (
+		          	<Box className="itemPlayer__controlsWrapper">
+
+			          <Box className="itemPlayer__controls" display="flex" flexDirection="row"
+			               justifyContent="space-around" margin="auto">
+
+				          <Box display="flex" alignItems="center">
+					          <ButtonPlay flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
+				          </Box>
+
+				          <IconButton size="large"
+				                      onClick={() => playerInstance.current.seekTo(playedSeconds - 10, 'seconds')}>
+					          <Replay10 fontSize="inherit"/>
+				          </IconButton>
+
+				          <IconButton size='large'
+				                      onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')}>
+					          <Forward30 fontSize="inherit"/>
+				          </IconButton>
+
+				          <Box className="itemPlayer__controls__rate" display="flex" alignItems="center" onClick={updatePlaybackRate}>
+					          <span>{playbackRate}x</span>
+				          </Box>
+
+			          </Box>
+
+			          <Box className="itemPlayer__progress" flex={1} display="flex" flexDirection="column">
+				          <Box display="flex" flexDirection="row" alignItems="center">
+
+					          <Slider
+						          min={0}
+						          defaultValue={0}
+						          max={duration}
+						          step={.01}
+						          size="medium"
+						          value={playedSeconds}
+						          sx={{padding: '10px 0 !important'}}
+						          onChange={(_, value) => {
+							          setIsPlaying(false);
+							          setPlayedSeconds(value);
+						          }}
+						          onChangeCommitted={(_, value) => {
+							          setIsPlaying(true);
+							          playerInstance.current.seekTo(playedSeconds);
+							          setPlayedSeconds(value);
+						          }}
+					          />
+
+				          </Box>
+				          <Box className="itemPlayer__duration" display="flex" flexDirection="row"
+				               justifyContent="space-between">
+					          <Box
+						          display="flex"
+						          justifyContent="flex-start"
+					          >
+						          {formatDuration(playedSeconds)}
+					          </Box>
+					          <Box
+						          display="flex"
+						          justifyContent="flex-end"
+					          >
+						          -{formatDuration(duration - playedSeconds)}
+					          </Box>
+				          </Box>
+			          </Box>
+
+		          </Box>
+		          )}
 
 		          {mode === 'video' ? (
 			          <Box className="itemPlayer__video__controls">
