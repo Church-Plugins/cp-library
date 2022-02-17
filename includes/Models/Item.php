@@ -2,6 +2,8 @@
 
 namespace CP_Library\Models;
 
+use CP_Library\Exception;
+
 /**
  * Item DB Class
  *
@@ -23,6 +25,58 @@ class Item extends Table  {
 		self::$post_type = 'cpl_items';
 
 		parent::init();
+	}
+
+	/**
+	 * Get types associated with this item
+	 *
+	 * @return array|null
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_types() {
+		global $wpdb;
+
+		$types = $wpdb->get_col( $wpdb->prepare( "SELECT `item_type_id` FROM " . static::$meta_table_name . " WHERE `key` = 'item_type';" ) );
+
+		return apply_filters( 'cpl_item_get_types', $types, $this );
+	}
+
+	/**
+	 * Update the types associated with this item
+	 *
+	 * @param $types array
+	 *
+	 * @return bool
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function update_types( $types ) {
+		$existing_types = $this->get_types();
+
+		foreach( $types as $type ) {
+			if ( $key = array_search( $type, $existing_types ) ) {
+				unset( $existing_types[ $key ] );
+				continue;
+			}
+
+			$data = [
+				'key' => 'item_type',
+				'item_type_id' => absint( $type ),
+			];
+
+			$this->update_meta( $data, false );
+		}
+
+		// remove any types which should no longer be attached
+		foreach( $existing_types as $type ) {
+			$this->delete_meta( absint( $type ), 'item_type_id' );
+		}
+
+		return true;
 	}
 
 	/**
@@ -78,11 +132,11 @@ class Item extends Table  {
 	 *
 	 * @since   1.0
 	*/
-	public static function get_meta_column_defaults() {
+	public function get_meta_column_defaults() {
 		return array(
 			'key'          => '',
 			'value'        => '',
-			'item_id'      => 0,
+			'item_id'      => $this->id,
 			'item_type_id' => 0,
 			'order'        => 0,
 			'published'    => date( 'Y-m-d H:i:s' ),

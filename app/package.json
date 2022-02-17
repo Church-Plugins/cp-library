@@ -43,7 +43,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "sass": "sass src/scss:src/css --no-source-map",
-    "sass-watch": "sass src/scss:src/css --watch --no-source-map"
+    "sass-watch": "sass src/scss:src/css --watch"
   },
   "eslintConfig": {
     "extends": [

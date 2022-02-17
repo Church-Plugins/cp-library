@@ -2,6 +2,8 @@
 namespace CP_Library\Setup\PostTypes;
 
 // Exit if accessed directly
+use CP_Library\Exception;
+
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
@@ -128,7 +130,36 @@ abstract class PostType {
 		add_action( 'cmb2_admin_init', [ $this, 'register_metaboxes' ] );
 		// add_action( 'rest_cpl_items_params', [ $this, 'rest_request_limit' ], 10, 1 );
 		add_action( 'rest_cpl_items_query', [ $this, 'rest_request_limit' ], 10, 1 );
+		add_action( "save_post_{$this->post_type}", [ $this, 'save_post' ] );
+
 		return;
+	}
+
+	/**
+	 * Save post to our custom table
+	 *
+	 * @param $post_id
+	 *
+	 * @return bool|\CP_Library\Models\Item|\CP_Library\Models\ItemType|\CP_Library\Models\Source
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function save_post( $post_id ) {
+
+		if ( 'auto-draft' == get_post_status( $post_id ) ) {
+			return false;
+		}
+
+		try {
+			// this will save the item to our custom table if it does not already exist
+			$model = cp_library()->setup->post_types->get_type_model( $this->post_type, $post_id );
+		} catch( Exception $e ) {
+			error_log( $e->getMessage() );
+			return false;
+		}
+
+		return $model;
 	}
 
 }

@@ -20,8 +20,8 @@ class Item extends PostType  {
 	protected function __construct() {
 		$this->post_type = CP_LIBRARY_UPREFIX . "_items";
 
-		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", __( 'Item', 'cp_library' ) );
-		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", __( 'Items', 'cp_library' ) );
+		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", __( 'Sermon', 'cp_library' ) );
+		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", __( 'Sermons', 'cp_library' ) );
 
 		parent::__construct();
 	}
@@ -96,15 +96,15 @@ class Item extends PostType  {
 		] );
 
 		$cmb->add_field( [
+			'name' => __( 'Facebook video permalink', 'cp-library' ),
 			'id'   => 'video_id_facebook',
 			'type' => 'text_medium',
-			'name' => __( 'Facebook video permalink', 'cp-library' ),
 		] );
 
 		$cmb->add_field( [
+			'name' => __( 'Vimeo video id', 'cp-library' ),
 			'id'   => 'video_id_vimeo',
 			'type' => 'text_medium',
-			'name' => __( 'Vimeo video id', 'cp-library' ),
 		] );
 
 	}

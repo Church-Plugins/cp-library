@@ -194,8 +194,11 @@ abstract class Table {
 	 * @since   1.0
 	 * @return  array
 	 */
-	public static function get_meta_column_defaults() {
-		return array();
+	public function get_meta_column_defaults() {
+		return array(
+			'item_id' => $this->id,
+			'updated' => date( 'Y-m-d H:i:s' ),
+		);
 	}
 
 	/**
@@ -317,9 +320,13 @@ abstract class Table {
 	 * @author Tanner Moushey
 	 */
 	public function update_meta_value( $key, $value ) {
+		$data = [ 'key' => $key, 'value' => $value, 'item_id' => $this->id ];
+		return $this->update_meta( $data );
+	}
+
+	public function update_meta( $data, $unique = true ) {
 		global $wpdb;
 
-		$data = [ 'key' => $key, 'value' => $value, 'item_id' => $this->id, 'updated' => date( 'Y-m-d H:i:s' ) ];
 		$data = apply_filters( 'cpl_pre_update_meta', $data, $this );
 
 		// Initialise column format array
@@ -335,11 +342,14 @@ abstract class Table {
 		$data_keys = array_keys( $data );
 		$column_formats = array_merge( array_flip( $data_keys ), $column_formats );
 
-		if ( $this->get_meta_value( $key ) ) {
-			$result = $wpdb->update( static::$meta_table_name, $data, array( 'item_id' => $this->id, 'key' => $key ), $column_formats );
+		if ( $this->get_meta_value( $data['key'] ) && $unique ) {
+			$result = $wpdb->update( static::$meta_table_name, $data, array(
+				'item_id' => $this->id,
+				'key'     => $data['key']
+			), $column_formats );
 		} else {
 			// set default values
-			$data = wp_parse_args( $data, static::get_meta_column_defaults() );
+			$data = wp_parse_args( $data, $this->get_meta_column_defaults() );
 			$wpdb->insert( static::$meta_table_name, $data, $column_formats );
 			$result = $wpdb->insert_id;
 		}
@@ -355,7 +365,8 @@ abstract class Table {
 	}
 
 	/**
-	 * @param $key
+	 * @param $value
+	 * @param $field
 	 *
 	 * @return bool
 	 * @throws Exception
@@ -363,10 +374,10 @@ abstract class Table {
 	 *
 	 * @author Tanner Moushey
 	 */
-	public function delete_meta( $key ) {
+	public function delete_meta( $value, $field = 'key' ) {
 		global $wpdb;
 
-		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM " . static::$meta_table_name . " WHERE `item_id` = %d AND `key` = %s", $this->id, $key ) ) ) {
+		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM " . static::$meta_table_name . " WHERE `item_id` = %d AND `{$field}` = %s", $this->id, $value ) ) ) {
 			throw new Exception( sprintf( 'The row (%d) was not deleted.', absint( $this->id ) ) );
 		}
 

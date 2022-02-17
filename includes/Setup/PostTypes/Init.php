@@ -33,6 +33,12 @@ class Init {
 	public $source;
 
 	/**
+	 * Setup Series CPT
+	 * @var ItemType
+	 */
+	public $item_type;
+
+	/**
 	 * Only make one instance of Init
 	 *
 	 * @return Init
@@ -68,14 +74,14 @@ class Init {
 	}
 
 	public function get_post_types() {
-		return [ $this->item->post_type, $this->source->post_type ];
+		return [ $this->item->post_type, $this->source->post_type, $this->series->post_type ];
 	}
 
 	/**
 	 * @param $type
 	 * @param $id
 	 *
-	 * @return \CP_Library\Models\Item | \CP_Library\Models\Source
+	 * @return \CP_Library\Models\Item | \CP_Library\Models\Source | \CP_Library\Models\ItemType
 	 * @throws Exception
 	 * @since  1.0.0
 	 *
@@ -87,6 +93,8 @@ class Init {
 				return \CP_Library\Models\Item::get_instance_from_origin( $id );
 			case $this->source->post_type:
 				return \CP_Library\Models\Source::get_instance_from_origin( $id );
+			case $this->item_type->post_type:
+				return \CP_Library\Models\ItemType::get_instance_from_origin( $id );
 		}
 	}
 
@@ -101,7 +109,7 @@ class Init {
 		add_filter( 'cmb2_override_meta_remove', [ $this, 'meta_save_override' ], 10, 4 );
 		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
 
-		add_filter( 'use_block_editor_for_post_type', [ $this, 'disable_gutenberg' ], 10, 2 );
+//		add_filter( 'use_block_editor_for_post_type', [ $this, 'disable_gutenberg' ], 10, 2 );
 
 		add_action( 'init', function() {
 			register_taxonomy_for_object_type( 'talk_categories', 'cpl_items' );
@@ -113,6 +121,7 @@ class Init {
 	public function register_post_types() {
 		$this->item = Item::get_instance();
 		$this->source = Source::get_instance();
+		$this->item_type = ItemType::get_instance();
 	}
 
 	public function meta_save_override( $return, $data_args, $field_args, $field ) {
