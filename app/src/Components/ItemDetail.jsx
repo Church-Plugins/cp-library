@@ -387,7 +387,7 @@ export default function ItemDetail({
 						          )}
 					          </>
 				          ) : (
-					          <Logo style="height:50%;"/>
+					          <Logo/>
 				          )}
 			          </Box>
 		          )}
