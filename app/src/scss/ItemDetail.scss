@@ -108,6 +108,10 @@
 	}
 	&__audio {
 		background: #ccc;
+
+		img {
+			max-height: 50%;
+		}
 	}
 
 	&__playAudio, &__playVideo {
