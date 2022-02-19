@@ -8,12 +8,11 @@ import ReactDOM from 'react-dom';
 import useBreakpoints from '../Hooks/useBreakpoints';
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 
-import LoadingIndicator from './LoadingIndicator';
-import ErrorDisplay from './ErrorDisplay';
-import AudioPlayer from './AudioPlayer';
+import LoadingIndicator from '../Elements/LoadingIndicator';
+import ErrorDisplay from '../Elements/ErrorDisplay';
 import ItemMeta from './ItemMeta';
-import SearchInput from './SearchInput';
-import RectangularButton from './RectangularButton';
+import SearchInput from '../Elements/SearchInput';
+import RectangularButton from '../Elements/RectangularButton';
 import { usePersistentPlayer, PersistentPlayerProvider } from '../Contexts/PersistentPlayerContext';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../Components/Theme";

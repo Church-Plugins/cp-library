@@ -10,8 +10,8 @@ import { ArrowLeftCircle } from "react-feather";
 import Controllers_WP_REST_Request from '../../Controllers/WP_REST_Request';
 import { noop } from "../../utils/noop";
 
-import LoadingIndicator from "../LoadingIndicator";
-import ErrorDisplay from "../ErrorDisplay";
+import LoadingIndicator from "../../Elements/LoadingIndicator";
+import ErrorDisplay from "../../Elements/ErrorDisplay";
 import Label from "./Label";
 
 const alphabet = [
@@ -54,7 +54,7 @@ export default function AllTopics({
 
   const handleLetterClick = letter => {
     const filterHeader = filterHeaderEls.current[letter].current;
-    
+
     if (filterHeader === null || scrollingContainerEl.current === null) return;
 
     setSelectedLetter(letter);

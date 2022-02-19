@@ -16,8 +16,8 @@ import async from 'async';
 import $ from 'jquery';
 import Button from '@mui/material/Button';
 
-import LoadingIndicator from "./LoadingIndicator";
-import ErrorDisplay from "./ErrorDisplay";
+import LoadingIndicator from "../Elements/LoadingIndicator";
+import ErrorDisplay from "../Elements/ErrorDisplay";
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 
 export default function FilterDrawerTopic({

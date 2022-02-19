@@ -12,12 +12,12 @@ import useBreakpoints from '../Hooks/useBreakpoints';
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 import { usePersistentPlayer } from '../Contexts/PersistentPlayerContext';
 
-import LoadingIndicator from './LoadingIndicator';
-import ErrorDisplay from './ErrorDisplay';
+import LoadingIndicator from '../Elements/LoadingIndicator';
+import ErrorDisplay from '../Elements/ErrorDisplay';
 import ItemMeta from './ItemMeta';
-import SearchInput from './SearchInput';
-import RectangularButton from './RectangularButton';
-import Logo from './Logo';
+import SearchInput from '../Elements/SearchInput';
+import RectangularButton from '../Elements/RectangularButton';
+import Logo from '../Elements/Logo';
 
 import { PictureInPicture, Forward30, Replay10, Fullscreen, PlayCircleOutline, Facebook, Twitter, Download, Link as LinkIcon } from "@mui/icons-material"
 import Slider from '@mui/material/Slider';
@@ -26,7 +26,7 @@ import ReactDOM from 'react-dom';
 import screenfull from 'screenfull';
 
 import formatDuration from '../utils/formatDuration';
-import ButtonPlay from './ButtonPlay';
+import ButtonPlay from '../Elements/ButtonPlay';
 
 
 export default function ItemDetail({
@@ -212,11 +212,11 @@ export default function ItemDetail({
     // Margin bottom is to account for audio player. Making sure all content is still visible with
     // the player is up.
     <Box className={"itemDetail__root" + playingClass}>
-      <Link to="/talks">{"<"} Back to talks</Link>
+      <Link to={"/" + window.cplVars.item.slug}>{"<"} Back to {window.cplVars.item.labelPlural}</Link>
       {false && isDesktop && (
         <>
           <Box display="flex" justifyContent="space-between">
-            <h1 className="itemDetail__header">Talks</h1>
+            <h1 className="itemDetail__header">{window.cplVars.item.labelPlural}</h1>
             {/* TODO: Think about who's responsible for search, e.g. here or a global search provider */}
             <Box className="itemDetail__search" marginLeft={1} display="flex" alignItems="center">
               <SearchInput onValueChange={console.log} />

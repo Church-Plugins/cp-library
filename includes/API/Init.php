@@ -1,8 +1,9 @@
 <?php
 namespace CP_Library\API;
 
-use CP_Library\API\Items 	as 	Items_API;
-use CP_Library\API\Sources 	as 	Sources_API;
+use CP_Library\API\Items as Items_API;
+use CP_Library\API\ItemTypes as ItemTypes_API;
+use CP_Library\API\Sources as Sources_API;
 
 /**
  * Provides the global $cp_library object
@@ -50,6 +51,7 @@ class Init {
 
 		$api_instance = [
 			new Items_API(),
+			new ItemTypes_API(),
 			new Sources_API()
 		];
 

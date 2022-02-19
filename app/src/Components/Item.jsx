@@ -9,9 +9,9 @@ import { useHistory } from "react-router-dom";
 
 import useBreakpoints from '../Hooks/useBreakpoints';
 import { usePersistentPlayer } from '../Contexts/PersistentPlayerContext';
-import RectangularButton from './RectangularButton';
+import RectangularButton from '../Elements/RectangularButton';
 import ItemMeta from "./ItemMeta";
-import Logo from "./Logo";
+import Logo from "../Elements/Logo";
 
 export default function Item({
   item,

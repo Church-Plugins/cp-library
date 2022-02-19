@@ -1,7 +1,7 @@
 
 import { MemoryRouter, Switch, Route } from "react-router-dom";
 
-import Talks from "./Talks";
+import Items from "./Items";
 import ItemDetail from "./ItemDetail";
 import { PersistentPlayerProvider } from "../Contexts/PersistentPlayerContext";
 import BottomNavigation from '@mui/material/BottomNavigation';
@@ -58,7 +58,10 @@ export default function App({
             render={({ match, location, history}) => <ItemDetail itemId={match.params.itemId} />}
           />
           <Route path="/talks">
-            <Talks />
+            <Items />
+          </Route>
+          <Route path="/series">
+            <Items />
           </Route>
         </Switch>
       </MemoryRouter>

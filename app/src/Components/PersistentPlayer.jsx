@@ -11,10 +11,10 @@ import screenful from 'screenfull';
 import useBreakpoints from '../Hooks/useBreakpoints';
 import formatDuration from '../utils/formatDuration';
 
-import LoadingIndicator from './LoadingIndicator';
-import ErrorDisplay from './ErrorDisplay';
-import ButtonPlay from './ButtonPlay';
-import Logo from './Logo';
+import LoadingIndicator from '../Elements/LoadingIndicator';
+import ErrorDisplay from '../Elements/ErrorDisplay';
+import ButtonPlay from '../Elements/ButtonPlay';
+import Logo from '../Elements/Logo';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../Components/Theme";
 

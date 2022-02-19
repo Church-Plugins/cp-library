@@ -6,8 +6,8 @@ import Pagination from '@mui/material/Pagination';
 import async from 'async';
 
 import Item from "./Item";
-import LoadingIndicator from "./LoadingIndicator";
-import ErrorDisplay from "./ErrorDisplay";
+import LoadingIndicator from "../Elements/LoadingIndicator";
+import ErrorDisplay from "../Elements/ErrorDisplay";
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 import useBreakpoints from '../Hooks/useBreakpoints';
 

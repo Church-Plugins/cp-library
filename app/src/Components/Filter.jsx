@@ -3,17 +3,16 @@ import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 
-import SearchInput from './SearchInput';
-import RoundButton from './RoundButton';
+import SearchInput from '../Elements/SearchInput';
+import RoundButton from '../Elements/RoundButton';
 import FilterDrawer from './FilterDrawer';
 import useBreakpoints from '../Hooks/useBreakpoints';
 import { noop } from '../utils/noop';
 
-import FilterAccordionFormat from './FilterAccordionFormat';
-import FilterAccordionPopular from './FilterAccordionPopular';
 import FilterBoxFormat from './FilterBoxFormat';
 import FilterBoxPopular from './FilterBoxPopular';
-import TopicFilter from './TopicFilter';
+import TopicFilter from './FilterTopic';
+import FormatFilter from './FilterFormat';
 
 export default function Filter ({
   activeFilters = {},
@@ -31,7 +30,12 @@ export default function Filter ({
         {isDesktop ? (
           <>
             <Box className="filter__accordion filter__format" flex={0}>
-              <FilterAccordionFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />
+	            <FormatFilter
+		            onClose={() => setFilterDrawerIsOpen(false)}
+		            open={filterDrawerIsOpen}
+		            onFilterChange={onFilterChange}
+		            activeFilters={activeFilters}
+	            />
             </Box>
             <Box className="filter__popular" flex={0}>
               <TopicFilter
