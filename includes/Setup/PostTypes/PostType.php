@@ -75,7 +75,6 @@ abstract class PostType {
 	 */
 	protected function __construct() {
 		$this->modal = '\CP_Library\Models\\' . get_class( $this );
-		$this->register_post_type();
 		$this->add_actions();
 	}
 
@@ -83,10 +82,10 @@ abstract class PostType {
 	 * Registers a custom post type using child-configured args
 	 *
 	 * @return void
+	 * @throws Exception
 	 * @author costmo
 	 */
 	public function register_post_type() {
-
 		$cpt_args = $this->get_args();
 
 		if( empty( $cpt_args ) || !is_array( $cpt_args ) ) {
@@ -131,7 +130,7 @@ abstract class PostType {
 		// add_action( 'rest_cpl_items_params', [ $this, 'rest_request_limit' ], 10, 1 );
 		add_action( 'rest_cpl_items_query', [ $this, 'rest_request_limit' ], 10, 1 );
 		add_action( "save_post_{$this->post_type}", [ $this, 'save_post' ] );
-
+		add_action( 'cpl_register_post_types', [ $this, 'register_post_type' ] );
 		return;
 	}
 

@@ -27,8 +27,8 @@ class Source extends PostType {
 
 		$this->post_type = CP_LIBRARY_UPREFIX . "_sources";
 
-		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", __( 'Source', 'cp_library' ) );
-		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", __( 'Sources', 'cp_library' ) );
+		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", __( 'Speaker', 'cp_library' ) );
+		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", __( 'Speakers', 'cp_library' ) );
 
 		parent::__construct();
 	}
@@ -48,9 +48,9 @@ class Source extends PostType {
 		$args = [
 			'public'        => true,
 			'menu_icon'     => $icon,
-			'show_in_menu'  => true,
+			'show_in_menu'  => 'edit.php?post_type=' . Item::get_instance()->post_type,
 			'show_in_rest'  => true,
-			'has_archive'   => CP_LIBRARY_UPREFIX . '-' . $single . '-archive',
+			'has_archive'   => CP_LIBRARY_UPREFIX . '-' . strtolower( $single ) . '-archive',
 			'hierarchical'  => true,
 			'label'         => $single,
 			'rewrite'       => [
@@ -74,44 +74,11 @@ class Source extends PostType {
 			]
 		];
 
-		return apply_filters( "cpl_{$this->post_type}_args", $args, $this );
+		return apply_filters( "{$this->post_type}_args", $args, $this );
 
 	}
 
-	/**
-	 * Add metaboxes for this CPT
-	 *
-	 * @return void
-	 * @author costmo
-	 */
 	public function register_metaboxes() {
-
-		$admin_view = new Source_Admin_View();
-
+		// TODO: Implement register_metaboxes() method.
 	}
-
-	/**
-	 * Add actions for this CPT to WP
-	 *
-	 * @return void
-	 * @author costmo
-	 */
-	public function add_actions() {
-//
-//		$model = new Source_Model();
-//
-//		add_action(
-//			'save_post_' . CP_LIBRARY_UPREFIX . '_sources',
-//			[$model, 'save_post'],
-//			20, 2
-//		);
-//
-//		parent::add_actions();
-//		return;
-	}
-
-
-
-
-
 }

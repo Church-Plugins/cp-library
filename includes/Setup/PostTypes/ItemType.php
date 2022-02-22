@@ -29,6 +29,19 @@ class ItemType extends PostType  {
 		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", __( 'Series', 'cp_library' ) );
 
 		parent::__construct();
+
+		$item_type   = Item::get_instance()->post_type;
+		$source_type = Source::get_instance()->post_type;
+
+		add_filter( "{$item_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
+		add_filter( "{$source_type}_args", [ $this, 'cpt_menu_position' ], 10 , 2 );
+
+	}
+
+	public function cpt_menu_position( $args, $class ) {
+		$args['show_in_menu'] = 'edit.php?post_type=' . $this->post_type;
+
+		return $args;
 	}
 
 	public function add_actions() {
@@ -69,7 +82,7 @@ class ItemType extends PostType  {
 
 		$plural = $this->plural_label;
 		$single = $this->single_label;
-		$icon   = apply_filters( "cpl_{$this->post_type}_icon", 'dashicons-video-alt3' );
+		$icon   = apply_filters( "cpl_{$this->post_type}_icon", 'dashicons-list-view' );
 
 		$args = [
 			'public'        => true,
@@ -100,7 +113,7 @@ class ItemType extends PostType  {
 			]
 		];
 
-		return apply_filters( "cpl_{$this->post_type}_args", $args, $this );
+		return apply_filters( "{$this->post_type}_args", $args, $this );
 	}
 
 	protected function sermon_series_metabox() {
@@ -178,6 +191,23 @@ class ItemType extends PostType  {
 		] );
 
 		$cmb->add_group_field( $group_field_id, [
+			'name' => 'Thumbnail',
+			'id'   => 'thumbnail',
+			'type' => 'file',
+			'options' => [
+				'url' => false,
+			],
+			'query_args' => array(
+				 'type' => array(
+				 	'image/gif',
+				 	'image/jpeg',
+				 	'image/png',
+				 ),
+			),
+			'preview_size' => 'medium',
+		] );
+
+		$cmb->add_group_field( $group_field_id, [
 			'name' => 'Speaker',
 			'id'   => 'speaker',
 			'type' => 'text'
@@ -245,6 +275,12 @@ class ItemType extends PostType  {
 					throw new Exception( 'The item was not saved correctly.' );
 				}
 
+				if ( ! empty( $item_data[ 'thumbnail_id' ] ) ) {
+					set_post_thumbnail( $item_data['id'], $item_data['thumbnail_id'] );
+				} else {
+					delete_post_thumbnail( $item_data['id'] );
+				}
+
 				$item = ItemModel::get_instance_from_origin( $item_data['id'] );
 
 				$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo' ];
@@ -291,6 +327,11 @@ class ItemType extends PostType  {
 				$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo' ];
 				foreach( $meta as $key ) {
 					$item_data[ $key ] = $item->model->get_meta_value( $key );
+				}
+
+				if ( has_post_thumbnail( $item_data['id'] ) ) {
+					$item_data['thumbnail_id'] = get_post_thumbnail_id( $item_data['id'] );
+					$item_data['thumbnail']    = wp_get_attachment_image_url( $item_data['thumbnail_id'], 'medium' );
 				}
 
 				$data[] = $item_data;

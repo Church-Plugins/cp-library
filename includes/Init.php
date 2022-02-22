@@ -25,6 +25,8 @@ class Init {
 	 */
 	public $api;
 
+	public $enqueue;
+
 	/**
 	 * Only make one instance of Init
 	 *
@@ -43,6 +45,7 @@ class Init {
 	 *
 	 */
 	protected function __construct() {
+		$this->enqueue = new \WPackio\Enqueue( $this->get_id(), 'dist', $this->get_version(), 'plugin', CP_LIBRARY_PLUGIN_FILE );
 		add_action( 'plugins_loaded', [ $this, 'maybe_setup' ], - 9999 );
 		add_action( 'init', [ $this, 'maybe_init' ] );
 	}
@@ -90,6 +93,7 @@ class Init {
 	protected function app_init() {
 		add_filter( 'script_loader_tag', [ $this, 'app_load_scripts' ], 10, 3 );
 		add_action( 'wp_enqueue_scripts', [ $this, 'app_enqueue' ] );
+		add_action( 'admin_enqueue_scripts', [ $this, 'admin_scripts' ] );
 		add_action( 'init', [ $this, 'rewrite_rules' ] );
 		add_action( 'init', [ $this, 'rewrite_rules' ] );
 
@@ -119,6 +123,11 @@ class Init {
 		}
 
 		return str_replace( ' src', ' async defer src', $tag );
+	}
+
+	public function admin_scripts() {
+		$this->enqueue->enqueue( 'styles', 'admin', [] );
+		$this->enqueue->enqueue( 'scripts', 'admin', [] );
 	}
 
 	/**
@@ -261,6 +270,15 @@ class Init {
 	 */
 	public function get_id() {
 		return 'cp-library';
+	}
+
+	/**
+	 * Provide a unique ID tag for the plugin
+	 *
+	 * @return string
+	 */
+	public function get_version() {
+		return '1.0.0';
 	}
 
 	/**

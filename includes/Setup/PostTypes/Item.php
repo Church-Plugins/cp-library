@@ -36,7 +36,7 @@ class Item extends PostType  {
 
 		$plural = $this->plural_label;
 		$single = $this->single_label;
-		$icon   = apply_filters( "cpl_{$this->post_type}_icon", 'dashicons-album' );
+		$icon   = apply_filters( "cpl_{$this->post_type}_icon", 'dashicons-format-video' );
 
 		$args = [
 			'public'        => true,
@@ -67,7 +67,7 @@ class Item extends PostType  {
 			]
 		];
 
-		return apply_filters( "cpl_{$this->post_type}_args", $args, $this );
+		return apply_filters( "{$this->post_type}_args", $args, $this );
 	}
 
 	public function register_metaboxes() {

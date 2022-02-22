@@ -1,0 +1,44 @@
+#cpl_series_items_data {
+
+}
+
+#cpl_series_items_repeat {
+
+	.cmb-repeatable-grouping {
+
+		> .inside {
+			> div:first-child {
+				position: absolute;
+				top: -4rem;
+				border-bottom: 0;
+
+				input:not(:focus) {
+					background: transparent;
+					border: none;
+					border-bottom: 1px solid;
+					border-radius: 0;
+					font-weight: bold;
+				}
+
+				.cmb-th {
+					display: none;
+				}
+			}
+		}
+
+		&.closed {
+			> .inside {
+				display: block;
+
+				> div:not(:last-child):not(:first-child) {
+					display: none;
+				}
+			}
+		}
+
+		.cmb-remove-field-row {
+			padding: .5rem 0;
+		}
+	}
+
+}

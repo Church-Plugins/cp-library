@@ -44,28 +44,64 @@ module.exports = {
 		// },
 		// If has more length, then multi-compiler
 		// We need to punt app compiling to `app/package.json`
+//		{
+//			name: 'app',
+//			entry: {
+//				main: ['./app/src/index.js']
+//			},
+//			webpackConfig: {
+//				module: {
+//					rules: [
+//						{
+//							test: /\.rt$/,
+//							use: [
+//								{
+//									loader: 'react-templates-loader?modules=amd',
+//								}
+//							]
+//						}
+//
+//					]
+//				}
+//			}
+//		}
 		{
-			name: 'app',
-			entry: {
-				main: ['./app/src/index.js']
+			name         : 'styles',
+			entry        : {
+				main: ['./assets/scss/main.scss'],
+				admin: ['./assets/scss/admin.scss'],
 			},
-			webpackConfig: {
-				module: {
-					rules: [
-						{
-							test: /\.rt$/,
-							use: [
-								{
-									loader: 'react-templates-loader?modules=amd',
-								}
-							]
-						}
+			webpackConfig: (config, merge, appDir, isDev) => {
+				const customRules = {
+					module: {
+						rules: [
+							{
+								test: /\.(png|jpg|gif|svg)$/i,
+								use : [
+									{
+										loader : 'url-loader',
+										options: {
+											limit: 8192,
+										}
+									}
+								]
+							}
+						]
+					}
+				};
 
-					]
-				}
-			}
+				return merge(config, customRules);
+			},
+		},
+		{
+			name : 'scripts',
+			entry: {
+				main: ['./assets/js/main.js'],
+				admin: ['./assets/js/admin.js']
+			},
 		}
 	],
+
 	// Output path relative to the context directory
 	// We need relative path here, else, we can not map to publicPath
 	outputPath: 'dist',

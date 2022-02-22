@@ -119,9 +119,18 @@ class Init {
 	}
 
 	public function register_post_types() {
+
 		$this->item = Item::get_instance();
-		$this->source = Source::get_instance();
-		$this->item_type = ItemType::get_instance();
+
+		if ( apply_filters( 'cpl_enable_sources', true ) ) {
+			$this->source = Source::get_instance();
+		}
+
+		if ( apply_filters( 'cpl_enable_item_types', true ) ) {
+			$this->item_type = ItemType::get_instance();
+		}
+
+		do_action( 'cpl_register_post_types' );
 	}
 
 	public function meta_save_override( $return, $data_args, $field_args, $field ) {
