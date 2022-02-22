@@ -20,42 +20,42 @@ abstract class Table {
 	 *
 	 * @since   1.0
 	 */
-	public static $table_name;
+	protected $table_name;
 
 	/**
 	 * The name of the meta database table
 	 *
 	 * @var string
 	 */
-	public static $meta_table_name;
+	protected $meta_table_name;
 
 	/**
 	 * The name of the primary column
 	 *
 	 * @since   1.0
 	 */
-	public static $primary_key;
+	protected $primary_key;
 
 	/**
 	 * Unique string to identify this data type
 	 *
 	 * @var string
 	 */
-	public static $type;
+	protected $type;
 
 	/**
 	 * The post type associated with this object
 	 *
 	 * @var
 	 */
-	public static $post_type;
+	protected $post_type;
 
 	/**
 	 * ID of the cache group to use
 	 *
 	 * @var string
 	 */
-	public static $cache_group;
+	protected $cache_group;
 
 	/**
 	 * ID of the current post
@@ -65,13 +65,24 @@ abstract class Table {
 	public $id = null;
 	public $origin_id = null;
 
-	public static function init() {
+	public function init() {
 		global $wpdb;
 
-		static::$cache_group = static::$type;
-		static::$table_name  = $wpdb->prefix . CP_LIBRARY_UPREFIX . '_' . static::$type;
-		static::$meta_table_name  = $wpdb->prefix . CP_LIBRARY_UPREFIX . '_' . static::$type . "_meta";
-		static::$primary_key = 'id';
+		$this->cache_group = $this->type;
+		$this->table_name  = $wpdb->prefix . CP_LIBRARY_UPREFIX . '_' . $this->type;
+		$this->meta_table_name  = $wpdb->prefix . CP_LIBRARY_UPREFIX . '_' . $this->type . "_meta";
+		$this->primary_key = 'id';
+	}
+
+	public static function get_prop( $var ) {
+		$class = get_called_class();
+		$instance = new $class();
+
+		if ( property_exists( $instance, $var ) ) {
+			return $instance->$var;
+		}
+
+		return '';
 	}
 
 	/**
@@ -87,8 +98,6 @@ abstract class Table {
 	public static function get_instance_from_origin( $origin_id ) {
 		global $wpdb;
 
-		static::init();
-
 		$origin_id = absint( $origin_id );
 		if ( ! $origin_id ) {
 			return false;
@@ -98,11 +107,11 @@ abstract class Table {
 			throw new Exception( 'That post does not exist.' );
 		}
 
-		if ( static::$post_type !== get_post_type( $origin_id ) ) {
+		if ( static::get_prop('post_type' ) !== get_post_type( $origin_id ) ) {
 			throw new Exception( 'The post type for the provided ID is not correct.' );
 		}
 
-		$object = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM " . static::$table_name . " WHERE origin_id = %s LIMIT 1;", $origin_id ) );
+		$object = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM " . static::get_prop('table_name' ) . " WHERE origin_id = %s LIMIT 1;", $origin_id ) );
 
 		if ( ! $object ) {
 			$data = [ 'origin_id' => $origin_id, 'status' => get_post_status( $origin_id ) ];
@@ -126,14 +135,12 @@ abstract class Table {
 	public static function get_instance( $id ) {
 		global $wpdb;
 
-		static::init();
-
 		$id = absint( $id );
 		if ( ! $id ) {
 			return false;
 		}
 
-		$object = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM " . static::$table_name . " WHERE id = %s LIMIT 1;", $id ) );
+		$object = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM " . static::get_prop('table_name' ) . " WHERE id = %s LIMIT 1;", $id ) );
 
 		if ( ! $object ) {
 			throw new Exception( 'Could not find object.' );
@@ -149,8 +156,12 @@ abstract class Table {
 	 *
 	 * @since   1.0
 	 */
-	public function __construct( $object ) {
-		static::init();
+	public function __construct( $object = false ) {
+		$this->init();
+
+		if ( ! $object ) {
+			return;
+		}
 
 		foreach( get_object_vars( $object ) as $key => $value ) {
 			$this->$key = $value;
@@ -239,7 +250,7 @@ abstract class Table {
 		$data_keys = array_keys( $data );
 		$column_formats = array_merge( array_flip( $data_keys ), $column_formats );
 
-		$wpdb->insert( static::$table_name, $data, $column_formats );
+		$wpdb->insert( static::get_prop('table_name' ), $data, $column_formats );
 
 		if ( ! $wpdb_insert_id = $wpdb->insert_id ) {
 			throw new Exception( 'Could not insert data.' );
@@ -281,7 +292,7 @@ abstract class Table {
 		}
 
 		if ( empty( $where ) ) {
-			$where = static::$primary_key;
+			$where = static::get_prop('primary_key' );
 		}
 
 		// Initialise column format array
@@ -297,7 +308,7 @@ abstract class Table {
 		$data_keys = array_keys( $data );
 		$column_formats = array_merge( array_flip( $data_keys ), $column_formats );
 
-		if ( false === $wpdb->update( static::$table_name, $data, array( $where => $row_id ), $column_formats ) ) {
+		if ( false === $wpdb->update( static::get_prop('table_name' ), $data, array( $where => $row_id ), $column_formats ) ) {
 			throw new Exception( sprintf( 'The row (%d) was not updated.', absint( $row_id ) ) );
 		}
 
@@ -343,14 +354,14 @@ abstract class Table {
 		$column_formats = array_merge( array_flip( $data_keys ), $column_formats );
 
 		if ( $this->get_meta_value( $data['key'] ) && $unique ) {
-			$result = $wpdb->update( static::$meta_table_name, $data, array(
-				'item_id' => $this->id,
+			$result = $wpdb->update( static::get_prop('meta_table_name' ), $data, array(
+				$this->type . '_id' => $this->id,
 				'key'     => $data['key']
 			), $column_formats );
 		} else {
 			// set default values
 			$data = wp_parse_args( $data, $this->get_meta_column_defaults() );
-			$wpdb->insert( static::$meta_table_name, $data, $column_formats );
+			$wpdb->insert( static::get_prop('meta_table_name' ), $data, $column_formats );
 			$result = $wpdb->insert_id;
 		}
 
@@ -361,7 +372,7 @@ abstract class Table {
 
 	public function get_meta_value( $key ) {
 		global $wpdb;
-		return $wpdb->get_var( $wpdb->prepare( "SELECT `value` FROM " . static::$meta_table_name . " WHERE `key` = %s AND item_id = %d LIMIT 1;", $key, $this->id ) );
+		return $wpdb->get_var( $wpdb->prepare( "SELECT `value` FROM " . static::get_prop('meta_table_name' ) . " WHERE `key` = %s AND {$this->type}_id = %d LIMIT 1;", $key, $this->id ) );
 	}
 
 	/**
@@ -377,7 +388,7 @@ abstract class Table {
 	public function delete_meta( $value, $field = 'key' ) {
 		global $wpdb;
 
-		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM " . static::$meta_table_name . " WHERE `item_id` = %d AND `{$field}` = %s", $this->id, $value ) ) ) {
+		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM " . static::get_prop('meta_table_name' ) . " WHERE `item_id` = %d AND `{$field}` = %s", $this->id, $value ) ) ) {
 			throw new Exception( sprintf( 'The row (%d) was not deleted.', absint( $this->id ) ) );
 		}
 
@@ -395,7 +406,7 @@ abstract class Table {
 
 		global $wpdb;
 
-		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM " . static::$table_name . " WHERE " . static::$primary_key . " = %d", $this->id ) ) ) {
+		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM " . static::get_prop('table_name' ) . " WHERE " . static::get_prop('primary_key' ) . " = %d", $this->id ) ) ) {
 			throw new Exception( sprintf( 'The row (%d) was not deleted.', absint( $this->id ) ) );
 		}
 
@@ -408,7 +419,7 @@ abstract class Table {
 	 * @since  1.0
 	 */
 	public static function set_last_changed() {
-		wp_cache_set( 'last_changed', microtime(), static::$cache_group );
+		wp_cache_set( 'last_changed', microtime(), static::get_prop('cache_group' ) );
 	}
 
 	/**
@@ -418,13 +429,13 @@ abstract class Table {
 	 */
 	public static function get_last_changed() {
 		if ( function_exists( 'wp_cache_get_last_changed' ) ) {
-			return wp_cache_get_last_changed( static::$cache_group );
+			return wp_cache_get_last_changed( static::get_prop('cache_group' ) );
 		}
 
-		$last_changed = wp_cache_get( 'last_changed', static::$cache_group );
+		$last_changed = wp_cache_get( 'last_changed', static::get_prop('cache_group' ) );
 		if ( ! $last_changed ) {
 			$last_changed = microtime();
-			wp_cache_set( 'last_changed', $last_changed, static::$cache_group );
+			wp_cache_set( 'last_changed', $last_changed, static::get_prop('cache_group' ) );
 		}
 
 		return $last_changed;

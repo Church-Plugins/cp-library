@@ -41,7 +41,7 @@ class SourceMeta extends Table  {
 	 * @author Tanner Moushey
 	 */
 	public static function get_keys() {
-		return apply_filters( 'cpl_source_meta_keys_enum', [ 'name', 'title', 'url' ] );
+		return apply_filters( 'cpl_source_meta_keys_enum', [ 'name', 'title', 'url', 'source_type' ] );
 	}
 
 	/**

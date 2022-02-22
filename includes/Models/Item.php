@@ -20,9 +20,9 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  */
 class Item extends Table  {
 
-	public static function init() {
-		self::$type = 'item';
-		self::$post_type = 'cpl_items';
+	public function init() {
+		$this->type = 'item';
+		$this->post_type = 'cpl_items';
 
 		parent::init();
 	}
@@ -38,7 +38,7 @@ class Item extends Table  {
 	public function get_types() {
 		global $wpdb;
 
-		$types = $wpdb->get_col( $wpdb->prepare( "SELECT `item_type_id` FROM " . static::$meta_table_name . " WHERE `key` = 'item_type' AND `item_id` = %d;", $this->id ) );
+		$types = $wpdb->get_col( $wpdb->prepare( "SELECT `item_type_id` FROM " . $this->meta_table_name . " WHERE `key` = 'item_type' AND `item_id` = %d;", $this->id ) );
 
 		return apply_filters( 'cpl_item_get_types', $types, $this );
 	}
@@ -93,7 +93,7 @@ class Item extends Table  {
 	public function update_type_order( $type, $order ) {
 		global $wpdb;
 
-		return $wpdb->update( static::$meta_table_name, [
+		return $wpdb->update( $this->meta_table_name, [
 			'order' => absint( $order ),
 		], array(
 			'item_id'      => $this->id,
@@ -143,6 +143,7 @@ class Item extends Table  {
 		return array(
 			'id'        => '%d',
 			'origin_id' => '%d',
+			'title'     => '%s',
 			'status'    => '%s',
 			'published' => '%s',
 			'updated'   => '%s',
@@ -157,6 +158,7 @@ class Item extends Table  {
 	public static function get_column_defaults() {
 		return array(
 			'origin_id' => 0,
+			'title'     => '',
 			'status'    => '',
 			'published' => date( 'Y-m-d H:i:s' ),
 			'updated'   => date( 'Y-m-d H:i:s' ),

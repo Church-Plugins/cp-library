@@ -2,11 +2,11 @@
 
 namespace CP_Library\Models;
 
-use CP_Library\Setup\Tables\ItemMeta;
-use CP_Library\Setup\Tables\Item;
+use CP_Library\Setup\Tables\SourceMeta;
+use CP_Library\Setup\Tables\Source;
 
 /**
- * Item DB Class
+ * SourceType DB Class
  *
  * @since       1.0
  */
@@ -15,17 +15,33 @@ use CP_Library\Setup\Tables\Item;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * Item Class
+ * SourceType Class
  *
  * @since 1.0.0
  */
-class ItemType extends Table  {
+class SourceType extends Table  {
 
 	public function init() {
-		$this->type = 'item_type';
-		$this->post_type = 'cpl_item_type';
+		$this->type = 'source_type';
 
 		parent::init();
+	}
+
+	/**
+	 * @param $title
+	 *
+	 * @return mixed|void
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public static function get_by_title( $title ) {
+		global $wpdb;
+
+		$instance = new self();
+		$type = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM " . $instance->table_name . " WHERE `title` = %s", $title )  );
+
+		return apply_filters( 'cpl_source_type_get_by_title', $type, $title );
 	}
 
 	/**
@@ -40,21 +56,20 @@ class ItemType extends Table  {
 		global $wpdb;
 
 		$instance = new self();
-
 		$types = $wpdb->get_results( "SELECT * FROM " . $instance->table_name );
 
 		if ( ! $types ) {
 			$types = [];
 		}
 
-		return apply_filters( 'cpl_get_all_item_types', $types );
+		return apply_filters( 'cpl_get_all_source_types', $types );
 	}
 
 	public function get_items() {
 		global $wpdb;
 
-		$meta  = ItemMeta::get_instance();
-		$item  = Item::get_instance();
+		$meta  = SourceMeta::get_instance();
+		$item  = Source::get_instance();
 
 		$sql = 'SELECT %1$s.* FROM %1$s
 INNER JOIN %2$s

@@ -31,7 +31,7 @@ class ItemType extends PostType  {
 		parent::__construct();
 
 		$item_type   = Item::get_instance()->post_type;
-		$source_type = Source::get_instance()->post_type;
+		$source_type = Speaker::get_instance()->post_type;
 
 		add_filter( "{$item_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 		add_filter( "{$source_type}_args", [ $this, 'cpt_menu_position' ], 10 , 2 );
@@ -50,26 +50,6 @@ class ItemType extends PostType  {
 		add_filter( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ], 10, 4 );
 		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
 
-	}
-
-	/**
-	 * Save title to custom table
-	 *
-	 * @param $post_id
-	 *
-	 * @return void
-	 * @since  1.0.0
-	 *
-	 * @author Tanner Moushey
-	 */
-	public function save_post( $post_id ) {
-		$model = parent::save_post( $post_id );
-
-		try {
-			$model->update( [ 'title' => get_the_title( $post_id ) ] );
-		} catch( Exception $e ) {
-			error_log( $e );
-		}
 	}
 
 	/**
@@ -187,7 +167,10 @@ class ItemType extends PostType  {
 		$cmb->add_group_field( $group_field_id, [
 			'name' => 'Title',
 			'id'   => 'title',
-			'type' => 'text'
+			'type' => 'text',
+			'attributes' => [
+				'placeholder' => Item::get_instance()->single_label . ' Title',
+			]
 		] );
 
 		$cmb->add_group_field( $group_field_id, [

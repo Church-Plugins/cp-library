@@ -41,6 +41,7 @@ class Item extends Table  {
 		return "CREATE TABLE " . $this->table_name . " (
 			`id` bigint NOT NULL AUTO_INCREMENT,
 			`origin_id` bigint,
+			`title` varchar(255) NOT NULL,
 			`status` ENUM( 'draft', 'publish', 'scheduled' ),
 			`published` datetime NOT NULL,
 			`updated` datetime NOT NULL,

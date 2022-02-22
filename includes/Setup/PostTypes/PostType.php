@@ -153,6 +153,7 @@ abstract class PostType {
 		try {
 			// this will save the item to our custom table if it does not already exist
 			$model = cp_library()->setup->post_types->get_type_model( $this->post_type, $post_id );
+			$model->update( [ 'title' => get_the_title( $post_id ) ] );
 		} catch( Exception $e ) {
 			error_log( $e->getMessage() );
 			return false;

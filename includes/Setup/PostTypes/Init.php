@@ -25,12 +25,12 @@ class Init {
 	public $item;
 
 	/**
-	 * Setup Source CPT
+	 * Setup Speaker CPT
 	 *
-	 * @var Source
+	 * @var Speaker
 	 * @author costmo
 	 */
-	public $source;
+	public $speaker;
 
 	/**
 	 * Setup Series CPT
@@ -74,7 +74,7 @@ class Init {
 	}
 
 	public function get_post_types() {
-		return [ $this->item->post_type, $this->source->post_type, $this->item_type->post_type ];
+		return [ $this->item->post_type, $this->speaker->post_type, $this->item_type->post_type ];
 	}
 
 	/**
@@ -91,8 +91,8 @@ class Init {
 		switch( $type ) {
 			case $this->item->post_type:
 				return \CP_Library\Models\Item::get_instance_from_origin( $id );
-			case $this->source->post_type:
-				return \CP_Library\Models\Source::get_instance_from_origin( $id );
+			case $this->speaker->post_type:
+				return \CP_Library\Models\Speaker::get_instance_from_origin( $id );
 			case $this->item_type->post_type:
 				return \CP_Library\Models\ItemType::get_instance_from_origin( $id );
 		}
@@ -122,8 +122,8 @@ class Init {
 
 		$this->item = Item::get_instance();
 
-		if ( apply_filters( 'cpl_enable_sources', true ) ) {
-			$this->source = Source::get_instance();
+		if ( apply_filters( 'cpl_enable_speakers', true ) ) {
+			$this->speaker = Speaker::get_instance();
 		}
 
 		if ( apply_filters( 'cpl_enable_item_types', true ) ) {
@@ -146,7 +146,7 @@ class Init {
 		try {
 			$model = $this->get_type_model( $type, $post_id );
 
-			$keys = 'item' == $model::$type ? ItemMeta::get_keys() : SourceMeta::get_keys();
+			$keys = 'item' == $model::get_prop( 'type' ) ? ItemMeta::get_keys() : SourceMeta::get_keys();
 
 			// only hijack meta keys that we control
 			if ( ! in_array( $data_args['field_id'], $keys ) ) {
@@ -177,7 +177,7 @@ class Init {
 		try {
 			$model = $this->get_type_model( $type, $object_id );
 
-			$keys = 'item' == $model::$type ? ItemMeta::get_keys() : SourceMeta::get_keys();
+			$keys = 'item' == $model::get_prop( 'type' ) ? ItemMeta::get_keys() : SourceMeta::get_keys();
 
 			// only hijack meta keys that we control
 			if ( ! in_array( $data_args['field_id'], $keys ) ) {

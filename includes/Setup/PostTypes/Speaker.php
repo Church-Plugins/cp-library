@@ -8,15 +8,15 @@ use CP_Library\Views\Admin\Source as Source_Admin_View;
 use CP_Library\Views\Admin\Item as Item_Admin_View;
 use CP_Library\Util\Convenience as Convenience;
 
-use CP_Library\Models\Source as Source_Model;
+use CP_Library\Models\Speaker as Speaker_Model;
 
 /**
- * Setup for custom post type: Source
+ * Setup for custom post type: Speaker
  *
  * @author costmo
  * @since 1.0
  */
-class Source extends PostType {
+class Speaker extends PostType {
 
 	/**
 	 * Child class constructor. Punts to the parent.
@@ -25,7 +25,7 @@ class Source extends PostType {
 	 */
 	protected function __construct() {
 
-		$this->post_type = CP_LIBRARY_UPREFIX . "_sources";
+		$this->post_type = CP_LIBRARY_UPREFIX . "_speaker";
 
 		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", __( 'Speaker', 'cp_library' ) );
 		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", __( 'Speakers', 'cp_library' ) );

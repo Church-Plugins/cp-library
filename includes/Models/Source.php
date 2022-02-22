@@ -20,8 +20,9 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  */
 class Source extends Table  {
 
-	public static function init() {
-		self::$type = 'source';
+	public function init() {
+		$this->type = 'source';
+		$this->post_type = 'cpl_speaker';
 
 		parent::init();
 	}
@@ -34,6 +35,7 @@ class Source extends Table  {
 	public static function get_columns() {
 		return array(
 			'id'        => '%d',
+			'origin_id' => '%d',
 			'title'     => '%s',
 			'status'    => '%s',
 			'published' => '%s',
@@ -49,6 +51,7 @@ class Source extends Table  {
 	public static function get_column_defaults() {
 		return array(
 			'id'        => 0,
+			'origin_id' => 0,
 			'title'     => '',
 			'status'    => '',
 			'published' => date( 'Y-m-d H:i:s' ),
@@ -57,52 +60,40 @@ class Source extends Table  {
 	}
 
 	/**
-	 * `save_post` action handler for the CPT
+	 * Get meta columns and formats
 	 *
-	 * @param int $post_id
-	 * @param WP_Post $post
-	 * @return void
-	 * @author costmo
-	 */
-	public function save_post( $post_id, $post ) {
+	 * @since   1.0
+	*/
+	public static function get_meta_columns() {
+		return array(
+			'id'             => '%d',
+			'key'            => '%s',
+			'value'          => '%s',
+			'source_id'      => '%d',
+			'source_type_id' => '%d',
+			'item_id'        => '%d',
+			'order'          => '%d',
+			'published'      => '%s',
+			'updated'        => '%s',
+		);
+	}
 
-//		// Surface sanity check
-//		if( !Convenience::is_post( $post ) || $post->post_type !== $this->post_type ) {
-//			return;
-//		}
-//
-//		$parent_source_nonce_field = CP_LIBRARY_UPREFIX . "_source_parent_nonce";
-//
-//		/**
-//		 * Parent Source metabox
-//		 * TODO: There are bound to be more of these... refactor so each `if` contains one line of code
-//		 */
-//		if( Convenience::nonce_is_valid( $parent_source_nonce_field ) ) {
-//
-//			$parent_key = CP_LIBRARY_UPREFIX . '_source_parent_id';
-//
-//			// Don't `empty()`-check this because '0' is a valid value
-//			if( is_array( $_REQUEST ) && array_key_exists( $parent_key, $_REQUEST ) && strlen( $_REQUEST[ $parent_key ] ) > 0 ) {
-//
-//				global $wpdb;
-//				// and finally, we can't use wp_update_post because that will trigger an infinite loop here
-//				$prepared = $wpdb->prepare(
-//					"UPDATE " . $wpdb->prefix . "posts SET post_parent = %d WHERE ID = %d",
-//					$_REQUEST[ $parent_key ], $post_id
-//				);
-//				$wpdb->query( $prepared );
-//
-//				// TODO: Maintain the wp_cpl_source table
-//
-//				// TODO: Find a nicer/more targeted way of doing this.
-//				wp_cache_flush();
-//			}
-//		}
-//		/**
-//		 * Parent Source metabox
-//		 */
-
-
+	/**
+	 * Get default meta column values
+	 *
+	 * @since   1.0
+	*/
+	public function get_meta_column_defaults() {
+		return array(
+			'key'            => '',
+			'value'          => '',
+			'source_id'      => $this->id,
+			'source_type_id' => 0,
+			'item_id'        => 0,
+			'order'          => 0,
+			'published'      => date( 'Y-m-d H:i:s' ),
+			'updated'        => date( 'Y-m-d H:i:s' ),
+		);
 	}
 
 }
