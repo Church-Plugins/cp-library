@@ -2,7 +2,9 @@
 import { MemoryRouter, Switch, Route } from "react-router-dom";
 
 import Items from "./Items";
+import Types from "./Types";
 import ItemDetail from "./ItemDetail";
+import TypeDetail from "./TypeDetail";
 import { PersistentPlayerProvider } from "../Contexts/PersistentPlayerContext";
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
@@ -14,7 +16,7 @@ import useBreakpoints from '../Hooks/useBreakpoints';
 export default function App({
   itemId,
 }) {
-  const initialPath = itemId === undefined ? "/talks" : `/talks/${itemId}`;
+  const initialPath = itemId === undefined ? "/series" : `/talks/${itemId}`;
   const { isDesktop } = useBreakpoints();
 
   const navClick = (path, newWindow = false) => {
@@ -57,11 +59,15 @@ export default function App({
             path="/talks/:itemId"
             render={({ match, location, history}) => <ItemDetail itemId={match.params.itemId} />}
           />
+          <Route
+            path={"/" + window.cplVars.type.slug + "/:typeId"}
+            render={({ match, location, history}) => <TypeDetail typeId={match.params.typeId} />}
+          />
           <Route path="/talks">
             <Items />
           </Route>
           <Route path="/series">
-            <Items />
+            <Types />
           </Route>
         </Switch>
       </MemoryRouter>

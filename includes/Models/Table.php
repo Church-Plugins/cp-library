@@ -78,7 +78,7 @@ abstract class Table {
 	 * Setup instance using an origin id
 	 * @param $origin_id
 	 *
-	 * @return bool | static
+	 * @return bool | static self
 	 * @throws Exception
 	 * @since  1.0.0
 	 *

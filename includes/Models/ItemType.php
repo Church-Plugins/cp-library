@@ -2,6 +2,9 @@
 
 namespace CP_Library\Models;
 
+use CP_Library\Setup\Tables\ItemMeta;
+use CP_Library\Setup\Tables\Item;
+
 /**
  * Item DB Class
  *
@@ -43,6 +46,23 @@ class ItemType extends Table  {
 		}
 
 		return apply_filters( 'cpl_get_all_types', $types );
+	}
+
+	public function get_items() {
+		global $wpdb;
+
+		$meta  = ItemMeta::get_instance();
+		$item  = Item::get_instance();
+
+		$sql = 'SELECT %1$s.* FROM %1$s
+INNER JOIN %2$s
+ON %1$s.id = %2$s.item_id
+WHERE %2$s.key = "item_type" AND %2$s.item_type_id = %3$d
+ORDER BY %2$s.order ASC';
+
+		$items = $wpdb->get_results( $wpdb->prepare( $sql, $item->table_name, $meta->table_name, $this->id ) );
+
+		return apply_filters( 'cpl_item_type_get_items', $items, $this );
 	}
 
 	/**

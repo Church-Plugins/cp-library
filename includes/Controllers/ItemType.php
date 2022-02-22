@@ -84,32 +84,28 @@ class ItemType {
 		return $this->filter( $return, __FUNCTION__ );
 	}
 
-	public function get_video() {
-		$return = [
-			'type'  => 'url',
-			'value' => false,
+	public function get_api_data() {
+		$data = [
+			'id'        => $this->model->id,
+			'originID'  => $this->post->ID,
+			'permalink' => $this->get_permalink(),
+			'thumb'     => $this->get_thumbnail(),
+			'title'     => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
+			'desc'      => $this->get_content(),
+			'date'      => $this->get_publish_date(),
+			'category'  => $this->get_categories(),
+			'items'     => [],
 		];
 
-		if ( $url = $this->model->get_meta_value( 'video_url' ) ) {
-			$return['value'] = esc_url( $url );
-		}
-
-		if ( ! $url ) {
-			if ( $id = $this->model->get_meta_value( 'video_id_vimeo' ) ) {
-				$return['type']  = 'vimeo';
-				$return['id']    = $id;
-				$return['value'] = 'https://vimeo.com/' . $id;
-			} else if ( $id = $this->model->get_meta_value( 'video_id_facebook' ) )  {
-				$return['type']  = 'facebook';
-				$return['id']    = $id;
-				$return['value'] = 'https://www.facebook.com' . $id;
+		foreach( $this->model->get_items() as $i ) {
+			try {
+				$item = new Item( $i->origin_id );
+				$data['items'][] = $item->get_api_data();
+			} catch( Exception $e ) {
+				error_log( $e );
 			}
 		}
 
-		return $this->filter( $return, __FUNCTION__ );
-	}
-
-	public function get_audio() {
-		return $this->filter( esc_url ( $this->model->get_meta_value( 'audio_url' ) ), __FUNCTION__ );
+		return $this->filter( $data, __FUNCTION__ );
 	}
 }

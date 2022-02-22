@@ -2,22 +2,21 @@ import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import { ChevronLeft } from 'react-feather';
 
-import ItemList from './ItemList';
+import TypeList from './TypeList';
 import Filter from './Filter';
 import RoundButton from '../Elements/RoundButton';
 
 import useBreakpoints from '../Hooks/useBreakpoints';
 import debounce from '@mui/utils/debounce';
 
-export default function Items () {
+export default function Types () {
 	const {isDesktop} = useBreakpoints();
 	const [activeFilters, setActiveFilters] = useState(
 		{
 			'topics' : [],
 			'formats': [],
 			'page'   : 1,
-			'search' : '',
-			'type' : '',
+			'search' : ''
 		}
 	);
 
@@ -141,20 +140,12 @@ export default function Items () {
 							Back
 						</RoundButton>
 					) : (
-						<h1 className="talks__title">{window.cplVars.item.labelPlural}</h1>
+						<h1 className="talks__title">{window.cplVars.type.labelPlural}</h1>
 					)}
 				</Box>
-				<Filter
-					className="talks__filter"
-					activeFilters={activeFilters}
-					onRemoveFilter={removeFilter}
-					onSearchInputChange={handleSearchInputChange}
-					onFilterChange={toggleFilter}
-					autoFocus={true}
-				/>
 			</Box>
 			<Box className="talks__itemListContainer" paddingY={1} paddingX={1}>
-				<ItemList activeFilters={activeFilters} className="talks__itemList"/>
+				<TypeList activeFilters={activeFilters} className="talks__itemList"/>
 			</Box>
 		</>
 	);

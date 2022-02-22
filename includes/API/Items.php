@@ -4,6 +4,7 @@ namespace CP_Library\API;
 
 use CP_Library\Controllers\Item;
 use CP_Library\Exception;
+use CP_Library\Models\ItemType;
 use WP_REST_Controller;
 use WP_REST_Server;
 use WP_REST_Request;
@@ -300,6 +301,26 @@ class Items extends WP_REST_Controller {
 			$args['post__in'] = $format_filter_ids;
 		}
 
+		if ( $type_id = $request->get_param( 'type' ) ) {
+			try {
+				$type = ItemType::get_instance( $type_id );
+				$items = $type->get_items();
+				$post__in = [];
+
+				foreach( $items as $item ) {
+					$post__in[] = $item->origin_id;
+				}
+
+				if ( empty( $args['post__in'] ) ) {
+					$args['post__in'] = $post__in;
+				} else {
+					$args['post__in'] = array_intersect( $args['post__in'], $post__in );
+				}
+			} catch( Exception $e ) {
+				error_log( $e );
+			}
+		}
+
 		// $posts = get_posts( $args );
 		if( $page = $request->get_param( 'p' ) ) {
 			$args['paged'] = absint( $page );
@@ -322,18 +343,7 @@ class Items extends WP_REST_Controller {
 			try {
 				$item = new Item( $post->ID );
 
-				$data = [
-					'id'        => $item->post->ID,
-					'cplItemID' => $item->model->id,
-					'permalink' => $item->get_permalink(),
-					'thumb'    => $item->get_thumbnail(),
-					'title'    => htmlspecialchars_decode( $item->get_title(), ENT_QUOTES | ENT_HTML401 ),
-					'desc'     => $item->get_content(),
-					'date'     => $item->get_publish_date(),
-					'category' => $item->get_categories(),
-					'video'    => $item->get_video(),
-					'audio'    => $item->get_audio(),
-				];
+				$data = $item->get_api_data();
 
 				$return_value['items'][] = $data;
 			} catch ( Exception $e ) {
@@ -358,20 +368,7 @@ class Items extends WP_REST_Controller {
 		try {
 			$item = new Item( $item_id );
 
-			$data = [
-				'id'        => $item->post->ID,
-				'cplItemID' => $item->model->id,
-				'permalink' => $item->get_permalink(),
-				'thumb'     => $item->get_thumbnail(),
-				'title'     => htmlspecialchars_decode( $item->get_title(), ENT_QUOTES | ENT_HTML401 ),
-				'desc'      => $item->get_content(),
-				'date'      => $item->get_publish_date(),
-				'category'  => $item->get_categories(),
-				'video'     => $item->get_video(),
-				'audio'     => $item->get_audio(),
-			];
-
-			$return_value['items'][] = $data;
+			$data = $item->get_api_data();
 		} catch ( Exception $e ) {
 			$data = [
 				'id' => $item_id,

@@ -38,7 +38,7 @@ class Item extends Table  {
 	public function get_types() {
 		global $wpdb;
 
-		$types = $wpdb->get_col( $wpdb->prepare( "SELECT `item_type_id` FROM " . static::$meta_table_name . " WHERE `key` = 'item_type';" ) );
+		$types = $wpdb->get_col( $wpdb->prepare( "SELECT `item_type_id` FROM " . static::$meta_table_name . " WHERE `key` = 'item_type' AND `item_id` = %d;", $this->id ) );
 
 		return apply_filters( 'cpl_item_get_types', $types, $this );
 	}
@@ -78,6 +78,61 @@ class Item extends Table  {
 
 		return true;
 	}
+
+	/**
+	 * Update the Item Type -> Item order
+	 *
+	 * @param $type
+	 * @param $order
+	 *
+	 * @return false|int
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function update_type_order( $type, $order ) {
+		global $wpdb;
+
+		return $wpdb->update( static::$meta_table_name, [
+			'order' => absint( $order ),
+		], array(
+			'item_id'      => $this->id,
+			'item_type_id' => $type
+		) );
+	}
+
+	/**
+	 *
+	 * @param $type
+	 *
+	 * @return bool
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	/**
+	 * Add new time to item
+	 *
+	 * @param $type
+	 *
+	 * @return bool
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function add_type( $type ) {
+		$existing_types = $this->get_types();
+
+		// check if type is already set
+		if ( false !== array_search( $type, $existing_types ) ) {
+			return true;
+		}
+
+		$existing_types[] = absint( $type );
+		return $this->update_types( $existing_types );
+	}
+
 
 	/**
 	 * Get columns and formats

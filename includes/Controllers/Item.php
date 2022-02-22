@@ -112,4 +112,21 @@ class Item {
 	public function get_audio() {
 		return $this->filter( esc_url ( $this->model->get_meta_value( 'audio_url' ) ), __FUNCTION__ );
 	}
+
+	public function get_api_data() {
+		$data = [
+			'id'        => $this->model->id,
+			'originID'  => $this->post->ID,
+			'permalink' => $this->get_permalink(),
+			'thumb'     => $this->get_thumbnail(),
+			'title'     => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
+			'desc'      => $this->get_content(),
+			'date'      => $this->get_publish_date(),
+			'category'  => $this->get_categories(),
+			'video'     => $this->get_video(),
+			'audio'     => $this->get_audio(),
+		];
+
+		return $this->filter( $data, __FUNCTION__ );
+	}
 }

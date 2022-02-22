@@ -4,6 +4,7 @@ namespace CP_Library\Setup\PostTypes;
 use CP_Library\Exception;
 use CP_Library\Models\ItemType as Model;
 use CP_Library\Models\Item as ItemModel;
+use \CP_Library\Controllers\Item as ItemController;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -33,8 +34,7 @@ class ItemType extends PostType  {
 	public function add_actions() {
 		parent::add_actions();
 
-		add_filter( 'cmb2_override_meta_save', [ $this, 'meta_save_override' ], 10, 4 );
-		add_filter( 'cmb2_override_meta_remove', [ $this, 'meta_save_override' ], 10, 4 );
+		add_filter( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ], 10, 4 );
 		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
 
 	}
@@ -140,16 +140,12 @@ class ItemType extends PostType  {
 
 	public function register_metaboxes() {
 		$this->sermon_series_metabox();
-		return;
 //		add_filter( 'cmb2_override_fonts_meta_value', '\StoryLoop\Views\Admin\Product::fonts_serialize_meta', 10, 2 );
 
-
-
-
 		$cmb = new_cmb2_box( array(
-			'id'           => 'cpl_series_data',
+			'id'           => 'cpl_series_items_data',
 			'object_types' => [ $this->post_type ],
-			'title'        => __( 'Sermons', 'cp-library' ),
+			'title'        => Item::get_instance()->plural_label,
 			'context'      => 'normal',
 			'show_names'   => true,
 			'priority'     => 'low',
@@ -166,7 +162,13 @@ class ItemType extends PostType  {
 				'remove_button'  => __( 'Remove', 'cp-library' ) . ' ' . Item::get_instance()->single_label,
 			    'sortable'      => true,
 				'remove_confirm' => sprintf( esc_html__( 'Are you sure you want to remove this %s?', 'cp-library' ), Item::get_instance()->single_label ),
+				'closed' => true,
 			],
+		] );
+
+		$cmb->add_group_field( $group_field_id, [
+			'id'   => 'id',
+			'type' => 'hidden',
 		] );
 
 		$cmb->add_group_field( $group_field_id, [
@@ -215,95 +217,85 @@ class ItemType extends PostType  {
 
 	}
 
-	public static function save_meta_fields( $object_id, $updated, $cmb ) {
-		remove_action( 'cmb2_save_post_fields_product_editable_files', 'StoryLoop\Controllers\EditableFiles::save_meta_fields', 10 );
-
-		$currentProduct = new Product( $object_id );
-
-		if ( 'on' !== $currentProduct->get_meta( 'pef_enable' ) ) {
-			return;
-		}
-
-		$editableFilesID = $currentProduct->get_editable_file_product_id();
-		$editableFilesProduct = new EDD_Download( $editableFilesID );
-
-		if ( 0 == $editableFilesProduct->ID ) {
-			$editableFilesProduct->create( [
-				'post_status' => 'publish',
-				'post_title'  => $currentProduct->get_meta( 'pef_label', $currentProduct->get_name() . ' [' . __( 'Project Files', 'cp-library' ) . ']' ),
-				'post_parent' => $object_id,
-			] );
-		} else {
-			wp_update_post( [
-				'ID'          => $editableFilesProduct->ID,
-				'post_title'  => $currentProduct->get_meta( 'pef_label', $currentProduct->get_name() . ' [' . __( 'Project Files', 'cp-library' ) . ']' ),
-				'post_parent' => $object_id,
-			] );
-		}
-
-		$pricing = [
-			[
-				'name' => __( 'Full Price', 'cp-library' ),
-				'amount' => $currentProduct->get_meta( 'pef_price_full', 0 ),
-			],
-			[
-				'name' => __( 'All Access Price', 'cp-library' ),
-				'amount' => $currentProduct->get_meta( 'pef_price_aap', 0 ),
-			]
-		];
-
-		$downloadFiles = [
-			1 => [
-				'index'     => 1,
-				'file'      => esc_url( $currentProduct->get_meta( 'pef_download_url' ) ),
-				'name'      => basename( $currentProduct->get_meta( 'pef_download_url' ) ),
-				'condition' => 'all'
-			]
-		];
-
-		update_post_meta( $editableFilesProduct->ID, 'edd_download_files', $downloadFiles );
-		update_post_meta( $editableFilesProduct->ID, '_variable_pricing', 1 );
-		update_post_meta( $editableFilesProduct->ID, 'edd_variable_prices', $pricing );
-		update_post_meta( $editableFilesProduct->ID, '_edd_all_access_exclude', 1 );
-		update_post_meta( $editableFilesProduct->ID, '_is_editable_file', 1 );
-
-		set_post_thumbnail( $editableFilesProduct->ID, get_post_thumbnail_id( $currentProduct->ID ) );
-
-		update_post_meta( $currentProduct->ID, 'editable_file_product', $editableFilesProduct->ID );
-
-	}
-
-	public function meta_save_override( $return, $data_args, $field_args, $field ) {
-
-		if ( 'cpl_series' !== $data_args['field_id'] ) {
-			return $return;
-		}
+	public function save_series_items( $object_id, $updated, $cmb ) {
+		remove_action( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ], 10 );
 
 		try {
-			$item = ItemModel::get_instance_from_origin( $data_args['id'] );
+			$type = Model::get_instance_from_origin( $object_id );
 
-			if ( isset( $data_args['value'] ) ) {
-				$return = $item->update_types( $data_args['value'] );
-			} else {
-				$return = $item->update_types( [] );
+			$data = get_post_meta( $object_id, 'cpl_series_items', true );
+
+			foreach ( $data as $index => $item_data ) {
+				if ( empty( $item_data['id'] ) ) {
+					$item_data['id'] = wp_insert_post( [
+						'post_type'   => Item::get_instance()->post_type,
+						'post_status' => 'publish',
+						'post_title'  => $item_data['title'],
+						'post_date'   => $item_data['date'],
+					] );
+				} else {
+					wp_update_post( [
+						'ID'         => $item_data['id'],
+						'post_title' => $item_data['title'],
+						'post_date'  => $item_data['date'],
+					] );
+				}
+
+				if ( ! $item_data['id'] ) {
+					throw new Exception( 'The item was not saved correctly.' );
+				}
+
+				$item = ItemModel::get_instance_from_origin( $item_data['id'] );
+
+				$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo' ];
+				foreach( $meta as $key ) {
+					if ( empty( $item_data[ $key ] ) ) {
+						$item->delete_meta( $key );
+					} else {
+						$item->update_meta_value( $key, $item_data[ $key ] );
+					}
+				}
+
+				$item->add_type( $type->id );
+				$item->update_type_order( $type->id, $index );
 			}
+
+
 		} catch ( Exception $e ) {
 			error_log( $e );
 		}
 
-		return $return;
 	}
 
 	public function meta_get_override( $data, $object_id, $data_args, $field ) {
 
-		if ( 'cpl_series' !== $data_args['field_id'] ) {
+		if ( 'cpl_series_items' !== $data_args['field_id'] ) {
 			return $data;
 		}
 
 		try {
-			$item = ItemModel::get_instance_from_origin( $object_id );
-			$data = $item->get_types();
-		} catch( Exception $e ) {
+
+			$series = Model::get_instance_from_origin( $object_id );
+			$data   = [];
+
+			foreach ( $series->get_items() as $i ) {
+				$item = new ItemController( $i->origin_id );
+
+				$item_data = [
+					'id'    => $item->model->origin_id,
+					'title' => $item->get_title(),
+					'speaker' => '',
+					'date' => $item->get_publish_date()->format('Y-m-d\TH:i:sP'),
+				];
+
+				$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo' ];
+				foreach( $meta as $key ) {
+					$item_data[ $key ] = $item->model->get_meta_value( $key );
+				}
+
+				$data[] = $item_data;
+			}
+		} catch ( Exception $e ) {
 			error_log( $e );
 		}
 

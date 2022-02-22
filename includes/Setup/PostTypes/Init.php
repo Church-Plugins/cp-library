@@ -74,7 +74,7 @@ class Init {
 	}
 
 	public function get_post_types() {
-		return [ $this->item->post_type, $this->source->post_type, $this->series->post_type ];
+		return [ $this->item->post_type, $this->source->post_type, $this->item_type->post_type ];
 	}
 
 	/**
@@ -109,7 +109,7 @@ class Init {
 		add_filter( 'cmb2_override_meta_remove', [ $this, 'meta_save_override' ], 10, 4 );
 		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
 
-//		add_filter( 'use_block_editor_for_post_type', [ $this, 'disable_gutenberg' ], 10, 2 );
+		add_filter( 'use_block_editor_for_post_type', [ $this, 'disable_gutenberg' ], 10, 2 );
 
 		add_action( 'init', function() {
 			register_taxonomy_for_object_type( 'talk_categories', 'cpl_items' );

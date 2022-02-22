@@ -29,7 +29,7 @@ class ItemTypes extends WP_REST_Controller {
 	 */
 	public function __construct() {
 		$this->namespace = cp_library()->get_api_namespace();
-		$this->rest_base = 'item-types';
+		$this->rest_base = 'types';
 		$this->post_type	=  CP_LIBRARY_UPREFIX . "_item_type";
 	}
 
@@ -63,10 +63,10 @@ class ItemTypes extends WP_REST_Controller {
 			// 'schema' => array( $this, 'get_public_item_schema' ),
 		) );
 
-		register_rest_route( $this->namespace, $this->rest_base . '/(?P<item_id>[\d]+)', array(
+		register_rest_route( $this->namespace, $this->rest_base . '/(?P<type_id>[\d]+)', array(
 			'args' => array(
-				'item_id' => array(
-					'description' => __( 'The ID of the item.', 'cp-library' ),
+				'type_id' => array(
+					'description' => __( 'The ID of the type.', 'cp-library' ),
 					'type'        => 'integer',
 					'required'    => true,
 				),
@@ -231,61 +231,8 @@ class ItemTypes extends WP_REST_Controller {
 			}
 		}
 
-		if( !empty( $request->get_param( 't' ) ) ) {
-			$topic_string = preg_replace( "/\,$/", "", trim( $request->get_param( 't' ) ) );
-			$taxonomies = explode( ",", $topic_string );
-		}
-
-		if( !empty( $request->get_param( 'f' ) ) ) {
-			$format_string = preg_replace( "/\,$/", "", trim( $request->get_param( 'f' ) ) );
-			$format_string = preg_replace( "/format\_\_/", "", $format_string );
-			$formats = explode( ",", $format_string );
-
-			if( !empty( $formats ) && !in_array( 'format__all', $formats ) && count( $formats ) == 1 ) {
-
-				$format = str_replace( 'filter__', '', $formats[0] );
-				$sql = '';
-				global $wpdb;
-				if( $format == 'audio' ) {
-					$sql = $wpdb->prepare(
-						"
-						SELECT		origin_id
-						FROM 		" . $wpdb->prefix . "cpl_item, " . $wpdb->prefix . "cpl_item_meta
-						WHERE		wp_cpl_item_meta.`key` IN ( %s ) AND
-									wp_cpl_item.`id` = wp_cpl_item_meta.item_id",
-						'audio_url'
-					);
-				} else {
-					$sql = $wpdb->prepare(
-						"
-						SELECT		origin_id
-						FROM 		" . $wpdb->prefix . "cpl_item, " . $wpdb->prefix . "cpl_item_meta
-						WHERE		wp_cpl_item_meta.`key` IN ( %s, %s ) AND
-									wp_cpl_item.`id` = wp_cpl_item_meta.item_id",
-						'video_id_vimeo', 'video_id_facebook'
-					);
-				}
-
-				$result = $wpdb->get_results( $sql );
-				foreach( $result as $row ) {
-					$format_filter_ids[] = $row->origin_id;
-				}
-			}
-		}
-
 		if( !empty( $request->get_param( 'count' ) ) ) {
 			$args['posts_per_page'] = absint( $request->get_param( 'count' ) );
-		}
-
-		if( !empty( $taxonomies ) ) {
-			$args['tax_query'] =
-			[
-				array (
-					'taxonomy' => 'talk_categories',
-					'field' => 'slug',
-					'terms' => $taxonomies,
-				)
-				];
 		}
 
 		// If the user has typed-in search parameters...
@@ -304,7 +251,8 @@ class ItemTypes extends WP_REST_Controller {
 		if( $page = $request->get_param( 'p' ) ) {
 			$args['paged'] = absint( $page );
 		}
-		$args = apply_filters( 'cpl_api_get_items_args', $args, $request );
+
+		$args = apply_filters( 'cpl_api_get_types_args', $args, $request );
 		$posts = new \WP_Query( $args );
 		$return_value = [
 			'count' => $posts->post_count,
@@ -320,18 +268,9 @@ class ItemTypes extends WP_REST_Controller {
 		foreach( $posts->posts as $post ) {
 
 			try {
-				$item = new ItemType( $post->ID );
+				$type = new ItemType( $post->ID );
 
-				$data = [
-					'id'            => $item->post->ID,
-					'cplItemTypeID' => $item->model->id,
-					'permalink'     => $item->get_permalink(),
-					'thumb'         => $item->get_thumbnail(),
-					'title'         => htmlspecialchars_decode( $item->get_title(), ENT_QUOTES | ENT_HTML401 ),
-					'desc'          => $item->get_content(),
-					'date'          => $item->get_publish_date(),
-					'category'      => $item->get_categories(),
-				];
+				$data = $type->get_api_data();
 
 				$return_value['items'][] = $data;
 			} catch ( Exception $e ) {
@@ -352,27 +291,16 @@ class ItemTypes extends WP_REST_Controller {
 	 * @return array|WP_Error Array on success, or WP_Error object on failure.
 	 */
 	public function get_item( $request ) {
-		$item_id = $request->get_param( 'item_id' );
+		$type_id = $request->get_param( 'type_id' );
 		try {
-			$item = new ItemType( $item_id );
+			$type = new ItemType( $type_id );
 
-			$data = [
-				'id'        => $item->post->ID,
-				'cplItemID' => $item->model->id,
-				'permalink' => $item->get_permalink(),
-				'thumb'     => $item->get_thumbnail(),
-				'title'     => htmlspecialchars_decode( $item->get_title(), ENT_QUOTES | ENT_HTML401 ),
-				'desc'      => $item->get_content(),
-				'date'      => $item->get_publish_date(),
-				'category'  => $item->get_categories(),
-				'video'     => $item->get_video(),
-				'audio'     => $item->get_audio(),
-			];
+			$data = $type->get_api_data();
 
 			$return_value['items'][] = $data;
 		} catch ( Exception $e ) {
 			$data = [
-				'id' => $item_id,
+				'id' => $type_id,
 				'error' => $e->getMessage(),
 			];
 
