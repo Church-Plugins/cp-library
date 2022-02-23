@@ -19,7 +19,7 @@ class Controllers_WP_REST_Request extends Component {
 
 		// In dev mode, we need the whole URL. Otherwise, it'll hit localhost:<port>/page/wp-json/...
 		// which results in 404.
-		this.urlBase = cplVar( 'url', 'site' ) + 'wp-json';
+		this.urlBase = cplVar( 'url', 'site' ) + '/wp-json';
 
 //		this.urlBase = 'https://re.local/wp-json';
 //		this.urlBase = 'https://richardellis.local/wp-json';
