@@ -17,7 +17,7 @@ import { cplVar } from '../utils/helpers';
 export default function App({
   itemId,
 }) {
-  const initialPath = itemId === undefined ? "/series" : `/talks/${itemId}`;
+  const initialPath = itemId === undefined ? "/" + cplVar( 'slug', 'item_type' ) : `/${cplVar( 'slug', 'item_type' )}/${itemId}`;
   const { isDesktop } = useBreakpoints();
 
   const navClick = (path, newWindow = false) => {
@@ -57,17 +57,17 @@ export default function App({
 
         <Switch>
           <Route
-            path="/talks/:itemId"
+            path={"/" + cplVar( 'slug', 'item' ) + "/:itemId"}
             render={({ match, location, history}) => <ItemDetail itemId={match.params.itemId} />}
           />
           <Route
             path={"/" + cplVar( 'slug', 'item_type' ) + "/:typeId"}
             render={({ match, location, history}) => <TypeDetail typeId={match.params.typeId} />}
           />
-          <Route path="/talks">
+          <Route path={"/" + cplVar( 'slug', 'item' )}>
             <Items />
           </Route>
-          <Route path="/series">
+          <Route path={"/" + cplVar( 'slug', 'item_type' )}>
             <Types />
           </Route>
         </Switch>

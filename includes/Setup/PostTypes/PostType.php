@@ -151,7 +151,7 @@ abstract class PostType {
 		$vars[ $key ] = [
 			'labelSingular' => $type->labels->name,
 			'labelPlural'   => $type->labels->singular_name,
-			'slug'          => $type->rewrite->slug,
+			'slug'          => $type->rewrite['slug'],
 		];
 
 		return $vars;
