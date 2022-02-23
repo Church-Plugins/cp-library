@@ -163,6 +163,7 @@ class Init {
 			'site' => [
 				'title' => get_bloginfo( 'name', 'display' ),
 				'thumb' => CP_LIBRARY_PLUGIN_URL . '/app/public/logo512.png',
+				'url'   => get_site_url(),
 			],
 		] );
 

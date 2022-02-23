@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import { cplVar } from '../utils/helpers';
 
 let axios = require( 'axios' );
 
@@ -18,7 +19,7 @@ class Controllers_WP_REST_Request extends Component {
 
 		// In dev mode, we need the whole URL. Otherwise, it'll hit localhost:<port>/page/wp-json/...
 		// which results in 404.
-		this.urlBase = process.env.REACT_APP_HOSTNAME + '/wp-json';
+		this.urlBase = cplVar( 'url', 'site' ) + 'wp-json';
 
 //		this.urlBase = 'https://re.local/wp-json';
 //		this.urlBase = 'https://richardellis.local/wp-json';
