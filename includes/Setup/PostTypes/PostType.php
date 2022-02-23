@@ -131,7 +131,30 @@ abstract class PostType {
 		add_action( 'rest_cpl_items_query', [ $this, 'rest_request_limit' ], 10, 1 );
 		add_action( "save_post_{$this->post_type}", [ $this, 'save_post' ] );
 		add_action( 'cpl_register_post_types', [ $this, 'register_post_type' ] );
+		add_filter( 'cpl_app_vars', [ $this, 'app_vars' ] );
 		return;
+	}
+
+	/**
+	 * Add vars for app localization
+	 *
+	 * @param $vars
+	 *
+	 * @return mixed
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function app_vars( $vars ) {
+		$type = get_post_type_object( $this->post_type );
+		$key  = str_replace( CP_LIBRARY_UPREFIX . '_', '', $this->post_type );
+		$vars[ $key ] = [
+			'labelSingular' => $type->labels->name,
+			'labelPlural'   => $type->labels->singular_name,
+			'slug'          => $type->rewrite->slug,
+		];
+
+		return $vars;
 	}
 
 	/**

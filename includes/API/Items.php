@@ -31,7 +31,7 @@ class Items extends WP_REST_Controller {
 	public function __construct() {
 		$this->namespace = cp_library()->get_api_namespace();
 		$this->rest_base = 'items';
-		$this->post_type	=  CP_LIBRARY_UPREFIX . "_items";
+		$this->post_type	=  CP_LIBRARY_UPREFIX . "_item";
 	}
 
 	/**

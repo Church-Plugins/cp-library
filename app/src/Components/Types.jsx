@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import { ChevronLeft } from 'react-feather';
+import { cplVar } from '../utils/helpers';
 
 import TypeList from './TypeList';
 import Filter from './Filter';
@@ -140,7 +141,7 @@ export default function Types () {
 							Back
 						</RoundButton>
 					) : (
-						<h1 className="talks__title">{window.cplVars.type.labelPlural}</h1>
+						<h1 className="talks__title">{cplVar( 'labelPlural', 'item_type' )}</h1>
 					)}
 				</Box>
 			</Box>

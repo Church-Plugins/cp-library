@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import { Calendar, Tag } from "react-feather"
 import relativeDate from "tiny-relative-date";
 import { convertWPDateStringToJSDateString } from '../utils/formateDate';
+import { cplVar } from '../utils/helpers';
 
 
 export default function ItemMeta({
@@ -26,9 +27,9 @@ export default function ItemMeta({
           <Box component="span" marginLeft={1}>
 	          {items.length}&nbsp;
 	          {items.length > 1 ? (
-		          <Box component="span">{window.cplVars.item.labelPlural}</Box>
+		          <Box component="span">{cplVar( 'labelPlural', 'item' )}</Box>
 	          ) : (
-							<Box component="span">{window.cplVars.item.labelSingular}</Box>
+							<Box component="span">{cplVar( 'labelSingular', 'item' )}</Box>
 	          ) }
           </Box>
         </Box>

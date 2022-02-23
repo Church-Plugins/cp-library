@@ -18,7 +18,7 @@ class Item extends PostType  {
 	 * @author costmo
 	 */
 	protected function __construct() {
-		$this->post_type = CP_LIBRARY_UPREFIX . "_items";
+		$this->post_type = CP_LIBRARY_UPREFIX . "_item";
 
 		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", __( 'Sermon', 'cp_library' ) );
 		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", __( 'Sermons', 'cp_library' ) );

@@ -1,9 +1,11 @@
+import { cplVar } from '../utils/helpers';
+
 export default function Logo(props) {
-  return (
+	return (
     <img
       {...props}
-      alt="Richard Ellis Talks logo"
-      src={`${process.env.REACT_APP_HOSTNAME}/wp-content/themes/rer/library/images/re-icon-sound.png`}
+      alt={cplVar( 'title', 'site' ) + " logo"}
+      src={cplVar( 'thumb', 'site' )}
     />
   );
 }

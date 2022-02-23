@@ -12,6 +12,7 @@ import AddComment from '@mui/icons-material/AddComment';
 import Link from '@mui/icons-material/Link';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import useBreakpoints from '../Hooks/useBreakpoints';
+import { cplVar } from '../utils/helpers';
 
 export default function App({
   itemId,
@@ -60,7 +61,7 @@ export default function App({
             render={({ match, location, history}) => <ItemDetail itemId={match.params.itemId} />}
           />
           <Route
-            path={"/" + window.cplVars.type.slug + "/:typeId"}
+            path={"/" + cplVar( 'slug', 'item_type' ) + "/:typeId"}
             render={({ match, location, history}) => <TypeDetail typeId={match.params.typeId} />}
           />
           <Route path="/talks">

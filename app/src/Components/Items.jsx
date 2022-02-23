@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import { ChevronLeft } from 'react-feather';
+import { cplVar } from '../utils/helpers';
 
 import ItemList from './ItemList';
 import Filter from './Filter';
@@ -141,7 +142,7 @@ export default function Items () {
 							Back
 						</RoundButton>
 					) : (
-						<h1 className="talks__title">{window.cplVars.item.labelPlural}</h1>
+						<h1 className="talks__title">{cplVar('labelPlural', 'item')}</h1>
 					)}
 				</Box>
 				<Filter

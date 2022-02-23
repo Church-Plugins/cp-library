@@ -22,7 +22,7 @@ class Item extends Table  {
 
 	public function init() {
 		$this->type = 'item';
-		$this->post_type = 'cpl_items';
+		$this->post_type = 'cpl_item';
 
 		parent::init();
 	}

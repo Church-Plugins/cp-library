@@ -224,14 +224,11 @@ abstract class Table {
 	 * @author Tanner Moushey
 	 */
 	public static function insert( $data ) {
-		static::init();
-
 		global $wpdb;
 
 		/**
 		 * @var static
 		 */
-		$class = get_called_class();
 		$data = apply_filters( 'cpl_pre_insert', $data );
 
 		// Set default values

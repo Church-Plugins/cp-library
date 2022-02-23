@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import { cplVar } from '../utils/helpers';
 
 import { Play, Volume1, Share2 } from "react-feather"
 import VideoPlayer from "react-player";
@@ -212,11 +213,11 @@ export default function ItemDetail({
     // Margin bottom is to account for audio player. Making sure all content is still visible with
     // the player is up.
     <Box className={"itemDetail__root" + playingClass}>
-      <Link to={"/" + window.cplVars.item.slug}>{"<"} Back to {window.cplVars.item.labelPlural}</Link>
+      <Link to={"/" + cplVar( 'slug', 'item' )}>{"<"} Back to {cplVar('labelPlural', 'item')}</Link>
       {false && isDesktop && (
         <>
           <Box display="flex" justifyContent="space-between">
-            <h1 className="itemDetail__header">{window.cplVars.item.labelPlural}</h1>
+            <h1 className="itemDetail__header">{cplVar('labelPlural', 'item')}</h1>
             {/* TODO: Think about who's responsible for search, e.g. here or a global search provider */}
             <Box className="itemDetail__search" marginLeft={1} display="flex" alignItems="center">
               <SearchInput onValueChange={console.log} />

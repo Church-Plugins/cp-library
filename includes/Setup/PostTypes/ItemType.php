@@ -49,7 +49,6 @@ class ItemType extends PostType  {
 
 		add_filter( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ], 10, 4 );
 		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
-
 	}
 
 	/**
@@ -65,18 +64,18 @@ class ItemType extends PostType  {
 		$icon   = apply_filters( "cpl_{$this->post_type}_icon", 'dashicons-list-view' );
 
 		$args = [
-			'public'        => true,
-			'menu_icon'     => $icon,
-			'show_in_menu'  => true,
-			'show_in_rest'  => true,
-			'has_archive'   => CP_LIBRARY_UPREFIX . '-' . $single . '-archive',
-			'hierarchical'  => true,
-			'label'         => $single,
-			'rewrite'       => [
-				'slug' 		=> strtolower( $plural )
+			'public'       => true,
+			'menu_icon'    => $icon,
+			'show_in_menu' => true,
+			'show_in_rest' => true,
+			'has_archive'  => false, // CP_LIBRARY_UPREFIX . '-' . strtolower( $single ) . '-archive',
+			'hierarchical' => true,
+			'label'        => $single,
+			'rewrite'      => [
+				'slug' => strtolower( $plural )
 			],
-			'supports' 		=> [ 'title', 'editor', 'thumbnail' ],
-			'labels'        => [
+			'supports'     => [ 'title', 'editor', 'thumbnail' ],
+			'labels'       => [
 				'name'               => $plural,
 				'singular_name'      => $single,
 				'add_new'            => 'Add New',

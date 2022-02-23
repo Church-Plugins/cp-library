@@ -45,7 +45,7 @@ class Init {
 	 *
 	 */
 	protected function __construct() {
-		$this->enqueue = new \WPackio\Enqueue( $this->get_id(), 'dist', $this->get_version(), 'plugin', CP_LIBRARY_PLUGIN_FILE );
+		$this->enqueue = new \WPackio\Enqueue( 'cpLibrary', 'dist', $this->get_version(), 'plugin', CP_LIBRARY_PLUGIN_FILE );
 		add_action( 'plugins_loaded', [ $this, 'maybe_setup' ], - 9999 );
 		add_action( 'init', [ $this, 'maybe_init' ] );
 	}
@@ -137,7 +137,6 @@ class Init {
 	 * @author costmo
 	 */
 	public function app_enqueue() {
-
 		wp_enqueue_script( 'cpl_persistent_player', CP_LIBRARY_PLUGIN_URL . '/assets/js/main.js', ['jquery'] );
 
 		$asset_manifest = json_decode( file_get_contents( CP_LIBRARY_ASSET_MANIFEST ), true );
@@ -159,6 +158,15 @@ class Init {
 		wp_localize_script( CP_LIBRARY_UPREFIX . '-runtime', 'cplParams', [
 			'logo' => get_stylesheet_directory_uri() . '/library/images/re-icon-sound.png',
 		] );
+
+		$cpl_vars = apply_filters( 'cpl_app_vars', [
+			'site' => [
+				'title' => get_bloginfo( 'name', 'display' ),
+				'thumb' => CP_LIBRARY_PLUGIN_URL . '/app/public/logo512.png',
+			],
+		] );
+
+		wp_localize_script( CP_LIBRARY_UPREFIX . '-runtime', 'cplVars', $cpl_vars );
 
 		// App main js
 		if( isset( $asset_manifest['files'][ 'main.js' ] ) ) {
