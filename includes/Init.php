@@ -103,9 +103,9 @@ class Init {
 	}
 
 	public function rewrite_rules() {
-		add_rewrite_tag( '%item%', '([^&]+)' );
-		add_rewrite_rule('^talks/([^/]*)/?','index.php?item=$matches[1]&pagename=talks','top');
-//		flush_rewrite_rules(true);
+//		add_rewrite_tag( '%item%', '([^&]+)' );
+//		add_rewrite_rule('^talks/([^/]*)/?','index.php?item=$matches[1]&pagename=talks','top');
+		flush_rewrite_rules(true);
 	}
 
 	/**
@@ -155,10 +155,6 @@ class Init {
 			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'runtime-main.js' ] );
 			wp_enqueue_script( CP_LIBRARY_UPREFIX . '-runtime', $path, [] );
 		}
-
-		wp_localize_script( CP_LIBRARY_UPREFIX . '-runtime', 'cplParams', [
-			'logo' => get_stylesheet_directory_uri() . '/library/images/re-icon-sound.png',
-		] );
 
 		$cpl_vars = apply_filters( 'cpl_app_vars', [
 			'site' => [

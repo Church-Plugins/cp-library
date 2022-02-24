@@ -92,7 +92,11 @@ class Templates {
 			return false;
 		}
 
-		$cpl_query = true;
+		$cpl_query = false;
+		$types = cp_library()->setup->post_types->get_post_types();
+		if ( is_singular( $types ) || is_post_type_archive( $types ) ) {
+			$cpl_query = true;
+		}
 
 		return apply_filters( 'cpl_template_is_query', $cpl_query );
 	}

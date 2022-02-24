@@ -148,8 +148,8 @@ abstract class PostType {
 		$type = get_post_type_object( $this->post_type );
 		$key  = str_replace( CP_LIBRARY_UPREFIX . '_', '', $this->post_type );
 		$vars[ $key ] = [
-			'labelSingular' => $type->labels->name,
-			'labelPlural'   => $type->labels->singular_name,
+			'labelSingular' => $type->labels->singular_name,
+			'labelPlural'   => $type->labels->name,
 			'slug'          => $type->rewrite['slug'],
 		];
 
