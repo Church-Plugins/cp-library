@@ -2,9 +2,6 @@
 
 namespace CP_Library\Setup;
 
-
-use CP_Library\Setup\PostTypes\PostType;
-
 /**
  * Setup plugin initialization
  */

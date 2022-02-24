@@ -75,7 +75,6 @@ abstract class PostType {
 	 */
 	protected function __construct() {
 		$this->modal = '\CP_Library\Models\\' . get_class( $this );
-		$this->add_actions();
 	}
 
 	/**

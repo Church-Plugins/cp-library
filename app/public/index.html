@@ -36,7 +36,8 @@
 		  cplVars = {
 		  	site : {
 		  		title : 'Church Website',
-				thumb : 'http://church.local/wp-content/plugins/cp-library/app/public/logo512.png'
+				thumb : 'http://church.local/wp-content/plugins/cp-library/app/public/logo512.png',
+				url : 'http://church.local'
 			},
 		  	item : {
 		  		labelSingular: 'Sermon',
@@ -66,7 +67,11 @@
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
 
-  	<script>
+	<script type="text/html" id="test-template">
+
+	</script>
+
+	<script>
 		cplParams = {};
 		cplParams.logo = '%REACT_APP_HOSTNAME%/wp-content/themes/rer/library/images/re-icon-sound.png';
 	</script>

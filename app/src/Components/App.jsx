@@ -1,5 +1,6 @@
 
 import { MemoryRouter, Switch, Route } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
 
 import Items from "./Items";
 import Types from "./Types";
@@ -15,9 +16,9 @@ import useBreakpoints from '../Hooks/useBreakpoints';
 import { cplVar } from '../utils/helpers';
 
 export default function App({
-  itemId,
+  itemId, typeId
 }) {
-  const initialPath = itemId === undefined ? "/" + cplVar( 'slug', 'item_type' ) : `/${cplVar( 'slug', 'item_type' )}/${itemId}`;
+  const initialPath = itemId === undefined ? "/" + cplVar( 'slug', 'item' ) : `/${cplVar( 'slug', 'item' )}/${itemId}`;
   const { isDesktop } = useBreakpoints();
 
   const navClick = (path, newWindow = false) => {

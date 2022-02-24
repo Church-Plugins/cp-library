@@ -1,6 +1,5 @@
 <?php
 // TODO: Undo the structure that's requiring output buffering here
-ob_start();
 $controller = new CP_Library\API\Items();
 
 // $request = new WP_REST_Request( '', '', [] );
@@ -29,7 +28,7 @@ $items = $response->get_data();
 
 				<div class="cpl-item-list--item--meta">
 					<div class="cpl-item-list--item--date"><?php echo $item['date']; ?></div>
-					<div class="cpl-item-list--item--category"><?php echo implode( ', ', $item['category'] ); ?></div>
+					<div class="cpl-item-list--item--category"><?php // echo implode( ', ', $item['category'] ); ?></div>
 				</div>
 			</div>
 
@@ -48,5 +47,3 @@ $items = $response->get_data();
 	<?php endforeach; ?>
 
 </div>
-<?php
-return ob_get_clean();

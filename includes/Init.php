@@ -67,6 +67,8 @@ class Init {
 		$this->setup = Setup\Init::get_instance();
 		$this->api   = API\Init::get_instance();
 
+		Templates::init();
+
 		include_once( CP_LIBRARY_INCLUDES . '/CLI/RE_Migrate.php' );
 	}
 
@@ -94,7 +96,6 @@ class Init {
 		add_filter( 'script_loader_tag', [ $this, 'app_load_scripts' ], 10, 3 );
 		add_action( 'wp_enqueue_scripts', [ $this, 'app_enqueue' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'admin_scripts' ] );
-		add_action( 'init', [ $this, 'rewrite_rules' ] );
 		add_action( 'init', [ $this, 'rewrite_rules' ] );
 
 		$shortcode = Shortcode_Controller::get_instance();
@@ -270,6 +271,16 @@ class Init {
 	 */
 	public function get_plugin_name() {
 		return __( 'Church Plugins - Library', 'cp-library' );
+	}
+
+	/**
+	 * Returns the plugin name, localized
+	 *
+	 * @since 1.0.0
+	 * @return string the plugin name
+	 */
+	public function get_plugin_path() {
+		return CP_LIBRARY_PLUGIN_DIR;
 	}
 
 	/**

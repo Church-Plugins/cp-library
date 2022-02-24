@@ -29,13 +29,6 @@ class ItemType extends PostType  {
 		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", __( 'Series', 'cp_library' ) );
 
 		parent::__construct();
-
-		$item_type   = Item::get_instance()->post_type;
-		$source_type = Speaker::get_instance()->post_type;
-
-		add_filter( "{$item_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
-		add_filter( "{$source_type}_args", [ $this, 'cpt_menu_position' ], 10 , 2 );
-
 	}
 
 	public function cpt_menu_position( $args, $class ) {
@@ -49,6 +42,12 @@ class ItemType extends PostType  {
 
 		add_filter( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ], 10, 4 );
 		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
+
+		$item_type   = Item::get_instance()->post_type;
+		$source_type = Speaker::get_instance()->post_type;
+
+		add_filter( "{$item_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
+		add_filter( "{$source_type}_args", [ $this, 'cpt_menu_position' ], 10 , 2 );
 	}
 
 	/**

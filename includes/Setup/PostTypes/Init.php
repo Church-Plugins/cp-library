@@ -121,13 +121,18 @@ class Init {
 	public function register_post_types() {
 
 		$this->item = Item::get_instance();
+		$this->speaker = Speaker::get_instance();
+		$this->item_type = ItemType::get_instance();
+
+
+		$this->item->add_actions();
 
 		if ( apply_filters( 'cpl_enable_speakers', true ) ) {
-			$this->speaker = Speaker::get_instance();
+			$this->speaker->add_actions();
 		}
 
 		if ( apply_filters( 'cpl_enable_item_types', true ) ) {
-			$this->item_type = ItemType::get_instance();
+			$this->item_type->add_actions();
 		}
 
 		do_action( 'cpl_register_post_types' );
