@@ -105,7 +105,13 @@ class Init {
 	public function rewrite_rules() {
 //		add_rewrite_tag( '%item%', '([^&]+)' );
 //		add_rewrite_rule('^talks/([^/]*)/?','index.php?item=$matches[1]&pagename=talks','top');
-		flush_rewrite_rules(true);
+
+		$flush = '1';
+
+		if ( get_option( '_cpl_needs_flush' ) != $flush ) {
+			flush_rewrite_rules(true);
+			update_option( '_cpl_needs_flush', $flush );
+		}
 	}
 
 	/**
