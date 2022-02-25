@@ -41,7 +41,7 @@ export default function FilterDrawerTopic({
 			try {
 				setTopicsLoading( true );
 				const restRequest = new Controllers_WP_REST_Request();
-				const data = await restRequest.get( {endpoint: 'items/dictionary', params: null} );
+				const data = await restRequest.get( {endpoint: 'items-dictionary', params: null} );
 
 				let outputItems = [];
 				if( data && data.items ) {

@@ -85,7 +85,7 @@ class Items extends WP_REST_Controller {
 			// 'schema' => array( $this, 'get_public_item_schema' ),
 		) );
 
-		register_rest_route( $this->namespace, $this->rest_base . '/dictionary', array(
+		register_rest_route( $this->namespace, $this->rest_base . '-dictionary', array(
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_topic_dictionary' ),

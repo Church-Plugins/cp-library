@@ -41,7 +41,7 @@ export default function AllTopics({
       try {
         setTopicsFullLoading( true );
         const restRequest = new Controllers_WP_REST_Request();
-        const response = await restRequest.get( {endpoint: 'items/dictionary', params: null} );
+        const response = await restRequest.get( {endpoint: 'items-dictionary', params: null} );
 				setTopicsFullItems(response.items);
 			} catch ( error ) {
 				setTopicsFullError(error);
