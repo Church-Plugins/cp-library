@@ -1,5 +1,5 @@
 import IconButton from '@mui/material/IconButton';
-import { PauseCircle, PlayCircle } from "@mui/icons-material"
+import { PauseCircle, PlayCircle, Pause, PlayArrow } from "@mui/icons-material"
 import * as React from 'react';
 import { styled } from '@mui/material/styles';
 import Stack from '@mui/material/Stack';
@@ -8,6 +8,7 @@ import { purple } from '@mui/material/colors';
 export default function ButtonPlay({
   // See MUI docs for possible values
   variant = "contained",
+	circleIcon = true,
   leftIcon,
   fullWidth = false,
   onClick,
@@ -24,7 +25,15 @@ export default function ButtonPlay({
       disabled={disabled}
       sx={{padding: 0}}
     >
-      {isPlaying ? <PauseCircle color="primary" sx={{fontSize: size}} /> : <PlayCircle color="primary" sx={{fontSize: size}} />}
+	    {circleIcon ? (
+	    	<>
+	        {isPlaying ? <PauseCircle color="primary" sx={{fontSize: size}} /> : <PlayCircle color="primary" sx={{fontSize: size}} />}
+	      </>
+			) : (
+        <>
+          {isPlaying ? <Pause color="primary" sx={{fontSize: size}} /> : <PlayArrow color="primary" sx={{fontSize: size}} />}
+        </>
+	    )}
     </IconButton>
   );
 }

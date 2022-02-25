@@ -9,6 +9,17 @@
 			width: 100%;
 			z-index: 450;
 			background: linear-gradient(0deg, black 80%, transparent 100%);
+			color: white;
+			box-sizing: border-box;
+			padding: 3rem 1rem 1rem;
+
+			button {
+				color: white;
+			}
+
+			.itemPlayer__controls {
+				padding: 0;
+			}
 		}
 
 	}
@@ -21,7 +32,6 @@
 		}
 
 		button {
-			color: white;
 			background-color: transparent !important;
 		}
 	}
@@ -50,22 +60,44 @@
 		}
 
 		.itemPlayer__controlsWrapper {
-			display: none;
-			position: fixed;
+			position: absolute;
 			left: 0;
 			bottom: 0;
 			width: 100%;
 			align-items: center;
-			padding: 0 40px 20px;
 			z-index: 10;
+
+			display: flex;
+			padding: 10px 5px;
+			box-sizing: border-box;
+			background: rgba(0, 0, 0, 0.75);
+			color: rgba(255,255,255, .9);
+			font-size: 12px;
+
+			button {
+				color: rgba(255,255,255, .9);
+				font-size: 24px;
+
+				svg {
+					font-size: 1em;
+				}
+			}
 		}
 
 		.itemPlayer__controls {
-			padding: 0 20px 0 0;
+			padding: 0 10px;
 
 			> * {
 				padding: 0;
-				margin-right: 20px;
+				margin: 0 5px;
+			}
+		}
+
+		.itemPlayer__progress {
+			padding-left: 10px;
+
+			.MuiSlider-rail {
+				background-color: white;
 			}
 		}
 
@@ -85,7 +117,17 @@
 			}
 
 			.itemPlayer__controlsWrapper {
+				position: fixed;
 				display: flex;
+				padding: 10px 40px 20px;
+			}
+
+			.itemPlayer__controls {
+				font-size: 16px;
+
+				button {
+					font-size: 30px;
+				}
 			}
 		}
 

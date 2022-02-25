@@ -22,7 +22,7 @@ import SearchInput from '../Elements/SearchInput';
 import RectangularButton from '../Elements/RectangularButton';
 import Logo from '../Elements/Logo';
 
-import { PictureInPicture, Forward30, Replay10, Fullscreen, PlayCircleOutline, Facebook, Twitter, Download, Link as LinkIcon } from "@mui/icons-material"
+import { PictureInPicture, Forward30, Replay10, OpenInFull, PlayCircleOutline, Facebook, Twitter, Download, Link as LinkIcon } from "@mui/icons-material"
 import Slider from '@mui/material/Slider';
 import IconButton from '@mui/material/IconButton';
 import ReactDOM from 'react-dom';
@@ -61,11 +61,23 @@ export default function ItemDetail({
   const history      = useHistory();
 
 	const onMouseMove = (e) => {
-		if (showFSControls || ! screenfull.isFullscreen ) return;
+		if (showFSControls || ! mode) return;
+		showControls();
+	};
+
+	const showControls = () => {
+		if ( ! isDesktop && ! screenfull.isFullscreen ) {
+			return;
+		}
 
 		setShowFSControls( true );
-		setTimeout(() => setShowFSControls( false ), 3500 );
+
+		if ( 'video' === mode ) {
+			setTimeout(() => setShowFSControls( false ), 3500 );
+		}
 	};
+
+	useEffect(() => { showControls() }, [mode]);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -141,7 +153,7 @@ export default function ItemDetail({
 		setMode(mode);
 		setPlayedSeconds(0);
 		setPlayingURL( 'video' === mode ? item.video.value : item.audio );
-		setIsPlaying(false)
+		setIsPlaying(false);
 		setIsPlaying(true);
 	};
 
@@ -311,85 +323,87 @@ export default function ItemDetail({
 		          )}
 
 		          {!showFSControls ? null : (
-		          	<Box className="itemPlayer__controlsWrapper">
+			          <Box className="itemPlayer__controlsWrapper">
 
-			          <Box className="itemPlayer__controls" display="flex" flexDirection="row"
-			               justifyContent="space-around" margin="auto">
+				          <Box className="itemPlayer__controls" display="flex" flexDirection="row"
+				               justifyContent="space-around" margin="auto">
 
-				          <Box display="flex" alignItems="center">
-					          <ButtonPlay flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
+					          <Box display="flex" alignItems="center">
+						          <ButtonPlay flex={0} padding={2} isPlaying={isPlaying} circleIcon={false} onClick={() => setIsPlaying(!isPlaying)}/>
+					          </Box>
+
+					          <IconButton
+					                      onClick={() => playerInstance.current.seekTo(playedSeconds - 10, 'seconds')}>
+						          <Replay10 fontSize="inherit"/>
+					          </IconButton>
+
+					          <IconButton
+					                      onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')}>
+						          <Forward30 fontSize="inherit"/>
+					          </IconButton>
+
+					          <Box className="itemPlayer__controls__rate" display="flex" alignItems="center"
+					               onClick={updatePlaybackRate}>
+						          <span>{playbackRate}x</span>
+					          </Box>
+
 				          </Box>
 
-				          <IconButton size="large"
-				                      onClick={() => playerInstance.current.seekTo(playedSeconds - 10, 'seconds')}>
-					          <Replay10 fontSize="inherit"/>
-				          </IconButton>
+				          <Box className="itemPlayer__progress" flex={1} display="flex" flexDirection="column">
+					          <Box display="flex" flexDirection="row" alignItems="center">
 
-				          <IconButton size='large'
-				                      onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')}>
-					          <Forward30 fontSize="inherit"/>
-				          </IconButton>
+						          <Slider
+							          min={0}
+							          defaultValue={0}
+							          max={duration}
+							          step={.01}
+							          size="medium"
+							          value={playedSeconds}
+							          sx={{padding: '10px 0 !important'}}
+							          onChange={(_, value) => {
+								          setIsPlaying(false);
+								          setPlayedSeconds(value);
+							          }}
+							          onChangeCommitted={(_, value) => {
+								          setIsPlaying(true);
+								          playerInstance.current.seekTo(playedSeconds);
+								          setPlayedSeconds(value);
+							          }}
+						          />
 
-				          <Box className="itemPlayer__controls__rate" display="flex" alignItems="center" onClick={updatePlaybackRate}>
-					          <span>{playbackRate}x</span>
+					          </Box>
+					          <Box className="itemPlayer__duration" display="flex" flexDirection="row"
+					               justifyContent="space-between">
+						          <Box
+							          display="flex"
+							          justifyContent="flex-start"
+						          >
+							          {formatDuration(playedSeconds)}
+						          </Box>
+						          <Box
+							          display="flex"
+							          justifyContent="flex-end"
+						          >
+							          -{formatDuration(duration - playedSeconds)}
+						          </Box>
+					          </Box>
 				          </Box>
+
+				          {!screenfull.isFullscreen && (
+					          <Box className="itemPlayer__controls" display="flex" flexDirection="row"
+				               justifyContent="space-around" margin="auto">
+						          {mode === 'video' && (
+								          <IconButton onClick={handleClickFullscreen}><OpenInFull/></IconButton>
+						          )}
+
+						          <IconButton sx={{ transform: 'scaley(-1)'}} onClick={handleClickPersistent}><PictureInPicture fontSize="inherit"/></IconButton>
+					          </Box>
+				          )}
 
 			          </Box>
-
-			          <Box className="itemPlayer__progress" flex={1} display="flex" flexDirection="column">
-				          <Box display="flex" flexDirection="row" alignItems="center">
-
-					          <Slider
-						          min={0}
-						          defaultValue={0}
-						          max={duration}
-						          step={.01}
-						          size="medium"
-						          value={playedSeconds}
-						          sx={{padding: '10px 0 !important'}}
-						          onChange={(_, value) => {
-							          setIsPlaying(false);
-							          setPlayedSeconds(value);
-						          }}
-						          onChangeCommitted={(_, value) => {
-							          setIsPlaying(true);
-							          playerInstance.current.seekTo(playedSeconds);
-							          setPlayedSeconds(value);
-						          }}
-					          />
-
-				          </Box>
-				          <Box className="itemPlayer__duration" display="flex" flexDirection="row"
-				               justifyContent="space-between">
-					          <Box
-						          display="flex"
-						          justifyContent="flex-start"
-					          >
-						          {formatDuration(playedSeconds)}
-					          </Box>
-					          <Box
-						          display="flex"
-						          justifyContent="flex-end"
-					          >
-						          -{formatDuration(duration - playedSeconds)}
-					          </Box>
-				          </Box>
-			          </Box>
-
-		          </Box>
 		          )}
 
-		          {mode === 'video' ? (
-			          <Box className="itemPlayer__video__controls">
-
-				          <Box position="absolute" zIndex={50} top={0} left={0} className="itemPlayer__fullscreen">
-					          <IconButton sx={{color: '#ffffff', transform: 'scalex(-1)'}}
-					                      onClick={handleClickFullscreen}><Fullscreen/></IconButton>
-				          </Box>
-
-			          </Box>
-
-		          ) : (
+		          {mode !== 'video' && (
 			          <Box
 				          className="itemDetail__audio"
 				          sx={displayBg}
@@ -515,7 +529,7 @@ export default function ItemDetail({
             </Box>
           </Box>
 
-	        {['audio', 'video'].includes(mode) && (
+	        {(mode && !isDesktop) && (
 	         <Box className="itemPlayer__controlsWrapper">
 		         <Box className="itemPlayer__progress" flex={1} display="flex" flexDirection="column" >
 			         <Box display="flex" flexDirection="row" alignItems="center">
