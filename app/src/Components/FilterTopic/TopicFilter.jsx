@@ -24,7 +24,7 @@ export default function TopicFilter({
 
   const handleClose = () => {
     setIsOpen(false);
-  }
+  };
 
   return (
     <ClickAwayListener onClickAway={handleClose}>

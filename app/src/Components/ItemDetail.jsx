@@ -73,7 +73,7 @@ export default function ItemDetail({
 		setShowFSControls( true );
 
 		if ( 'video' === mode ) {
-			setTimeout(() => setShowFSControls( false ), 3500 );
+			setTimeout(() => setShowFSControls( false ), 4000 );
 		}
 	};
 
@@ -121,10 +121,8 @@ export default function ItemDetail({
 	const handleFileDownload = () => {
 		const link = document.createElement('a');
     link.href = item.audio;
-    link.setAttribute(
-      'download',
-      item.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3',
-    );
+
+    link.href = cplVar( 'url', 'site' ) + '?item_id=' + item.originID + '&key=audio&name=' + item.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3';
 
 		link.setAttribute(
 			'target',
@@ -371,22 +369,14 @@ export default function ItemDetail({
 							          }}
 						          />
 
-					          </Box>
-					          <Box className="itemPlayer__duration" display="flex" flexDirection="row"
-					               justifyContent="space-between">
 						          <Box
 							          display="flex"
-							          justifyContent="flex-start"
+							          className="itemPlayer__remaining"
 						          >
-							          {formatDuration(playedSeconds)}
-						          </Box>
-						          <Box
-							          display="flex"
-							          justifyContent="flex-end"
-						          >
-							          -{formatDuration(duration - playedSeconds)}
+							          {formatDuration(duration - playedSeconds)}
 						          </Box>
 					          </Box>
+
 				          </Box>
 
 				          {!screenfull.isFullscreen && (

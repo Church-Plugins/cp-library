@@ -67,6 +67,7 @@ class Init {
 		$this->setup = Setup\Init::get_instance();
 		$this->api   = API\Init::get_instance();
 
+		Download::get_instance();
 		Templates::init();
 
 		include_once( CP_LIBRARY_INCLUDES . '/CLI/RE_Migrate.php' );

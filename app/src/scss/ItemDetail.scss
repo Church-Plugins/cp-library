@@ -132,6 +132,21 @@
 		}
 
 	}
+
+	&__remaining {
+		margin-left: 10px;
+		min-width: 5em;
+		text-align: left;
+		justify-content: flex-start;
+
+		.player__seconds {
+			width: 2em;
+		}
+
+		&:before {
+			content: '-';
+		}
+	}
 }
 
 .itemDetail {
@@ -165,4 +180,5 @@
 			margin-right: 1rem;
 		}
 	}
+
 }
