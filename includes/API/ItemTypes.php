@@ -182,7 +182,7 @@ class ItemTypes extends WP_REST_Controller {
 		$find = rawurlencode( rawurldecode( $find ) );
 		$return_value = [];
 
-		$address = get_site_url() . '/wp-json/wp/v2/search?search=' . $find . '&subtype=cpl_items&per_page=100&';
+		$address = get_site_url() . '/wp-json/wp/v2/search?search=' . $find . '&subtype=cpl_item&per_page=100&';
 		$request = wp_remote_get( $address, ['sslverify' => false] );
 		if( is_wp_error( $request ) ) {
 			return [];

@@ -53,7 +53,7 @@ class RE_Migrate {
 
 		foreach( $talks as $talk ) {
 			$progress->tick();
-			$talk->post_type = 'cpl_items';
+			$talk->post_type = 'cpl_item';
 			$audio = get_post_meta( $talk->ID, 'talk_file', true );
 
 			wp_update_post( $talk );
@@ -78,7 +78,7 @@ class RE_Migrate {
 
 		foreach( $sermons as $sermon ) {
 			$progress->tick();
-			$sermon->post_type = 'cpl_items';
+			$sermon->post_type = 'cpl_item';
 			$vimeo = get_post_meta( $sermon->ID, 'vimeo_video_id', true );
 			$facebook = get_post_meta( $sermon->ID, 'facebook_video_id', true );
 

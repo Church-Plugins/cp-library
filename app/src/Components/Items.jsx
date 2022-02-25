@@ -12,15 +12,13 @@ import debounce from '@mui/utils/debounce';
 
 export default function Items () {
 	const {isDesktop} = useBreakpoints();
-	const [activeFilters, setActiveFilters] = useState(
-		{
-			'topics' : [],
-			'formats': [],
-			'page'   : 1,
-			'search' : '',
-			'type' : '',
-		}
-	);
+	const [activeFilters, setActiveFilters] = useState( {
+		'ready'  : false,
+		'topics' : [],
+		'formats': [],
+		'page'   : 1,
+		'search' : '',
+	} );
 
 	const toggleFilter = (label) => {
 
@@ -47,27 +45,24 @@ export default function Items () {
 
 	// TODO: Wire-up
 	const addFilter = (label, filterType) => {
-
-		let topicInput = (
-			'topic' === filterType
-		) ? [...activeFilters.topics, label] : [...activeFilters.topics];
-		let formatInput = (
-			'format' === filterType
-		) ? [...activeFilters.formats, label] : [...activeFilters.formats];
+		let topicInput = ('topic' === filterType) ? [...activeFilters.topics, label] : [...activeFilters.topics];
+		let formatInput = ('format' === filterType) ? [...activeFilters.formats, label] : [...activeFilters.formats];
+		let search = ('search' === filterType) ? label : activeFilters.search;
+		let ready = ('ready' === filterType) ? label : activeFilters.ready;
 
 		setActiveFilters(
 			{
+				'ready'  : ready,
 				'topics' : topicInput,
 				'formats': formatInput,
 				'page'   : 1,
-				'search' : activeFilters.search
+				'search' : search
 			}
 		);
 	};
 
 	// TODO: Wire-up
 	const removeFilter = (label, filterType) => {
-
 		if (!filterType) {
 			filterType = 'topic';
 		}
@@ -81,6 +76,7 @@ export default function Items () {
 
 		setActiveFilters(
 			{
+				'ready'  : activeFilters.ready,
 				'topics' : topicInput,
 				'formats': formatInput,
 				'page'   : 1,
@@ -99,6 +95,7 @@ export default function Items () {
 		) ? [] : [...activeFilters.formats];
 
 		setActiveFilters({
+			'ready'  : activeFilters.ready,
 			'topics' : topicInput,
 			'formats': formatInput,
 			'page'   : 1,
@@ -110,6 +107,7 @@ export default function Items () {
 	const handleSearchInputChange = debounce((value) => {
 		setActiveFilters(
 			{
+				'ready'  : activeFilters.ready,
 				'topics' : [...activeFilters.topics],
 				'formats': [...activeFilters.formats],
 				'page'   : 1,
@@ -120,10 +118,17 @@ export default function Items () {
 	useEffect(() => {
 		const urlParams = new URLSearchParams(window.location.search);
 		const format = urlParams.get('format');
+		const search = urlParams.get('s');
 
-		if (format) {
-			addFilter('format__' + format, 'format');
-		}
+		setActiveFilters(
+			{
+				'ready'  : true,
+				'topics' : [],
+				'formats': format ? [ format ] : [],
+				'page'   : 1,
+				'search' : search ? search : '',
+			}
+		);
 	}, []);
 
 	return (

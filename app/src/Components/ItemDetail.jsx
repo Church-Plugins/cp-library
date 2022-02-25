@@ -4,10 +4,12 @@ import Divider from '@mui/material/Divider';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { cplVar } from '../utils/helpers';
+import debounce from '@mui/utils/debounce';
 
 import { Play, Volume1, Share2 } from "react-feather"
 import VideoPlayer from "react-player";
 import { Link } from 'react-router-dom';
+import { useHistory } from "react-router-dom";
 
 import useBreakpoints from '../Hooks/useBreakpoints';
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
@@ -46,7 +48,7 @@ export default function ItemDetail({
   const [playbackRate, setPlaybackRate] = useState(1 );
 	const [displayBg, setDisplayBG]   = useState( {backgroundColor: "#C4C4C4"} );
 	const [showFSControls, setShowFSControls]   = useState( false );
-
+	const itemContainer = useRef(false);
   // Keep frequently-updated states (mainly the progress from the media player) as a ref so they
   // don't trigger re-render.
   const mediaState = useRef({});
@@ -56,6 +58,7 @@ export default function ItemDetail({
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 	const copyLinkRef = useRef(null);
+  const history      = useHistory();
 
 	const onMouseMove = (e) => {
 		if (showFSControls || ! screenfull.isFullscreen ) return;
@@ -159,9 +162,13 @@ export default function ItemDetail({
 		}
 	};
 
+	const handleSearchInputChange = debounce((value) => {
+		history.push(`${cplVar( 'path', 'site' )}/${cplVar( 'slug', 'item' )}?s=${value}`);
+	}, 1000);
+
   // Fetch the individual item when mounted.
   useEffect(() => {
-    (async () => {
+		(async () => {
       try {
         setLoading(true);
         const restRequest = new Controllers_WP_REST_Request();
@@ -171,7 +178,8 @@ export default function ItemDetail({
         setError(error);
       } finally {
         setLoading(false);
-      }
+				itemContainer.current.scrollIntoView({behavior: "smooth"});
+			}
     })();
   }, []);
 
@@ -206,21 +214,23 @@ export default function ItemDetail({
   }, [item]);
 
   return loading ? (
-    <LoadingIndicator />
+  	<Box ref={itemContainer} className={"itemDetail__root" + playingClass}>
+      <LoadingIndicator />
+	  </Box>
   ) : error ? (
     <ErrorDisplay error={error} />
   ) : (
     // Margin bottom is to account for audio player. Making sure all content is still visible with
     // the player is up.
-    <Box className={"itemDetail__root" + playingClass}>
-      <Link to={"/" + cplVar( 'slug', 'item' )}>{"<"} Back to {cplVar('labelPlural', 'item')}</Link>
-      {false && isDesktop && (
+    <Box ref={itemContainer} className={"itemDetail__root" + playingClass}>
+      <Link className="itemDetail__Back" to={cplVar( 'path', 'site' ) + "/" + cplVar( 'slug', 'item' )}>{"<"} Back to {cplVar('labelPlural', 'item')}</Link>
+      {isDesktop && (
         <>
-          <Box display="flex" justifyContent="space-between">
-            <h1 className="itemDetail__header">{cplVar('labelPlural', 'item')}</h1>
+          <Box display="flex" justifyContent="space-between" className="itemDetail__header">
+            <h1 className="itemDetail__header__title">{cplVar('labelPlural', 'item')}</h1>
             {/* TODO: Think about who's responsible for search, e.g. here or a global search provider */}
             <Box className="itemDetail__search" marginLeft={1} display="flex" alignItems="center">
-              <SearchInput onValueChange={console.log} />
+              <SearchInput onValueChange={handleSearchInputChange} />
             </Box>
           </Box>
           <Divider className="itemDetail__divider" sx={{ marginY: 2 }} />
@@ -247,6 +257,11 @@ export default function ItemDetail({
 
         <Box className="itemDetail__rightContent" flex={1} flexBasis="60%">
           {/* TODO: Componentize as <FeatureImage />. These could be the same thing as the ones in the item list */}
+
+          {! isDesktop ? null : (
+          	<div dangerouslySetInnerHTML={{__html: cplVar( 'mobileTop', 'components' ) }} />
+          )}
+
           <Box
             className="itemDetail__featureImage"
             position="relative"

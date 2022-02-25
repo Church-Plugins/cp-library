@@ -35,7 +35,7 @@ export default function Item({
           background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(196, 196, 196, 0) 109.68%)'
         }
       }}
-      onClick={() => history.push(`/${cplVar( 'slug', 'item' )}/${item.originID}`)}
+      onClick={() => history.push(`${cplVar( 'path', 'site' )}/${cplVar( 'slug', 'item' )}/${item.slug}`)}
     >
       <Box className="cplItem__content" display="flex" flexDirection="row" width="100%">
         <Box className="cplItem__thumb" flex={0} display="flex" alignItems="center">
@@ -136,7 +136,7 @@ export function ItemActions({
   }
 
   return (
-    <IconButton className="cplItem__toItem" onClick={() => history.push(`/talks/${item.originID}`)}>
+    <IconButton className="cplItem__toItem" onClick={() => history.push(`${cplVar( 'path', 'site' )}/talks/${item.slug}`)}>
       <ChevronRight/>
     </IconButton>
   );

@@ -22,9 +22,6 @@ function ItemList ({
 	const useStyles = makeStyles(() => (
 		{
 			ul: {
-				'& .MuiPaginationItem-root'      : {
-					color: '#fff'
-				},
 				'& .MuiPaginationItem-root:hover': {
 					backgroundColor: 'rgba(255, 255, 255, 0.2)'
 				},
@@ -40,15 +37,23 @@ function ItemList ({
 		(
 			async () => {
 				try {
+
+					if (!activeFilters.ready) {
+						return;
+					}
+
 					setLoading(true);
 					const restRequest = new Controllers_WP_REST_Request();
 					let inputParams = 't=' +
 					                  activeFilters.topics.join(',') + '&' +
 					                  'f=' +
 					                  activeFilters.formats.join(',') + '&' +
-					                  'type=' +
-					                  activeFilters.type + '&' +
 					                  's=' + encodeURIComponent(activeFilters.search).replace(' ', '+');
+
+					if ( undefined !== activeFilters.type && activeFilters.type ) {
+						inputParams += 'type=' + activeFilters.type;
+					}
+
 					const data = await restRequest.get({endpoint: 'items', params: inputParams});
 					data.page = 1;
 					setItems(data);
@@ -65,15 +70,19 @@ function ItemList ({
 
 		try {
 			setLoading(true);
+			document.querySelector('.talks__itemListContainer').scrollIntoView({behavior: "smooth"});
 			const restRequest = new Controllers_WP_REST_Request();
 			let inputParams = 't=' +
 			                  activeFilters.topics.join(',') + '&' +
 			                  'f=' +
 			                  activeFilters.formats.join(',') + '&' +
 			                  'p=' + value + '&' +
-			                  'type=' +
-			                  activeFilters.type + '&' +
 			                  's=' + activeFilters.search;
+
+			if ( undefined !== activeFilters.type && activeFilters.type ) {
+				inputParams += 'type=' + activeFilters.type;
+			}
+
 			const data = await restRequest.get({endpoint: 'items', params: inputParams});
 			data.page = value;
 			setItems(data);

@@ -118,6 +118,7 @@ class Item {
 			'id'        => $this->model->id,
 			'originID'  => $this->post->ID,
 			'permalink' => $this->get_permalink(),
+			'slug'      => $this->post->post_name,
 			'thumb'     => $this->get_thumbnail(),
 			'title'     => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
 			'desc'      => $this->get_content(),

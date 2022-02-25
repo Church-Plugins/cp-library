@@ -75,7 +75,7 @@ class Shortcode
 	public function render_root( $args ) {
 		$item_id = 0;
 		$path = get_query_var( 'item' );
-		if ( $path && $item = get_page_by_path( $path, OBJECT, 'cpl_items' ) ) {
+		if ( $path && $item = get_page_by_path( $path, OBJECT, 'cpl_item' ) ) {
 			$item_id = $item->ID;
 		}
 

@@ -1,5 +1,5 @@
 
-import { MemoryRouter, Switch, Route } from "react-router-dom";
+import { MemoryRouter, Switch, Route, BrowserRouter } from "react-router-dom";
 import React, { useState, useEffect } from 'react';
 
 import Items from "./Items";
@@ -41,38 +41,29 @@ export default function App({
 
   return (
     <PersistentPlayerProvider>
-      <MemoryRouter initialEntries={[initialPath]}>
+      <BrowserRouter initialEntries={[initialPath]}>
 
 	      {!isDesktop && (
-		      <BottomNavigation
-			      className="cplItems__topNav"
-			      showLabels
-		      >
-			      <BottomNavigationAction label="Subscribe" icon={<AddComment/>} onClick={() => navClick(
-				      'https://itunes.apple.com/us/podcast/richard-ellis-talks/id626398296', true)}/>
-			      <BottomNavigationAction label="Contribute" icon={<VolunteerActivismIcon/>}
-			                              onClick={() => navClick('/contribute/' )}/>
-			      <BottomNavigationAction label="Connect" icon={<Link/>} onClick={() => navClick('/connect/' )}/>
-		      </BottomNavigation>
+		      <div dangerouslySetInnerHTML={{__html: cplVar( 'mobileTop', 'components' ) }} />
 	      )}
 
         <Switch>
           <Route
-            path={"/" + cplVar( 'slug', 'item' ) + "/:itemId"}
+            path={cplVar( 'path', 'site' ) + "/" + cplVar( 'slug', 'item' ) + "/:itemId"}
             render={({ match, location, history}) => <ItemDetail itemId={match.params.itemId} />}
           />
           <Route
-            path={"/" + cplVar( 'slug', 'item_type' ) + "/:typeId"}
+            path={cplVar( 'path', 'site' ) + "/" + cplVar( 'slug', 'item_type' ) + "/:typeId"}
             render={({ match, location, history}) => <TypeDetail typeId={match.params.typeId} />}
           />
-          <Route path={"/" + cplVar( 'slug', 'item' )}>
+          <Route path={cplVar( 'path', 'site' ) + "/" + cplVar( 'slug', 'item' )}>
             <Items />
           </Route>
-          <Route path={"/" + cplVar( 'slug', 'item_type' )}>
+          <Route path={cplVar( 'path', 'site' ) + "/" + cplVar( 'slug', 'item_type' )}>
             <Types />
           </Route>
         </Switch>
-      </MemoryRouter>
+      </BrowserRouter>
     </PersistentPlayerProvider>
   );
 };

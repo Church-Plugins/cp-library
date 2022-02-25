@@ -126,8 +126,8 @@ abstract class PostType {
 	 */
 	public function add_actions() {
 		add_action( 'cmb2_admin_init', [ $this, 'register_metaboxes' ] );
-		// add_action( 'rest_cpl_items_params', [ $this, 'rest_request_limit' ], 10, 1 );
-		add_action( 'rest_cpl_items_query', [ $this, 'rest_request_limit' ], 10, 1 );
+		// add_action( 'rest_cpl_item_params', [ $this, 'rest_request_limit' ], 10, 1 );
+		add_action( 'rest_cpl_item_query', [ $this, 'rest_request_limit' ], 10, 1 );
 		add_action( "save_post_{$this->post_type}", [ $this, 'save_post' ] );
 		add_action( 'cpl_register_post_types', [ $this, 'register_post_type' ] );
 		add_filter( 'cpl_app_vars', [ $this, 'app_vars' ] );

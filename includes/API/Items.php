@@ -64,11 +64,11 @@ class Items extends WP_REST_Controller {
 			// 'schema' => array( $this, 'get_public_item_schema' ),
 		) );
 
-		register_rest_route( $this->namespace, $this->rest_base . '/(?P<item_id>[\d]+)', array(
+		register_rest_route( $this->namespace, $this->rest_base . '/(?P<item_id>[^.\/]+)', array(
 			'args' => array(
 				'item_id' => array(
 					'description' => __( 'The ID of the item.', 'cp-library' ),
-					'type'        => 'integer',
+					'type'        => 'string',
 					'required'    => true,
 				),
 			),
@@ -175,7 +175,7 @@ class Items extends WP_REST_Controller {
 	 * TODO: Figure out how to overrid the 100 post maximum for this endpoint
 	 *
 	 * @param String $find				The string/terms to find
-	 * @return Array
+	 * @return array
 	 * @author costmo
 	 */
 	public function get_search_results( $find ) {
@@ -183,17 +183,18 @@ class Items extends WP_REST_Controller {
 		$find = rawurlencode( rawurldecode( $find ) );
 		$return_value = [];
 
-		$address = get_site_url() . '/wp-json/wp/v2/search?search=' . $find . '&subtype=cpl_items&per_page=100&';
-		$request = wp_remote_get( $address, ['sslverify' => false] );
-		if( is_wp_error( $request ) ) {
-			return [];
-		}
+		$request  = new WP_REST_Request( 'GET', "/wp/v2/search", [] );
 
-		$result = wp_remote_retrieve_body( $request );
-		$data = @json_decode( $result );
+		$request->set_param( 'search', $find );
+		$request->set_param( 'subtype', $this->post_type );
+		$request->set_param( 'per_page', 100 );
+
+		$response = rest_do_request( $request );
+		$data     = $response->get_data();
+
 		if( !empty( $data ) ) {
 			foreach( $data as $item ) {
-				$return_value[] = $item->id;
+				$return_value[] = $item['id'];
 			}
 		}
 
@@ -366,6 +367,15 @@ class Items extends WP_REST_Controller {
 	public function get_item( $request ) {
 		$item_id = $request->get_param( 'item_id' );
 		try {
+
+			if ( ! is_numeric( $item_id ) ) {
+				if ( ! $item = get_page_by_path( $item_id, OBJECT, $this->post_type ) ) {
+					throw new Exception( 'Could not find the requested item' );
+				}
+
+				$item_id = $item->ID;
+			}
+
 			$item = new Item( $item_id );
 
 			$data = $item->get_api_data();
