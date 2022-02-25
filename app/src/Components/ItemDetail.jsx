@@ -163,6 +163,14 @@ export default function ItemDetail({
 	};
 
 	const handleSearchInputChange = debounce((value) => {
+		if ( ! value ) {
+			return;
+		}
+
+		if ( 4 > value.length ) {
+			return;
+		}
+
 		history.push(`${cplVar( 'path', 'site' )}/${cplVar( 'slug', 'item' )}?s=${value}`);
 	}, 1000);
 

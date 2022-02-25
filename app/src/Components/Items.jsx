@@ -124,7 +124,7 @@ export default function Items () {
 			{
 				'ready'  : true,
 				'topics' : [],
-				'formats': format ? [ format ] : [],
+				'formats': format ? [ 'format__' + format ] : [],
 				'page'   : 1,
 				'search' : search ? search : '',
 			}
