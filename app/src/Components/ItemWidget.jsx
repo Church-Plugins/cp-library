@@ -88,9 +88,7 @@ export function ItemWidgetContent ({
 					<ItemMeta date={item.date.date} category={[]}/>
 				</Box>
 				<h1 className="itemWidget__title">{item.title}</h1>
-				<Box className="itemWidget__description">
-					<p>{item.desc}</p>
-				</Box>
+				<Box className="itemWidget__description" dangerouslySetInnerHTML={{ __html: item.desc }}/>
 
 				<Box className="itemWidget__actions" display="flex" alignItems="flex-start">
 
