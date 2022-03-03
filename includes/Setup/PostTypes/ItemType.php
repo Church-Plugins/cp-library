@@ -201,6 +201,13 @@ class ItemType extends PostType  {
 		] );
 
 		$cmb->add_group_field( $group_field_id, [
+			'name' => __( 'Content', 'cp-library' ),
+			'desc' => __( 'The content to display alongside with this item, leave blank to hide this field.', 'cp-library' ),
+			'id'   => 'content',
+			'type' => 'wysiwyg',
+		] );
+
+		$cmb->add_group_field( $group_field_id, [
 			'name' => __( 'Video URL', 'cp-library' ),
 			'desc' => __( 'The URL of the video to show, leave blank to hide this field.', 'cp-library' ),
 			'id'   => 'video_url',
@@ -239,16 +246,18 @@ class ItemType extends PostType  {
 			foreach ( $data as $index => $item_data ) {
 				if ( empty( $item_data['id'] ) ) {
 					$item_data['id'] = wp_insert_post( [
-						'post_type'   => Item::get_instance()->post_type,
-						'post_status' => 'publish',
-						'post_title'  => $item_data['title'],
-						'post_date'   => $item_data['date'],
+						'post_type'    => Item::get_instance()->post_type,
+						'post_status'  => 'publish',
+						'post_title'   => $item_data['title'],
+						'post_date'    => $item_data['date'],
+						'post_content' => $item_data['content'],
 					] );
 				} else {
 					wp_update_post( [
-						'ID'         => $item_data['id'],
-						'post_title' => $item_data['title'],
-						'post_date'  => $item_data['date'],
+						'ID'           => $item_data['id'],
+						'post_title'   => $item_data['title'],
+						'post_date'    => $item_data['date'],
+						'post_content' => $item_data['content'],
 					] );
 				}
 
@@ -301,6 +310,7 @@ class ItemType extends PostType  {
 				$item_data = [
 					'id'    => $item->model->origin_id,
 					'title' => $item->get_title(),
+					'content' => $item->get_content( true ),
 					'speaker' => '',
 					'date' => $item->get_publish_date()->format('Y-m-d\TH:i:sP'),
 				];

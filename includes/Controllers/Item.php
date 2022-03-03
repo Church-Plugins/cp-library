@@ -33,8 +33,15 @@ class Item {
 		return apply_filters( 'cpl_item_' . $function, $value, $this );
 	}
 
-	public function get_content() {
-		return $this->filter( get_the_content( null, false, $this->post ), __FUNCTION__ );
+	public function get_content( $raw = false ) {
+		the_content();
+
+		$content = get_the_content( null, false, $this->post );
+		if ( ! $raw ) {
+			$content = apply_filters( 'the_content', $content );
+		}
+
+		return $this->filter( $content, __FUNCTION__ );
 	}
 
 	public function get_title() {
