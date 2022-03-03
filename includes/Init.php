@@ -97,15 +97,19 @@ class Init {
 		add_filter( 'script_loader_tag', [ $this, 'app_load_scripts' ], 10, 3 );
 		add_action( 'wp_enqueue_scripts', [ $this, 'app_enqueue' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'admin_scripts' ] );
-		add_action( 'init', [ $this, 'rewrite_rules' ] );
+		add_action( 'init', [ $this, 'rewrite_rules' ], 100 );
 
 		$shortcode = Shortcode_Controller::get_instance();
 		$shortcode->add_shortcodes();
 	}
 
 	public function rewrite_rules() {
-//		add_rewrite_tag( '%item%', '([^&]+)' );
-//		add_rewrite_rule('^talks/([^/]*)/?','index.php?item=$matches[1]&pagename=talks','top');
+
+		if ( $this->setup->post_types->item_type_enabled() ) {
+			$type = get_post_type_object( $this->setup->post_types->item_type->post_type )->rewrite['slug'];
+			add_rewrite_tag( '%type-item%', '([^&]+)' );
+			add_rewrite_rule("^$type/([^/]*)/([^/]*)?",'index.php?cpl_item_type=$matches[1]&type-item=$matches[2]','top');
+		}
 
 		$flush = '1';
 
@@ -146,6 +150,8 @@ class Init {
 	 */
 	public function app_enqueue() {
 		wp_enqueue_script( 'cpl_persistent_player', CP_LIBRARY_PLUGIN_URL . '/assets/js/main.js', ['jquery'] );
+
+		$this->enqueue->enqueue( 'styles', 'main', [] );
 
 		$asset_manifest = json_decode( file_get_contents( CP_LIBRARY_ASSET_MANIFEST ), true );
 
@@ -238,6 +244,10 @@ class Init {
 	}
 
 	/** Helper Methods **************************************/
+
+	public function get_default_thumb() {
+		return CP_LIBRARY_PLUGIN_URL . '/app/public/logo512.png';
+	}
 
 	/**
 	 * Make sure required plugins are active

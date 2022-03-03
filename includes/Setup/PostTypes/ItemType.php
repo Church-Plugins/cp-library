@@ -67,7 +67,7 @@ class ItemType extends PostType  {
 			'menu_icon'    => $icon,
 			'show_in_menu' => true,
 			'show_in_rest' => true,
-			'has_archive'  => false, // CP_LIBRARY_UPREFIX . '-' . strtolower( $single ) . '-archive',
+			'has_archive'  => strtolower( $plural ), // CP_LIBRARY_UPREFIX . '-' . strtolower( $single ) . '-archive',
 			'hierarchical' => true,
 			'label'        => $single,
 			'rewrite'      => [

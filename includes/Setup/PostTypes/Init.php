@@ -131,11 +131,23 @@ class Init {
 			$this->speaker->add_actions();
 		}
 
-		if ( apply_filters( 'cpl_enable_item_types', true ) ) {
+		if ( $this->item_type_enabled() ) {
 			$this->item_type->add_actions();
 		}
 
 		do_action( 'cpl_register_post_types' );
+	}
+
+	/**
+	 * If the item type post type is enabled
+	 *
+	 * @return mixed|void
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function item_type_enabled() {
+		return apply_filters( 'cpl_enable_item_types', true );
 	}
 
 	public function meta_save_override( $return, $data_args, $field_args, $field ) {

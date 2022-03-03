@@ -52,6 +52,10 @@ class Item {
 
 		$thumb = $this->maybeGetVimeoThumb();
 
+		if ( ! $thumb ) {
+			$thumb = cp_library()->get_default_thumb();
+		}
+
 		return $this->filter( $thumb, __FUNCTION__ );
 	}
 
@@ -124,8 +128,8 @@ class Item {
 			'desc'      => $this->get_content(),
 			'date'      => $this->get_publish_date(),
 			'category'  => $this->get_categories(),
-			'video'     => $this->get_video(),
-			'audio'     => $this->get_audio(),
+			'video'     => 'https://vimeo.com/169599296', // $this->get_video(),
+			'audio'     => 'https://ret.sfo2.cdn.digitaloceanspaces.com/wp-content/uploads/2021/08/re20210828-29.mp3', /// $this->get_audio(),
 		];
 
 		return $this->filter( $data, __FUNCTION__ );
