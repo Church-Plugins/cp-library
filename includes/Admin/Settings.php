@@ -2,8 +2,6 @@
 
 namespace CP_Library\Admin;
 
-use CP_Library\Init as CP_Library;
-
 /**
  * Plugin settings
  *
@@ -29,139 +27,347 @@ class Settings {
 	}
 
 	/**
+	 * Get a value from the options table
+	 *
+	 * @param $key
+	 * @param $default
+	 * @param $group
+	 *
+	 * @return mixed|void
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public static function get( $key, $default = '', $group = 'cpl_main_options' ) {
+		$options = get_option( $group, [] );
+
+		if ( isset( $options[ $key ] ) ) {
+			$value = $options[ $key ];
+		} else {
+			$value = $default;
+		}
+
+		return apply_filters( 'cpl_settings_get', $value, $key, $group );
+	}
+
+	/**
+	 * Get advanced options
+	 *
+	 * @param $key
+	 * @param $default
+	 *
+	 * @return mixed|void
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public static function get_advanced( $key, $default = '' ) {
+		return self::get( $key, $default, 'cpl_advanced_options' );
+	}
+
+	public static function get_item( $key, $default = '' ) {
+		return self::get( $key, $default, 'cpl_item_options' );
+	}
+
+	public static function get_item_type( $key, $default = '' ) {
+		return self::get( $key, $default, 'cpl_item_type_options' );
+	}
+
+	public static function get_speaker( $key, $default = '' ) {
+		return self::get( $key, $default, 'cpl_speaker_options' );
+	}
+
+	/**
 	 * Class constructor. Add admin hooks and actions
 	 *
 	 */
 	protected function __construct() {
-		add_action( 'admin_init', array( $this, 'register_settings' ), 50 );
-		add_action( 'admin_menu', array( $this, 'admin_menu'        ), 50 );
-		add_action( 'admin_notices', array( $this, 'license_admin_notice' ) );
+		add_action( 'cmb2_admin_init', [ $this, 'register_main_options_metabox' ] );
+		add_action( 'cmb2_save_options_page_fields', 'flush_rewrite_rules' );
+	}
+
+	public function register_main_options_metabox() {
+
+		$post_type = cp_library()->setup->post_types->item_type_enabled() ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
+		/**
+		 * Registers main options page menu item and form.
+		 */
+		$args = array(
+			'id'           => 'cpl_main_options_page',
+			'title'        => 'Settings',
+			'object_types' => array( 'options-page' ),
+			'option_key'   => 'cpl_main_options',
+			'tab_group'    => 'cpl_main_options',
+			'tab_title'    => 'Main',
+			'parent_slug'  => 'edit.php?post_type=' . $post_type,
+			'display_cb'   => [ $this, 'options_display_with_tabs'],
+		);
+
+		$main_options = new_cmb2_box( $args );
+
+		/**
+		 * Options fields ids only need
+		 * to be unique within this box.
+		 * Prefix is not needed.
+		 */
+		$main_options->add_field( array(
+			'name'    => 'Site Background Color',
+			'desc'    => 'field description (optional)',
+			'id'      => 'bg_color',
+			'type'    => 'colorpicker',
+			'default' => '#ffffff',
+		) );
+
+		$this->item_options();
+
+		if ( cp_library()->setup->post_types->item_type_enabled() ) {
+			$this->item_type_options();
+		}
+
+		if ( cp_library()->setup->post_types->speaker_enabled() ) {
+			$this->speaker_options();
+		}
+
+		$this->advanced_options();
+
+		/**
+		 * Registers tertiary options page, and set main item as parent.
+		 */
+		$args = array(
+			'id'           => 'cpl_license_options_page',
+			'title'        => 'Settings',
+			'object_types' => array( 'options-page' ),
+			'option_key'   => 'cpl_license',
+			'parent_slug'  => 'cpl_main_options',
+			'tab_group'    => 'cpl_main_options',
+			'tab_title'    => 'License',
+			'display_cb'   => [ $this, 'options_display_with_tabs' ]
+		);
+
+		$tertiary_options = new_cmb2_box( $args );
+
+		$tertiary_options->add_field( array(
+			'name' => 'License Key',
+			'id'   => 'license',
+			'type' => 'text',
+		) );
+	}
+
+	protected function item_options() {
+		/**
+		 * Registers secondary options page, and set main item as parent.
+		 */
+		$args = array(
+			'id'           => 'cpl_item_options_page',
+			'title'        => 'Settings',
+			'object_types' => array( 'options-page' ),
+			'option_key'   => 'cpl_item_options',
+			'parent_slug'  => 'cpl_main_options',
+			'tab_group'    => 'cpl_main_options',
+			'tab_title'    => cp_library()->setup->post_types->item->plural_label,
+			'display_cb'   => [ $this, 'options_display_with_tabs' ],
+		);
+
+		$options = new_cmb2_box( $args );
+
+		$options->add_field( array(
+			'name' => __( 'Labels' ),
+			'id'   => 'labels',
+			'type' => 'title',
+		) );
+
+		$options->add_field( array(
+			'name'    => __( 'Singular Label', 'cp-library' ),
+			'id'      => 'singular_label',
+			'type'    => 'text',
+			'default' => cp_library()->setup->post_types->item->single_label,
+		) );
+
+		$options->add_field( array(
+			'name'    => __( 'Plural Label', 'cp-library' ),
+			'id'      => 'plural_label',
+			'type'    => 'text',
+			'default' => cp_library()->setup->post_types->item->plural_label,
+		) );
+
+	}
+
+	protected function item_type_options() {
+		/**
+		 * Registers secondary options page, and set main item as parent.
+		 */
+		$args = array(
+			'id'           => 'cpl_item_type_options_page',
+			'title'        => 'Settings',
+			'object_types' => array( 'options-page' ),
+			'option_key'   => 'cpl_item_type_options',
+			'parent_slug'  => 'cpl_main_options',
+			'tab_group'    => 'cpl_main_options',
+			'tab_title'    => cp_library()->setup->post_types->item_type->plural_label,
+			'display_cb'   => [ $this, 'options_display_with_tabs' ],
+		);
+
+		$options = new_cmb2_box( $args );
+
+		$options->add_field( array(
+			'name' => __( 'Labels' ),
+			'id'   => 'labels',
+			'type' => 'title',
+		) );
+
+		$options->add_field( array(
+			'name'    => __( 'Singular Label', 'cp-library' ),
+			'id'      => 'singular_label',
+			'type'    => 'text',
+			'default' => cp_library()->setup->post_types->item_type->single_label,
+		) );
+
+		$options->add_field( array(
+			'name'    => __( 'Plural Label', 'cp-library' ),
+			'id'      => 'plural_label',
+			'type'    => 'text',
+			'default' => cp_library()->setup->post_types->item_type->plural_label,
+		) );
+
+	}
+
+	protected function speaker_options() {
+		/**
+		 * Registers secondary options page, and set main item as parent.
+		 */
+		$args = array(
+			'id'           => 'cpl_speaker_options_page',
+			'title'        => 'Settings',
+			'object_types' => array( 'options-page' ),
+			'option_key'   => 'cpl_speaker_options',
+			'parent_slug'  => 'cpl_main_options',
+			'tab_group'    => 'cpl_main_options',
+			'tab_title'    => cp_library()->setup->post_types->speaker->plural_label,
+			'display_cb'   => [ $this, 'options_display_with_tabs' ],
+		);
+
+		$options = new_cmb2_box( $args );
+
+		$options->add_field( array(
+			'name' => __( 'Labels' ),
+			'id'   => 'labels',
+			'type' => 'title',
+		) );
+
+		$options->add_field( array(
+			'name'    => __( 'Singular Label', 'cp-library' ),
+			'id'      => 'singular_label',
+			'type'    => 'text',
+			'default' => cp_library()->setup->post_types->speaker->single_label,
+		) );
+
+		$options->add_field( array(
+			'name'    => __( 'Plural Label', 'cp-library' ),
+			'id'      => 'plural_label',
+			'type'    => 'text',
+			'default' => cp_library()->setup->post_types->speaker->plural_label,
+		) );
+
+	}
+
+	protected function advanced_options() {
+		/**
+		 * Registers secondary options page, and set main item as parent.
+		 */
+		$args = array(
+			'id'           => 'cpl_advanced_options_page',
+			'title'        => 'Settings',
+			'object_types' => array( 'options-page' ),
+			'option_key'   => 'cpl_advanced_options',
+			'parent_slug'  => 'cpl_main_options',
+			'tab_group'    => 'cpl_main_options',
+			'tab_title'    => 'Advanced',
+			'display_cb'   => [ $this, 'options_display_with_tabs' ],
+		);
+
+		$advanced_options = new_cmb2_box( $args );
+
+		$advanced_options->add_field( array(
+			'name' => __( 'Modules' ),
+			'id'   => 'modules_enabled',
+			'type' => 'title',
+		) );
+
+		$advanced_options->add_field( array(
+			'name'    => __( 'Enable' ) . ' ' . cp_library()->setup->post_types->item_type->plural_label,
+			'id'      => 'item_type_enabled',
+			'type'    => 'radio_inline',
+			'default' => 1,
+			'options' => [
+				1 => __( 'Enable', 'cp-library' ),
+				0 => __( 'Disable', 'cp-library' ),
+			]
+		) );
+
+		$advanced_options->add_field( array(
+			'name'    => __( 'Enable' ) . ' ' . cp_library()->setup->post_types->speaker->plural_label,
+			'id'      => 'speaker_enabled',
+			'type'    => 'radio_inline',
+			'default' => 1,
+			'options' => [
+				1 => __( 'Enable', 'cp-library' ),
+				0 => __( 'Disable', 'cp-library' ),
+			]
+		) );
+
 	}
 
 	/**
-	 * Register the settings
+	 * A CMB2 options-page display callback override which adds tab navigation among
+	 * CMB2 options pages which share this same display callback.
 	 *
-	 * @return void
-	 * @access      public
-	 * @since       1.0.0
+	 * @param \CMB2_Options_Hookup $cmb_options The CMB2_Options_Hookup object.
 	 */
-	public function register_settings() {
-		register_setting( 'cp_library_settings_group', 'cp_library_license_key', array( $this, 'sanitize_license' ) );
-	}
-
-	/**
-	 * Add the menu item
-	 *
-	 * @access      public
-	 * @since       1.0.0
-	 * @return      void
-	 */
-	public function admin_menu() {
-		add_submenu_page( 'settings', __( 'Church Plugins Library Settings', 'cp-library' ), __( 'CP Library', 'cp-library' ), 'manage_options', cp_library()->get_id(), array( $this, 'settings_page' ) );
-	}
-
-	/**
-	 * Licensing admin UI
-	 *
-	 * TODO: Move this to an Admin\View class
-	 * TODO: return instead of echo
-	 *
-	 * @return void
-	 */
-	public function settings_page() {
-		$license  = get_option( 'cp_library_license_key', '' );
-		$status   = get_option( 'cp_library_license_status', '' );
-
-		if ( isset( $_REQUEST['updated'] ) && $_REQUEST['updated'] !== false ) : ?>
-			<div class="updated fade"><p><strong><?php _e( 'Options saved', 'cp-library' ); ?></strong></p></div>
-		<?php endif; ?>
-
-		<div class="rcpbp-wrap">
-
-			<h2 class="rcpbp-settings-title"><?php echo esc_html( get_admin_page_title() ); ?></h2><hr>
-
-			<form method="post" action="options.php" class="rcp_options_form">
-				<?php settings_fields( 'cp_library_settings_group' ); ?>
-
-				<table class="form-table">
-					<tr>
-						<th>
-							<label for="cp_library_license_key"><?php _e( 'License Key', 'cp-library' ); ?></label>
-						</th>
-						<td>
-							<p><input class="regular-text" type="text" id="cp_library_license_key" name="cp_library_license_key" value="<?php echo esc_attr( $license ); ?>" />
-							<?php if( $status == 'valid' ) : ?>
-								<?php wp_nonce_field( 'cp_library_deactivate_license', 'cp_library_deactivate_license' ); ?>
-								<?php submit_button( 'Deactivate License', 'secondary', 'cp_library_license_deactivate', false ); ?>
-								<span style="color:green">&nbsp;&nbsp;<?php _e( 'active', 'cp-library' ); ?></span>
-							<?php elseif( 'invalid' == $status ) : ?>
-								<?php echo $status; ?>
-							<?php elseif( $license ) : ?>
-								<?php submit_button( 'Activate License', 'secondary', 'cp_library_license_activate', false ); ?>
-							<?php endif; ?></p>
-
-							<p class="description"><?php printf( __( 'Enter your Church Plugins - Library license key. This is required for automatic updates and <a href="%s">support</a>.', 'cp-library' ), cp_library()->get_support_url() ); ?></p>
-						</td>
-					</tr>
-
-				</table>
-
-				<?php settings_fields( 'cp_library_settings_group' ); ?>
-				<?php wp_nonce_field( 'cp_library_nonce', 'cp_library_nonce' ); ?>
-				<?php submit_button( 'Save Options' ); ?>
-
+	public function options_display_with_tabs( $cmb_options ) {
+		$tabs = $this->options_page_tabs( $cmb_options );
+		?>
+		<div class="wrap cmb2-options-page option-<?php echo $cmb_options->option_key; ?>">
+			<?php if ( get_admin_page_title() ) : ?>
+				<h2><?php echo wp_kses_post( get_admin_page_title() ); ?></h2>
+			<?php endif; ?>
+			<h2 class="nav-tab-wrapper">
+				<?php foreach ( $tabs as $option_key => $tab_title ) : ?>
+					<a class="nav-tab<?php if ( isset( $_GET['page'] ) && $option_key === $_GET['page'] ) : ?> nav-tab-active<?php endif; ?>"
+					   href="<?php menu_page_url( $option_key ); ?>"><?php echo wp_kses_post( $tab_title ); ?></a>
+				<?php endforeach; ?>
+			</h2>
+			<form class="cmb-form" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="POST"
+				  id="<?php echo $cmb_options->cmb->cmb_id; ?>" enctype="multipart/form-data"
+				  encoding="multipart/form-data">
+				<input type="hidden" name="action" value="<?php echo esc_attr( $cmb_options->option_key ); ?>">
+				<?php $cmb_options->options_page_metabox(); ?>
+				<?php submit_button( esc_attr( $cmb_options->cmb->prop( 'save_button' ) ), 'primary', 'submit-cmb' ); ?>
 			</form>
 		</div>
-
-	<?php
-	}
-
-
-	/**
-	 * Sanitize license input
-	 *
-	 * @param String $new
-	 * @return String
-	 * @author costmo
-	 */
-	public function sanitize_license( $new ) {
-		$old = get_option( 'cp_library_license_key' );
-		if ( $old && $old != $new ) {
-			delete_option( 'cp_library_license_key' ); // new license has been entered, so must reactivate
-		}
-
-		return $new;
+		<?php
 	}
 
 	/**
-	 * This is a means of catching errors from the activation method above and displaying it to the customer
+	 * Gets navigation tabs array for CMB2 options pages which share the given
+	 * display_cb param.
 	 *
-	 * TODO: Move this to an Admin\View class
-	 * TODO: return instead of echo
+	 * @param \CMB2_Options_Hookup $cmb_options The CMB2_Options_Hookup object.
 	 *
-	 * @return void
+	 * @return array Array of tab information.
 	 */
-	public function license_admin_notice() {
-		if ( isset( $_GET['sl_activation'] ) && ! empty( $_GET['message'] ) ) {
+	public function options_page_tabs( $cmb_options ) {
+		$tab_group = $cmb_options->cmb->prop( 'tab_group' );
+		$tabs      = array();
 
-			switch ( $_GET['sl_activation'] ) {
-
-				case 'false':
-					$message = urldecode( $_GET['message'] );
-					?>
-					<div class="error">
-						<p><?php echo $message; ?></p>
-					</div>
-					<?php
-					break;
-
-				case 'true':
-				default:
-					// Developers can put a custom success message here for when activation is successful if they way.
-					break;
-
+		foreach ( \CMB2_Boxes::get_all() as $cmb_id => $cmb ) {
+			if ( $tab_group === $cmb->prop( 'tab_group' ) ) {
+				$tabs[ $cmb->options_page_keys()[0] ] = $cmb->prop( 'tab_title' )
+					? $cmb->prop( 'tab_title' )
+					: $cmb->prop( 'title' );
 			}
 		}
+
+		return $tabs;
 	}
 
 

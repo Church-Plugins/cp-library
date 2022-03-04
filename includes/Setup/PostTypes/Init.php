@@ -3,6 +3,7 @@
 namespace CP_Library\Setup\PostTypes;
 
 
+use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Setup\Tables\ItemMeta;
 use CP_Library\Setup\Tables\SourceMeta;
@@ -147,7 +148,8 @@ class Init {
 	 * @author Tanner Moushey
 	 */
 	public function item_type_enabled() {
-		return apply_filters( 'cpl_enable_item_types', true );
+		$enabled = (bool) Settings::get( 'item_type_enabled', true, 'cpl_advanced_options' );
+		return apply_filters( 'cpl_enable_item_types', $enabled );
 	}
 
 	/**
@@ -159,7 +161,8 @@ class Init {
 	 * @author Tanner Moushey
 	 */
 	public function speaker_enabled() {
-		return apply_filters( 'cpl_enable_speaker', true );
+		$enabled = (bool) Settings::get( 'speaker_enabled', true, 'cpl_advanced_options' );
+		return apply_filters( 'cpl_enable_speaker', $enabled );
 	}
 
 	/**

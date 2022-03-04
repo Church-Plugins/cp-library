@@ -4,6 +4,7 @@ namespace CP_Library\Setup\PostTypes;
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Models\Item as ItemModel;
 use CP_Library\Views\Admin\Source as Source_Admin_View;
@@ -29,8 +30,8 @@ class Speaker extends PostType {
 
 		$this->post_type = CP_LIBRARY_UPREFIX . "_speaker";
 
-		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", __( 'Speaker', 'cp_library' ) );
-		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", __( 'Speakers', 'cp_library' ) );
+		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", Settings::get_speaker( 'singular_label', 'Speaker' ) );
+		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", Settings::get_speaker( 'plural_label', 'Speakers' ) );
 
 		parent::__construct();
 	}
@@ -53,17 +54,18 @@ class Speaker extends PostType {
 		$plural = $this->plural_label;
 		$single = $this->single_label;
 		$icon   = apply_filters( "cpl_{$this->post_type}_icon", 'dashicons-groups' );
+		$slug   = apply_filters( "cpl_{$this->post_type}_slug", strtolower( sanitize_title( $plural ) ) );
 
 		$args = [
 			'public'        => true,
 			'menu_icon'     => $icon,
 			'show_in_menu'  => 'edit.php?post_type=' . Item::get_instance()->post_type,
 			'show_in_rest'  => true,
-			'has_archive'   => CP_LIBRARY_UPREFIX . '-' . strtolower( $single ) . '-archive',
+			'has_archive'   => $slug,
 			'hierarchical'  => true,
 			'label'         => $single,
 			'rewrite'       => [
-				'slug' 		=> strtolower( $single )
+				'slug' 		=> $slug
 			],
 			'supports' 		=> [ 'title', 'editor', 'thumbnail' ],
 			'labels'        => [

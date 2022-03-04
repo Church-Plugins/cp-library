@@ -1,6 +1,7 @@
 <?php
 namespace CP_Library\Setup\PostTypes;
 
+use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Models\ItemType as Model;
 use CP_Library\Models\Item as ItemModel;
@@ -26,8 +27,8 @@ class ItemType extends PostType  {
 	protected function __construct() {
 		$this->post_type = CP_LIBRARY_UPREFIX . "_item_type";
 
-		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", __( 'Series', 'cp_library' ) );
-		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", __( 'Series', 'cp_library' ) );
+		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", Settings::get_item_type( 'singular_label', 'Series' ) );
+		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", Settings::get_item_type( 'plural_label', 'Series' ) );
 
 		parent::__construct();
 	}
@@ -63,17 +64,18 @@ class ItemType extends PostType  {
 		$plural = $this->plural_label;
 		$single = $this->single_label;
 		$icon   = apply_filters( "cpl_{$this->post_type}_icon", 'dashicons-list-view' );
+		$slug   = apply_filters( "cpl_{$this->post_type}_slug", strtolower( sanitize_title( $plural ) ) );
 
 		$args = [
 			'public'       => true,
 			'menu_icon'    => $icon,
 			'show_in_menu' => true,
 			'show_in_rest' => true,
-			'has_archive'  => strtolower( $plural ), // CP_LIBRARY_UPREFIX . '-' . strtolower( $single ) . '-archive',
+			'has_archive'  => $slug,
 			'hierarchical' => true,
 			'label'        => $single,
 			'rewrite'      => [
-				'slug' => strtolower( $plural )
+				'slug' => $slug
 			],
 			'supports'     => [ 'title', 'editor', 'thumbnail' ],
 			'labels'       => [

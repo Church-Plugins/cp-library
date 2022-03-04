@@ -2,8 +2,6 @@
 
 namespace CP_Library\Admin;
 
-use CP_Library\Setup\Source;
-
 /**
  * Admin-only plugin initialization
  */

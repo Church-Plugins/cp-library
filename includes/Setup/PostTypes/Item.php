@@ -2,6 +2,8 @@
 namespace CP_Library\Setup\PostTypes;
 
 // Exit if accessed directly
+use CP_Library\Admin\Settings;
+
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
@@ -20,8 +22,8 @@ class Item extends PostType  {
 	protected function __construct() {
 		$this->post_type = CP_LIBRARY_UPREFIX . "_item";
 
-		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", __( 'Sermon', 'cp_library' ) );
-		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", __( 'Sermons', 'cp_library' ) );
+		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", Settings::get_item( 'singular_label', 'Sermon' ) );
+		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", Settings::get_item( 'plural_label', 'Sermons' ) );
 
 		parent::__construct();
 	}
@@ -37,17 +39,18 @@ class Item extends PostType  {
 		$plural = $this->plural_label;
 		$single = $this->single_label;
 		$icon   = apply_filters( "cpl_{$this->post_type}_icon", 'dashicons-format-video' );
+		$slug   = apply_filters( "cpl_{$this->post_type}_slug", strtolower( sanitize_title( $plural ) ) );
 
 		$args = [
 			'public'        => true,
 			'menu_icon'     => $icon,
 			'show_in_menu'  => true,
 			'show_in_rest'  => true,
-			'has_archive'   => strtolower( $plural ),
+			'has_archive'   => $slug,
 			'hierarchical'  => true,
 			'label'         => $single,
 			'rewrite'       => [
-				'slug' 		=> strtolower( $plural )
+				'slug' 		=> $slug
 			],
 			'supports' 		=> [ 'title', 'editor', 'thumbnail' ],
 			'labels'        => [
