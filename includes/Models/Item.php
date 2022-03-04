@@ -3,6 +3,7 @@
 namespace CP_Library\Models;
 
 use CP_Library\Exception;
+use CP_Library\Setup\Tables\SourceMeta;
 
 /**
  * Item DB Class
@@ -25,6 +26,63 @@ class Item extends Table  {
 		$this->post_type = 'cpl_item';
 
 		parent::init();
+	}
+
+	/**
+	 *
+	 * @return mixed|void
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_speakers() {
+		global $wpdb;
+
+		$speaker = Speaker::get_instance();
+		$speaker_type = Speaker::get_type_id();
+		$speakers = $wpdb->get_col( $wpdb->prepare( "SELECT `source_id` FROM " . $speaker->meta_table_name . " WHERE `key` = 'source_item' AND `item_id` = %d AND `source_type_id` = %d;", $this->id, $speaker_type ) );
+
+		return apply_filters( 'cpl_item_get_speakers', $speakers, $this );
+	}
+
+	/**
+	 * Update the speakers associated with this item
+	 *
+	 * @param $speakers array
+	 *
+	 * @return bool
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function update_speakers( $speakers ) {
+		$existing_speakers = $this->get_speakers();
+
+		foreach( $speakers as $speaker ) {
+			if ( false !== $key = array_search( $speaker, $existing_speakers ) ) {
+				unset( $existing_speakers[ $key ] );
+				continue;
+			}
+
+			$data = [
+				'key' => 'source_item',
+				'item_id' => absint( $this->id ),
+				'source_type_id' => Speaker::get_type_id(),
+			];
+
+			$speaker_model = Speaker::get_instance( $speaker );
+			$speaker_model->update_meta( $data, false );
+		}
+
+		// remove any speakers which should no longer be attached
+		foreach( $existing_speakers as $speaker ) {
+			$speaker_model = Speaker::get_instance( $speaker );
+			$speaker_model->delete_meta( absint( $this->id ), 'item_id' );
+		}
+
+		return true;
 	}
 
 	/**
@@ -58,7 +116,7 @@ class Item extends Table  {
 		$existing_types = $this->get_types();
 
 		foreach( $types as $type ) {
-			if ( $key = array_search( $type, $existing_types ) ) {
+			if ( false !== $key = array_search( $type, $existing_types ) ) {
 				unset( $existing_types[ $key ] );
 				continue;
 			}
@@ -131,6 +189,25 @@ class Item extends Table  {
 
 		$existing_types[] = absint( $type );
 		return $this->update_types( $existing_types );
+	}
+
+	/**
+	 * Also delete all item associated meta
+	 *
+	 * @return bool|void
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function delete() {
+		do_action( "cpl_{$this->type}_delete_meta_before" );
+		$source = new Source();
+		$source->delete_all_meta( $this->id, 'item_id' );
+		$this->delete_all_meta( $this->id, 'item_id' );
+		do_action( "cpl_{$this->type}_delete_meta_after" );
+
+		parent::delete();
 	}
 
 

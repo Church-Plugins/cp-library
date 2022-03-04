@@ -127,7 +127,7 @@ class Init {
 
 		$this->item->add_actions();
 
-		if ( apply_filters( 'cpl_enable_speakers', true ) ) {
+		if ( $this->speaker_enabled() ) {
 			$this->speaker->add_actions();
 		}
 
@@ -150,6 +150,33 @@ class Init {
 		return apply_filters( 'cpl_enable_item_types', true );
 	}
 
+	/**
+	 * If the item type post type is enabled
+	 *
+	 * @return mixed|void
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function speaker_enabled() {
+		return apply_filters( 'cpl_enable_speaker', true );
+	}
+
+	/**
+	 * Hijack the meta save filter to save to our tables
+	 *
+	 * Currently will also save to postmeta
+	 *
+	 * @param $return
+	 * @param $data_args
+	 * @param $field_args
+	 * @param $field
+	 *
+	 * @return mixed
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
 	public function meta_save_override( $return, $data_args, $field_args, $field ) {
 
 		$post_id = $data_args['id'];
@@ -170,10 +197,14 @@ class Init {
 				return $return;
 			}
 
+			// @todo at some point update the return value to prevent saving in meta table and our table
+			// for now, we'll save to both places
 			if ( isset( $data_args['value'] ) ) {
-				$return = $model->update_meta_value( $data_args['field_id'], $data_args['value'] );
+//				$return = '';
+				$model->update_meta_value( $data_args['field_id'], $data_args['value'] );
 			} else {
-				$return = $model->delete_meta( $data_args['field_id'] );
+//				$return = '';
+				$model->delete_meta( $data_args['field_id'] );
 			}
 		} catch ( Exception $e ) {
 			error_log( $e->getMessage() );

@@ -26,7 +26,7 @@ class SourceMeta extends Table  {
 	public function __construct() {
 		global $wpdb;
 
-		$this->table_name = $wpdb->prefix . 'cpl_source_meta';
+		$this->table_name = $wpdb->prefix . 'cp_source_meta';
 		$this->version    = '1.0';
 
 		parent::__construct();
@@ -41,7 +41,7 @@ class SourceMeta extends Table  {
 	 * @author Tanner Moushey
 	 */
 	public static function get_keys() {
-		return apply_filters( 'cpl_source_meta_keys_enum', [ 'name', 'title', 'url', 'source_type' ] );
+		return apply_filters( 'cpl_source_meta_keys_enum', [ 'name', 'title', 'url', 'source_type', 'source_item' ] );
 	}
 
 	/**

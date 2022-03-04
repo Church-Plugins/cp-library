@@ -4,6 +4,7 @@ namespace CP_Library\Setup\PostTypes;
 use CP_Library\Exception;
 use CP_Library\Models\ItemType as Model;
 use CP_Library\Models\Item as ItemModel;
+use CP_Library\Models\Speaker as Speaker_Model;
 use \CP_Library\Controllers\Item as ItemController;
 
 // Exit if accessed directly
@@ -40,7 +41,8 @@ class ItemType extends PostType  {
 	public function add_actions() {
 		parent::add_actions();
 
-		add_filter( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ], 10, 4 );
+		add_filter( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ], 10 );
+		add_filter( 'cmb2_save_post_fields_cpl_series_data', [ $this, 'save_item_series' ], 10 );
 		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
 
 		$item_type   = Item::get_instance()->post_type;
@@ -122,6 +124,7 @@ class ItemType extends PostType  {
 		$cmb->add_field( [
 			'name' => __( 'Add to', 'cp-library' ) . ' ' . $this->single_label,
 			'id'   => 'cpl_series',
+			'desc' => sprintf( __( 'Create a new %s <a target="_blank" href="%s">here</a>.', 'cp-library' ), $this->plural_label, add_query_arg( [ 'post_type' => $this->post_type ], admin_url( 'post-new.php' ) )  ),
 			'type' => 'multicheck',
 			'select_all_button' => false,
 			'options' => $series
@@ -131,7 +134,6 @@ class ItemType extends PostType  {
 
 	public function register_metaboxes() {
 		$this->sermon_series_metabox();
-//		add_filter( 'cmb2_override_fonts_meta_value', '\StoryLoop\Views\Admin\Product::fonts_serialize_meta', 10, 2 );
 
 		$cmb = new_cmb2_box( array(
 			'id'           => 'cpl_series_items_data',
@@ -188,16 +190,36 @@ class ItemType extends PostType  {
 			'preview_size' => 'medium',
 		] );
 
-		$cmb->add_group_field( $group_field_id, [
-			'name' => 'Speaker',
-			'id'   => 'speaker',
-			'type' => 'text'
-		] );
+		if ( cp_library()->setup->post_types->speaker_enabled() ) {
+
+			$speakers = Speaker_Model::get_all_speakers();
+
+			if ( empty( $speakers ) ) {
+				$cmb->add_group_field( $group_field_id, [
+					'desc' => sprintf( __( 'No %s have been created yet. <a href="%s">Create one here.</a>', 'cp-library' ), Speaker::get_instance()->plural_label, add_query_arg( [ 'post_type' => Speaker::get_instance()->post_type ], admin_url( 'post-new.php' ) ) ),
+					'id'   => 'cpl_no_speakers',
+					'type' => 'title'
+				] );
+			} else {
+				$speakers = array_combine( wp_list_pluck( $speakers, 'id' ), wp_list_pluck( $speakers, 'title' ) );
+
+				$cmb->add_group_field( $group_field_id, [
+					'name'              => Speaker::get_instance()->single_label,
+					'id'                => 'speaker',
+					'type'              => 'multicheck_inline',
+					'select_all_button' => false,
+					'options'           => $speakers,
+					'desc' => sprintf( __( '<br />Create a new %s <a href="%s">here</a>.', 'cp-library' ), Speaker::get_instance()->plural_label, add_query_arg( [ 'post_type' => Speaker::get_instance()->post_type ], admin_url( 'post-new.php' ) ) ),
+				] );
+			}
+
+		}
+
 
 		$cmb->add_group_field( $group_field_id, [
 			'name' => 'Date',
 			'id'   => 'date',
-			'type' => 'text'
+			'type' => 'text_datetime_timestamp'
 		] );
 
 		$cmb->add_group_field( $group_field_id, [
@@ -235,8 +257,42 @@ class ItemType extends PostType  {
 
 	}
 
-	public function save_series_items( $object_id, $updated, $cmb ) {
-		remove_action( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ], 10 );
+	/**
+	 * Save item series to the item_meta table
+	 *
+	 * @param $object_id
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function save_item_series( $object_id ) {
+		remove_filter( 'cmb2_save_post_fields_cpl_series_data', [ $this, 'save_item_series' ] );
+		try {
+			$item = ItemModel::get_instance_from_origin( $object_id );
+
+			if ( ! $series = get_post_meta( $object_id, 'cpl_series', true ) ) {
+				$series = [];
+			}
+
+			$item->update_types( $series );
+
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
+	}
+
+	/**
+	 * Save the items repeater field in the Series CPT
+	 *
+	 * @param $object_id
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function save_series_items( $object_id ) {
+		remove_action( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ] );
 
 		try {
 			$type = Model::get_instance_from_origin( $object_id );
@@ -286,49 +342,82 @@ class ItemType extends PostType  {
 				$item->update_type_order( $type->id, $index );
 			}
 
-
 		} catch ( Exception $e ) {
 			error_log( $e );
 		}
 
 	}
 
+	/**
+	 * Meta override
+	 *
+	 * @param $data
+	 * @param $object_id
+	 * @param $data_args
+	 * @param $field
+	 *
+	 * @return array|null
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
 	public function meta_get_override( $data, $object_id, $data_args, $field ) {
 
-		if ( 'cpl_series_items' !== $data_args['field_id'] ) {
-			return $data;
-		}
-
 		try {
-
-			$series = Model::get_instance_from_origin( $object_id );
-			$data   = [];
-
-			foreach ( $series->get_items() as $i ) {
-				$item = new ItemController( $i->origin_id );
-
-				$item_data = [
-					'id'    => $item->model->origin_id,
-					'title' => $item->get_title(),
-					'content' => $item->get_content( true ),
-					'speaker' => '',
-					'date' => $item->get_publish_date()->format('Y-m-d\TH:i:sP'),
-				];
-
-				$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo' ];
-				foreach( $meta as $key ) {
-					$item_data[ $key ] = $item->model->get_meta_value( $key );
-				}
-
-				if ( has_post_thumbnail( $item_data['id'] ) ) {
-					$item_data['thumbnail_id'] = get_post_thumbnail_id( $item_data['id'] );
-					$item_data['thumbnail']    = wp_get_attachment_image_url( $item_data['thumbnail_id'], 'medium' );
-				}
-
-				$data[] = $item_data;
+			switch ( $data_args['field_id'] ) {
+				case 'cpl_series_items':
+					return $this->get_series_items( $data, $object_id );
+				case 'cpl_series':
+					$item = ItemModel::get_instance_from_origin( $object_id );
+					return $item->get_types();
 			}
 		} catch ( Exception $e ) {
 			error_log( $e );
+		}
+
+		return $data;
+	}
+
+	/**
+	 * @param $data
+	 * @param $object_id
+	 *
+	 * @return array
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	protected function get_series_items( $data, $object_id ) {
+		$series = Model::get_instance_from_origin( $object_id );
+		$data   = [];
+
+		foreach ( $series->get_items() as $i ) {
+			$item = new ItemController( $i->origin_id );
+
+			$item_data = [
+				'id'      => $item->model->origin_id,
+				'title'   => $item->get_title(),
+				'content' => $item->get_content( true ),
+				'speaker' => '',
+				'date'    => $item->get_publish_date()->format( 'Y-m-d\TH:i:sP' ),
+			];
+
+			$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo' ];
+			foreach ( $meta as $key ) {
+				$item_data[ $key ] = $item->model->get_meta_value( $key );
+			}
+
+			if ( cp_library()->setup->post_types->speaker_enabled() ) {
+				$item_data['speaker'] = $item->model->get_speakers();
+			}
+
+			if ( has_post_thumbnail( $item_data['id'] ) ) {
+				$item_data['thumbnail_id'] = get_post_thumbnail_id( $item_data['id'] );
+				$item_data['thumbnail']    = wp_get_attachment_image_url( $item_data['thumbnail_id'], 'medium' );
+			}
+
+			$data[] = $item_data;
 		}
 
 		return $data;

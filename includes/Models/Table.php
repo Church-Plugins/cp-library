@@ -124,20 +124,22 @@ abstract class Table {
 
 	/**
 	 * Setup instance using the primary id
-	 * @param $id
+	 * @param $id integer
 	 *
-	 * @return bool | static
+	 * @return static
 	 * @throws Exception
 	 * @since  1.0.0
 	 *
 	 * @author Tanner Moushey
 	 */
-	public static function get_instance( $id ) {
+	public static function get_instance( $id = 0 ) {
 		global $wpdb;
 
 		$id = absint( $id );
+		$class = get_called_class();
+
 		if ( ! $id ) {
-			return false;
+			return new $class();
 		}
 
 		$object = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM " . static::get_prop('table_name' ) . " WHERE id = %s LIMIT 1;", $id ) );
@@ -146,7 +148,6 @@ abstract class Table {
 			throw new Exception( 'Could not find object.' );
 		}
 
-		$class = get_called_class();
 		return new $class( $object );
 	}
 
@@ -374,7 +375,7 @@ abstract class Table {
 
 	/**
 	 * @param $value
-	 * @param $field
+	 * @param $column string
 	 *
 	 * @return bool
 	 * @throws Exception
@@ -382,10 +383,32 @@ abstract class Table {
 	 *
 	 * @author Tanner Moushey
 	 */
-	public function delete_meta( $value, $field = 'key' ) {
+	public function delete_meta( $value, $column = 'key' ) {
 		global $wpdb;
 
-		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM " . static::get_prop('meta_table_name' ) . " WHERE `item_id` = %d AND `{$field}` = %s", $this->id, $value ) ) ) {
+		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM " . $this->meta_table_name . " WHERE `item_id` = %d AND `{$column}` = %s", $this->id, $value ) ) ) {
+			throw new Exception( sprintf( 'The row (%d) was not deleted.', absint( $this->id ) ) );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Delete all meta from a table where the value matches the column
+	 *
+	 * @param $value
+	 * @param $column
+	 *
+	 * @return bool
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function delete_all_meta( $value, $column ) {
+		global $wpdb;
+
+		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM " . $this->meta_table_name . " WHERE `{$column}` = %s", $value ) ) ) {
 			throw new Exception( sprintf( 'The row (%d) was not deleted.', absint( $this->id ) ) );
 		}
 
@@ -403,9 +426,13 @@ abstract class Table {
 
 		global $wpdb;
 
+		do_action( 'cpl_post_delete_before', $this );
+
 		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM " . static::get_prop('table_name' ) . " WHERE " . static::get_prop('primary_key' ) . " = %d", $this->id ) ) ) {
 			throw new Exception( sprintf( 'The row (%d) was not deleted.', absint( $this->id ) ) );
 		}
+
+		do_action( 'cpl_post_delete_after', $this );
 
 		return true;
 	}

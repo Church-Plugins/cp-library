@@ -26,7 +26,7 @@ class Source extends Table  {
 	public function __construct() {
 		global $wpdb;
 
-		$this->table_name = $wpdb->prefix . 'cpl_source';
+		$this->table_name = $wpdb->prefix . 'cp_source';
 		$this->version    = '1.0';
 
 		parent::__construct();

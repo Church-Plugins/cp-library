@@ -2,6 +2,7 @@
 
 namespace CP_Library\Models;
 
+use CP_Library\Exception;
 use CP_Library\Setup\Tables\SourceMeta;
 use CP_Library\Setup\Tables\Source;
 
@@ -22,9 +23,13 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class SourceType extends Table  {
 
 	public function init() {
+		global $wpdb;
+
 		$this->type = 'source_type';
 
 		parent::init();
+
+		$this->table_name  = $wpdb->prefix . 'cp_' . $this->type;
 	}
 
 	/**
@@ -80,6 +85,23 @@ ORDER BY %2$s.order ASC';
 		$items = $wpdb->get_results( $wpdb->prepare( $sql, $item->table_name, $meta->table_name, $this->id ) );
 
 		return apply_filters( 'cpl_item_type_get_items', $items, $this );
+	}
+
+	/**
+	 * Also delete all item associated meta
+	 *
+	 * @return bool|void
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function delete() {
+		do_action( "cpl_{$this->type}_delete_meta_before" );
+		$this->delete_all_meta( $this->id, 'source_type_id' );
+		do_action( "cpl_{$this->type}_delete_meta_after" );
+
+		parent::delete();
 	}
 
 	/**

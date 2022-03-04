@@ -72,11 +72,11 @@ class Init {
 			return;
 		}
 
-		$table_check = get_option( 'cpl_table_check', false );
+		$table_check = get_option( 'cpl_table_check', cp_library()->get_version() );
 		$installed   = false;
 		$tables      = [ 'item', 'item_meta', 'item_type', 'source', 'source_meta', 'source_type' ];
 
-		if ( false === $table_check || current_time( 'timestamp' ) > $table_check ) {
+		if ( cp_library()->get_version() !== $table_check || current_time( 'timestamp' ) > $table_check ) {
 
 			foreach( $tables as $table ) {
 				if ( ! @cp_library()->setup->tables->$table->installed() ) {
@@ -90,7 +90,7 @@ class Init {
 				do_action( 'cpl_after_install' );
 			}
 
-			update_option( 'cpl_table_check', ( current_time( 'timestamp' ) + WEEK_IN_SECONDS ) );
+			update_option( 'cpl_table_check', cp_library()->get_version() );
 
 		}
 

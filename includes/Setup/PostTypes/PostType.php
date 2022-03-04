@@ -129,6 +129,8 @@ abstract class PostType {
 		// add_action( 'rest_cpl_item_params', [ $this, 'rest_request_limit' ], 10, 1 );
 		add_action( 'rest_cpl_item_query', [ $this, 'rest_request_limit' ], 10, 1 );
 		add_action( "save_post_{$this->post_type}", [ $this, 'save_post' ] );
+		add_action( "save_post_{$this->post_type}", [ $this, 'save_post' ] );
+		add_action( "deleted_post", [ $this, 'delete_post' ] );
 		add_action( 'cpl_register_post_types', [ $this, 'register_post_type' ] );
 		add_filter( 'cpl_app_vars', [ $this, 'app_vars' ] );
 		return;
@@ -182,6 +184,22 @@ abstract class PostType {
 		}
 
 		return $model;
+	}
+
+	/**
+	 * @param $post_id
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function delete_post( $post_id ) {
+		try {
+			$model = cp_library()->setup->post_types->get_type_model( $this->post_type, $post_id );
+			$model->delete();
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
 	}
 
 }
