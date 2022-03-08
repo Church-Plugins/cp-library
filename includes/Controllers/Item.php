@@ -2,6 +2,7 @@
 
 namespace CP_Library\Controllers;
 
+use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Models\Item as ItemModel;
 
@@ -34,8 +35,6 @@ class Item {
 	}
 
 	public function get_content( $raw = false ) {
-		the_content();
-
 		$content = get_the_content( null, false, $this->post );
 		if ( ! $raw ) {
 			$content = apply_filters( 'the_content', $content );
@@ -52,6 +51,26 @@ class Item {
 		return $this->filter( get_permalink( $this->post->ID ), __FUNCTION__ );
 	}
 
+	/**
+	 * Get default thumbnail for items
+	 *
+	 * @return mixed|void
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_default_thumb() {
+		return $this->filter( Settings::get( 'default_thumbnail', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ), __FUNCTION__ );
+	}
+
+	/**
+	 * Get thumbnail
+	 *
+	 * @return mixed|void
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
 	public function get_thumbnail() {
 		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID ) ) {
 			return $this->filter( $thumb, __FUNCTION__ );
@@ -60,12 +79,20 @@ class Item {
 		$thumb = $this->maybeGetVimeoThumb();
 
 		if ( ! $thumb ) {
-			$thumb = cp_library()->get_default_thumb();
+			$thumb = $this->get_default_thumb();
 		}
 
 		return $this->filter( $thumb, __FUNCTION__ );
 	}
 
+	/**
+	 * Get thumbnail from Vimeo
+	 *
+	 * @return false
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
 	protected function maybeGetVimeoThumb() {
 		if ( ! $id = $this->model->get_meta_value( 'video_id_vimeo' ) ) {
 			return false;

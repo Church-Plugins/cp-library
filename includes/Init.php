@@ -1,6 +1,7 @@
 <?php
 namespace CP_Library;
 
+use CP_Library\Admin\Settings;
 use CP_Library\Controllers\Shortcode as Shortcode_Controller;
 
 /**
@@ -172,7 +173,7 @@ class Init {
 		$cpl_vars = apply_filters( 'cpl_app_vars', [
 			'site' => [
 				'title' => get_bloginfo( 'name', 'display' ),
-				'thumb' => CP_LIBRARY_PLUGIN_URL . '/app/public/logo512.png',
+				'thumb' => Settings::get( 'default_thumbnail', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
 				'url'   => get_site_url(),
 				'path'  => '',
 			],
@@ -228,7 +229,7 @@ class Init {
 		?>
 		<style>
 			:root {
-				--cpl-primary: #4D6CFA;
+				--cpl-primary: <?php echo Settings::get( 'color_primary', '#333333' ); ?>;
 			}
 		</style>
 		<?php

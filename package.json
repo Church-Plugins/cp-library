@@ -15,8 +15,9 @@
   },
   "dependencies": {
     "@wpackio/entrypoint": "^6.4.0",
+    "babel-loader": "8.1.0",
+    "react-hot-loader": "^4.13.0",
     "react-templates": "^0.6.3",
-    "react-templates-loader": "^0.6.5",
-    "babel-loader": "8.1.0"
+    "react-templates-loader": "^0.6.5"
   }
 }

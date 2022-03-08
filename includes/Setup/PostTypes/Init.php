@@ -125,7 +125,6 @@ class Init {
 		$this->speaker = Speaker::get_instance();
 		$this->item_type = ItemType::get_instance();
 
-
 		$this->item->add_actions();
 
 		if ( $this->speaker_enabled() ) {

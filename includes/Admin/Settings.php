@@ -111,11 +111,28 @@ class Settings {
 		 * Prefix is not needed.
 		 */
 		$main_options->add_field( array(
-			'name'    => 'Site Background Color',
-			'desc'    => 'field description (optional)',
-			'id'      => 'bg_color',
+			'name'    => __( 'Primary Color', 'cp-library' ),
+			'desc'    => __( 'The primary color to use in the templates.', 'cp-library' ),
+			'id'      => 'color_primary',
 			'type'    => 'colorpicker',
-			'default' => '#ffffff',
+			'default' => '#333333',
+		) );
+
+		$main_options->add_field( array(
+			'name'         => __( 'Default Thumbnail', 'cp-library' ),
+			'desc'         => sprintf( __( 'The default thumbnail image to use for %s.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'id'           => 'default_thumbnail',
+			'type'         => 'file',
+			// query_args are passed to wp.media's library query.
+			'query_args'   => array(
+				// Or only allow gif, jpg, or png images
+				 'type' => array(
+				     'image/gif',
+				     'image/jpeg',
+				     'image/png',
+				 ),
+			),
+			'preview_size' => 'medium', // Image size to use when previewing in the admin
 		) );
 
 		$this->item_options();
@@ -186,6 +203,7 @@ class Settings {
 		$options->add_field( array(
 			'name'    => __( 'Plural Label', 'cp-library' ),
 			'id'      => 'plural_label',
+			'desc'    => __( 'Caution: changing this value will also adjust the url structure and may affect your SEO.', 'cp-library' ),
 			'type'    => 'text',
 			'default' => cp_library()->setup->post_types->item->plural_label,
 		) );
@@ -225,6 +243,7 @@ class Settings {
 		$options->add_field( array(
 			'name'    => __( 'Plural Label', 'cp-library' ),
 			'id'      => 'plural_label',
+			'desc'    => __( 'Caution: changing this value will also adjust the url structure and may affect your SEO.', 'cp-library' ),
 			'type'    => 'text',
 			'default' => cp_library()->setup->post_types->item_type->plural_label,
 		) );
@@ -263,6 +282,7 @@ class Settings {
 
 		$options->add_field( array(
 			'name'    => __( 'Plural Label', 'cp-library' ),
+			'desc'    => __( 'Caution: changing this value will also adjust the url structure and may affect your SEO.', 'cp-library' ),
 			'id'      => 'plural_label',
 			'type'    => 'text',
 			'default' => cp_library()->setup->post_types->speaker->plural_label,

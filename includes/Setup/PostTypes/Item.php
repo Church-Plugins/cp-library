@@ -22,8 +22,8 @@ class Item extends PostType  {
 	protected function __construct() {
 		$this->post_type = CP_LIBRARY_UPREFIX . "_item";
 
-		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", Settings::get_item( 'singular_label', 'Sermon' ) );
-		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", Settings::get_item( 'plural_label', 'Sermons' ) );
+		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", Settings::get_item( 'singular_label', 'Message' ) );
+		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", Settings::get_item( 'plural_label', 'Messages' ) );
 
 		parent::__construct();
 	}
