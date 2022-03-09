@@ -249,6 +249,12 @@ class ItemType extends PostType  {
 		] );
 
 		$cmb->add_group_field( $group_field_id, [
+			'name' => __( 'Youtube video permalink', 'cp-library' ),
+			'id'   => 'video_id_youtube',
+			'type' => 'text_medium',
+		] );
+
+		$cmb->add_group_field( $group_field_id, [
 			'name' => __( 'Facebook video permalink', 'cp-library' ),
 			'id'   => 'video_id_facebook',
 			'type' => 'text_medium',
