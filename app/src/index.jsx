@@ -3,8 +3,8 @@ import ReactDOM 	from 'react-dom';
 
 //import './css/App.css';
 
-import './css/main.css';
-import './css/index.css';
+//import './css/main.css';
+//import './css/index.css';
 
 //import './css/SourceList.css';
 //import './css/ItemList.css';

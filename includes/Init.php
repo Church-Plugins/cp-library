@@ -335,7 +335,7 @@ class Init {
 	 * @return string
 	 */
 	public function get_version() {
-		return '1.0.0';
+		return '0.0.1';
 	}
 
 	/**

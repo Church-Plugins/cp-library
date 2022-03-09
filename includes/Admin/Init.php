@@ -50,7 +50,7 @@ class Init {
 	 * @return void
 	 */
 	protected function actions() {
-		add_action( 'admin_init', [ $this, 'after_install' ] );
+		add_action( 'admin_init', [ $this, 'update_install' ] );
 	}
 
 	/** Actions ***************************************************/
@@ -63,7 +63,7 @@ class Init {
 	 * @return void
 	 * @author costmo
 	 */
-	public function after_install() {
+	public function update_install() {
 		// return;
 
 		if ( ! is_admin() ) {
@@ -74,7 +74,7 @@ class Init {
 		$installed   = false;
 		$tables      = [ 'item', 'item_meta', 'item_type', 'source', 'source_meta', 'source_type' ];
 
-		if ( cp_library()->get_version() !== $table_check || current_time( 'timestamp' ) > $table_check ) {
+		if ( cp_library()->get_version() !== $table_check ) {
 
 			foreach( $tables as $table ) {
 				if ( ! @cp_library()->setup->tables->$table->installed() ) {

@@ -54,6 +54,19 @@ class ItemMeta extends Table  {
 	}
 
 	/**
+	 * SQL to update ENUM values for meta keys
+	 *
+	 * @return string
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function update_enum_sql() {
+		$keys = "'" . implode( "', '", self::get_keys() ) . "'";
+		return "ALTER TABLE " . $this->table_name . " MODIFY COLUMN key ENUM( $keys );";
+	}
+
+	/**
 	 * Create the table
 	 *
 	 * @since   1.0.0
@@ -80,4 +93,25 @@ class ItemMeta extends Table  {
 
 	}
 
+	/**
+	 *
+	 * @return string
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function current_version() {
+		return 1;
+	}
+
+	/**
+	 *
+	 * @return false
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function needs_update() {
+
+	}
 }

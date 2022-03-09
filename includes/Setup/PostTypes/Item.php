@@ -105,6 +105,12 @@ class Item extends PostType  {
 		] );
 
 		$cmb->add_field( [
+			'name' => __( 'Youtube video permalink', 'cp-library' ),
+			'id'   => 'video_id_youtube',
+			'type' => 'text_medium',
+		] );
+
+		$cmb->add_field( [
 			'name' => __( 'Vimeo video id', 'cp-library' ),
 			'id'   => 'video_id_vimeo',
 			'type' => 'text_medium',

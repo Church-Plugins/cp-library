@@ -62,6 +62,18 @@ class Table {
 	public function __construct() {}
 
 	/**
+	 * Whether or not we need to run an update routine on this table
+	 *
+	 * @return false
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function needs_update() {
+		return false;
+	}
+
+	/**
 	 * Check if the given table exists
 	 *
 	 * @since  1.0
