@@ -26,7 +26,7 @@ class Item extends Table  {
 		global $wpdb;
 
 		$this->table_name = $wpdb->prefix . 'cpl_item';
-		$this->version    = '1.0';
+		$this->version    = 1;
 
 		parent::__construct();
 	}
