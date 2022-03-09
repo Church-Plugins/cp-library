@@ -153,6 +153,25 @@ class Init {
 		wp_enqueue_script( 'cpl_persistent_player', CP_LIBRARY_PLUGIN_URL . '/assets/js/main.js', ['jquery'] );
 
 		$this->enqueue->enqueue( 'styles', 'main', [] );
+		$scripts = $this->enqueue->enqueue( 'app', 'main', [ 'js_dep' => ['jquery'] ] );
+
+		$cpl_vars = apply_filters( 'cpl_app_vars', [
+			'site' => [
+				'title' => get_bloginfo( 'name', 'display' ),
+				'thumb' => Settings::get( 'default_thumbnail', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
+				'url'   => get_site_url(),
+				'path'  => '',
+			],
+			'components' => [
+				'mobileTop' => ''
+			],
+		] );
+
+		if ( isset( $scripts['js'], $scripts['js'][0], $scripts['js'][0]['handle'] ) ) {
+			wp_localize_script( $scripts['js'][0]['handle'], 'cplVars', $cpl_vars );
+		}
+
+		return;
 
 		$asset_manifest = json_decode( file_get_contents( CP_LIBRARY_ASSET_MANIFEST ), true );
 

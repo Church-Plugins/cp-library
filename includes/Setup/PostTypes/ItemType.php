@@ -44,7 +44,10 @@ class ItemType extends PostType  {
 
 		add_filter( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ], 10 );
 		add_filter( 'cmb2_save_post_fields_cpl_series_data', [ $this, 'save_item_series' ], 10 );
-		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
+
+		if ( empty( $_GET['cpl-recovery'] ) ) {
+			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
+		}
 
 		$item_type   = Item::get_instance()->post_type;
 		$source_type = Speaker::get_instance()->post_type;

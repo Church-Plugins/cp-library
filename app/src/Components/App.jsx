@@ -1,6 +1,7 @@
 
 import { MemoryRouter, Switch, Route, BrowserRouter } from "react-router-dom";
 import React, { useState, useEffect } from 'react';
+import { hot } from 'react-hot-loader';
 
 import Items from "./Items";
 import Types from "./Types";
@@ -15,9 +16,9 @@ import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import useBreakpoints from '../Hooks/useBreakpoints';
 import { cplVar } from '../utils/helpers';
 
-export default function App({
+const App = ({
   itemId, typeId
-}) {
+}) => {
   const initialPath = itemId === undefined ? "/" + cplVar( 'slug', 'item' ) : `/${cplVar( 'slug', 'item' )}/${itemId}`;
   const { isDesktop } = useBreakpoints();
 
@@ -67,3 +68,5 @@ export default function App({
     </PersistentPlayerProvider>
   );
 };
+
+export default hot(module)(App);
