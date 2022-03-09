@@ -62,6 +62,50 @@ class Table {
 	public function __construct() {}
 
 	/**
+	 * Current table version
+	 *
+	 * @return int
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_version() {
+		return 1;
+	}
+
+	/**
+	 * Get tables check option
+	 *
+	 * @return false|mixed|void
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_tables_check() {
+		return get_option( 'cpl_tables_check', [] );
+	}
+
+	/**
+	 * Update the version of this table
+	 *
+	 * @param $version int
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function updated_table( $version = 0 ) {
+		if ( ! $version ) {
+			$version = $this->version;
+		}
+
+		$tables = $this->get_tables_check();
+		$tables[ $this->table_name ] = $version;
+
+		update_option( 'cpl_tables_check', $tables );
+	}
+
+	/**
 	 * Whether or not we need to run an update routine on this table
 	 *
 	 * @return false
@@ -70,8 +114,23 @@ class Table {
 	 * @author Tanner Moushey
 	 */
 	public function needs_update() {
-		return false;
+		$check = $this->get_tables_check();
+
+		if ( empty( $check[ $this->table_name ] ) ) {
+			return true;
+		}
+
+		return $check[ $this->table_name ] != $this->version;
 	}
+
+	/**
+	 * update table
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function maybe_update() {}
 
 	/**
 	 * Check if the given table exists

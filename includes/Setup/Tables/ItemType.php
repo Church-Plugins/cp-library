@@ -27,7 +27,7 @@ class ItemType extends Table  {
 		global $wpdb;
 
 		$this->table_name = $wpdb->prefix . 'cpl_item_type';
-		$this->version    = '1.0';
+		$this->version    = 1;
 
 		parent::__construct();
 	}
@@ -51,6 +51,15 @@ class ItemType extends Table  {
 			KEY `idx_parent_id` (`parent_id`)
 		) CHARACTER SET utf8 COLLATE utf8_general_ci;";
 
+	}
+
+	public function maybe_update() {
+		global $wpdb;
+
+		$sql = "ALTER TABLE " . $this->table_name . " ADD COLUMN title varchar(255) AFTER origin_id;";
+
+		$wpdb->query( $sql );
+		$this->updated_table();
 	}
 
 }

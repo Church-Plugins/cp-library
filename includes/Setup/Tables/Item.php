@@ -51,5 +51,15 @@ class Item extends Table  {
 		) CHARACTER SET utf8 COLLATE utf8_general_ci;";
 
 	}
+
+	public function maybe_update() {
+		global $wpdb;
+
+		$sql = "ALTER TABLE " . $this->table_name . " ADD COLUMN title varchar(255) AFTER origin_id;";
+
+		$wpdb->query( $sql );
+		$this->updated_table();
+	}
+
 }
 

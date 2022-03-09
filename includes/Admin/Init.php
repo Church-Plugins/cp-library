@@ -92,6 +92,12 @@ class Init {
 
 		}
 
+		foreach ( $tables as $table ) {
+			if ( @cp_library()->setup->tables->$table->needs_update() ) {
+				@cp_library()->setup->tables->$table->maybe_update();
+			}
+		}
+
 	}
 
 

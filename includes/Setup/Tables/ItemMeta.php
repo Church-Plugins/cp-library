@@ -27,7 +27,7 @@ class ItemMeta extends Table  {
 		global $wpdb;
 
 		$this->table_name = $wpdb->prefix . 'cpl_item_meta';
-		$this->version    = '1.0';
+		$this->version    = 1;
 
 		parent::__construct();
 
@@ -50,7 +50,7 @@ class ItemMeta extends Table  {
 	 *
 	 */
 	public static function get_keys() {
-		return apply_filters( 'cpl_item_meta_keys_enum', [ '', 'avatar', 'name', 'video_url', 'audio_url', 'video_id_vimeo', 'video_id_facebook', 'item_type' ] );
+		return apply_filters( 'cpl_item_meta_keys_enum', [ '', 'avatar', 'name', 'video_url', 'audio_url', 'video_id_vimeo', 'video_id_facebook', 'video_id_youtube', 'item_type' ] );
 	}
 
 	/**
@@ -95,23 +95,19 @@ class ItemMeta extends Table  {
 
 	/**
 	 *
-	 * @return string
+	 * @return null
 	 * @since  1.0.0
 	 *
 	 * @author Tanner Moushey
 	 */
-	public function current_version() {
-		return 1;
+	public function maybe_update() {
+		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+
+		$sql = $this->update_enum_sql();
+
+		dbDelta( $sql );
+
+		$this->updated_table();
 	}
 
-	/**
-	 *
-	 * @return false
-	 * @since  1.0.0
-	 *
-	 * @author Tanner Moushey
-	 */
-	public function needs_update() {
-
-	}
 }
