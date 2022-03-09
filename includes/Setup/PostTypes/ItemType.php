@@ -345,7 +345,7 @@ class ItemType extends PostType  {
 
 				$item = ItemModel::get_instance_from_origin( $item_data['id'] );
 
-				$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo' ];
+				$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo', 'video_id_youtube' ];
 				foreach( $meta as $key ) {
 					if ( empty( $item_data[ $key ] ) ) {
 						$item->delete_meta( $key );
