@@ -311,19 +311,24 @@ class ItemType extends PostType  {
 			$data = get_post_meta( $object_id, 'cpl_series_items', true );
 
 			foreach ( $data as $index => $item_data ) {
+
+				if ( empty( $item_data['content'] ) ) {
+					$item_data['content'] = '';
+				}
+
 				if ( empty( $item_data['id'] ) ) {
 					$item_data['id'] = wp_insert_post( [
 						'post_type'    => Item::get_instance()->post_type,
 						'post_status'  => 'publish',
 						'post_title'   => $item_data['title'],
-						'post_date'    => $item_data['date'],
+						'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ),
 						'post_content' => $item_data['content'],
 					] );
 				} else {
 					wp_update_post( [
 						'ID'           => $item_data['id'],
 						'post_title'   => $item_data['title'],
-						'post_date'    => $item_data['date'],
+						'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ),
 						'post_content' => $item_data['content'],
 					] );
 				}
