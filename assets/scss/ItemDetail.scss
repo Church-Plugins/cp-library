@@ -150,6 +150,23 @@
 }
 
 .itemDetail {
+
+	&__actions {
+		display: flex;
+		justify-content: flex-end;
+		margin: 0 -.5rem;
+
+		> * {
+			margin: 1rem .5rem;
+		}
+
+		button {
+			display: inline-flex;
+			height: 100%;
+			align-items: center;
+		}
+	}
+
 	&__root {
 		padding-bottom: 10rem;
 

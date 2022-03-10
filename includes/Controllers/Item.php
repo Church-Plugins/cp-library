@@ -22,12 +22,13 @@ class Item {
 	 * Item constructor.
 	 *
 	 * @param $id
+	 * @param bool $use_origin whether or not to use the origin id
 	 *
 	 * @throws Exception
 	 */
-	public function __construct( $id ) {
-		$this->model = ItemModel::get_instance_from_origin( $id );
-		$this->post  = get_post( $id );
+	public function __construct( $id, $use_origin = true ) {
+		$this->model = $use_origin ? ItemModel::get_instance_from_origin( $id ) : ItemModel::get_instance( $id );
+		$this->post  = get_post( $this->model->origin_id );
 	}
 
 	protected function filter( $value, $function ) {
@@ -108,6 +109,19 @@ class Item {
 		return $this->filter( get_post_datetime( $this->post ), __FUNCTION__ );
 	}
 
+	public function get_topics() {
+		$return = [];
+		$terms  = get_the_terms( $this->post->ID, cp_library()->setup->taxonomies->topic->taxonomy );
+
+		if ( $terms ) {
+			foreach ( $terms as $term ) {
+				$return[ $term->slug ] = $term->name;
+			}
+		}
+
+		return $this->filter( $return, __FUNCTION__ );
+	}
+
 	public function get_categories() {
 		$return = [];
 		$terms = get_the_terms( $this->post->ID, 'talk_categories' );
@@ -151,6 +165,41 @@ class Item {
 		return $this->filter( esc_url ( $this->model->get_meta_value( 'audio_url' ) ), __FUNCTION__ );
 	}
 
+	/**
+	 * Get the item_types associated with this item
+	 *
+	 * @return array|mixed|void
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_types() {
+		$types = [];
+
+		if ( ! cp_library()->setup->post_types->item_type_enabled() ) {
+			return $types;
+		}
+
+		try {
+			$item_types = $this->model->get_types();
+
+			if ( ! empty( $item_types ) ) {
+				foreach ( $item_types as $type_id ) {
+					$type = new ItemType( $type_id, false );
+					$types[] = [
+						'title'     => $type->get_title(),
+						'permalink' => $type->get_permalink(),
+					];
+				}
+			}
+		} catch( Exception $e ) {
+			error_log( $e );
+		}
+
+		return $this->filter( $types, __FUNCTION__ );
+
+	}
+
 	public function get_api_data() {
 		$data = [
 			'id'        => $this->model->id,
@@ -162,8 +211,10 @@ class Item {
 			'desc'      => $this->get_content(),
 			'date'      => $this->get_publish_date(),
 			'category'  => $this->get_categories(),
-			'video'     => 'https://vimeo.com/169599296', // $this->get_video(),
-			'audio'     => 'https://ret.sfo2.cdn.digitaloceanspaces.com/wp-content/uploads/2021/08/re20210828-29.mp3', /// $this->get_audio(),
+			'video'     => $this->get_video(),
+			'audio'     => $this->get_audio(),
+			'types'     => $this->get_types(),
+			'topics'    => $this->get_topics(),
 		];
 
 		return $this->filter( $data, __FUNCTION__ );

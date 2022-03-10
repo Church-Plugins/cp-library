@@ -1,0 +1,21 @@
+.cpl-item-card {
+	width: 320px;
+	cursor: pointer;
+	background: rgba(0, 0, 0, .05);
+	padding: 1rem;
+
+	&--thumb {
+		padding-bottom: 56.25%;
+		margin: -1rem -1rem 1rem;
+		background-size: cover;
+		background-position: center center;
+	}
+
+	&--title {
+		font-size: 1.25em;
+	}
+
+	&--meta {
+		font-size: .875em;
+	}
+}

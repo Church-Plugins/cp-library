@@ -1,0 +1,22 @@
+.cpl-single-item {
+	display: flex;
+	flex-direction: row;
+
+	&--back {
+		margin-bottom: 1rem;
+		display: inline-block;
+		&:before {
+			content: '←';
+			margin-right: .5em;
+		}
+	}
+
+	&--content {
+		padding-right: 10%;
+		margin-right: 0;
+	}
+
+	&--media {
+		flex: 1 0 60%;
+	}
+}

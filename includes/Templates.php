@@ -150,14 +150,13 @@ class Templates {
 	 * @return string Path to template
 	 */
 	public static function template_include( $template ) {
-		do_action( 'tribe_tec_template_chooser', $template );
+		do_action( 'cpl_template_chooser', $template );
 
-		// no non-events need apply
 		if ( ! self::is_cpl_query() ) {
 			return $template;
 		}
 
-		// if it's a single 404 event
+		// if it's a single 404
 		if ( is_single() && is_404() ) {
 			return get_404_template();
 		}

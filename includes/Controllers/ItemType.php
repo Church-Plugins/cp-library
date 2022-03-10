@@ -21,12 +21,13 @@ class ItemType {
 	 * Item constructor.
 	 *
 	 * @param $id
+	 * @param bool $use_origin whether or not to use the origin id
 	 *
 	 * @throws Exception
 	 */
-	public function __construct( $id ) {
-		$this->model = Model::get_instance_from_origin( $id );
-		$this->post  = get_post( $id );
+	public function __construct( $id, $use_origin = true ) {
+		$this->model = $use_origin ? Model::get_instance_from_origin( $id ) : Model::get_instance( $id );
+		$this->post  = get_post( $this->model->origin_id );
 	}
 
 	protected function filter( $value, $function ) {
@@ -70,16 +71,28 @@ class ItemType {
 		return $this->filter( get_post_datetime( $this->post ), __FUNCTION__ );
 	}
 
-	public function get_categories() {
+	public function get_scripture() {
 		$return = [];
-		$terms = get_the_terms( $this->post->ID, 'talk_categories' );
+		$terms  = get_the_terms( $this->post->ID, cp_library()->setup->taxonomies->scripture->taxonomy );
 
 		if ( $terms ) {
-			foreach( $terms as $term ) {
+			foreach ( $terms as $term ) {
 				$return[ $term->slug ] = $term->name;
 			}
 		}
 
+		return $this->filter( $return, __FUNCTION__ );
+	}
+
+	public function get_seasons() {
+		$return = [];
+		$terms  = get_the_terms( $this->post->ID, cp_library()->setup->taxonomies->season->taxonomy );
+
+		if ( $terms ) {
+			foreach ( $terms as $term ) {
+				$return[ $term->slug ] = $term->name;
+			}
+		}
 
 		return $this->filter( $return, __FUNCTION__ );
 	}
@@ -93,8 +106,9 @@ class ItemType {
 			'title'     => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
 			'desc'      => $this->get_content(),
 			'date'      => $this->get_publish_date(),
-			'category'  => $this->get_categories(),
 			'items'     => [],
+			'season'    => $this->get_seasons(),
+			'scripture' => $this->get_scripture(),
 		];
 
 		foreach( $this->model->get_items() as $i ) {

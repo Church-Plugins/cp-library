@@ -9,6 +9,8 @@ try {
 }
 ?>
 
+<a class="back-link cpl-single-item--back" href="<?php echo get_post_type_archive_link( cp_library()->setup->post_types->item->post_type ); ?>"><?php printf( __('Back to %s', 'cp-library' ), strtolower( cp_library()->setup->post_types->item->plural_label ) ); ?></a>
+
 <div class="cpl-single-item">
 
 	<?php \CP_Library\Templates::get_template_part( 'parts/item-single/content' ); ?>
