@@ -428,7 +428,7 @@ class Templates {
 		extract( $args );
 
 		// append .php to file name
-		if ( substr( $template, - 4 ) != '.php' ) {
+		if ( substr( $template, - 4 ) != '.php' && false === strpos( $template, '.json' ) ) {
 			$template .= '.php';
 		}
 

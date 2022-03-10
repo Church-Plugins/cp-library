@@ -6,6 +6,10 @@
 
 	.cmb-repeatable-grouping {
 
+		.cmbhandle-title span {
+			display: none;
+		}
+
 		> .inside {
 			> div:first-child {
 				position: absolute;
@@ -23,6 +27,11 @@
 				.cmb-th {
 					display: none;
 				}
+
+				.cmb-td {
+					float: none;
+					margin-left: 1.5rem;
+				}
 			}
 		}
 
@@ -39,6 +48,47 @@
 		.cmb-remove-field-row {
 			padding: .5rem 0;
 		}
+
+		.cmb-type-multicheck-inline {
+
+			ul {
+				max-height: 5rem;
+				overflow: scroll;
+			}
+
+			li {
+				margin-bottom: 12px;
+			}
+
+			input:checked + label {
+				font-weight: bold;
+			}
+		}
+
 	}
 
 }
+
+#side-sortables {
+
+	.cmb-row:last-child {
+		margin-bottom: 0;
+
+		.cmb2-metabox-description {
+			padding-bottom: 0;
+		}
+	}
+
+	#cpl_season_data,
+	#cpl_scripture_data,
+	#cpl_topic_data {
+		.cmb-type-multicheck {
+			max-height: 15rem;
+			overflow: scroll;
+			//margin-bottom: 0;
+			box-sizing: border-box;
+		}
+	}
+
+}
+

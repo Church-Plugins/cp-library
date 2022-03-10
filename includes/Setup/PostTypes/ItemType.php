@@ -7,6 +7,7 @@ use CP_Library\Models\ItemType as Model;
 use CP_Library\Models\Item as ItemModel;
 use CP_Library\Models\Speaker as Speaker_Model;
 use \CP_Library\Controllers\Item as ItemController;
+use CP_Library\Setup\Taxonomies\Taxonomy;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -111,8 +112,8 @@ class ItemType extends PostType  {
 			'object_types' => [ cp_library()->setup->post_types->item->post_type ],
 			'title'        => $this->single_label,
 			'context'      => 'side',
-			'show_names'   => true,
-			'priority'     => 'high',
+			'show_names'   => false,
+			'priority'     => 'default',
 			'closed'       => false,
 		) );
 
@@ -266,6 +267,17 @@ class ItemType extends PostType  {
 			'type' => 'text_medium',
 		] );
 
+		foreach( cp_library()->setup->taxonomies->get_objects() as $tax ) {
+			/** @var $tax Taxonomy */
+			$cmb->add_group_field( $group_field_id, [
+				'name'              => $tax->plural_label,
+				'id'                => $tax->taxonomy,
+				'type'              => 'multicheck_inline',
+				'select_all_button' => false,
+				'options'           => $tax->get_terms_for_metabox(),
+			] );
+		}
+
 	}
 
 	/**
@@ -343,6 +355,15 @@ class ItemType extends PostType  {
 					delete_post_thumbnail( $item_data['id'] );
 				}
 
+				// save custom taxonomies
+				foreach( cp_library()->setup->taxonomies->get_taxonomies() as $tax ) {
+					if ( empty( $item_data[ $tax ] ) ) {
+						wp_set_post_terms( $item_data['id'], [], $tax );
+					} else {
+						wp_set_post_terms( $item_data['id'], $item_data[ $tax ], $tax );
+					}
+				}
+
 				$item = ItemModel::get_instance_from_origin( $item_data['id'] );
 
 				$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo', 'video_id_youtube' ];
@@ -356,6 +377,7 @@ class ItemType extends PostType  {
 
 				$item->add_type( $type->id );
 				$item->update_type_order( $type->id, $index );
+
 			}
 
 		} catch ( Exception $e ) {
@@ -431,6 +453,10 @@ class ItemType extends PostType  {
 			if ( has_post_thumbnail( $item_data['id'] ) ) {
 				$item_data['thumbnail_id'] = get_post_thumbnail_id( $item_data['id'] );
 				$item_data['thumbnail']    = wp_get_attachment_image_url( $item_data['thumbnail_id'], 'medium' );
+			}
+
+			foreach( cp_library()->setup->taxonomies->get_taxonomies() as $tax ) {
+				$item_data[ $tax ] = wp_get_post_terms( $item_data['id'], $tax, [ 'fields' => 'names' ] );
 			}
 
 			$data[] = $item_data;

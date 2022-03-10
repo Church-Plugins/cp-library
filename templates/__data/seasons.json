@@ -1,0 +1,19 @@
+[
+  { "term" : "Advent", "weight" : 5 },
+  { "term" : "Ash Wednesday", "weight" : 6 },
+  { "term" : "Christmas", "weight" : 9 },
+  { "term" : "Christmas Eve", "weight" : 2 },
+  { "term" : "Easter", "weight" : 10 },
+  { "term" : "Epiphany", "weight" : 4 },
+  { "term" : "Father's Day", "weight" : 7 },
+  { "term" : "Good Friday", "weight" : 6 },
+  { "term" : "Halloween", "weight" : 6 },
+  { "term" : "Maundy Thursday", "weight" : 2 },
+  { "term" : "Mother’s Day", "weight" : 7 },
+  { "term" : "New Year's", "weight" : 9 },
+  { "term" : "Palm Sunday", "weight" : 7 },
+  { "term" : "Passover", "weight" : 5 },
+  { "term" : "Pentecost", "weight" : 4 },
+  { "term" : "Reformation Day", "weight" : 3 },
+  { "term" : "Lent", "weight" : 4 }
+]

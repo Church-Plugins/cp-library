@@ -102,8 +102,8 @@ class Speaker extends PostType {
 			'object_types' => [ cp_library()->setup->post_types->item->post_type ],
 			'title'        => $this->single_label,
 			'context'      => 'side',
-			'show_names'   => true,
-			'priority'     => 'high',
+			'show_names'   => false,
+			'priority'     => 'default',
 			'closed'       => false,
 		) );
 
