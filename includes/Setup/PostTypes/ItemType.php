@@ -367,7 +367,7 @@ class ItemType extends PostType  {
 				$item = ItemModel::get_instance_from_origin( $item_data['id'] );
 
 				if ( cp_library()->setup->post_types->speaker_enabled() ) {
-					$item->update_speakers( $item_data['speaker'] );
+					$item->update_speakers( $item_data['speakers'] );
 				}
 
 				$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo', 'video_id_youtube' ];
