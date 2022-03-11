@@ -211,7 +211,7 @@ class ItemType extends PostType  {
 
 				$cmb->add_group_field( $group_field_id, [
 					'name'              => Speaker::get_instance()->single_label,
-					'id'                => 'speaker',
+					'id'                => 'speakers',
 					'type'              => 'multicheck_inline',
 					'select_all_button' => false,
 					'options'           => $speakers,
@@ -366,6 +366,10 @@ class ItemType extends PostType  {
 
 				$item = ItemModel::get_instance_from_origin( $item_data['id'] );
 
+				if ( cp_library()->setup->post_types->speaker_enabled() ) {
+					$item->update_speakers( $item_data['speaker'] );
+				}
+
 				$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo', 'video_id_youtube' ];
 				foreach( $meta as $key ) {
 					if ( empty( $item_data[ $key ] ) ) {
@@ -447,7 +451,7 @@ class ItemType extends PostType  {
 			}
 
 			if ( cp_library()->setup->post_types->speaker_enabled() ) {
-				$item_data['speaker'] = $item->model->get_speakers();
+				$item_data['speakers'] = $item->model->get_speakers();
 			}
 
 			if ( has_post_thumbnail( $item_data['id'] ) ) {

@@ -60,7 +60,7 @@ class Item extends Table  {
 	public function update_speakers( $speakers ) {
 		$existing_speakers = $this->get_speakers();
 
-		foreach( $speakers as $speaker ) {
+		foreach( (array) $speakers as $speaker ) {
 			if ( false !== $key = array_search( $speaker, $existing_speakers ) ) {
 				unset( $existing_speakers[ $key ] );
 				continue;
