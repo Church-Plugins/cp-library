@@ -16,8 +16,7 @@ try {
 	<?php \CP_Library\Templates::get_template_part( 'parts/item-single/content' ); ?>
 
 	<div class="cpl-single-item--media">
-		<div class="itemDetail__rightContent cpl_item_player" data-item="<?php echo esc_attr( json_encode( $item ) ); ?>">
-		</div>
+		<div class="itemDetail__rightContent cpl_item_player" data-item="<?php echo esc_attr( json_encode( $item ) ); ?>"></div>
 	</div>
 
 </div>
