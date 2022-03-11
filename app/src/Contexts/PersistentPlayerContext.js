@@ -2,8 +2,8 @@ import { createContext, useReducer, useContext, useEffect, useCallback } from "r
 import ReactDOM from 'react-dom';
 import { ThemeProvider } from '@mui/material/styles';
 
-import PersistentPlayer from "../Components/PersistentPlayer";
-import theme from "../Components/Theme";
+import PersistentPlayer from "../Templates/PersistentPlayer";
+import theme from "../Templates/Theme";
 
 const PersistentPlayerContext = createContext()
 

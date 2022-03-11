@@ -1,11 +1,8 @@
 import IconButton from '@mui/material/IconButton';
 import { PauseCircle, PlayCircle, Pause, PlayArrow } from "@mui/icons-material"
 import * as React from 'react';
-import { styled } from '@mui/material/styles';
-import Stack from '@mui/material/Stack';
-import { purple } from '@mui/material/colors';
 
-export default function ButtonPlay({
+export default function PlayPause({
   // See MUI docs for possible values
   variant = "contained",
 	circleIcon = true,

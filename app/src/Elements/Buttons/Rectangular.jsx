@@ -1,6 +1,6 @@
 import Button from '@mui/material/Button';
 
-export default function RectangularButton({
+export default function Rectangular({
   // See MUI docs for possible values
   variant = "contained",
   leftIcon,
@@ -12,13 +12,12 @@ export default function RectangularButton({
 }) {
   return (
     <Button
-      className={`rectangularButton__root rectangularButton__${variant}`}
+      className={`cpl-button cpl-button--${variant} rectangularButton__root rectangularButton__${variant}`}
       variant={variant}
       startIcon={leftIcon}
       fullWidth={fullWidth}
       onClick={onClick}
       disabled={disabled}
-      sx={sx}
     >
       {children}
     </Button>

@@ -14,6 +14,7 @@ $type = \CP_Library\Templates::get_type();
 			<?php endwhile; ?>
 		</div>
 
-		<?php do_action( 'cpl_after_cpl_archive_'  . $type ); ?>
+		<?php do_action( 'cpl_after_archive' ); ?>
+		<?php do_action( 'cpl_after_archive_'  . $type ); ?>
 	</div>
 <?php endif; ?>

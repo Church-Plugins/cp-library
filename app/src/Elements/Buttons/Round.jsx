@@ -1,6 +1,6 @@
 import Button from '@mui/material/Button';
 
-export default function RoundButton({
+export default function Round({
   // See MUI docs for possible values
   variant = "contained",
   leftIcon,

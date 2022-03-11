@@ -165,6 +165,10 @@ class Init {
 			'components' => [
 				'mobileTop' => ''
 			],
+			'i18n' => [
+				'playAudio' => __( 'Play Audio', 'cp-library' ),
+				'playVideo' => __( 'Play Video', 'cp-library' ),
+			],
 		] );
 
 		if ( isset( $scripts['js'], $scripts['js'][0], $scripts['js'][0]['handle'] ) ) {

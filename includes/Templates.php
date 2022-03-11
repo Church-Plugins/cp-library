@@ -51,6 +51,7 @@ class Templates {
 		wp_cache_set( self::spoofed_post()->ID, [ true ], 'post_meta' );
 
 		add_action( 'wp_head', [ __CLASS__, 'wpHeadFinished' ], 999 );
+		add_action( 'cpl_after_archive', 'the_posts_pagination' );
 
 		// add the theme name to the body class when needed
 		if ( self::needs_compatibility_fix() ) {
@@ -202,7 +203,7 @@ class Templates {
 		$template_filename = basename( self::$template );
 
 		if ( $template_filename == 'default-template.php' ) {
-			$classes[] = 'tribe-events-page-template';
+			$classes[] = 'cpl-page-template';
 		} else {
 			$classes[] = 'page-template-' . sanitize_title( $template_filename );
 		}

@@ -1,26 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
-import Divider from '@mui/material/Divider';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { cplVar } from '../utils/helpers';
-import debounce from '@mui/utils/debounce';
+import { cplVar } from '../../utils/helpers';
 
 import { Play, Volume1, Share2 } from "react-feather"
 import VideoPlayer from "react-player";
-import { Link } from 'react-router-dom';
-import { useHistory } from "react-router-dom";
 
-import useBreakpoints from '../Hooks/useBreakpoints';
-import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
-import { usePersistentPlayer } from '../Contexts/PersistentPlayerContext';
+import useBreakpoints from '../../Hooks/useBreakpoints';
+import Controllers_WP_REST_Request from '../../Controllers/WP_REST_Request';
+import { usePersistentPlayer } from '../../Contexts/PersistentPlayerContext';
 
-import LoadingIndicator from '../Elements/LoadingIndicator';
-import ErrorDisplay from '../Elements/ErrorDisplay';
-import ItemMeta from './ItemMeta';
-import SearchInput from '../Elements/SearchInput';
-import RectangularButton from '../Elements/RectangularButton';
-import Logo from '../Elements/Logo';
+import LoadingIndicator from '../../Elements/LoadingIndicator';
+import ErrorDisplay from '../../Elements/ErrorDisplay';
+import Rectangular from '../../Elements/Buttons/Rectangular';
+import Logo from '../../Elements/Logo';
 
 import { PictureInPicture, Forward30, Replay10, OpenInFull, PlayCircleOutline, Facebook, Twitter, Download, Link as LinkIcon } from "@mui/icons-material"
 import Slider from '@mui/material/Slider';
@@ -28,15 +22,14 @@ import IconButton from '@mui/material/IconButton';
 import ReactDOM from 'react-dom';
 import screenfull from 'screenfull';
 
-import formatDuration from '../utils/formatDuration';
-import ButtonPlay from '../Elements/ButtonPlay';
+import formatDuration from '../../utils/formatDuration';
+import PlayPause from '../../Elements/Buttons/PlayPause';
 
 
-export default function ItemDetail({
-  itemId,
+export default function Player({
+  item,
 }) {
   const { isDesktop } = useBreakpoints();
-  const [item, setItem] = useState();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState();
   // Video or audio
@@ -58,7 +51,6 @@ export default function ItemDetail({
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 	const copyLinkRef = useRef(null);
-  const history      = useHistory();
 
 	const onMouseMove = (e) => {
 		if (showFSControls || ! mode) return;
@@ -172,18 +164,6 @@ export default function ItemDetail({
 		}
 	};
 
-	const handleSearchInputChange = debounce((value) => {
-		if ( ! value ) {
-			return;
-		}
-
-		if ( 4 > value.length ) {
-			return;
-		}
-
-		history.push(`${cplVar( 'path', 'site' )}/${cplVar( 'slug', 'item' )}?s=${value}`);
-	}, 1000);
-
   // Fetch the individual item when mounted.
   useEffect(() => {
 		(async () => {
@@ -231,49 +211,11 @@ export default function ItemDetail({
 
   }, [item]);
 
-  return loading ? (
-  	<Box ref={itemContainer} className={"itemDetail__root" + playingClass}>
-      <LoadingIndicator />
-	  </Box>
-  ) : error ? (
-    <ErrorDisplay error={error} />
-  ) : (
+  return (
     // Margin bottom is to account for audio player. Making sure all content is still visible with
     // the player is up.
     <Box ref={itemContainer} className={"itemDetail__root" + playingClass}>
-      <Link className="itemDetail__Back" to={cplVar( 'path', 'site' ) + "/" + cplVar( 'slug', 'item' )}>{"<"} Back to {cplVar('labelPlural', 'item')}</Link>
-      {isDesktop && (
-        <>
-          <Box display="flex" justifyContent="space-between" className="itemDetail__header">
-            <h1 className="itemDetail__header__title">{cplVar('labelPlural', 'item')}</h1>
-            {/* TODO: Think about who's responsible for search, e.g. here or a global search provider */}
-            <Box className="itemDetail__search" marginLeft={1} display="flex" alignItems="center">
-              <SearchInput onValueChange={handleSearchInputChange} />
-            </Box>
-          </Box>
-          <Divider className="itemDetail__divider" sx={{ marginY: 2 }} />
-        </>
-      )}
-      <Box display="flex" flexDirection={isDesktop ? "row" : "column"}>
-        <Box className="itemDetail__leftContent" flex={1} flexBasis="40%" marginRight={isDesktop ? 2 : 0}>
-          <h1 className="itemDetail__title" dangerouslySetInnerHTML={{ __html: item.title }} />
-          {isDesktop ? (
-            <>
-              <Box className="itemDetail__itemMeta" marginTop={4}>
-                <ItemMeta date={item.date.date} category={Object.values(item.category)} />
-              </Box>
-
-              <Box className="itemDetail__description" marginTop={4} dangerouslySetInnerHTML={{ __html: item.desc }} />
-            </>
-          ) : (
-            <Divider
-              className="itemDetail__divider itemDetail__shortDivider"
-              sx={{ width: 58, height: 6, marginY: 2 }}
-            />
-          )}
-        </Box>
-
-        <Box className="itemDetail__rightContent" flex={1} flexBasis="60%">
+        <Box className="itemDetail__rightContent">
           {/* TODO: Componentize as <FeatureImage />. These could be the same thing as the ones in the item list */}
 
           {! isDesktop ? null : (
@@ -327,7 +269,7 @@ export default function ItemDetail({
 				               justifyContent="space-around" margin="auto">
 
 					          <Box display="flex" alignItems="center">
-						          <ButtonPlay flex={0} padding={2} isPlaying={isPlaying} circleIcon={false} onClick={() => setIsPlaying(!isPlaying)}/>
+						          <PlayPause flex={0} padding={2} isPlaying={isPlaying} circleIcon={false} onClick={() => setIsPlaying(!isPlaying)}/>
 					          </Box>
 
 					          <IconButton
@@ -424,17 +366,11 @@ export default function ItemDetail({
 
           </Box>
 
-          {isDesktop ? null : (
-            <Box className="itemDetail__category" marginTop={1}>
-              <span>CATEGORIES: {Object.values(item.category).join(", ")}</span>
-            </Box>
-          )}
-
           <Box className="itemDetail__actions" display="flex" alignItems="stretch" marginTop={2}>
 
 	          {item.video.value && (
 		          <Box className="itemDetail__playVideo" flex={1} marginRight={1}>
-			          <RectangularButton
+			          <Rectangular
 				          leftIcon={<Play/>}
 				          onClick={() => {
 					          if (persistentPlayerIsActive) {
@@ -451,13 +387,13 @@ export default function ItemDetail({
 				          fullWidth
 			          >
 				          Play Video
-			          </RectangularButton>
+			          </Rectangular>
 		          </Box>
 	          )}
 
 	          {item.audio && (
 		          <Box className="itemDetail__playAudio" flex={1} >
-			          <RectangularButton
+			          <Rectangular
 				          variant="outlined"
 				          leftIcon={<Volume1/>}
 				          onClick={() => {
@@ -472,11 +408,10 @@ export default function ItemDetail({
 						          updateMode('audio');
 					          }
 				          }}
-				          // disabled={!item.audio || mode === "audio"}
 				          fullWidth
 			          >
 				          Play Audio
-			          </RectangularButton>
+			          </Rectangular>
 		          </Box>
 	          )}
 
@@ -485,14 +420,14 @@ export default function ItemDetail({
               flex={0}
               marginLeft={1}
             >
-              <RectangularButton
+              <Rectangular
 	              aria-controls="itemDetail__share"
 	              aria-haspopup="true"
 	              aria-expanded={open ? 'true' : undefined}
 	              onClick={handleClick}
 	              variant="outlined">
                 <Share2 />
-              </RectangularButton>
+              </Rectangular>
 	            <Menu
 		            id="itemDetail__share__menu"
 		            className="itemDetail__share__menu"
@@ -572,7 +507,7 @@ export default function ItemDetail({
 			         </IconButton>
 
 			         <Box display="flex" alignItems="center">
-				         <ButtonPlay flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
+				         <PlayPause flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
 			         </Box>
 			         <IconButton size='large' onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')}>
 				         <Forward30 fontSize="inherit"/>
@@ -588,12 +523,6 @@ export default function ItemDetail({
 
 
         </Box>
-      </Box>
-
-      {isDesktop ? null : (
-        <Box className="itemDetail__description" marginTop={2} dangerouslySetInnerHTML={{ __html: item.desc }} />
-      )}
-
     </Box>
   );
 }
