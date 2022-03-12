@@ -51,4 +51,70 @@ class Convenience
 
 	}
 
+	public static function relative_time( $timestamp, $format = '' ) {
+
+		$format = ! empty( $format ) ? $format : get_option( 'date_format' );
+
+		if ( ! ctype_digit( $timestamp ) ) {
+			$timestamp = strtotime( $timestamp );
+		}
+
+		$diff = current_time( 'timestamp' ) - $timestamp;
+		if ( $diff == 0 ) {
+			return 'now';
+		} elseif ( $diff > 0 ) {
+			$day_diff = floor( $diff / 86400 );
+			if ( $day_diff == 0 ) {
+				if ( $diff < 60 ) {
+					return 'just now';
+				}
+				if ( $diff < 120 ) {
+					return '1 minute ago';
+				}
+				if ( $diff < 3600 ) {
+					return floor( $diff / 60 ) . ' minutes ago';
+				}
+				if ( $diff < 7200 ) {
+					return '1 hour ago';
+				}
+				if ( $diff < 86400 ) {
+					return floor( $diff / 3600 ) . ' hours ago';
+				}
+			}
+			if ( $day_diff == 1 ) {
+				return 'Yesterday';
+			}
+			if ( $day_diff < 7 ) {
+				return $day_diff . ' days ago';
+			}
+
+			return date( $format, $timestamp );
+		} else {
+			$diff     = abs( $diff );
+			$day_diff = floor( $diff / 86400 );
+			if ( $day_diff == 0 ) {
+				if ( $diff < 120 ) {
+					return 'in a minute';
+				}
+				if ( $diff < 3600 ) {
+					return 'in ' . floor( $diff / 60 ) . ' minutes';
+				}
+				if ( $diff < 7200 ) {
+					return 'in an hour';
+				}
+				if ( $diff < 86400 ) {
+					return 'in ' . floor( $diff / 3600 ) . ' hours';
+				}
+			}
+			if ( $day_diff == 1 ) {
+				return 'Tomorrow';
+			}
+			if ( $day_diff < 4 ) {
+				return date( 'l', $timestamp );
+			}
+
+			return date( $format, $timestamp );
+		}
+	}
+
 }

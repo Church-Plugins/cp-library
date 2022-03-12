@@ -95,7 +95,13 @@ class Templates {
 
 		$cpl_query = false;
 		$types = cp_library()->setup->post_types->get_post_types();
+
 		if ( $wp_query->is_singular( $types ) || $wp_query->is_post_type_archive( $types ) ) {
+			$cpl_query = true;
+		}
+
+		$taxonomies = cp_library()->setup->taxonomies->get_taxonomies();
+		if ( $wp_query->is_tax( $taxonomies ) ) {
 			$cpl_query = true;
 		}
 
@@ -337,8 +343,9 @@ class Templates {
 			$wp_query = self::get_global_query_object();
 
 			$types     = cp_library()->setup->post_types->get_post_types();
+			$taxonomies = cp_library()->setup->taxonomies->get_taxonomies();
 
-			if ( $wp_query->is_post_type_archive( $types ) ) {
+			if ( $wp_query->is_post_type_archive( $types ) || $wp_query->is_tax( $taxonomies ) ) {
 				$template = self::get_template_hierarchy( 'archive', [ 'disable_view_check' => true ] );
 			}
 

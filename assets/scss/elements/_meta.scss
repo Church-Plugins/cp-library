@@ -1,0 +1,15 @@
+.cpl-meta {
+	display: flex;
+	flex-flow: row wrap;
+
+	.material-icons-outlined {
+		font-size: 1em;
+		margin-right: .5em;
+	}
+
+	> * {
+		display: flex;
+		margin-right: 1em;
+		align-items: center;
+	}
+}

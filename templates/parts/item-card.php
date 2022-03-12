@@ -14,13 +14,19 @@ try {
 
 	<h3 class="cpl-item-card--title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
 
-	<div class="cpl-item-card--meta">
-		<div class="cpl-item-card--meta--date">
-			<?php echo $item["date"]->format('Y-m-d'); ?>
+	<div class="cpl-meta">
+		<div class="cpl-meta--date">
+			<?php echo $item["date"]["desc"]; ?>
 		</div>
 
-		<div class="cpl-item-card--meta--categories">
-			<?php echo implode( ', ', $item['topics'] ); ?>
-		</div>
+		<?php if ( ! empty( $item['topics'] ) ) : ?>
+			<div class="cpl-meta--topics">
+				<span class="material-icons-outlined">sell</span>
+
+				<?php foreach ( $item['topics'] as $topic ) : ?>
+					<a href="<?php echo esc_url( $topic['url'] ); ?>"><?php echo esc_html( $topic['name'] ); ?></a>
+				<?php endforeach; ?>
+			</div>
+		<?php endif; ?>
 	</div>
 </article>

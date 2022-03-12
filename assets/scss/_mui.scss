@@ -1,0 +1,11 @@
+
+body {
+	.MuiButton-root {
+		color: var(--cpl-primary);
+		border-color: var(--cpl-primary);
+
+		&:hover {
+			border-color: var(--cpl-primary);
+		}
+	}
+}

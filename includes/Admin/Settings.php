@@ -119,6 +119,23 @@ class Settings {
 		) );
 
 		$main_options->add_field( array(
+			'name'         => __( 'Site Logo', 'cp-library' ),
+			'desc'         => sprintf( __( 'The logo to use for %s.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'id'           => 'logo',
+			'type'         => 'file',
+			// query_args are passed to wp.media's library query.
+			'query_args'   => array(
+				// Or only allow gif, jpg, or png images
+				 'type' => array(
+				     'image/gif',
+				     'image/jpeg',
+				     'image/png',
+				 ),
+			),
+			'preview_size' => 'thumbnail', // Image size to use when previewing in the admin
+		) );
+
+		$main_options->add_field( array(
 			'name'         => __( 'Default Thumbnail', 'cp-library' ),
 			'desc'         => sprintf( __( 'The default thumbnail image to use for %s.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
 			'id'           => 'default_thumbnail',

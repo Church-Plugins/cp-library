@@ -1,5 +1,7 @@
 <?php
-$type = \CP_Library\Templates::get_type();
+use CP_Library\Templates;
+
+$type = Templates::get_type();
 ?>
 
 <?php if ( have_posts() ) : ?>
@@ -7,9 +9,9 @@ $type = \CP_Library\Templates::get_type();
 		<?php do_action( 'cpl_before_cpl_archive_'  . $type ); ?>
 
 		<div class="cpl-archive--list">
-			<?php while( have_posts() ) : the_post(); ?>
+			<?php while( have_posts() ) : the_post();  ?>
 				<div class="cpl-archive--list--item">
-					<?php \CP_Library\Templates::get_template_part( "parts/$type-list" ); ?>
+					<?php Templates::get_template_part( "parts/" . Templates::get_type() . "-list" ); ?>
 				</div>
 			<?php endwhile; ?>
 		</div>

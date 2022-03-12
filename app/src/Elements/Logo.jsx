@@ -5,7 +5,7 @@ export default function Logo(props) {
     <img
       {...props}
       alt={cplVar( 'title', 'site' ) + " logo"}
-      src={cplVar( 'thumb', 'site' )}
+      src={cplVar( 'logo', 'site' )}
     />
   );
 }

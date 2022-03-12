@@ -40,19 +40,22 @@
 
 	}
 
-		&--meta {
-			margin-top: .5rem;
+	&--meta {
+		margin-top: .5rem;
 
-			> * {
-				display: inline-flex;
-				align-items: center;
-				margin-right: 1rem;
-			}
+		> * {
+			display: inline-flex;
+			align-items: center;
+			margin-right: 1rem;
 		}
+	}
 
-	&--actions {
+	&--actions--buttons {
 		display: flex;
 		align-items: center;
-		margin-left: .5rem;
+
+		> * {
+			margin-left: .5rem;
+		}
 	}
 }

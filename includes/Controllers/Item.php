@@ -5,6 +5,7 @@ namespace CP_Library\Controllers;
 use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Models\Item as ItemModel;
+use CP_Library\Util\Convenience;
 
 class Item {
 
@@ -106,7 +107,26 @@ class Item {
 	}
 
 	public function get_publish_date() {
-		return $this->filter( get_post_datetime( $this->post ), __FUNCTION__ );
+		$date = get_post_datetime( $this->post );
+		return $this->filter( $date->getTimestamp(), __FUNCTION__ );
+	}
+
+	/**
+	 *
+	 * @return mixed|void
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_the_topics() {
+		$terms = $this->get_topics();
+		$return = [];
+
+		foreach( $terms as $term ) {
+			$return[] = sprintf( '<a href="%s">%s</a>', $term['url'], $term['name'] );
+		}
+
+		return $this->filter( $return, __FUNCTION__ );
 	}
 
 	public function get_topics() {
@@ -115,7 +135,11 @@ class Item {
 
 		if ( $terms ) {
 			foreach ( $terms as $term ) {
-				$return[ $term->slug ] = $term->name;
+				$return[ $term->slug ] = [
+					'name' => $term->name,
+					'slug' => $term->slug,
+					'url'  => get_term_link( $term )
+				];
 			}
 		}
 
@@ -209,7 +233,7 @@ class Item {
 			'thumb'     => $this->get_thumbnail(),
 			'title'     => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
 			'desc'      => $this->get_content(),
-			'date'      => $this->get_publish_date(),
+			'date'      => [ 'desc' => Convenience::relative_time( $this->get_publish_date() ), 'timestamp' => $this->get_publish_date() ],
 			'category'  => $this->get_categories(),
 			'video'     => $this->get_video(),
 			'audio'     => $this->get_audio(),

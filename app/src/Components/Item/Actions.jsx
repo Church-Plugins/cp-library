@@ -43,7 +43,7 @@ export default function Actions({
 	return (
 		<Box className="cpl-list-item--actions">
 			{isDesktop ? (
-				<Box className="cpl-item--actions--buttons">
+				<Box className="cpl-list-item--actions--buttons">
 					{item.video.value && (
 						<PlayVideo onClick={playVideo}/>
 					)}
@@ -52,7 +52,7 @@ export default function Actions({
 					)}
 				</Box>
 			) : (
-				<IconButton className="cpl-item--to-item" onClick={() => history.push(`${cplVar('path', 'site')}/${cplVar('slug', 'item')}/${item.slug}`)}>
+				<IconButton className="cpl-list-item--to-item" onClick={() => history.push(`${cplVar('path', 'site')}/${cplVar('slug', 'item')}/${item.slug}`)}>
 					<ChevronRight/>
 				</IconButton>
 			)}

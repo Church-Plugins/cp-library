@@ -159,6 +159,7 @@ class Init {
 			'site' => [
 				'title' => get_bloginfo( 'name', 'display' ),
 				'thumb' => Settings::get( 'default_thumbnail', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
+				'logo'  => Settings::get( 'logo', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
 				'url'   => get_site_url(),
 				'path'  => '',
 			],
