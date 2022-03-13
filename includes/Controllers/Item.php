@@ -80,6 +80,15 @@ class Item {
 
 		$thumb = $this->maybeGetVimeoThumb();
 
+		if ( ! $thumb && ! empty( $this->get_types() ) ) {
+			try {
+				$type = new ItemType( $this->get_types()[0]['id'] );
+				$thumb = $type->get_thumbnail();
+			} catch( Exception $e ) {
+				error_log( $e );
+			}
+		}
+
 		if ( ! $thumb ) {
 			$thumb = $this->get_default_thumb();
 		}
@@ -211,6 +220,7 @@ class Item {
 				foreach ( $item_types as $type_id ) {
 					$type = new ItemType( $type_id, false );
 					$types[] = [
+						'id'        => $type->model->id,
 						'title'     => $type->get_title(),
 						'permalink' => $type->get_permalink(),
 					];

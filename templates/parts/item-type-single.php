@@ -16,20 +16,48 @@ try {
 	return;
 }
 
-add_filter( 'post_type_link', function( $link, $post ) {
+/**
+ * Add back button for type template
+ *
+ * @since  1.0.0
+ *
+ * @author Tanner Moushey
+ */
+function cpl_item_type_back() {
+
+	if ( get_query_var( 'type-item' ) ) : ?>
+		<a class="back-link cpl-single-type--back" href="<?php echo get_the_permalink(); ?>"><?php printf( __('Back to %s overview', 'cp-library' ), strtolower( cp_library()->setup->post_types->item_type->single_label ) ); ?></a>
+	<?php else : ?>
+		<a class="back-link cpl-single-type--back" href="<?php echo get_post_type_archive_link( cp_library()->setup->post_types->item_type->post_type ); ?>"><?php printf( __('Back to all %s', 'cp-library' ), strtolower( cp_library()->setup->post_types->item_type->plural_label ) ); ?></a>
+	<?php
+	endif;
+}
+add_action( 'cpl_single_type_before', 'cpl_item_type_back' );
+
+/**
+ * Remove the before link on the item-single template
+ */
+add_action( 'cpl_single_item_before', function() {
+	remove_action( 'cpl_single_item_before', 'cpl_item_back' );
+}, 5 );
+
+/**
+ * Customize item link to contain item type link
+ */
+function cpl_item_type_item_link ( $link, $post ) {
 	if ( get_post_type( $post ) != cp_library()->setup->post_types->item->post_type ) {
 		return $link;
 	}
 
 	$item_type = get_queried_object();
 	return trailingslashit( get_permalink( $item_type ) . $post->post_name );
-}, 10, 2 );
-
+}
+add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 ?>
 
-<a class="back-link cpl-single-type--back" href="<?php echo get_post_type_archive_link( cp_library()->setup->post_types->item_type->post_type ); ?>"><?php printf( __('Back to %s', 'cp-library' ), strtolower( cp_library()->setup->post_types->item_type->plural_label ) ); ?></a>
+<?php do_action( 'cpl_single_type_before', $item_type ); ?>
 
-<div class="cpl-single-type">
+<div class="cpl-single-type" onclick="window.location = jQuery(this).find('a').attr('href');">
 	<?php if ( $selected_item ) : ?>
 		<?php
 		$post = $selected_item;
@@ -64,22 +92,20 @@ add_filter( 'post_type_link', function( $link, $post ) {
 
 				<div class="cpl-meta">
 					<div class="cpl-meta--date">
-						<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none"
-							 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-							<line x1="16" y1="2" x2="16" y2="6"></line>
-							<line x1="8" y1="2" x2="8" y2="6"></line>
-							<line x1="3" y1="10" x2="21" y2="10"></line>
-						</svg>
-						<span class="MuiBox-root css-1isemmb"><?php echo $item_type["date"]; ?></span></div>
-					<div class="cpl-meta--topics">
-						<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none"
-							 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-							<line x1="7" y1="7" x2="7.01" y2="7"></line>
-						</svg>
-						<span class="MuiBox-root css-1isemmb"><?php echo implode( ', ', $item_type['scripture'] ); ?></span>
+						<span class="material-icons-outlined">calendar_today</span>
+
+						<span class="MuiBox-root css-1isemmb"><?php echo $item_type["date"]["desc"]; ?></span>
 					</div>
+
+					<?php if ( ! empty( $item_type['topics'] ) ) : ?>
+						<div class="cpl-meta--topics">
+							<span class="material-icons-outlined">sell</span>
+
+							<?php foreach ( $item_type['topics'] as $topic ) : ?>
+								<a href="<?php echo esc_url( $topic['url'] ); ?>"><?php echo esc_html( $topic['name'] ); ?></a>
+							<?php endforeach; ?>
+						</div>
+					<?php endif; ?>
 				</div>
 
 				<div class="cpl-single-type--desc">
@@ -100,3 +126,5 @@ add_filter( 'post_type_link', function( $link, $post ) {
 	</section>
 
 </div>
+
+<?php do_action( 'cpl_single_type_after', $item_type ); ?>

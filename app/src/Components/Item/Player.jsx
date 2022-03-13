@@ -369,7 +369,7 @@ export default function Player({
           <Box className="itemDetail__actions" display="flex" alignItems="stretch" marginTop={2}>
 
 	          {item.video.value && (
-		          <Box className="itemDetail__playVideo" flex={1} marginRight={1}>
+		          <Box className="itemDetail__playVideo" marginRight={1}>
 			          <Rectangular
 				          leftIcon={<Play/>}
 				          onClick={() => {
@@ -392,7 +392,7 @@ export default function Player({
 	          )}
 
 	          {item.audio && (
-		          <Box className="itemDetail__playAudio" flex={1} >
+		          <Box className="itemDetail__playAudio" >
 			          <Rectangular
 				          variant="outlined"
 				          leftIcon={<Volume1/>}
@@ -417,7 +417,6 @@ export default function Player({
 
             <Box
               className="itemDetail__share"
-              flex={0}
               marginLeft={1}
             >
               <Rectangular

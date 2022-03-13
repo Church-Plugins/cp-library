@@ -1,17 +1,26 @@
 .cpl-archive {
 
-	&--list {
+	&--item {
+		.cpl-archive--list {
 
+			&--item {
+				display: flex;
+				width: 100%;
+				text-align: left;
+				padding: 16px;
+				border-radius: 8px;
+				background: transparent;
+			}
 
-		&--item {
-			display: flex;
-			width: 100%;
-			text-align: left;
-			padding: 16px;
-			border-radius: 8px;
-			background: transparent;
 		}
+	}
 
+	&--item-type {
+		.cpl-archive--list {
+			display: grid;
+			column-gap: 2.5rem;
+			grid-template-columns: repeat(auto-fill, minmax(20em, 1fr));
+		}
 	}
 
 }

@@ -26,7 +26,7 @@ try {
 			<div class="cpl-meta--date">
 				<span class="material-icons-outlined">calendar_today</span>
 
-				<span class="MuiBox-root css-1isemmb"><?php echo $item["date"]["desc"]; ?></span>
+				<span><?php echo $item["date"]["desc"]; ?></span>
 			</div>
 
 			<?php if ( ! empty( $item['topics'] ) ) : ?>

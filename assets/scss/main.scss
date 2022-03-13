@@ -9,11 +9,14 @@
 @import "elements/meta";
 
 @import "archive";
+
 @import "item/list";
 @import "item/card";
 @import "item/single";
-@import "item-type-list";
-@import "item-type-single";
+
+@import "item-type/single";
+@import "item-type/list";
+
 @import "App.scss";
 @import "Filter.scss";
 @import "index.scss";
