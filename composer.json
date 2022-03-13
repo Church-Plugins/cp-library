@@ -1,5 +1,5 @@
 {
-  "name": "church-plugins/cp-library",
+  "name": "churchplugins/cp-library",
   "type": "wordpress-plugin",
   "description": "Church library plugin for sermons, talks, and other media.",
   "keywords": [],
