@@ -5,26 +5,37 @@ $type = Templates::get_type();
 $description = get_the_archive_description();
 ?>
 
-<?php if ( have_posts() ) : ?>
-	<div class="cpl-archive cpl-archive--<?php echo esc_attr( $type ); ?>">
+<div class="cpl-archive cpl-archive--<?php echo esc_attr( $type ); ?>">
 
-		<?php do_action( 'cpl_before_archive' ); ?>
-		<?php do_action( 'cpl_before_archive_'  . $type ); ?>
+	<?php do_action( 'cpl_before_archive' ); ?>
+	<?php do_action( 'cpl_before_archive_'  . $type ); ?>
 
-		<?php the_archive_title( '<h1 class="page-title">', '</h1>' ); ?>
-		<?php if ( $description ) : ?>
-			<div class="archive-description"><?php echo wp_kses_post( wpautop( $description ) ); ?></div>
-		<?php endif; ?>
+	<h1 class="page-title"><?php echo post_type_archive_title(); ?></h1>
 
-		<div class="cpl-archive--list">
-			<?php while( have_posts() ) : the_post();  ?>
-				<div class="cpl-archive--list--item">
-					<?php Templates::get_template_part( "parts/" . Templates::get_type() . "-list" ); ?>
-				</div>
-			<?php endwhile; ?>
+	<div class="cpl-archive--container">
+
+		<div class="cpl-archive--container--filter">
+			<?php Templates::get_template_part( "parts/filter" ); ?>
 		</div>
 
-		<?php do_action( 'cpl_after_archive' ); ?>
-		<?php do_action( 'cpl_after_archive_'  . $type ); ?>
+		<div class="cpl-archive--container--list">
+			<?php Templates::get_template_part( "parts/filter-selected" ); ?>
+
+			<div class="cpl-archive--list">
+				<?php if ( have_posts() ) : ?>
+					<?php while( have_posts() ) : the_post();  ?>
+						<div class="cpl-archive--list--item">
+							<?php Templates::get_template_part( "parts/" . Templates::get_type() . "-list" ); ?>
+						</div>
+					<?php endwhile; ?>
+				<?php else : ?>
+						<p><?php printf( __( "No %s found.", 'cp-library' ), $type->plural_label ); ?></p>
+				<?php endif; ?>
+			</div>
+		</div>
+
 	</div>
-<?php endif; ?>
+
+	<?php do_action( 'cpl_after_archive' ); ?>
+	<?php do_action( 'cpl_after_archive_'  . $type ); ?>
+</div>

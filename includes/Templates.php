@@ -108,39 +108,6 @@ class Templates {
 		return apply_filters( 'cpl_template_is_query', $cpl_query );
 	}
 
-	/**
-	 * Look for the stylesheets. Fall back to $fallback path if the stylesheets can't be located or the array is empty.
-	 *
-	 * @param array|string $stylesheets Path to the stylesheet
-	 * @param bool|string  $fallback    Path to fallback stylesheet
-	 *
-	 * @return bool|string Path to stylesheet
-	 */
-	public static function locate_stylesheet( $stylesheets, $fallback = false ) {
-		if ( ! is_array( $stylesheets ) ) {
-			$stylesheets = [ $stylesheets ];
-		}
-		if ( empty( $stylesheets ) ) {
-			return $fallback;
-		}
-		foreach ( $stylesheets as $filename ) {
-			if ( file_exists( get_stylesheet_directory() . '/' . $filename ) ) {
-				$located = trailingslashit( get_stylesheet_directory_uri() ) . $filename;
-				break;
-			} else {
-				if ( file_exists( get_template_directory() . '/' . $filename ) ) {
-					$located = trailingslashit( get_template_directory_uri() ) . $filename;
-					break;
-				}
-			}
-		}
-		if ( empty( $located ) ) {
-			return $fallback;
-		}
-
-		return $located;
-	}
-
 	public static function get_type( $type = false ) {
 		if ( ! $type ) {
 			$type = get_post_type();

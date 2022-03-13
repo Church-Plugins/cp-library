@@ -18,7 +18,8 @@
   },
   "autoload": {
     "psr-4": {
-      "CP_Library\\": "includes/"
+      "CP_Library\\": "includes/",
+      "ChurchPlugins\\": "includes/Toolbox/"
     }
   }
 }

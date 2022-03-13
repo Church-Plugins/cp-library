@@ -1,0 +1,3 @@
+[submodule "includes/Toolbox"]
+	path = includes/Toolbox
+	url = https://github.com/Church-Plugins/Toolbox.git
