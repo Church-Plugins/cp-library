@@ -79,7 +79,11 @@ class ItemType {
 
 		if ( $terms ) {
 			foreach ( $terms as $term ) {
-				$return[ $term->slug ] = $term->name;
+				$return[ $term->slug ] = [
+					'name' => $term->name,
+					'slug' => $term->slug,
+					'url'  => get_term_link( $term )
+				];
 			}
 		}
 

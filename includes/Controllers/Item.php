@@ -155,6 +155,23 @@ class Item {
 		return $this->filter( $return, __FUNCTION__ );
 	}
 
+	public function get_scripture() {
+		$return = [];
+		$terms  = get_the_terms( $this->post->ID, cp_library()->setup->taxonomies->scripture->taxonomy );
+
+		if ( $terms ) {
+			foreach ( $terms as $term ) {
+				$return[ $term->slug ] = [
+					'name' => $term->name,
+					'slug' => $term->slug,
+					'url'  => get_term_link( $term )
+				];
+			}
+		}
+
+		return $this->filter( $return, __FUNCTION__ );
+	}
+
 	public function get_categories() {
 		$return = [];
 		$terms = get_the_terms( $this->post->ID, 'talk_categories' );
@@ -249,6 +266,7 @@ class Item {
 			'audio'     => $this->get_audio(),
 			'types'     => $this->get_types(),
 			'topics'    => $this->get_topics(),
+			'scripture' => $this->get_scripture(),
 		];
 
 		return $this->filter( $data, __FUNCTION__ );

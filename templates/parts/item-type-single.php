@@ -106,6 +106,16 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 							<?php endforeach; ?>
 						</div>
 					<?php endif; ?>
+
+					<?php if ( ! empty( $item_type['scripture'] ) ) : ?>
+						<div class="cpl-meta--topics">
+							<span class="material-icons-outlined">menu_book</span>
+
+							<?php foreach ( $item_type['scripture'] as $scripture ) : ?>
+								<a href="<?php echo esc_url( $scripture['url'] ); ?>"><?php echo esc_html( $scripture['name'] ); ?></a><span class="cpl-separator">, </span>
+							<?php endforeach; ?>
+						</div>
+					<?php endif; ?>
 				</div>
 
 				<div class="cpl-single-type--desc">

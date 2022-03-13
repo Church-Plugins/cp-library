@@ -7,11 +7,17 @@
 				display: flex;
 				width: 100%;
 				text-align: left;
-				padding: 16px;
-				border-radius: 8px;
-				background: transparent;
 			}
 
+		}
+	}
+
+	// make the types scroll horizontally when in taxonomy archive
+	.cpl-archive--item-type {
+		.cpl-archive--list {
+			grid-auto-flow: column;
+			grid-auto-columns: minmax(20em, 1fr);
+			overflow-x: scroll;
 		}
 	}
 
@@ -20,6 +26,17 @@
 			display: grid;
 			column-gap: 2.5rem;
 			grid-template-columns: repeat(auto-fill, minmax(20em, 1fr));
+		}
+	}
+
+	.pagination {
+		margin: 1.5rem auto;
+		text-align: center;
+	}
+
+	.nav-links {
+		> * {
+			margin: 0 .5em;
 		}
 	}
 

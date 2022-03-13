@@ -17,7 +17,7 @@ try {
 	<?php if ( ! empty( $item['types'] ) ) : ?>
 		<div class="cpl-single-item--types">
 			<?php foreach( $item['types'] as $type ) : ?>
-				<a href="<?php echo esc_url( $type['permalink'] ); ?>"><?php echo esc_html( $type['title'] ); ?></a>
+				<a href="<?php echo esc_url( $type['permalink'] ); ?>"><?php echo esc_html( $type['title'] ); ?></a><span class="cpl-separator">, </span>
 			<?php endforeach; ?>
 		</div>
 	<?php endif; ?>
@@ -37,6 +37,16 @@ try {
 					<a href="<?php echo esc_url( $topic['url'] ); ?>"><?php echo esc_html( $topic['name'] ); ?></a>
 				<?php endforeach; ?>
 			</div>
+			<?php endif; ?>
+
+			<?php if ( ! empty( $item['scripture'] ) ) : ?>
+				<div class="cpl-meta--topics">
+					<span class="material-icons-outlined">menu_book</span>
+
+					<?php foreach ( $item['scripture'] as $scripture ) : ?>
+						<a href="<?php echo esc_url( $scripture['url'] ); ?>"><?php echo esc_html( $scripture['name'] ); ?></a><span class="cpl-separator">, </span>
+					<?php endforeach; ?>
+				</div>
 			<?php endif; ?>
 		</div>
 
