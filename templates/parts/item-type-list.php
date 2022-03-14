@@ -49,7 +49,7 @@ try {
 			<?php endif; ?>
 		</div>
 
-		<?php if ( $excerpt = get_the_excerpt()  ) : ?>
+		<?php if ( 0 && $excerpt = get_the_excerpt() ) : ?>
 			<div class="cpl-list-type--desc">
 				<?php echo $excerpt; ?>
 			</div>
