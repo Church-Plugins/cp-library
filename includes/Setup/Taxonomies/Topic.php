@@ -1,13 +1,8 @@
 <?php
 namespace CP_Library\Setup\Taxonomies;
 
-use CP_Library\Admin\Settings;
-use CP_Library\Exception;
-use CP_Library\Models\ItemType as Model;
-use CP_Library\Models\Item as ItemModel;
-use CP_Library\Models\Speaker as Speaker_Model;
-use \CP_Library\Controllers\Item as ItemController;
 use CP_Library\Templates;
+use ChurchPlugins\Setup\Taxonomies\Taxonomy;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;

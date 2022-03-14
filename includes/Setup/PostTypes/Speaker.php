@@ -4,14 +4,13 @@ namespace CP_Library\Setup\PostTypes;
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+use ChurchPlugins\Setup\Tables\SourceMeta;
 use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Models\Item as ItemModel;
-use CP_Library\Views\Admin\Source as Source_Admin_View;
-use CP_Library\Views\Admin\Item as Item_Admin_View;
-use CP_Library\Util\Convenience as Convenience;
-
 use CP_Library\Models\Speaker as Speaker_Model;
+
+use ChurchPlugins\Setup\PostTypes\PostType;
 
 /**
  * Setup for custom post type: Speaker
@@ -27,13 +26,12 @@ class Speaker extends PostType {
 	 * @author costmo
 	 */
 	protected function __construct() {
-
 		$this->post_type = CP_LIBRARY_UPREFIX . "_speaker";
 
 		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", Settings::get_speaker( 'singular_label', 'Speaker' ) );
 		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", Settings::get_speaker( 'plural_label', 'Speakers' ) );
 
-		parent::__construct();
+		parent::__construct( 'CP_Library' );
 	}
 
 	public function add_actions() {
@@ -44,49 +42,28 @@ class Speaker extends PostType {
 	}
 
 	/**
+	 * Return custom meta keys
+	 *
+	 * @return array|mixed|void
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function meta_keys() {
+		return SourceMeta::get_keys();
+	}
+
+	/**
 	 * Setup arguments for this CPT
 	 *
 	 * @return array
 	 * @author costmo
 	 */
 	public function get_args() {
+		$args              = parent::get_args();
+		$args['menu_icon'] = apply_filters( "{$this->post_type}_icon", 'dashicons-group' );
 
-		$plural = $this->plural_label;
-		$single = $this->single_label;
-		$icon   = apply_filters( "cpl_{$this->post_type}_icon", 'dashicons-groups' );
-		$slug   = apply_filters( "cpl_{$this->post_type}_slug", strtolower( sanitize_title( $plural ) ) );
-
-		$args = [
-			'public'        => true,
-			'menu_icon'     => $icon,
-			'show_in_menu'  => 'edit.php?post_type=' . Item::get_instance()->post_type,
-			'show_in_rest'  => true,
-			'has_archive'   => $slug,
-			'hierarchical'  => true,
-			'label'         => $single,
-			'rewrite'       => [
-				'slug' 		=> $slug
-			],
-			'supports' 		=> [ 'title', 'editor', 'thumbnail' ],
-			'labels'        => [
-				'name'               => $plural,
-				'singular_name'      => $single,
-				'add_new'            => 'Add New',
-				'add_new_item'       => 'Add New ' . $single,
-				'edit'               => 'Edit',
-				'edit_item'          => 'Edit ' . $single,
-				'new_item'           => 'New ' . $single,
-				'view'               => 'View',
-				'view_item'          => 'View ' . $single,
-				'search_items'       => 'Search ' . $plural,
-				'not_found'          => 'No ' . $plural . ' found',
-				'not_found_in_trash' => 'No ' . $plural . ' found in Trash',
-				'parent'             => 'Parent ' . $single
-			]
-		];
-
-		return apply_filters( "{$this->post_type}_args", $args, $this );
-
+		return $args;
 	}
 
 	public function register_metaboxes() {

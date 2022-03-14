@@ -3,7 +3,6 @@
 namespace CP_Library\Models;
 
 use CP_Library\Exception;
-use CP_Library\Setup\Tables\SourceMeta;
 
 /**
  * Item DB Class
@@ -41,7 +40,7 @@ class Item extends Table  {
 
 		$speaker = Speaker::get_instance();
 		$speaker_type = Speaker::get_type_id();
-		$speakers = $wpdb->get_col( $wpdb->prepare( "SELECT `source_id` FROM " . $speaker->meta_table_name . " WHERE `key` = 'source_item' AND `item_id` = %d AND `source_type_id` = %d;", $this->id, $speaker_type ) );
+		$speakers = $wpdb->get_col( $wpdb->prepare( "SELECT `source_id` FROM " . $speaker->get_prop( 'meta_table_name' ) . " WHERE `key` = 'source_item' AND `item_id` = %d AND `source_type_id` = %d;", $this->id, $speaker_type ) );
 
 		return apply_filters( 'cpl_item_get_speakers', $speakers, $this );
 	}

@@ -3,8 +3,9 @@
 namespace CP_Library\Models;
 
 use CP_Library\Exception;
-use CP_Library\Setup\Tables\SourceMeta as SourceMetaTable;
-use CP_Library\Setup\Tables\SourceType as SourceTypeTable;
+use ChurchPlugins\Setup\Tables\SourceMeta as SourceMetaTable;
+use ChurchPlugins\Models\Source;
+use ChurchPlugins\Models\SourceType;
 
 /**
  * Source DB Class

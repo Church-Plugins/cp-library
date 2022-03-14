@@ -49,56 +49,9 @@ class Init {
 	 *
 	 * @return void
 	 */
-	protected function actions() {
-		add_action( 'admin_init', [ $this, 'update_install' ] );
-	}
+	protected function actions() {}
 
 	/** Actions ***************************************************/
-
-	/**
-	 * Post-install actions
-	 *
-	 * - Make sure database is installed and up-to-date
-	 *
-	 * @return void
-	 * @author costmo
-	 */
-	public function update_install() {
-		// return;
-
-		if ( ! is_admin() ) {
-			return;
-		}
-
-		$table_check = get_option( 'cpl_table_check', cp_library()->get_version() );
-		$installed   = false;
-		$tables      = [ 'item', 'item_meta', 'item_type', 'source', 'source_meta', 'source_type' ];
-
-		if ( cp_library()->get_version() !== $table_check ) {
-
-			foreach( $tables as $table ) {
-				if ( ! @cp_library()->setup->tables->$table->installed() ) {
-					// Create the source database (this ensures it creates it on multisite instances where it is network activated)
-					@cp_library()->setup->tables->$table->create_table();
-					$installed = true;
-				}
-			}
-
-			if ( $installed ) {
-				do_action( 'cpl_after_install' );
-			}
-
-			update_option( 'cpl_table_check', cp_library()->get_version() );
-
-		}
-
-		foreach ( $tables as $table ) {
-			if ( @cp_library()->setup->tables->$table->needs_update() ) {
-				@cp_library()->setup->tables->$table->maybe_update();
-			}
-		}
-
-	}
 
 
 }

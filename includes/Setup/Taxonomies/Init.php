@@ -113,7 +113,7 @@ class Init {
 		$this->season->add_actions();
 		$this->topic->add_actions();
 
-		do_action( 'cpl_register_taxonomies' );
+		do_action( 'cp_register_taxonomies' );
 
 	}
 

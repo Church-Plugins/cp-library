@@ -2,6 +2,8 @@
 
 namespace CP_Library\Setup\Tables;
 
+use ChurchPlugins\Setup\Tables\Table;
+
 /**
  * ItemMeta DB Class
  *

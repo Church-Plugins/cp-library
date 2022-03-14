@@ -6,8 +6,9 @@ use CP_Library\Exception;
 use CP_Library\Models\ItemType as Model;
 use CP_Library\Models\Item as ItemModel;
 use CP_Library\Models\Speaker as Speaker_Model;
-use \CP_Library\Controllers\Item as ItemController;
-use CP_Library\Setup\Taxonomies\Taxonomy;
+use CP_Library\Controllers\Item as ItemController;
+use ChurchPlugins\Setup\Taxonomies\Taxonomy;
+use ChurchPlugins\Setup\PostTypes\PostType;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -31,7 +32,7 @@ class ItemType extends PostType  {
 		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", Settings::get_item_type( 'singular_label', 'Series' ) );
 		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", Settings::get_item_type( 'plural_label', 'Series' ) );
 
-		parent::__construct();
+		parent::__construct( 'CP_Library' );
 	}
 
 	public function cpt_menu_position( $args, $class ) {
@@ -64,42 +65,10 @@ class ItemType extends PostType  {
 	 * @author costmo
 	 */
 	public function get_args() {
+		$args              = parent::get_args();
+		$args['menu_icon'] = apply_filters( "{$this->post_type}_icon", 'dashicons-list-view' );
 
-		$plural = $this->plural_label;
-		$single = $this->single_label;
-		$icon   = apply_filters( "cpl_{$this->post_type}_icon", 'dashicons-list-view' );
-		$slug   = apply_filters( "cpl_{$this->post_type}_slug", strtolower( sanitize_title( $plural ) ) );
-
-		$args = [
-			'public'       => true,
-			'menu_icon'    => $icon,
-			'show_in_menu' => true,
-			'show_in_rest' => true,
-			'has_archive'  => $slug,
-			'hierarchical' => true,
-			'label'        => $single,
-			'rewrite'      => [
-				'slug' => $slug
-			],
-			'supports'     => [ 'title', 'editor', 'thumbnail' ],
-			'labels'       => [
-				'name'               => $plural,
-				'singular_name'      => $single,
-				'add_new'            => 'Add New',
-				'add_new_item'       => 'Add New ' . $single,
-				'edit'               => 'Edit',
-				'edit_item'          => 'Edit ' . $single,
-				'new_item'           => 'New ' . $single,
-				'view'               => 'View',
-				'view_item'          => 'View ' . $single,
-				'search_items'       => 'Search ' . $plural,
-				'not_found'          => 'No ' . $plural . ' found',
-				'not_found_in_trash' => 'No ' . $plural . ' found in Trash',
-				'parent'             => 'Parent ' . $single
-			]
-		];
-
-		return apply_filters( "{$this->post_type}_args", $args, $this );
+		return $args;
 	}
 
 	protected function sermon_series_metabox() {

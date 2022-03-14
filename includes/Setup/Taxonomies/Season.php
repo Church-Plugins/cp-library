@@ -2,6 +2,7 @@
 namespace CP_Library\Setup\Taxonomies;
 
 use CP_Library\Templates;
+use ChurchPlugins\Setup\Taxonomies\Taxonomy;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
