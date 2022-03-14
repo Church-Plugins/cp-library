@@ -1,10 +1,10 @@
 .cpl-item-card {
 	width: 320px;
-	cursor: pointer;
 	background: rgba(0, 0, 0, .05);
 	padding: 1rem;
 
 	&--thumb {
+		cursor: pointer;
 		padding-bottom: 56.25%;
 		margin: -1rem -1rem 1rem;
 		background-size: cover;

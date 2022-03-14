@@ -9,8 +9,8 @@ try {
 }
 ?>
 
-<article class="cpl-item-card" onclick="window.location = jQuery(this).find('a').attr('href');">
-	<div class="cpl-item-card--thumb" style="background-image: url('<?php echo esc_url( $item['thumb'] ); ?>');"></div>
+<article class="cpl-item-card">
+	<div class="cpl-item-card--thumb" onclick="window.location = jQuery(this).parent().find('.cpl-item-card--title a').attr('href');" style="background-image: url('<?php echo esc_url( $item['thumb'] ); ?>');"></div>
 
 	<h3 class="cpl-item-card--title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
 

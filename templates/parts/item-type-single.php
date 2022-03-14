@@ -57,7 +57,7 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 
 <?php do_action( 'cpl_single_type_before', $item_type ); ?>
 
-<div class="cpl-single-type" onclick="window.location = jQuery(this).find('a').attr('href');">
+<div class="cpl-single-type">
 	<?php if ( $selected_item ) : ?>
 		<?php
 		$post = $selected_item;
