@@ -42,6 +42,10 @@ $get = $_GET;
 	</form>
 
 	<script>
+	  	jQuery('.cpl-filter--form input[type=checkbox]').on('change', function() {
+			jQuery('.cpl-filter--form').submit();
+		});
+
 		jQuery('.cpl-filter--has-dropdown button').on( 'click', function(e) {
 			e.preventDefault();
 			jQuery(this).parent().toggleClass('open');

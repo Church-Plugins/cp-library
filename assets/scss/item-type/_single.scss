@@ -37,18 +37,21 @@
 	}
 
 	&--items {
-		display: flex;
-		flex-direction: row;
-		overflow: scroll;
-		margin: 1rem 0;
-
-		> * {
-			flex-shrink: 0;
-			margin: 0 .5rem;
-
-			&:first-child {
-				margin-left: 0;
-			}
+		.cpl-list-item--types {
+			display: none;
 		}
+		//display: flex;
+		//flex-direction: row;
+		//overflow: scroll;
+		//margin: 1rem 0;
+		//
+		//> * {
+		//	flex-shrink: 0;
+		//	margin: 0 .5rem;
+		//
+		//	&:first-child {
+		//		margin-left: 0;
+		//	}
+		//}
 	}
 }

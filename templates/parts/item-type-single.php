@@ -131,7 +131,7 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 
 	<section class="cpl-single-type--items">
 		<?php foreach ( $item_type['items'] as $item ) : $post = get_post( $item['originID'] );setup_postdata( $post ); ?>
-			<?php \CP_Library\Templates::get_template_part( "parts/item-card" ); ?>
+			<?php \CP_Library\Templates::get_template_part( "parts/item-list" ); ?>
 		<?php endforeach; $post = $original_post; wp_reset_postdata(); ?>
 	</section>
 

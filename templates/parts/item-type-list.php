@@ -23,7 +23,8 @@ try {
 	<div class="cpl-list-type--details">
 		<h3 class="cpl-list-type--title"><a href="<?php the_permalink(); ?>"><?php echo $item_type['title']; ?></a></h3>
 
-		<div class="cpl-meta">
+		<div class="cpl-meta" style="display:none;">
+
 			<div class="cpl-meta--date">
 				<span class="material-icons-outlined">calendar_today</span>
 
