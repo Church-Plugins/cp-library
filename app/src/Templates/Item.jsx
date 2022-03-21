@@ -62,7 +62,7 @@ export default function Item({
         >
           <h3 className="cplItem__title">{displayTitle}</h3>
           <Box marginTop={1} className="cplItem__itemMeta">
-            <ItemMeta date={item.date.date} category={Object.values(item.category) || []} />
+            <ItemMeta date={item.date.desc} category={Object.values(item.category) || []} />
           </Box>
         </Box>
         {!isDesktop && isNew && (

@@ -260,7 +260,7 @@ export default function ItemDetail({
           {isDesktop ? (
             <>
               <Box className="itemDetail__itemMeta" marginTop={4}>
-                <ItemMeta date={item.date.date} category={Object.values(item.category)} />
+                <ItemMeta date={item.date.desc} category={Object.values(item.category)} />
               </Box>
 
               <Box className="itemDetail__description" marginTop={4} dangerouslySetInnerHTML={{ __html: item.desc }} />

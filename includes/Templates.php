@@ -175,6 +175,8 @@ class Templates {
 
 		$template_filename = basename( self::$template );
 
+		$classes[] = 'cpl-template';
+
 		if ( $template_filename == 'default-template.php' ) {
 			$classes[] = 'cpl-page-template';
 		} else {

@@ -232,7 +232,7 @@ export default function TypeDetail({
       {isDesktop ? (
         <>
           <Box className="typeDetail__itemMeta" marginTop={4}>
-            <TypeMeta date={item.date.date} items={item.items} />
+            <TypeMeta date={item.date.desc} items={item.items} />
           </Box>
 
           <Box className="typeDetail__description" marginTop={4} dangerouslySetInnerHTML={{ __html: item.desc }} />

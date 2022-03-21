@@ -65,7 +65,7 @@ export default function Type({
         >
           <h3 className="cplItem__title">{displayTitle}</h3>
           <Box marginTop={1} className="cplItem__itemMeta">
-            <TypeMeta date={item.date.date} items={item.items} />
+            <TypeMeta date={item.date.desc} items={item.items} />
           </Box>
         </Box>
         {!isDesktop && isNew && (
