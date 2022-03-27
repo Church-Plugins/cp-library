@@ -3,6 +3,7 @@ namespace CP_Library;
 
 use CP_Library\Admin\Settings;
 use CP_Library\Controllers\Shortcode as Shortcode_Controller;
+use ChurchPlugins\Setup\Init as CP_Setup;
 
 /**
  * Provides the global $cp_library object
@@ -58,6 +59,13 @@ class Init {
 	 */
 	public function maybe_setup() {
 		if ( ! $this->check_required_plugins() ) {
+			return;
+		}
+
+		$cp = CP_Setup::get_instance();
+
+		// make sure needed tables are installed
+		if ( ! $cp->is_installed() ) {
 			return;
 		}
 
@@ -253,7 +261,7 @@ class Init {
 		?>
 		<style>
 			:root {
-				--cpl-primary: <?php echo Settings::get( 'color_primary', '#333333' ); ?>;
+				--cpl-color--primary: <?php echo Settings::get( 'color_primary', '#333333' ); ?>;
 			}
 		</style>
 		<?php

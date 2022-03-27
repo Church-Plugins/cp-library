@@ -107,11 +107,6 @@ class Init {
 	 */
 	protected function actions() {
 		add_filter( 'use_block_editor_for_post_type', [ $this, 'disable_gutenberg' ], 10, 2 );
-
-		add_action( 'init', function() {
-			register_taxonomy_for_object_type( 'talk_categories', 'cpl_item' );
-		}, 20 );
-
 		add_action( 'init', [ $this, 'register_post_types' ] );
 	}
 

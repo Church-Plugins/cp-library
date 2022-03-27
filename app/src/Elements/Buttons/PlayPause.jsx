@@ -24,11 +24,11 @@ export default function PlayPause({
     >
 	    {circleIcon ? (
 	    	<>
-	        {isPlaying ? <PauseCircle color="primary" sx={{fontSize: size}} /> : <PlayCircle color="primary" sx={{fontSize: size}} />}
+	        {isPlaying ? <PauseCircle sx={{fontSize: size}} /> : <PlayCircle sx={{fontSize: size}} />}
 	      </>
 			) : (
         <>
-          {isPlaying ? <Pause color="primary" sx={{fontSize: size}} /> : <PlayArrow color="primary" sx={{fontSize: size}} />}
+          {isPlaying ? <Pause sx={{fontSize: size}} /> : <PlayArrow sx={{fontSize: size}} />}
         </>
 	    )}
     </IconButton>

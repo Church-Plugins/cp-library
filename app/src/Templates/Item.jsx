@@ -1,11 +1,8 @@
 import React from 'react';
 import Box from '@mui/material/Box';
-import { PlayCircleOutline } from "@mui/icons-material"
-import ListItem from '@mui/material/ListItem';
 import { useHistory } from "react-router-dom";
 import { cplVar } from '../utils/helpers';
 
-import useBreakpoints from '../Hooks/useBreakpoints';
 import ItemMeta from "./ItemMeta";
 import Logo from "../Elements/Logo";
 
@@ -14,72 +11,58 @@ import Actions from "../Components/Item/Actions";
 export default function Item({
   item,
   isNew,
+	setActiveFilters
 }) {
-  const { isDesktop } = useBreakpoints();
-
   const displayTitle = item.title.replace( "&#8217;", "'" );
   const displayBg    = item.thumb ? { background: "url(" + item.thumb + ")", backgroundSize: "cover" } : {backgroundColor: "#C4C4C4"};
   const history      = useHistory();
+	const getClass = () => {
+		let itemClass = 'cpl-list-item';
+
+		if ( isNew ) {
+			itemClass += ' is-new';
+		}
+
+		if ( item.video.value ) {
+			itemClass += ' has-video';
+		}
+
+		if ( item.audio ) {
+			itemClass += ' has-audio';
+		}
+
+		return itemClass;
+	}
+	const itemClass = getClass();
 
   return (
-    <ListItem
-      className="cplItem__root"
-      sx={{
-        padding: isDesktop ? 2 : 1,
-        borderRadius: 2,
-        background: !isDesktop && isNew ? 'linear-gradient(180deg, rgba(77, 108, 250, 0.5) 0%, rgba(196, 196, 196, 0) 109.68%)' : 'transparent',
-        '&:hover': {
-          background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(196, 196, 196, 0) 109.68%)'
-        }
-      }}
+    <Box
+      className={itemClass}
       onClick={() => history.push(`${cplVar( 'path', 'site' )}/${cplVar( 'slug', 'item' )}/${item.slug}`)}
     >
-      <Box className="cplItem__content" display="flex" flexDirection="row" width="100%">
-        <Box className="cplItem__thumb" flex={0} display="flex" alignItems="center">
-          <Box
-            sx={displayBg}
-            borderRadius={1}
-            width={isDesktop ? 184 : 57}
-            height={isDesktop ? 111 : 47}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
-            {item.thumb ? (
-            	<PlayCircleOutline sx={{fontSize: 40}} />
-            ) : (
-              <Logo height="50%"/>
-	            )}
-          </Box>
-        </Box>
-        <Box
-          className="cplItem__details"
-          flex={1}
-          display="flex"
-          flexDirection="column"
-          marginLeft={2}
-          justifyContent={isDesktop ? "space-between" : "center"}
-        >
-          <h3 className="cplItem__title">{displayTitle}</h3>
-          <Box marginTop={1} className="cplItem__itemMeta">
-            <ItemMeta date={item.date.desc} category={Object.values(item.category) || []} />
-          </Box>
-        </Box>
-        {!isDesktop && isNew && (
-          <Box
-            className="cplItem__new"
-            flex={0}
-            display="flex"
-            alignItems="center"
-            marginLeft={1}
-            sx={{ textTransform: "uppercase" }}
-          >
-            New
-          </Box>
-        )}
 
-	      <Actions item={item} />
+      <Box className="cpl-list-item--thumb">
+        <Box sx={displayBg} className="cpl-list-item--thumb--canvas">
+          {item.thumb ? (
+		          <img
+			          alt={item.title + ' thumbnail'}
+			          src={item.thumb}
+		          />
+          ) : (
+            <Logo height="50%"/>
+            )}
+        </Box>
       </Box>
-    </ListItem>
+
+      <Box className="cpl-list-item--details">
+        <h3 className="cpl-list-item--title">{displayTitle}</h3>
+        <Box className="cpl-meta">
+          <ItemMeta date={item.date.desc} category={item.category || []} setActiveFilters={setActiveFilters} />
+        </Box>
+      </Box>
+
+      <Actions item={item} />
+
+    </Box>
   );
 }

@@ -2,15 +2,30 @@ $color-white: #FFFFFF;
 $color-black: #0B0B0B;
 $color-grey: #A7A2A9;
 
-//:root {
-//	--cpl--primary: #ffffff;
-//	--cpl--background: linear-gradient(140deg, #2c2a2b, black 40%);
-//	--cpl--text-color: #ffffff;
-//}
-
-
 :root {
-	--cpl--primary: #ffffff;
-	--cpl--background: transparent;
-	--cpl--text-color: inherit;
+	--cpl-color--primary: #ffffff;
+	--cpl--background: linear-gradient(140deg, #2c2a2b, black 40%);
+	--cpl--text-color: #ffffff;
+//	--cpl-color--primary: #ffffff;
+//	--cpl--background: transparent;
+//	--cpl--text-color: inherit;
+
+	--cpl-grid--sm: 576px;
+	--cpl-grid--md: 768px;
+	--cpl-grid--lg: 1025px;
+	--cpl-grid--xl: 1280px;
+	--cpl-grid--xxl: 1920px;
 }
+
+$grid-breakpoints: () !default;
+$grid-breakpoints: map-merge(
+  (
+    xs: 0,
+    sm: 576px,
+    md: 768px,
+    lg: 880px,
+    xl: 1280px,
+    xxl: 1920px,
+  ),
+  $grid-breakpoints
+);

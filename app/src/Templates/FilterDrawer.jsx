@@ -24,15 +24,6 @@ export default function FilterDrawer({
 
   const [topicDrawerIsOpen, setTopicDrawerIsOpen] = useState( false );
 
-  const RenderBoxFormats = () => {
-	return <FilterBoxFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />
-
-  }
-
-  const RenderBoxPopular = () => {
-	return <FilterBoxPopular onFilterChange={onFilterChange} activeFilters={activeFilters} />
-  }
-
   return (
     <Portal>
       <Drawer

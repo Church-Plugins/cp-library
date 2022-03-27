@@ -9,8 +9,14 @@
 		margin-bottom: .75rem;
 
 		> * {
-			&:not(:last-child) {
-				margin-right: .75rem;
+			&:not(:first-child) {
+				margin-left: .75rem;
+			}
+		}
+
+		.filter__button {
+			button {
+				color: inherit;
 			}
 		}
 	}
@@ -61,7 +67,11 @@
 
 	&--search {
 		margin-right: 0;
-		margin-left: auto;
+		margin-left: auto !important;
+
+		@include media-breakpoint-down(md) {
+			flex-grow: 1;
+		}
 
 		&--box {
 			background: white;
@@ -70,19 +80,19 @@
 			padding: .5em;
 			border-radius: 20px;
 
-			button {
+			svg, button {
 				padding: 0;
 				margin: 0 .5em 0 0;
 				background: transparent;
 				color: inherit;
 			}
 
-			input {
+			input[type=text] {
 				padding: 0;
 				background: transparent;
-				border: none;
-				outline: none;
-				box-shadow: none;
+				border: none !important;
+				outline: none !important;
+				box-shadow: none !important;
 			}
 		}
 	}

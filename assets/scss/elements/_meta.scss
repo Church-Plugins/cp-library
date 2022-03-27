@@ -12,7 +12,7 @@
 		margin-bottom: .75em;
 	}
 
-	.material-icons-outlined {
+	svg, .material-icons-outlined {
 		font-size: 1em;
 		margin-right: .5em;
 	}
@@ -21,6 +21,21 @@
 		display: flex;
 		margin-right: 1em;
 		align-items: center;
+	}
+
+	&--topics {
+
+		&--topic {
+			cursor: pointer;
+			&:hover {
+				text-decoration: underline;
+			}
+
+			&:not(:last-child):after {
+				content: ',';
+				margin-right: .5em;
+			}
+		}
 	}
 }
 

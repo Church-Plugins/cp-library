@@ -118,12 +118,13 @@ export default function Items () {
 	useEffect(() => {
 		const urlParams = new URLSearchParams(window.location.search);
 		const format = urlParams.get('format');
+		const topics = urlParams.get('topics');
 		const search = urlParams.get('s');
 
 		setActiveFilters(
 			{
 				'ready'  : true,
-				'topics' : [],
+				'topics' : topics ? [ topics ] : [],
 				'formats': format ? [ 'format__' + format ] : [],
 				'page'   : 1,
 				'search' : search ? search : '',
@@ -132,36 +133,27 @@ export default function Items () {
 	}, []);
 
 	return (
-		<>
-			<Box
-				className="talks__headerContainer"
-				top={0}
-				// So that itemlist tucks underneath when scrolled up.
-				zIndex={1}
-				// TODO: To get this right, give the root element a background color that matches the host's
-				backgroundColor="inherit"
-			>
-				<Box className="talks__header" marginY={2}>
-					{!isDesktop && activeFilters.length > 0 ? (
-						<Round variant="contained" leftIcon={<ChevronLeft/>} onClick={() => clearFilters()}>
-							Back
-						</Round>
-					) : (
-						<h1 className="talks__title">{cplVar('labelPlural', 'item')}</h1>
-					)}
-				</Box>
+		<Box className="cpl-archive cpl-archive--item">
+			{!isDesktop && activeFilters.length > 0 ? (
+				<Round variant="contained" leftIcon={<ChevronLeft/>} onClick={() => clearFilters()}>
+					Back
+				</Round>
+			) : (
+				<h1 className="page-title">{cplVar('labelPlural', 'item')}</h1>
+			)}
+
+			<Box className="cpl-archive--container">
 				<Filter
-					className="talks__filter"
+					className="cpl-archive--container--filter"
 					activeFilters={activeFilters}
 					onRemoveFilter={removeFilter}
 					onSearchInputChange={handleSearchInputChange}
 					onFilterChange={toggleFilter}
 					autoFocus={true}
 				/>
+
+				<ItemList activeFilters={activeFilters} setActiveFilters={setActiveFilters} />
 			</Box>
-			<Box className="talks__itemListContainer" paddingY={1} paddingX={1}>
-				<ItemList activeFilters={activeFilters} className="talks__itemList"/>
-			</Box>
-		</>
+		</Box>
 	);
 }

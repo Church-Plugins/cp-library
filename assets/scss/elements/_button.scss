@@ -10,13 +10,13 @@
 	}
 
 	&--outlined {
-		border: 1px solid var(--cpl-primary);
+		border: 1px solid var(--cpl-color--primary);
 		background: transparent;
-		color: var(--cpl-primary);
+		color: var(--cpl-color--primary);
 
 		&:hover, &:focus {
-			border: 1px solid var(--cpl-primary);
-			color: var(--cpl-primary);
+			border: 1px solid var(--cpl-color--primary);
+			color: var(--cpl-color--primary);
 			background: rgba( 0, 0, 0, .05);
 		}
 	}

@@ -7,7 +7,7 @@ import { cplVar } from '../../utils/helpers';
 export default function PlayVideo({onClick, disabled = false}) {
   return (
     <Box className='cpl-action--play-video'>
-      <Rectangular variant="outlined" leftIcon={<PlayArrow />} onClick={onClick}>
+      <Rectangular variant="primary" leftIcon={<PlayArrow />} onClick={onClick}>
 	      {cplVar('playVideo', 'i18n' )}
       </Rectangular>
     </Box>

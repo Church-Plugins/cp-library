@@ -2,7 +2,7 @@
 	&__controlsWrapper {
 		padding: 2rem 1rem;
 
-		@media (max-width: 760px) {
+		@include media-breakpoint-down(md) {
 			position: fixed;
 			bottom: 0;
 			left: 0;
@@ -150,6 +150,12 @@
 }
 
 .itemDetail {
+
+	&__share {
+		svg {
+			margin: auto;
+		}
+	}
 
 	&__actions {
 		display: flex;

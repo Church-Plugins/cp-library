@@ -2,7 +2,14 @@
 	display: flex;
 	flex-direction: row;
 	width: 100%;
-	margin-bottom: 1rem;
+	margin-top: 1rem;
+	cursor: pointer;
+	padding: 1rem;
+	border-radius: .5em;
+
+	&:hover {
+		background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(196, 196, 196, 0) 109.68%);
+	}
 
 	&--thumb {
 		flex: 0 1 0;
@@ -52,6 +59,7 @@
 	&--actions {
 		display: flex;
 		height: 100%;
+		align-self: center;
 	}
 
 	&--actions--buttons {

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
-import Divider from '@mui/material/Divider';
 
 import SearchInput from '../Elements/SearchInput';
 import Round from '../Elements/Buttons/Round';
@@ -25,56 +24,46 @@ export default function Filter ({
   const [topicDrawerIsOpen, setTopicDrawerIsOpen] = useState(false);
 
   return (
-    <Box className="filter__root">
-      <Box display="flex" justifyContent={isDesktop ? "space-between" : "initial"}>
-        {isDesktop ? (
-          <>
-            <Box className="filter__accordion filter__format" flex={0}>
-	            <FormatFilter
-		            onClose={() => setFilterDrawerIsOpen(false)}
-		            open={filterDrawerIsOpen}
-		            onFilterChange={onFilterChange}
-		            activeFilters={activeFilters}
-	            />
-            </Box>
-            <Box className="filter__popular" flex={0}>
-              <TopicFilter
-                onClose={() => setTopicDrawerIsOpen(false)}
-                open={topicDrawerIsOpen}
-                onFilterChange={onFilterChange}
-                activeFilters={activeFilters.topics}
-              />
-            </Box>
-            <Box className="filter__search" flex={0} display="flex" alignItems="center">
-              <SearchInput onValueChange={onSearchInputChange} />
-            </Box>
-          </>
-        ) : (
-          <>
-            <Box className="filter__search" flex={1} display="flex" alignItems="center">
-              <SearchInput width="full" onValueChange={onSearchInputChange} />
-            </Box>
-            <Box className="filter__button" flex={0} marginLeft={2} display="flex" alignItems="center">
-              <Round
-                variant="contained"
-                onClick={() => setFilterDrawerIsOpen(!filterDrawerIsOpen)}
-              >
-                Filter
-              </Round>
-            </Box>
-            <FilterDrawer
-              open={filterDrawerIsOpen}
-              onClose={() => setFilterDrawerIsOpen(false)}
-              onFilterChange={onFilterChange}
-              FormatFilter={() => <FilterBoxFormat onFilterChange={onFilterChange} activeFilters={activeFilters} />}
-              TopicFilter={() => <FilterBoxPopular onFilterChange={onFilterChange} activeFilters={activeFilters} />}
-              activeFilters={activeFilters}
-              />
-          </>
-        )}
+    <Box className="cpl-filter">
+      <Box className="cpl-filter--form">
+	      <Box className="filter__accordion filter__format cpl-touch-hide" flex={0}>
+		      <FormatFilter
+			      onClose={() => setFilterDrawerIsOpen(false)}
+			      open={filterDrawerIsOpen}
+			      onFilterChange={onFilterChange}
+			      activeFilters={activeFilters}
+		      />
+	      </Box>
+	      <Box className="filter__popular cpl-touch-hide" flex={0}>
+		      <TopicFilter
+			      onClose={() => setTopicDrawerIsOpen(false)}
+			      open={topicDrawerIsOpen}
+			      onFilterChange={onFilterChange}
+			      activeFilters={activeFilters.topics}
+		      />
+	      </Box>
+	      <Box className="cpl-filter--search">
+		      <Box className="cpl-filter--search--box">
+			      <SearchInput onValueChange={onSearchInputChange}/>
+		      </Box>
+	      </Box>
+	      <Box className="filter__button cpl-touch-only" flex={0} marginLeft={2} display="flex" alignItems="center">
+		      <Round
+			      variant="contained"
+			      onClick={() => setFilterDrawerIsOpen(!filterDrawerIsOpen)}
+		      >
+			      Filter
+		      </Round>
+	      </Box>
+	      <FilterDrawer
+		      open={filterDrawerIsOpen}
+		      onClose={() => setFilterDrawerIsOpen(false)}
+		      onFilterChange={onFilterChange}
+		      FormatFilter={() => <FilterBoxFormat onFilterChange={onFilterChange} activeFilters={activeFilters}/>}
+		      TopicFilter={() => <FilterBoxPopular onFilterChange={onFilterChange} activeFilters={activeFilters}/>}
+		      activeFilters={activeFilters}
+	      />
       </Box>
-
-      {isDesktop ? <Divider className="filter__divider" sx={{ marginY: 3 }} /> : null}
 
       {activeFilters.topics.length > 0 && (
         <Box

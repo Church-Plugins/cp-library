@@ -64,3 +64,14 @@ if ( itemPlayers.length ) {
 		ReactDOM.render(<ItemPlayer item={item}/>, itemPlayers[i]);
 	}
 }
+
+window.addEventListener( 'cp-render-item-actions', function(e) {
+	let actions = document.querySelectorAll( '.cpl_item_actions' );
+
+	if ( actions.length ) {
+		for ( let i = 0; i < actions.length; i++ ) {
+			let item = JSON.parse(actions[i].getAttribute('data-item'));
+			ReactDOM.render(<ItemActions item={item}/>, actions[i]);
+		}
+	}
+}, false );

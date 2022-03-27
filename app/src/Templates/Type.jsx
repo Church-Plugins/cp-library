@@ -26,7 +26,7 @@ export default function Type({
 
   return (
     <ListItem
-      className="cplItem__root"
+      className="cpl-item--root"
       sx={{
         padding: isDesktop ? 2 : 1,
         borderRadius: 2,
@@ -37,8 +37,8 @@ export default function Type({
       }}
       onClick={() => history.push(`/${cplVar( 'slug', 'item_type' )}/${item.originID}`)}
     >
-      <Box className="cplItem__content" display="flex" flexDirection="row" width="100%">
-        <Box className="cplItem__thumb" flex={0} display="flex" alignItems="center">
+      <Box className="cpl-item--content" display="flex" flexDirection="row" width="100%">
+        <Box className="cpl-item--thumb" flex={0} display="flex" alignItems="center">
           <Box
             sx={displayBg}
             borderRadius={1}
@@ -56,15 +56,15 @@ export default function Type({
           </Box>
         </Box>
         <Box
-          className="cplItem__details"
+          className="cpl-item--details"
           flex={1}
           display="flex"
           flexDirection="column"
           marginLeft={2}
           justifyContent={isDesktop ? "space-between" : "center"}
         >
-          <h3 className="cplItem__title">{displayTitle}</h3>
-          <Box marginTop={1} className="cplItem__itemMeta">
+          <h3 className="cpl-item--title">{displayTitle}</h3>
+          <Box marginTop={1} className="cpl-item--item-meta">
             <TypeMeta date={item.date.desc} items={item.items} />
           </Box>
         </Box>

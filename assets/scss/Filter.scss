@@ -1,3 +1,11 @@
+.filter__format,
+.filter__popular {
+	button {
+		color: var(--cpl--text-color);
+		background: transparent;
+	}
+}
+
 .filter__root {
 
 	text-decoration: none;

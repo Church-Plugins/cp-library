@@ -19,10 +19,24 @@ add_action( 'cpl_single_item_before', 'cpl_item_back' );
 
 <div class="cpl-single-item">
 
-	<?php \CP_Library\Templates::get_template_part( 'parts/item-single/content' ); ?>
+	<div class="cpl-single-item--title">
+		<h1><?php the_title(); ?></h1>
+	</div>
 
-	<div class="cpl-single-item--media">
-		<div class="itemDetail__rightContent cpl_item_player" data-item="<?php echo esc_attr( json_encode( $item ) ); ?>"></div>
+	<?php if ( ! empty( $item['types'] ) ) : ?>
+		<div class="cpl-single-item--types">
+			<?php foreach( $item['types'] as $type ) : ?>
+				<a href="<?php echo esc_url( $type['permalink'] ); ?>"><?php echo esc_html( $type['title'] ); ?></a><span class="cpl-separator">, </span>
+			<?php endforeach; ?>
+		</div>
+	<?php endif; ?>
+
+	<div class="cpl-columns">
+		<?php \CP_Library\Templates::get_template_part( 'parts/item-single/content' ); ?>
+
+		<div class="cpl-single-item--media">
+			<div class="itemDetail__rightContent cpl_item_player" data-item="<?php echo esc_attr( json_encode( $item ) ); ?>"></div>
+		</div>
 	</div>
 
 </div>

@@ -60,8 +60,9 @@ class Speaker extends PostType {
 	 * @author costmo
 	 */
 	public function get_args() {
-		$args              = parent::get_args();
-		$args['menu_icon'] = apply_filters( "{$this->post_type}_icon", 'dashicons-group' );
+		$args                 = parent::get_args();
+		$args['menu_icon']    = apply_filters( "{$this->post_type}_icon", 'dashicons-group' );
+		$args['show_in_menu'] = 'edit.php?post_type=' . cp_library()->setup->post_types->item->post_type;
 
 		return $args;
 	}

@@ -109,7 +109,12 @@ class Item {
 			return false;
 		}
 
-		$data = file_get_contents( "http://vimeo.com/api/v2/video/$id.json" );
+		$data = @file_get_contents( "http://vimeo.com/api/v2/video/$id.json" );
+
+		if ( ! $data ) {
+			return false;
+		}
+
 		$data = json_decode( $data );
 
 		return $data[0]->thumbnail_large;

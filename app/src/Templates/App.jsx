@@ -44,9 +44,7 @@ const App = ({
     <PersistentPlayerProvider>
       <BrowserRouter initialEntries={[initialPath]}>
 
-	      {!isDesktop && (
-		      <div dangerouslySetInnerHTML={{__html: cplVar( 'mobileTop', 'components' ) }} />
-	      )}
+	      <div className="cpl-touch-only" dangerouslySetInnerHTML={{__html: cplVar( 'mobileTop', 'components' ) }} />
 
         <Switch>
           <Route

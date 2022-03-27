@@ -11,8 +11,6 @@ import useBreakpoints from '../../Hooks/useBreakpoints';
 import Controllers_WP_REST_Request from '../../Controllers/WP_REST_Request';
 import { usePersistentPlayer } from '../../Contexts/PersistentPlayerContext';
 
-import LoadingIndicator from '../../Elements/LoadingIndicator';
-import ErrorDisplay from '../../Elements/ErrorDisplay';
 import Rectangular from '../../Elements/Buttons/Rectangular';
 import Logo from '../../Elements/Logo';
 
@@ -218,16 +216,13 @@ export default function Player({
         <Box className="itemDetail__rightContent">
           {/* TODO: Componentize as <FeatureImage />. These could be the same thing as the ones in the item list */}
 
-          {! isDesktop ? null : (
-          	<div dangerouslySetInnerHTML={{__html: cplVar( 'mobileTop', 'components' ) }} />
-          )}
+          <div className="cpl-touch-hide" dangerouslySetInnerHTML={{__html: cplVar( 'mobileTop', 'components' ) }} />
 
           <Box
             className="itemDetail__featureImage"
             position="relative"
             paddingTop="56.26%"
             backgroundColor={mode === "audio" ? "#C4C4C4" : "transparent"}
-            marginTop={isDesktop ? 0 : 1}
           >
 	          <Box className="itemPlayer__video"
 	               position="absolute"
@@ -263,7 +258,7 @@ export default function Player({
 		          )}
 
 		          {!showFSControls ? null : (
-			          <Box className="itemPlayer__controlsWrapper">
+			          <Box className="itemPlayer__controlsWrapper cpl-touch-hide">
 
 				          <Box className="itemPlayer__controls" display="flex" flexDirection="row"
 				               justifyContent="space-around" margin="auto">
@@ -372,6 +367,7 @@ export default function Player({
 		          <Box className="itemDetail__playVideo" marginRight={1}>
 			          <Rectangular
 				          leftIcon={<Play/>}
+				          variant="primary"
 				          onClick={() => {
 					          if (persistentPlayerIsActive) {
 						          passToPersistentPlayer({
@@ -453,8 +449,8 @@ export default function Player({
             </Box>
           </Box>
 
-	        {(mode && !isDesktop) && (
-	         <Box className="itemPlayer__controlsWrapper">
+	        {mode && (
+	         <Box className="itemPlayer__controlsWrapper cpl-touch-only">
 		         <Box className="itemPlayer__progress" flex={1} display="flex" flexDirection="column" >
 			         <Box display="flex" flexDirection="row" alignItems="center">
 
@@ -506,12 +502,12 @@ export default function Player({
 			         </IconButton>
 
 			         <Box display="flex" alignItems="center">
-				         <PlayPause flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
+				         <PlayPause isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
 			         </Box>
 			         <IconButton size='large' onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')}>
 				         <Forward30 fontSize="inherit"/>
 			         </IconButton>
-			         <IconButton size="large" sx={{color: '#ffffff', transform: 'scaley(-1)'}}
+			         <IconButton size="large" sx={{transform: 'scaley(-1)'}}
 			                     onClick={handleClickPersistent}><PictureInPicture fontSize="inherit"/></IconButton>
 
 		         </Box>

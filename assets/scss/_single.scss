@@ -1,0 +1,23 @@
+.cpl-single {
+
+	&--header {
+		padding-bottom: 1rem;
+		border-bottom: 1px solid;
+		margin-bottom: 2rem;
+
+		&--title {
+			font-size: 2.25rem;
+		}
+
+	}
+
+	&--back {
+		margin-bottom: 1rem;
+		display: inline-block;
+
+		&:before {
+			content: '←';
+			margin-right: .5em;
+		}
+	}
+}

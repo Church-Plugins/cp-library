@@ -1,26 +1,52 @@
 .cpl-single-item {
-	display: flex;
-	flex-direction: row;
 
-	&--back {
-		margin-bottom: 1rem;
-		display: inline-block;
-		&:before {
-			content: '←';
-			margin-right: .5em;
+	&--title {
+		h1 {
+			font-size: 1.5rem;
+			margin: 0.5rem 0;
 		}
+
+		@include media-breakpoint-down(md) {
+			&:after {
+				content: '';
+				background: var(--cpl-color--primary);
+				height: 6px;
+				width: 3.5em;
+				margin: 1em 0;
+				display: block;
+			}
+		}
+
 	}
 
 	&--types {
 		font-size: 1.25em;
 	}
 
-	&--content {
-		padding-right: 10%;
-		margin-right: 0;
+	@include media-breakpoint-up(lg) {
+		&--content {
+			padding-right: 10%;
+			margin-right: 0;
+		}
+
+		&--media {
+			margin-top: -2rem;
+			flex: 1 0 60%;
+		}
 	}
 
-	&--media {
-		flex: 1 0 60%;
+	@include media-breakpoint-down(md) {
+		.cpl-columns {
+			flex-flow: row wrap;
+		}
+
+		&--media {
+			width: 100%;
+		}
+
+		&--content {
+			width: 100%;
+			order: 10;
+		}
 	}
 }

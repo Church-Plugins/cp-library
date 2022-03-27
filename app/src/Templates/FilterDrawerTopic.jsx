@@ -4,15 +4,12 @@ import Typography from '@mui/material/Typography';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
 import Portal from '@mui/material/Portal';
-import { XCircle } from 'react-feather';
 import { noop } from "../utils/noop";
 import Grid from '@mui/material/Grid';
-import Link from '@mui/material/Link';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
-import async from 'async';
 import $ from 'jquery';
 import Button from '@mui/material/Button';
 
@@ -174,7 +171,7 @@ export default function FilterDrawerTopic({
 											let loopRef = mobileRefs[letter];
 
 											return (
-												<Grid className="topic__letter_ref" ref={loopRef} item xs={12}>
+												<Grid key={index} className="topic__letter_ref" ref={loopRef} item xs={12}>
 													<Box id={`letter__${lower}`} className="topic__letter_header" >
 														{upper}
 													</Box>
@@ -183,7 +180,7 @@ export default function FilterDrawerTopic({
 														{topicsItems[ letter ].map(
 															(item, itemIndex) => {
 
-																return <FormControlLabel
+																return <FormControlLabel key={itemIndex}
 																			className="topic__letter_item_label"
 																			control={
 																				<Checkbox
@@ -209,7 +206,7 @@ export default function FilterDrawerTopic({
 									(letter, index) => {
 										let lowerLetter = letter.toLowerCase();
 										return (
-											<Box className={`toc__alph_select select__${lowerLetter}`} >
+											<Box key={index} className={`toc__alph_select select__${lowerLetter}`} >
 												<Button
 													className="toc__alph_select_button"
 													onClick={(event) => { executeScroll( event, lowerLetter ); }}

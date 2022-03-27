@@ -49,7 +49,7 @@ try {
 			<?php endif; ?>
 
 			<?php if ( ! empty( $item['scripture'] ) ) : ?>
-				<div class="cpl-meta--topics">
+				<div class="cpl-meta--scripture">
 					<span class="material-icons-outlined">menu_book</span>
 
 					<?php foreach ( $item['scripture'] as $scripture ) : ?>

@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
-import List from '@mui/material/List';
 import { makeStyles } from '@mui/styles';
 import Pagination from '@mui/material/Pagination';
-import async from 'async';
 
 import Item from './Item';
 import LoadingIndicator from '../Elements/LoadingIndicator';
@@ -13,6 +11,7 @@ import useBreakpoints from '../Hooks/useBreakpoints';
 
 function ItemList ({
 	activeFilters,
+	setActiveFilters
 }) {
 	const [items, setItems] = useState([]);
 	const [loading, setLoading] = useState(false);
@@ -70,7 +69,7 @@ function ItemList ({
 
 		try {
 			setLoading(true);
-			document.querySelector('.talks__itemListContainer').scrollIntoView({behavior: "smooth"});
+			document.querySelector('.cpl-filter').scrollIntoView({behavior: "smooth"});
 			const restRequest = new Controllers_WP_REST_Request();
 			let inputParams = 't=' +
 			                  activeFilters.topics.join(',') + '&' +
@@ -101,14 +100,15 @@ function ItemList ({
 		<Box>No items</Box>
 	) : (
 		<>
-			<List className="itemList__root">
-				{items.items.map((item, index) => (
-					// "isNew" assumes the items are sorted by creation date descendingly.
-					<Item key={item.title} item={item} isNew={index === 0}/>
+			<Box className="cpl-archive--list">
+				{items.items.map((item, index) => ( // "isNew" assumes the items are sorted by creation date descendingly.
+					<Box className="cpl-archive--list--item" key={index}>
+						<Item item={item} isNew={index === 0} setActiveFilters={setActiveFilters}/>
+					</Box>
 				))}
-			</List>
+			</Box>
 			{1 < items.pages && (
-				<Box className="talks__paginationContainer" paddingY={1}>
+				<Box className="navigation pagination cpl-pagination">
 					<Pagination
 						classes={{ul: classes.ul}}
 						size={isDesktop ? 'large' : 'small'}
@@ -118,7 +118,6 @@ function ItemList ({
 						onChange={handlePageChange}/>
 				</Box>
 			)}
-
 		</>
 	);
 }
