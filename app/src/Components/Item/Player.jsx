@@ -516,7 +516,6 @@ export default function Player({
 
 	        )}
 
-
         </Box>
     </Box>
   );

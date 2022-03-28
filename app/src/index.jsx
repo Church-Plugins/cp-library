@@ -40,11 +40,23 @@ if (itemList) {
 }
 
 if (itemWidget) {
-	ReactDOM.render(<ItemWidget/>, itemWidget);
+	let item = JSON.parse(itemWidget.getAttribute('data-item'));
+
+	if (item) {
+		ReactDOM.render(<ItemWidget item={item}/>, itemWidget);
+	} else {
+		ReactDOM.render(<ItemWidget/>, itemWidget);
+	}
 }
 
 if (videoWidget) {
-	ReactDOM.render(<VideoWidget/>, videoWidget);
+	let item = JSON.parse(videoWidget.getAttribute('data-item'));
+
+	if ( item ) {
+		ReactDOM.render(<VideoWidget item={item}/>, videoWidget);
+	} else {
+		ReactDOM.render(<VideoWidget />, videoWidget);
+	}
 }
 
 if( item ) {

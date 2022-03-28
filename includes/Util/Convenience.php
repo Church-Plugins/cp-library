@@ -59,7 +59,7 @@ class Convenience
 			$timestamp = strtotime( $timestamp );
 		}
 
-		$diff = current_time( 'timestamp' ) - $timestamp;
+		$diff = time() - $timestamp;
 		if ( $diff == 0 ) {
 			return 'now';
 		} elseif ( $diff > 0 ) {

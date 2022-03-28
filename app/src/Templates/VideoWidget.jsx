@@ -10,31 +10,25 @@ import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 
 import LoadingIndicator from '../Elements/LoadingIndicator';
 import ErrorDisplay from '../Elements/ErrorDisplay';
-import ItemMeta from './ItemMeta';
-import SearchInput from '../Elements/SearchInput';
 import { PlayCircleOutline } from "@mui/icons-material"
-import Rectangular from '../Elements/Buttons/Rectangular';
 import { usePersistentPlayer, PersistentPlayerProvider } from '../Contexts/PersistentPlayerContext';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../Templates/Theme";
 import Logo from '../Elements/Logo';
 
-const TESTING_ID = 30219;
-
-export default function ItemWidget() {
+export default function ItemWidget( { item } ) {
 
   return (
   	<ThemeProvider theme={theme}>
 	    <PersistentPlayerProvider>
-	      <ItemWidgetContent />
+	      <ItemWidgetContent widgetItem={item} />
 	    </PersistentPlayerProvider>
 	  </ThemeProvider>
   );
 };
 
 export function ItemWidgetContent ({
-	// TODO: How to get the id? Can we pass it in to the React component?
-	itemId = TESTING_ID,
+	widgetItem
 }) {
   const { passToPersistentPlayer } = usePersistentPlayer();
 	const {isDesktop} = useBreakpoints();
@@ -44,22 +38,27 @@ export function ItemWidgetContent ({
 	const [displayBg, setDisplayBG]   = useState( {backgroundColor: "#C4C4C4"} );
 
 	useEffect(() => {
-		(
-			async () => {
-				try {
-					setLoading(true);
-					const restRequest = new Controllers_WP_REST_Request();
-					const data = await restRequest.get({endpoint: `items/?count=1&media-type=video`});
-					setItem(data.items[0]);
+		if ( undefined !== widgetItem ) {
+			setItem(widgetItem);
+			setLoading(false);
+		} else {
+			(
+				async () => {
+					try {
+						setLoading(true);
+						const restRequest = new Controllers_WP_REST_Request();
+						const data = await restRequest.get({endpoint: `items/?count=1&media-type=video`});
+						setItem(data.items[0]);
 
 
-				} catch (error) {
-					setError(error);
-				} finally {
-					setLoading(false);
+					} catch (error) {
+						setError(error);
+					} finally {
+						setLoading(false);
+					}
 				}
-			}
-		)();
+			)();
+		}
 	}, []);
 
   useEffect(() => {

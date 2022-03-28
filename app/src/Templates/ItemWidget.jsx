@@ -1,60 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
-import Divider from '@mui/material/Divider';
 import { Play, Volume1, Share2 } from 'react-feather';
-import * as VideoPlayer from 'react-player/vimeo';
-import ReactDOM from 'react-dom';
-
-import useBreakpoints from '../Hooks/useBreakpoints';
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 
 import LoadingIndicator from '../Elements/LoadingIndicator';
 import ErrorDisplay from '../Elements/ErrorDisplay';
 import ItemMeta from './ItemMeta';
-import SearchInput from '../Elements/SearchInput';
 import Rectangular from '../Elements/Buttons/Rectangular';
 import { usePersistentPlayer, PersistentPlayerProvider } from '../Contexts/PersistentPlayerContext';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../Templates/Theme";
 
-const TESTING_ID = 123;
-
-export default function ItemWidget() {
+export default function ItemWidget( { item } ) {
 
   return (
   	<ThemeProvider theme={theme}>
 	    <PersistentPlayerProvider>
-	      <ItemWidgetContent />
+	      <ItemWidgetContent widgetItem={item}  />
 	    </PersistentPlayerProvider>
 	  </ThemeProvider>
   );
 };
 
 export function ItemWidgetContent ({
-	// TODO: How to get the id? Can we pass it in to the React component?
-	itemId = TESTING_ID,
+	widgetItem
 }) {
   const { passToPersistentPlayer } = usePersistentPlayer();
-	const {isDesktop} = useBreakpoints();
 	const [item, setItem] = useState();
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState();
 
 	useEffect(() => {
-		(
-			async () => {
-				try {
-					setLoading(true);
-					const restRequest = new Controllers_WP_REST_Request();
-					const data = await restRequest.get({endpoint: `items/?count=1&media-type=audio`});
-					setItem(data.items[0]);
-				} catch (error) {
-					setError(error);
-				} finally {
-					setLoading(false);
+		if ( undefined !== widgetItem ) {
+			setItem(widgetItem);
+			setLoading(false);
+		} else {
+			(
+				async () => {
+					try {
+						setLoading(true);
+						const restRequest = new Controllers_WP_REST_Request();
+						const data = await restRequest.get({endpoint: `items/?count=1&media-type=audio`});
+						setItem(data.items[0]);
+					} catch (error) {
+						setError(error);
+					} finally {
+						setLoading(false);
+					}
 				}
-			}
-		)();
+			)();
+		}
 	}, []);
 
 	const playVideo = () => {

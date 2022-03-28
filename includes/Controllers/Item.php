@@ -122,7 +122,7 @@ class Item {
 
 	public function get_publish_date() {
 		$date = get_post_datetime( $this->post );
-		return $this->filter( $date->getTimestamp(), __FUNCTION__ );
+		return $this->filter( $date->format('U' ), __FUNCTION__ );
 	}
 
 	/**
