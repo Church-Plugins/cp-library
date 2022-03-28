@@ -35,10 +35,17 @@ export default function Item({
 	}
 	const itemClass = getClass();
 
+	const toItem = () => {
+		history.push({
+			pathname: `${cplVar( 'path', 'site' )}/${cplVar( 'slug', 'item' )}/${item.slug}`,
+			state: { item: item }
+		});
+	}
+
   return (
     <Box
       className={itemClass}
-      onClick={() => history.push(`${cplVar( 'path', 'site' )}/${cplVar( 'slug', 'item' )}/${item.slug}`)}
+      onClick={toItem}
     >
 
       <Box className="cpl-list-item--thumb">

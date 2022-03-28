@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import { cplVar } from '../utils/helpers';
 import debounce from '@mui/utils/debounce';
 
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useHistory } from "react-router-dom";
 
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
@@ -23,6 +23,7 @@ export default function ItemDetail({
   const [error, setError] = useState();
 	const itemContainer = useRef(false);
   const history      = useHistory();
+	const location     = useLocation();
 
 	const handleSearchInputChange = debounce((value) => {
 		if ( ! value ) {
@@ -38,19 +39,29 @@ export default function ItemDetail({
 
   // Fetch the individual item when mounted.
   useEffect(() => {
-		(async () => {
-      try {
-        setLoading(true);
-        const restRequest = new Controllers_WP_REST_Request();
-        const data = await restRequest.get( {endpoint: `items/${itemId}`} );
-        setItem(data);
-      } catch (error) {
-        setError(error);
-      } finally {
-        setLoading(false);
-				itemContainer.current.scrollIntoView({behavior: "smooth"});
-			}
-    })();
+
+		// allow for an item passed by state
+		if ( undefined !== location.state && location.state.item ) {
+			setItem(location.state.item);
+			setLoading(false);
+			itemContainer.current.scrollIntoView({behavior: 'smooth'});
+		} else {
+			(
+				async () => {
+					try {
+						setLoading(true);
+						const restRequest = new Controllers_WP_REST_Request();
+						const data = await restRequest.get({endpoint: `items/${itemId}`});
+						setItem(data);
+					} catch (error) {
+						setError(error);
+					} finally {
+						setLoading(false);
+					}
+				}
+			)();
+		}
+
   }, []);
 
   return loading ? (
