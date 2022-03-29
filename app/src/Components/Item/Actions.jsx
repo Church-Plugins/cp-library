@@ -42,8 +42,7 @@ export default function Actions({
 
 	return (
 		<Box className="cpl-list-item--actions">
-			{isDesktop ? (
-				<Box className="cpl-list-item--actions--buttons">
+				<Box className="cpl-list-item--actions--buttons cpl-touch-hide">
 					{item.video.value && (
 						<PlayVideo onClick={playVideo}/>
 					)}
@@ -51,11 +50,9 @@ export default function Actions({
 						<PlayAudio onClick={playAudio}/>
 					)}
 				</Box>
-			) : (
-				<IconButton className="cpl-list-item--to-item" onClick={() => history.push(`${cplVar('path', 'site')}/${cplVar('slug', 'item')}/${item.slug}`)}>
+				<IconButton className="cpl-list-item--to-item cpl-touch-only" onClick={() => history.push(`${cplVar('path', 'site')}/${cplVar('slug', 'item')}/${item.slug}`)}>
 					<ChevronRight/>
 				</IconButton>
-			)}
 		</Box>
 	);
 }

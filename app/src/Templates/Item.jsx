@@ -63,9 +63,7 @@ export default function Item({
 
       <Box className="cpl-list-item--details">
         <h3 className="cpl-list-item--title">{displayTitle}</h3>
-        <Box className="cpl-meta">
-          <ItemMeta date={item.date.desc} category={item.category || []} setActiveFilters={setActiveFilters} />
-        </Box>
+        <ItemMeta date={item.date.desc} category={item.category || []} setActiveFilters={setActiveFilters} />
       </Box>
 
       <Actions item={item} />

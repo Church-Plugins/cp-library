@@ -1,10 +1,12 @@
+$gap: min(3.5%, 1rem);
+
 .cpl-list-item {
 	display: flex;
 	flex-direction: row;
 	width: 100%;
-	margin-top: 1rem;
+	margin-top: $gap;
 	cursor: pointer;
-	padding: 1rem;
+	padding: $gap;
 	border-radius: .5em;
 
 	&:hover {
@@ -12,21 +14,28 @@
 	}
 
 	&--thumb {
-		flex: 0 1 0;
+		flex: 0 1 17%;
 		display: flex;
 		align-items: center;
 		cursor: pointer;
+		overflow: hidden;
 
 		&--canvas {
-			width: 184px;
+			width: 100%;
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			height: 100%;
+			padding-bottom: 100%;
+			background-position: center center !important;
 			//background-color: rgb(196, 196, 196);
+
+			@include media-breakpoint-up(lg) {
+				padding-bottom: 62.5%;
+			}
 		}
 
 		img {
+			display: none;
 			width: auto;
 			height: auto;
 		}
@@ -36,23 +45,41 @@
 		flex: 1 1 0;
 		display: flex;
 		flex-direction: column;
-		margin-left: 1rem;
-		justify-content: space-between;
-		padding: 1rem 0;
-
-		h3 {
-			margin-top: 0;
-		}
-
+		margin-left: $gap;
+		justify-content: space-evenly;
+		overflow: hidden;
 	}
 
-	&--meta {
-		margin-top: .5rem;
+	&--title {
+		margin: 0;
+		font-size: min(3.75vw, 24px);
+		line-height: 1.5;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+
+	.cpl-meta {
+		font-size: min(2.75vw, 12px);
+		margin-top: 0;
+		flex-flow: row;
+		overflow: hidden;
 
 		> * {
 			display: inline-flex;
 			align-items: center;
-			margin-right: 1rem;
+			margin-right: 1em;
+			flex-flow: row;
+			white-space: nowrap;
+		}
+
+		&--topics {
+			overflow: hidden;
+
+			&--topic {
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
 		}
 	}
 
@@ -60,6 +87,12 @@
 		display: flex;
 		height: 100%;
 		align-self: center;
+
+		.cpl-list-item--to-item {
+			color: currentColor;
+			padding: 0;
+		}
+
 	}
 
 	&--actions--buttons {
@@ -67,7 +100,10 @@
 		align-items: center;
 
 		> * {
-			margin-left: .5rem;
+			margin-left: .5em;
 		}
+
 	}
+
+
 }
