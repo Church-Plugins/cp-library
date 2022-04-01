@@ -2,8 +2,10 @@
 
 namespace CP_Library\Controllers;
 
+use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Models\ItemType as Model;
+use CP_Library\Util\Convenience;
 
 class ItemType {
 
@@ -21,12 +23,13 @@ class ItemType {
 	 * Item constructor.
 	 *
 	 * @param $id
+	 * @param bool $use_origin whether or not to use the origin id
 	 *
 	 * @throws Exception
 	 */
-	public function __construct( $id ) {
-		$this->model = Model::get_instance_from_origin( $id );
-		$this->post  = get_post( $id );
+	public function __construct( $id, $use_origin = true ) {
+		$this->model = $use_origin ? Model::get_instance_from_origin( $id ) : Model::get_instance( $id );
+		$this->post  = get_post( $this->model->origin_id );
 	}
 
 	protected function filter( $value, $function ) {
@@ -50,36 +53,52 @@ class ItemType {
 			return $this->filter( $thumb, __FUNCTION__ );
 		}
 
-		$thumb = $this->maybeGetVimeoThumb();
-
-		return $this->filter( $thumb, __FUNCTION__ );
+		return $this->filter( $this->get_default_thumb(), __FUNCTION__ );
 	}
 
-	protected function maybeGetVimeoThumb() {
-		if ( ! $id = $this->model->get_meta_value( 'video_id_vimeo' ) ) {
-			return false;
-		}
-
-		$data = file_get_contents( "http://vimeo.com/api/v2/video/$id.json" );
-		$data = json_decode( $data );
-
-		return $data[0]->thumbnail_large;
+	/**
+	 * Get default thumbnail for items
+	 *
+	 * @return mixed|void
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_default_thumb() {
+		return $this->filter( Settings::get( 'default_thumbnail', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ), __FUNCTION__ );
 	}
 
 	public function get_publish_date() {
-		return $this->filter( get_post_datetime( $this->post ), __FUNCTION__ );
+		$date = get_post_datetime( $this->post );
+		return $this->filter( $date->getTimestamp(), __FUNCTION__ );
 	}
 
-	public function get_categories() {
+	public function get_scripture() {
 		$return = [];
-		$terms = get_the_terms( $this->post->ID, 'talk_categories' );
+		$terms  = get_the_terms( $this->post->ID, cp_library()->setup->taxonomies->scripture->taxonomy );
 
 		if ( $terms ) {
-			foreach( $terms as $term ) {
-				$return[ $term->slug ] = $term->name;
+			foreach ( $terms as $term ) {
+				$return[ $term->slug ] = [
+					'name' => $term->name,
+					'slug' => $term->slug,
+					'url'  => get_term_link( $term )
+				];
 			}
 		}
 
+		return $this->filter( $return, __FUNCTION__ );
+	}
+
+	public function get_seasons() {
+		$return = [];
+		$terms  = get_the_terms( $this->post->ID, cp_library()->setup->taxonomies->season->taxonomy );
+
+		if ( $terms ) {
+			foreach ( $terms as $term ) {
+				$return[ $term->slug ] = $term->name;
+			}
+		}
 
 		return $this->filter( $return, __FUNCTION__ );
 	}
@@ -92,9 +111,10 @@ class ItemType {
 			'thumb'     => $this->get_thumbnail(),
 			'title'     => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
 			'desc'      => $this->get_content(),
-			'date'      => $this->get_publish_date(),
-			'category'  => $this->get_categories(),
+			'date'      => [ 'desc' => Convenience::relative_time( $this->get_publish_date() ), 'timestamp' => $this->get_publish_date() ],
 			'items'     => [],
+			'season'    => $this->get_seasons(),
+			'scripture' => $this->get_scripture(),
 		];
 
 		foreach( $this->model->get_items() as $i ) {

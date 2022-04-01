@@ -2,6 +2,8 @@
 
 namespace CP_Library\Setup\Tables;
 
+use ChurchPlugins\Setup\Tables\Table;
+
 /**
  * ItemType DB Class
  *
@@ -27,7 +29,7 @@ class ItemType extends Table  {
 		global $wpdb;
 
 		$this->table_name = $wpdb->prefix . 'cpl_item_type';
-		$this->version    = '1.0';
+		$this->version    = 1;
 
 		parent::__construct();
 	}
@@ -42,7 +44,7 @@ class ItemType extends Table  {
 		return "CREATE TABLE " . $this->table_name . " (
 			`id` bigint NOT NULL AUTO_INCREMENT,
 			`origin_id` bigint,
-			`title` varchar(255) NOT NULL,
+			`title` varchar(255),
 			`parent_id` bigint,
 			`published` datetime NOT NULL,
 			`updated` datetime NOT NULL,
@@ -51,6 +53,15 @@ class ItemType extends Table  {
 			KEY `idx_parent_id` (`parent_id`)
 		) CHARACTER SET utf8 COLLATE utf8_general_ci;";
 
+	}
+
+	public function maybe_update() {
+		global $wpdb;
+
+		$sql = "ALTER TABLE " . $this->table_name . " ADD COLUMN title varchar(255) AFTER origin_id;";
+
+		$wpdb->query( $sql );
+		$this->updated_table();
 	}
 
 }

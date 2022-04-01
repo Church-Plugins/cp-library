@@ -1,4 +1,14 @@
 const pkg = require('./package.json');
+const {
+	getFileLoaderOptions,
+	issuerForNonStyleFiles,
+	issuerForStyleFiles,
+	getBabelPresets,
+	getDefaultBabelPresetOptions,
+	issuerForJsTsFiles,
+	issuerForNonJsTsFiles,
+	// eslint-disable-next-line import/no-extraneous-dependencies
+} = require('@wpackio/scripts');
 
 module.exports = {
 	// Project Identity
@@ -44,11 +54,11 @@ module.exports = {
 		// },
 		// If has more length, then multi-compiler
 		// We need to punt app compiling to `app/package.json`
-//		{
-//			name: 'app',
-//			entry: {
-//				main: ['./app/src/index.js']
-//			},
+		{
+			name: 'app',
+			entry: {
+				main: ['./app/src/index.jsx']
+			},
 //			webpackConfig: {
 //				module: {
 //					rules: [
@@ -63,8 +73,62 @@ module.exports = {
 //
 //					]
 //				}
-//			}
-//		}
+//			},
+			webpackConfig: (config, merge, appDir, isDev) => {
+				const customRules = {
+					module: {
+						rules: [
+							// Config for SVGR in javascript/typescript files
+							{
+								test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
+								issuer: issuerForJsTsFiles,
+								use: [
+									{
+										loader: 'babel-loader',
+										options: {
+											presets: getBabelPresets(
+												getDefaultBabelPresetOptions(true, isDev),
+												undefined
+											),
+										},
+									},
+									{
+										loader: '@svgr/webpack',
+										options: { babel: false },
+									},
+									{
+										loader: 'file-loader',
+										options: getFileLoaderOptions(
+											appDir,
+											isDev,
+											false
+										),
+									},
+								],
+							},
+							// For everything else, we use file-loader only
+							{
+								test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
+								issuer: issuerForNonJsTsFiles,
+								use: [
+									{
+										loader: 'file-loader',
+										options: getFileLoaderOptions(
+											appDir,
+											isDev,
+											true
+										),
+									},
+								],
+							},
+						],
+					},
+				};
+
+				// merge and return
+				return merge(config, customRules);
+			},
+		},
 		{
 			name         : 'styles',
 			entry        : {
@@ -111,7 +175,7 @@ module.exports = {
 	// Whether or not to use the new jsx runtime introduced in React 17
 	// this is opt-in
 	// @see {https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html}
-	useReactJsxRuntime: false,
+	useReactJsxRuntime: true,
 	// Disable react refresh
 	disableReactRefresh: false,
 	// Needs sass?
@@ -136,7 +200,11 @@ module.exports = {
 	// Won't hurt because we use PHP to automate loading
 	optimizeSplitChunks: true,
 	// Usually PHP and other files to watch and reload when changed
-	watch: './inc|includes/**/*.php',
+	watch: './inc|includes|templates/**/*.php',
+	jsBabelOverride: defaults => ({
+		...defaults,
+		plugins: ['react-hot-loader/babel'],
+	}),
 	// Files that you want to copy to your ultimate theme/plugin package
 	// Supports glob matching from minimatch
 	// @link <https://github.com/isaacs/minimatch#usage>

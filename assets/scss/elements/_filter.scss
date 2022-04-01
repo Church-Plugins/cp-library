@@ -1,0 +1,118 @@
+.cpl-filter {
+
+	&--form {
+		display: flex;
+		justify-content: flex-start;
+
+		border-bottom: 1px solid;
+		padding-bottom: .75rem;
+		margin-bottom: .75rem;
+
+		> * {
+			&:not(:first-child) {
+				margin-left: .75rem;
+			}
+		}
+
+		.filter__button {
+			button {
+				color: inherit;
+			}
+		}
+	}
+
+	&--has-dropdown {
+		position: relative;
+
+		&.open {
+			.cpl-filter--dropdown {
+				display: block;
+			}
+		}
+	}
+
+	&--dropdown-button {
+		svg, .material-icons-outlined {
+			display: none;
+			margin: -0.25em -0.25em -0.25em 0.25em;
+		}
+
+		&:after {
+			content: '\e313';
+			font-family: 'Material Icons Outlined';
+			font-size: 1.5em;
+			line-height: .75em;
+			margin: -0.25em -0.25em -0.25em 0.25em;
+		}
+	}
+
+	&--dropdown {
+		display: none;
+		background: white;
+		padding: .75em;
+		box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.05);
+		border-radius: .5em;
+		margin-top: .25em;
+		position: absolute;
+		top: 100%;
+		left: 0;
+		min-width: 100%;
+
+		label {
+			display: block;
+			cursor: pointer;
+			white-space: nowrap;
+		}
+	}
+
+	&--search {
+		margin-right: 0;
+		margin-left: auto !important;
+
+		@include media-breakpoint-down(md) {
+			flex-grow: 1;
+		}
+
+		&--box {
+			background: white;
+			display: flex;
+			align-items: center;
+			padding: .5em;
+			border-radius: 20px;
+
+			svg, button {
+				padding: 0;
+				margin: 0 .5em 0 0;
+				background: transparent;
+				color: inherit;
+			}
+
+			input[type=text] {
+				padding: 0;
+				background: transparent;
+				border: none !important;
+				outline: none !important;
+				box-shadow: none !important;
+			}
+		}
+	}
+
+	&--filters {
+		display: flex;
+		margin-bottom: 2rem;
+
+		&--filter {
+			border: 1px solid;
+			border-radius: 20px;
+			display: inline-flex;
+			padding: 0 .5em;
+			margin-right: .5em;
+
+			&:before {
+				content: '\e5cd';
+				font-family: 'Material Icons Outlined';
+				margin: 0 0.25em 0 -0.25em;
+			}
+		}
+	}
+}

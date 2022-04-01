@@ -1,0 +1,57 @@
+.cpl-single-type {
+
+	&--container {
+		display: flex;
+		flex-direction: row;
+		margin-bottom: 2rem;
+	}
+
+	&--back {
+		margin-bottom: 1rem;
+		display: inline-block;
+		&:before {
+			content: '←';
+			margin-right: .5em;
+		}
+	}
+
+	&--meta {
+		display: flex;
+
+		> * {
+			margin-right: 1rem;
+		}
+	}
+
+	&--content {
+		padding-left: 5%;
+		margin-right: 0;
+	}
+
+	&--media {
+		flex: 1 0 40%;
+	}
+
+	&--items-title {
+		margin-top: 2rem;
+	}
+
+	&--items {
+		.cpl-list-item--types {
+			display: none;
+		}
+		//display: flex;
+		//flex-direction: row;
+		//overflow: scroll;
+		//margin: 1rem 0;
+		//
+		//> * {
+		//	flex-shrink: 0;
+		//	margin: 0 .5rem;
+		//
+		//	&:first-child {
+		//		margin-left: 0;
+		//	}
+		//}
+	}
+}

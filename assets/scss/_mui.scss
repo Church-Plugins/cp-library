@@ -1,0 +1,23 @@
+
+body {
+	.MuiSlider-root {
+		color: var(--cpl-color--primary);
+	}
+
+	.MuiButton-root {
+		color: var(--cpl-color--primary);
+		border-color: var(--cpl-color--primary);
+
+		&:hover {
+			border-color: var(--cpl-color--primary);
+		}
+
+	}
+
+	.MuiButtonBase-root {
+		&.button__play {
+			color: var(--cpl-color--primary);
+		}
+	}
+
+}

@@ -75,18 +75,30 @@ class Init {
 	 *
 	 * @return void
 	 */
-	protected function includes() {
-		$this->source = Source::get_instance();
-		$this->source_meta = SourceMeta::get_instance();
-		$this->source_type = SourceType::get_instance();
+	protected function includes() {}
 
-		$this->item = Item::get_instance();
-		$this->item_meta = ItemMeta::get_instance();
-		$this->item_type = ItemType::get_instance();
+	protected function actions() {
+		add_filter( 'cp_registered_tables', [ $this, 'register_tables' ] );
 	}
 
-	protected function actions() {}
-
 	/** Actions ***************************************************/
+
+	/**
+	 * Add our tables to the Church Plugins registration function
+	 *
+	 * @param $tables
+	 *
+	 * @return mixed
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function register_tables( $tables ) {
+		$tables[] = Item::get_instance();
+		$tables[] = ItemMeta::get_instance();
+		$tables[] = ItemType::get_instance();
+
+		return $tables;
+	}
 
 }

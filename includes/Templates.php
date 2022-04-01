@@ -51,6 +51,7 @@ class Templates {
 		wp_cache_set( self::spoofed_post()->ID, [ true ], 'post_meta' );
 
 		add_action( 'wp_head', [ __CLASS__, 'wpHeadFinished' ], 999 );
+		add_action( 'cpl_after_archive', 'the_posts_pagination' );
 
 		// add the theme name to the body class when needed
 		if ( self::needs_compatibility_fix() ) {
@@ -94,46 +95,26 @@ class Templates {
 
 		$cpl_query = false;
 		$types = cp_library()->setup->post_types->get_post_types();
-		if ( is_singular( $types ) || is_post_type_archive( $types ) ) {
+
+		if ( $wp_query->is_singular( $types ) || $wp_query->is_post_type_archive( $types ) ) {
+			$cpl_query = true;
+		}
+
+		$taxonomies = cp_library()->setup->taxonomies->get_taxonomies();
+		if ( $wp_query->is_tax( $taxonomies ) ) {
 			$cpl_query = true;
 		}
 
 		return apply_filters( 'cpl_template_is_query', $cpl_query );
 	}
 
-	/**
-	 * Look for the stylesheets. Fall back to $fallback path if the stylesheets can't be located or the array is empty.
-	 *
-	 * @param array|string $stylesheets Path to the stylesheet
-	 * @param bool|string  $fallback    Path to fallback stylesheet
-	 *
-	 * @return bool|string Path to stylesheet
-	 */
-	public static function locate_stylesheet( $stylesheets, $fallback = false ) {
-		if ( ! is_array( $stylesheets ) ) {
-			$stylesheets = [ $stylesheets ];
-		}
-		if ( empty( $stylesheets ) ) {
-			return $fallback;
-		}
-		foreach ( $stylesheets as $filename ) {
-			if ( file_exists( get_stylesheet_directory() . '/' . $filename ) ) {
-				$located = trailingslashit( get_stylesheet_directory_uri() ) . $filename;
-				break;
-			} else {
-				if ( file_exists( get_template_directory() . '/' . $filename ) ) {
-					$located = trailingslashit( get_template_directory_uri() ) . $filename;
-					break;
-				}
-			}
-		}
-		if ( empty( $located ) ) {
-			return $fallback;
+	public static function get_type( $type = false ) {
+		if ( ! $type ) {
+			$type = get_post_type();
 		}
 
-		return $located;
+		return str_replace( [ 'cpl_', '_' ], [ '', '-' ], $type );
 	}
-
 
 	/**
 	 * Pick the correct template to include
@@ -143,14 +124,13 @@ class Templates {
 	 * @return string Path to template
 	 */
 	public static function template_include( $template ) {
-		do_action( 'tribe_tec_template_chooser', $template );
+		do_action( 'cpl_template_chooser', $template );
 
-		// no non-events need apply
 		if ( ! self::is_cpl_query() ) {
 			return $template;
 		}
 
-		// if it's a single 404 event
+		// if it's a single 404
 		if ( is_single() && is_404() ) {
 			return get_404_template();
 		}
@@ -164,7 +144,7 @@ class Templates {
 		// user has selected a page/custom page template
 		if ( $default_template = apply_filters( 'cpl_default_template', false ) ) {
 			if ( ! is_single() || ! post_password_required() ) {
-				add_action( 'loop_start', [ __CLASS__, 'setup_ecp_template' ] );
+				add_action( 'loop_start', [ __CLASS__, 'setup_cpl_template' ] );
 			}
 
 			$template = $default_template !== 'default'
@@ -195,8 +175,10 @@ class Templates {
 
 		$template_filename = basename( self::$template );
 
+		$classes[] = 'cpl-template';
+
 		if ( $template_filename == 'default-template.php' ) {
-			$classes[] = 'tribe-events-page-template';
+			$classes[] = 'cpl-page-template';
 		} else {
 			$classes[] = 'page-template-' . sanitize_title( $template_filename );
 		}
@@ -258,11 +240,11 @@ class Templates {
 
 
 	/**
-	 * This is where the magic happens where we run some ninja code that hooks the query to resolve to an events template.
+	 * This is where the magic happens where we run some ninja code that hooks the query to resolve to an library template.
 	 *
 	 * @param \WP_Query $query
 	 */
-	public static function setup_ecp_template( $query ) {
+	public static function setup_cpl_template( $query ) {
 
 		do_action( 'tribe_events_filter_the_page_title' );
 
@@ -271,10 +253,10 @@ class Templates {
 			add_action( 'the_post', [ __CLASS__, 'spoof_the_post' ] );
 
 			// on the_content, load our events template
-			add_filter( 'the_content', [ __CLASS__, 'load_ecp_into_page_template' ] );
+			add_filter( 'the_content', [ __CLASS__, 'load_cpl_into_page_template' ] );
 
 			// only do this once
-			remove_action( 'loop_start', [ __CLASS__, 'setup_ecp_template' ] );
+			remove_action( 'loop_start', [ __CLASS__, 'setup_cpl_template' ] );
 		}
 	}
 
@@ -323,7 +305,28 @@ class Templates {
 		$template = '';
 
 
-		$template = self::get_template_hierarchy( 'app', [ 'disable_view_check' => true ] );
+		if ( apply_filters( 'cpl_template_use_react', false ) ) {
+			$template = self::get_template_hierarchy( 'app', [ 'disable_view_check' => true ] );
+		} else {
+
+			$wp_query = self::get_global_query_object();
+
+			$types     = cp_library()->setup->post_types->get_post_types();
+			$taxonomies = cp_library()->setup->taxonomies->get_taxonomies();
+
+			if ( $wp_query->is_post_type_archive( $types ) ) {
+				$template = self::get_template_hierarchy( 'archive', [ 'disable_view_check' => true ] );
+			}
+
+			if ( $wp_query->is_tax( $taxonomies ) ) {
+				$template = self::get_template_hierarchy( 'archive-tax', [ 'disable_view_check' => true ] );
+			}
+
+			if ( $wp_query->is_singular( $types ) ) {
+				$template = self::get_template_hierarchy( 'single', [ 'disable_view_check' => true ] );
+			}
+
+		}
 
 		// apply filters
 		return apply_filters( 'cpl_current_view_template', $template );
@@ -335,9 +338,9 @@ class Templates {
 	 *
 	 * @return string Page content
 	 */
-	public static function load_ecp_into_page_template( $contents = '' ) {
+	public static function load_cpl_into_page_template( $contents = '' ) {
 		// only run once!!!
-		remove_filter( 'the_content', [ __CLASS__, 'load_ecp_into_page_template' ] );
+		remove_filter( 'the_content', [ __CLASS__, 'load_cpl_into_page_template' ] );
 
 		self::restoreQuery();
 
@@ -355,6 +358,11 @@ class Templates {
 		}
 
 		return $contents;
+	}
+
+	public static function get_template_part( $template, $args = [] ) {
+		$template = self::get_template_hierarchy( $template );
+		include( $template );
 	}
 
 	/**
@@ -400,7 +408,7 @@ class Templates {
 		extract( $args );
 
 		// append .php to file name
-		if ( substr( $template, - 4 ) != '.php' ) {
+		if ( substr( $template, - 4 ) != '.php' && false === strpos( $template, '.json' ) ) {
 			$template .= '.php';
 		}
 

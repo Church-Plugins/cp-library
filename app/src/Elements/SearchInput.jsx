@@ -13,7 +13,6 @@ export default function SearchInput({
       className="searchInput__root"
       placeholder="Search"
       defaultValue={urlParams.get('s')}
-      sx={{ width: width === "short" ? 250 : "100%" }}
       startAdornment={<Search />}
       onChange={e => onValueChange(e.target.value)}
     />

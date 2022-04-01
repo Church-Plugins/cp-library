@@ -1,0 +1,35 @@
+:root {
+	--cpl-button-primary-color: linear-gradient(180deg,#4d6cfa 0,#000 109.68%);
+	--cpl-button-primary-color-text: white;
+	--cpl-button-color: #fff;
+	--cpl-button-hover-bg: rgba( 255, 255, 255, .15 );
+}
+
+.cpl-button {
+	line-height: 1.25;
+	font-size: 0.75rem;
+	font-weight: 400;
+	letter-spacing: .12em;
+	text-transform: uppercase;
+	padding: 1.75em 1.5em;
+	transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, border-color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms, color 250ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+	width: 100%;
+	border-radius: 8px;
+
+	&--outlined {
+		border: 1px solid var( --cpl-button-color );
+		color: var( --cpl-button-color );
+
+		&:hover {
+			border: 1px solid var( --cpl-button-color );
+			color: var( --cpl-button-color );
+			background: var( --cpl-button-hover-bg );
+		}
+	}
+
+	&--primary {
+		background: var( --cpl-button-primary-color );
+		color: var( --cpl-button-primary-color-text );;
+		border: 0;
+	}
+}

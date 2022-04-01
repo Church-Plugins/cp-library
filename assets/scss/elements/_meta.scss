@@ -1,0 +1,46 @@
+.cpl-separator:last-child {
+	display: none;
+}
+
+.cpl-meta {
+	display: flex;
+	flex-flow: row wrap;
+	margin-top: .75em;
+	font-size: .875em;
+
+	&:not(:last-child) {
+		margin-bottom: .75em;
+	}
+
+	svg, .material-icons-outlined {
+		font-size: 1em;
+		margin-right: .5em;
+	}
+
+	> * {
+		display: flex;
+		margin-right: 1em;
+		align-items: center;
+	}
+
+	&--topics {
+
+		&--topic {
+			cursor: pointer;
+			&:hover {
+				text-decoration: underline;
+			}
+
+			&:not(:last-child):after {
+				content: ',';
+				margin-right: .5em;
+			}
+		}
+	}
+}
+
+.cpl-single {
+	.cpl-meta {
+
+	}
+}

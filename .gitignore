@@ -5,9 +5,6 @@ package-lock.json
 /build/
 /node_modules/
 /docs/
-/vendor/
 .phpdoc
 .vscode
-app/src/css
-app/src/templates
 app/templates/*.rt.js

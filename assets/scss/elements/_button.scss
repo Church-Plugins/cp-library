@@ -1,0 +1,29 @@
+.cpl-button {
+	display: flex;
+	align-items: center;
+
+	svg, .material-icons-outlined {
+		font-size: 1.5em;
+    line-height: 0.75em;
+    position: relative;
+    margin: -0.25em 0.25em -0.25em -0.25em;
+	}
+
+	&--outlined {
+		border: 1px solid var(--cpl-color--primary);
+		background: transparent;
+		color: var(--cpl-color--primary);
+
+		&:hover, &:focus {
+			border: 1px solid var(--cpl-color--primary);
+			color: var(--cpl-color--primary);
+			background: rgba( 0, 0, 0, .05);
+		}
+	}
+
+	&--transparent {
+		border: none !important;
+		background: transparent !important;
+		color: inherit !important;
+	}
+}

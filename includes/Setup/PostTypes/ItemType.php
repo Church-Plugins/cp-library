@@ -1,10 +1,14 @@
 <?php
 namespace CP_Library\Setup\PostTypes;
 
+use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Models\ItemType as Model;
 use CP_Library\Models\Item as ItemModel;
-use \CP_Library\Controllers\Item as ItemController;
+use CP_Library\Models\Speaker as Speaker_Model;
+use CP_Library\Controllers\Item as ItemController;
+use ChurchPlugins\Setup\Taxonomies\Taxonomy;
+use ChurchPlugins\Setup\PostTypes\PostType;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -25,10 +29,10 @@ class ItemType extends PostType  {
 	protected function __construct() {
 		$this->post_type = CP_LIBRARY_UPREFIX . "_item_type";
 
-		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", __( 'Series', 'cp_library' ) );
-		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", __( 'Series', 'cp_library' ) );
+		$this->single_label = apply_filters( "cpl_single_{$this->post_type}_label", Settings::get_item_type( 'singular_label', 'Series' ) );
+		$this->plural_label = apply_filters( "cpl_plural_{$this->post_type}_label", Settings::get_item_type( 'plural_label', 'Series' ) );
 
-		parent::__construct();
+		parent::__construct( 'CP_Library' );
 	}
 
 	public function cpt_menu_position( $args, $class ) {
@@ -40,8 +44,12 @@ class ItemType extends PostType  {
 	public function add_actions() {
 		parent::add_actions();
 
-		add_filter( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ], 10, 4 );
-		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
+		add_filter( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ], 10 );
+		add_filter( 'cmb2_save_post_fields_cpl_series_data', [ $this, 'save_item_series' ], 10 );
+
+		if ( empty( $_GET['cpl-recovery'] ) ) {
+			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
+		}
 
 		$item_type   = Item::get_instance()->post_type;
 		$source_type = Speaker::get_instance()->post_type;
@@ -57,41 +65,10 @@ class ItemType extends PostType  {
 	 * @author costmo
 	 */
 	public function get_args() {
+		$args              = parent::get_args();
+		$args['menu_icon'] = apply_filters( "{$this->post_type}_icon", 'dashicons-list-view' );
 
-		$plural = $this->plural_label;
-		$single = $this->single_label;
-		$icon   = apply_filters( "cpl_{$this->post_type}_icon", 'dashicons-list-view' );
-
-		$args = [
-			'public'       => true,
-			'menu_icon'    => $icon,
-			'show_in_menu' => true,
-			'show_in_rest' => true,
-			'has_archive'  => false, // CP_LIBRARY_UPREFIX . '-' . strtolower( $single ) . '-archive',
-			'hierarchical' => true,
-			'label'        => $single,
-			'rewrite'      => [
-				'slug' => strtolower( $plural )
-			],
-			'supports'     => [ 'title', 'editor', 'thumbnail' ],
-			'labels'       => [
-				'name'               => $plural,
-				'singular_name'      => $single,
-				'add_new'            => 'Add New',
-				'add_new_item'       => 'Add New ' . $single,
-				'edit'               => 'Edit',
-				'edit_item'          => 'Edit ' . $single,
-				'new_item'           => 'New ' . $single,
-				'view'               => 'View',
-				'view_item'          => 'View ' . $single,
-				'search_items'       => 'Search ' . $plural,
-				'not_found'          => 'No ' . $plural . ' found',
-				'not_found_in_trash' => 'No ' . $plural . ' found in Trash',
-				'parent'             => 'Parent ' . $single
-			]
-		];
-
-		return apply_filters( "{$this->post_type}_args", $args, $this );
+		return $args;
 	}
 
 	protected function sermon_series_metabox() {
@@ -104,8 +81,8 @@ class ItemType extends PostType  {
 			'object_types' => [ cp_library()->setup->post_types->item->post_type ],
 			'title'        => $this->single_label,
 			'context'      => 'side',
-			'show_names'   => true,
-			'priority'     => 'high',
+			'show_names'   => false,
+			'priority'     => 'default',
 			'closed'       => false,
 		) );
 
@@ -122,6 +99,7 @@ class ItemType extends PostType  {
 		$cmb->add_field( [
 			'name' => __( 'Add to', 'cp-library' ) . ' ' . $this->single_label,
 			'id'   => 'cpl_series',
+			'desc' => sprintf( __( 'Create a new %s <a target="_blank" href="%s">here</a>.', 'cp-library' ), $this->plural_label, add_query_arg( [ 'post_type' => $this->post_type ], admin_url( 'post-new.php' ) )  ),
 			'type' => 'multicheck',
 			'select_all_button' => false,
 			'options' => $series
@@ -131,7 +109,6 @@ class ItemType extends PostType  {
 
 	public function register_metaboxes() {
 		$this->sermon_series_metabox();
-//		add_filter( 'cmb2_override_fonts_meta_value', '\StoryLoop\Views\Admin\Product::fonts_serialize_meta', 10, 2 );
 
 		$cmb = new_cmb2_box( array(
 			'id'           => 'cpl_series_items_data',
@@ -188,16 +165,43 @@ class ItemType extends PostType  {
 			'preview_size' => 'medium',
 		] );
 
-		$cmb->add_group_field( $group_field_id, [
-			'name' => 'Speaker',
-			'id'   => 'speaker',
-			'type' => 'text'
-		] );
+		if ( cp_library()->setup->post_types->speaker_enabled() ) {
+
+			$speakers = Speaker_Model::get_all_speakers();
+
+			if ( empty( $speakers ) ) {
+				$cmb->add_group_field( $group_field_id, [
+					'desc' => sprintf( __( 'No %s have been created yet. <a href="%s">Create one here.</a>', 'cp-library' ), Speaker::get_instance()->plural_label, add_query_arg( [ 'post_type' => Speaker::get_instance()->post_type ], admin_url( 'post-new.php' ) ) ),
+					'id'   => 'cpl_no_speakers',
+					'type' => 'title'
+				] );
+			} else {
+				$speakers = array_combine( wp_list_pluck( $speakers, 'id' ), wp_list_pluck( $speakers, 'title' ) );
+
+				$cmb->add_group_field( $group_field_id, [
+					'name'              => Speaker::get_instance()->single_label,
+					'id'                => 'speakers',
+					'type'              => 'multicheck_inline',
+					'select_all_button' => false,
+					'options'           => $speakers,
+					'desc' => sprintf( __( '<br />Create a new %s <a href="%s">here</a>.', 'cp-library' ), Speaker::get_instance()->plural_label, add_query_arg( [ 'post_type' => Speaker::get_instance()->post_type ], admin_url( 'post-new.php' ) ) ),
+				] );
+			}
+
+		}
+
 
 		$cmb->add_group_field( $group_field_id, [
 			'name' => 'Date',
 			'id'   => 'date',
-			'type' => 'text'
+			'type' => 'text_datetime_timestamp'
+		] );
+
+		$cmb->add_group_field( $group_field_id, [
+			'name' => __( 'Content', 'cp-library' ),
+			'desc' => __( 'The content to display alongside with this item, leave blank to hide this field.', 'cp-library' ),
+			'id'   => 'content',
+			'type' => 'wysiwyg',
 		] );
 
 		$cmb->add_group_field( $group_field_id, [
@@ -215,6 +219,12 @@ class ItemType extends PostType  {
 		] );
 
 		$cmb->add_group_field( $group_field_id, [
+			'name' => __( 'Youtube video permalink', 'cp-library' ),
+			'id'   => 'video_id_youtube',
+			'type' => 'text_medium',
+		] );
+
+		$cmb->add_group_field( $group_field_id, [
 			'name' => __( 'Facebook video permalink', 'cp-library' ),
 			'id'   => 'video_id_facebook',
 			'type' => 'text_medium',
@@ -226,10 +236,55 @@ class ItemType extends PostType  {
 			'type' => 'text_medium',
 		] );
 
+		foreach( cp_library()->setup->taxonomies->get_objects() as $tax ) {
+			/** @var $tax Taxonomy */
+			$cmb->add_group_field( $group_field_id, [
+				'name'              => $tax->plural_label,
+				'id'                => $tax->taxonomy,
+				'type'              => 'multicheck_inline',
+				'select_all_button' => false,
+				'options'           => $tax->get_terms_for_metabox(),
+			] );
+		}
+
 	}
 
-	public function save_series_items( $object_id, $updated, $cmb ) {
-		remove_action( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ], 10 );
+	/**
+	 * Save item series to the item_meta table
+	 *
+	 * @param $object_id
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function save_item_series( $object_id ) {
+		remove_filter( 'cmb2_save_post_fields_cpl_series_data', [ $this, 'save_item_series' ] );
+		try {
+			$item = ItemModel::get_instance_from_origin( $object_id );
+
+			if ( ! $series = get_post_meta( $object_id, 'cpl_series', true ) ) {
+				$series = [];
+			}
+
+			$item->update_types( $series );
+
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
+	}
+
+	/**
+	 * Save the items repeater field in the Series CPT
+	 *
+	 * @param $object_id
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function save_series_items( $object_id ) {
+		remove_action( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ] );
 
 		try {
 			$type = Model::get_instance_from_origin( $object_id );
@@ -237,18 +292,25 @@ class ItemType extends PostType  {
 			$data = get_post_meta( $object_id, 'cpl_series_items', true );
 
 			foreach ( $data as $index => $item_data ) {
+
+				if ( empty( $item_data['content'] ) ) {
+					$item_data['content'] = '';
+				}
+
 				if ( empty( $item_data['id'] ) ) {
 					$item_data['id'] = wp_insert_post( [
-						'post_type'   => Item::get_instance()->post_type,
-						'post_status' => 'publish',
-						'post_title'  => $item_data['title'],
-						'post_date'   => $item_data['date'],
+						'post_type'    => Item::get_instance()->post_type,
+						'post_status'  => 'publish',
+						'post_title'   => $item_data['title'],
+						'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ),
+						'post_content' => $item_data['content'],
 					] );
 				} else {
 					wp_update_post( [
-						'ID'         => $item_data['id'],
-						'post_title' => $item_data['title'],
-						'post_date'  => $item_data['date'],
+						'ID'           => $item_data['id'],
+						'post_title'   => $item_data['title'],
+						'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ),
+						'post_content' => $item_data['content'],
 					] );
 				}
 
@@ -262,9 +324,22 @@ class ItemType extends PostType  {
 					delete_post_thumbnail( $item_data['id'] );
 				}
 
+				// save custom taxonomies
+				foreach( cp_library()->setup->taxonomies->get_taxonomies() as $tax ) {
+					if ( empty( $item_data[ $tax ] ) ) {
+						wp_set_post_terms( $item_data['id'], [], $tax );
+					} else {
+						wp_set_post_terms( $item_data['id'], $item_data[ $tax ], $tax );
+					}
+				}
+
 				$item = ItemModel::get_instance_from_origin( $item_data['id'] );
 
-				$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo' ];
+				if ( cp_library()->setup->post_types->speaker_enabled() ) {
+					$item->update_speakers( $item_data['speakers'] );
+				}
+
+				$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo', 'video_id_youtube' ];
 				foreach( $meta as $key ) {
 					if ( empty( $item_data[ $key ] ) ) {
 						$item->delete_meta( $key );
@@ -275,8 +350,8 @@ class ItemType extends PostType  {
 
 				$item->add_type( $type->id );
 				$item->update_type_order( $type->id, $index );
-			}
 
+			}
 
 		} catch ( Exception $e ) {
 			error_log( $e );
@@ -284,41 +359,80 @@ class ItemType extends PostType  {
 
 	}
 
+	/**
+	 * Meta override
+	 *
+	 * @param $data
+	 * @param $object_id
+	 * @param $data_args
+	 * @param $field
+	 *
+	 * @return array|null
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
 	public function meta_get_override( $data, $object_id, $data_args, $field ) {
 
-		if ( 'cpl_series_items' !== $data_args['field_id'] ) {
-			return $data;
-		}
-
 		try {
-
-			$series = Model::get_instance_from_origin( $object_id );
-			$data   = [];
-
-			foreach ( $series->get_items() as $i ) {
-				$item = new ItemController( $i->origin_id );
-
-				$item_data = [
-					'id'    => $item->model->origin_id,
-					'title' => $item->get_title(),
-					'speaker' => '',
-					'date' => $item->get_publish_date()->format('Y-m-d\TH:i:sP'),
-				];
-
-				$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo' ];
-				foreach( $meta as $key ) {
-					$item_data[ $key ] = $item->model->get_meta_value( $key );
-				}
-
-				if ( has_post_thumbnail( $item_data['id'] ) ) {
-					$item_data['thumbnail_id'] = get_post_thumbnail_id( $item_data['id'] );
-					$item_data['thumbnail']    = wp_get_attachment_image_url( $item_data['thumbnail_id'], 'medium' );
-				}
-
-				$data[] = $item_data;
+			switch ( $data_args['field_id'] ) {
+				case 'cpl_series_items':
+					return $this->get_series_items( $data, $object_id );
+				case 'cpl_series':
+					$item = ItemModel::get_instance_from_origin( $object_id );
+					return $item->get_types();
 			}
 		} catch ( Exception $e ) {
 			error_log( $e );
+		}
+
+		return $data;
+	}
+
+	/**
+	 * @param $data
+	 * @param $object_id
+	 *
+	 * @return array
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	protected function get_series_items( $data, $object_id ) {
+		$series = Model::get_instance_from_origin( $object_id );
+		$data   = [];
+
+		foreach ( $series->get_items() as $i ) {
+			$item = new ItemController( $i->origin_id );
+
+			$item_data = [
+				'id'      => $item->model->origin_id,
+				'title'   => $item->get_title(),
+				'content' => $item->get_content( true ),
+				'speaker' => '',
+				'date'    => date( 'Y-m-d\TH:i:sP', $item->get_publish_date() ),
+			];
+
+			$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo' ];
+			foreach ( $meta as $key ) {
+				$item_data[ $key ] = $item->model->get_meta_value( $key );
+			}
+
+			if ( cp_library()->setup->post_types->speaker_enabled() ) {
+				$item_data['speakers'] = $item->model->get_speakers();
+			}
+
+			if ( has_post_thumbnail( $item_data['id'] ) ) {
+				$item_data['thumbnail_id'] = get_post_thumbnail_id( $item_data['id'] );
+				$item_data['thumbnail']    = wp_get_attachment_image_url( $item_data['thumbnail_id'], 'medium' );
+			}
+
+			foreach( cp_library()->setup->taxonomies->get_taxonomies() as $tax ) {
+				$item_data[ $tax ] = wp_get_post_terms( $item_data['id'], $tax, [ 'fields' => 'names' ] );
+			}
+
+			$data[] = $item_data;
 		}
 
 		return $data;

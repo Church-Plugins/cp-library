@@ -1,0 +1,43 @@
+.cpl-archive {
+
+	&--item {
+		.cpl-archive--list {
+
+			&--item {
+				display: flex;
+				width: 100%;
+				text-align: left;
+			}
+
+		}
+	}
+
+	// make the types scroll horizontally when in taxonomy archive
+	.cpl-archive--item-type {
+		.cpl-archive--list {
+			grid-auto-flow: column;
+			grid-auto-columns: minmax(20em, 1fr);
+			overflow-x: scroll;
+		}
+	}
+
+	&--item-type {
+		.cpl-archive--list {
+			display: grid;
+			column-gap: 2.5rem;
+			grid-template-columns: repeat(auto-fill, minmax(20em, 1fr));
+		}
+	}
+
+	.pagination {
+		margin: 1.5rem auto;
+		text-align: center;
+	}
+
+	.nav-links {
+		> * {
+			margin: 0 .5em;
+		}
+	}
+
+}

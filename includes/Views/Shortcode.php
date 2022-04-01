@@ -134,13 +134,33 @@ class Shortcode
 
 	public function render_item_widget( $args ) {
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_item_widget"></div>';
+
+		$request = new \WP_REST_Request( 'GET', '/' . cp_library()->get_api_namespace() . '/items' );
+		$request->set_query_params( [ 'count' => 1, 'media-type' => 'audio' ] );
+		$response = rest_do_request( $request );
+		$server   = rest_get_server();
+		$data     = $server->response_to_data( $response, false );
+
+		if ( ! empty( $data['items'] ) ) {
+			$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_item_widget" data-item="' . esc_attr( json_encode( $data['items'][0] ) ) . '"></div>';
+		}
+
 		return $output;
 	}
 
 	public function render_video_widget( $args ) {
 		$output  = self::staticScript( $args );
-		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_video_widget"></div>';
+
+		$request = new \WP_REST_Request( 'GET', '/' . cp_library()->get_api_namespace() . '/items' );
+		$request->set_query_params( [ 'count' => 1, 'media-type' => 'video' ] );
+		$response = rest_do_request( $request );
+		$server   = rest_get_server();
+		$data     = $server->response_to_data( $response, false );
+
+		if ( ! empty( $data['items'] ) ) {
+			$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_video_widget" data-item="' . esc_attr( json_encode( $data['items'][0] ) ) . '"></div>';
+		}
+
 		return $output;
 	}
 

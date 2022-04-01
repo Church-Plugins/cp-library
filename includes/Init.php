@@ -1,7 +1,9 @@
 <?php
 namespace CP_Library;
 
+use CP_Library\Admin\Settings;
 use CP_Library\Controllers\Shortcode as Shortcode_Controller;
+use ChurchPlugins\Setup\Init as CP_Setup;
 
 /**
  * Provides the global $cp_library object
@@ -60,6 +62,13 @@ class Init {
 			return;
 		}
 
+		$cp = CP_Setup::get_instance();
+
+		// make sure needed tables are installed
+		if ( ! $cp->is_installed() ) {
+			return;
+		}
+
 		$this->includes();
 		$this->actions();
 		$this->app_init();
@@ -97,15 +106,19 @@ class Init {
 		add_filter( 'script_loader_tag', [ $this, 'app_load_scripts' ], 10, 3 );
 		add_action( 'wp_enqueue_scripts', [ $this, 'app_enqueue' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'admin_scripts' ] );
-		add_action( 'init', [ $this, 'rewrite_rules' ] );
+		add_action( 'init', [ $this, 'rewrite_rules' ], 100 );
 
 		$shortcode = Shortcode_Controller::get_instance();
 		$shortcode->add_shortcodes();
 	}
 
 	public function rewrite_rules() {
-//		add_rewrite_tag( '%item%', '([^&]+)' );
-//		add_rewrite_rule('^talks/([^/]*)/?','index.php?item=$matches[1]&pagename=talks','top');
+
+		if ( $this->setup->post_types->item_type_enabled() ) {
+			$type = get_post_type_object( $this->setup->post_types->item_type->post_type )->rewrite['slug'];
+			add_rewrite_tag( '%type-item%', '([^&]+)' );
+			add_rewrite_rule("^$type/([^/]*)/([^/]*)?",'index.php?cpl_item_type=$matches[1]&type-item=$matches[2]','top');
+		}
 
 		$flush = '1';
 
@@ -147,6 +160,32 @@ class Init {
 	public function app_enqueue() {
 		wp_enqueue_script( 'cpl_persistent_player', CP_LIBRARY_PLUGIN_URL . '/assets/js/main.js', ['jquery'] );
 
+		$this->enqueue->enqueue( 'styles', 'main', [] );
+		$scripts = $this->enqueue->enqueue( 'app', 'main', [ 'js_dep' => ['jquery'] ] );
+
+		$cpl_vars = apply_filters( 'cpl_app_vars', [
+			'site' => [
+				'title' => get_bloginfo( 'name', 'display' ),
+				'thumb' => Settings::get( 'default_thumbnail', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
+				'logo'  => Settings::get( 'logo', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
+				'url'   => get_site_url(),
+				'path'  => '',
+			],
+			'components' => [
+				'mobileTop' => ''
+			],
+			'i18n' => [
+				'playAudio' => __( 'Play Audio', 'cp-library' ),
+				'playVideo' => __( 'Play Video', 'cp-library' ),
+			],
+		] );
+
+		if ( isset( $scripts['js'], $scripts['js'][0], $scripts['js'][0]['handle'] ) ) {
+			wp_localize_script( $scripts['js'][0]['handle'], 'cplVars', $cpl_vars );
+		}
+
+		return;
+
 		$asset_manifest = json_decode( file_get_contents( CP_LIBRARY_ASSET_MANIFEST ), true );
 
 		// TODO: Calls to `str_replace` need to be less specific
@@ -166,7 +205,7 @@ class Init {
 		$cpl_vars = apply_filters( 'cpl_app_vars', [
 			'site' => [
 				'title' => get_bloginfo( 'name', 'display' ),
-				'thumb' => CP_LIBRARY_PLUGIN_URL . '/app/public/logo512.png',
+				'thumb' => Settings::get( 'default_thumbnail', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
 				'url'   => get_site_url(),
 				'path'  => '',
 			],
@@ -222,7 +261,7 @@ class Init {
 		?>
 		<style>
 			:root {
-				--cpl-primary: #4D6CFA;
+				--cpl-color--primary: <?php echo Settings::get( 'color_primary', '#333333' ); ?>;
 			}
 		</style>
 		<?php
@@ -238,6 +277,10 @@ class Init {
 	}
 
 	/** Helper Methods **************************************/
+
+	public function get_default_thumb() {
+		return CP_LIBRARY_PLUGIN_URL . '/app/public/logo512.png';
+	}
 
 	/**
 	 * Make sure required plugins are active
@@ -305,7 +348,7 @@ class Init {
 	 * @return string
 	 */
 	public function get_version() {
-		return '1.0.0';
+		return '0.0.2';
 	}
 
 	/**

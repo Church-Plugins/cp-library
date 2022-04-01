@@ -1,0 +1,29 @@
+.cpl-list-type {
+	margin-bottom: 1.5em;
+
+	&--thumb {
+		cursor: pointer;
+		width: 100%;
+
+		img {
+			width: auto;
+			height: auto;
+		}
+	}
+
+	&--details {
+
+		padding: 1em;
+		background: rgba( 0, 0, 0, .05);
+
+		h3 {
+			font-size: 1.25em;
+
+			a {
+				color: inherit;
+			}
+		}
+
+	}
+
+}
