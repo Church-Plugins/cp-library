@@ -49,5 +49,29 @@ class Controllers_WP_REST_Request extends Component {
 			})
 	}
 
+	/**
+	 * Simple WP REST API endpoint post
+	 * @param String endpoint			The name of the endpoint
+	 * @param String params				Query parameters
+	 * @param Object data
+	 * @returns
+	 */
+	post( {endpoint = null, params = null, data = {} } ) {
+		let url = this.urlBase + "/" + this.namespace + "/" + endpoint;
+
+		if( params ) {
+			url = url + "?" + params;
+		}
+
+		return axios
+			.post( url, data )
+			.then(response => response.data)
+			.catch(error => {
+				// Usually consumers want to handle the error themselves. If there's any global error
+				// handler (e.g reporting to a monitoring tool) we can run it here before we throw it.
+				throw error;
+			})
+	}
+
 }
 export default Controllers_WP_REST_Request;
