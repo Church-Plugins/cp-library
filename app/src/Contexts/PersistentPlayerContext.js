@@ -1,6 +1,7 @@
 import { createContext, useReducer, useContext, useEffect, useCallback } from "react";
 import ReactDOM from 'react-dom';
 import { ThemeProvider } from '@mui/material/styles';
+import { cplLog } from '../utils/helpers';
 
 import PersistentPlayer from "../Templates/PersistentPlayer";
 import theme from "../Templates/Theme";
@@ -81,6 +82,14 @@ function PersistentPlayerProvider({children}) {
       isPlaying,
       playedSeconds,
     });
+
+		cplLog( item.id, 'persistent' );
+
+		// also log a play action if we are not currently playing
+		if ( ! playedSeconds > 0 ) {
+			cplLog( item.id, 'play' );
+		}
+
   }, [state.isActive])
 
   // NOTE: you *might* need to memoize this value
