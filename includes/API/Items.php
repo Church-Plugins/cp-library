@@ -2,6 +2,7 @@
 
 namespace CP_Library\API;
 
+use ChurchPlugins\Models\Log;
 use CP_Library\Controllers\Item;
 use CP_Library\Exception;
 use CP_Library\Models\ItemType;
@@ -93,6 +94,14 @@ class Items extends WP_REST_Controller {
 			),
 		) );
 
+		register_rest_route( $this->namespace, $this->rest_base . '/(?P<item_id>[^.\/]+)/log/', array(
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'log' ),
+				'permission_callback' => array( $this, 'get_permissions_check' ),
+			),
+		) );
+
 //        register_rest_route( $this->namespace, $this->rest_base . '/edit', array(
 //            array(
 //                'methods'             => WP_REST_Server::CREATABLE,
@@ -102,6 +111,36 @@ class Items extends WP_REST_Controller {
 //            'schema' => array( $this, 'get_public_item_schema' ),
 //        ) );
 
+	}
+
+	public function log( $request ) {
+
+		try {
+
+			if ( ! $item_id = $request->get_param( 'item_id' ) ) {
+				throw new Exception( 'No item_id specified' );
+			}
+
+			if ( ! $action = $request->get_param( 'action' ) ) {
+				throw new Exception( 'No action specified' );
+			}
+
+			$data = Log::insert( [
+				'object_type' => 'item',
+				'object_id' => $item_id,
+				'action' =>  $action,
+			] );
+
+		} catch ( \ChurchPlugins\Exception $e ) {
+			$data = [
+				'id'    => $item_id,
+				'error' => $e->getMessage(),
+			];
+
+			error_log( $e->getMessage() );
+		}
+
+		return $data;
 	}
 
 	/**

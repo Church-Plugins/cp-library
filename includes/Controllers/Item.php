@@ -2,6 +2,7 @@
 
 namespace CP_Library\Controllers;
 
+use ChurchPlugins\Models\Log;
 use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Models\Item as ItemModel;
@@ -275,5 +276,35 @@ class Item {
 		];
 
 		return $this->filter( $data, __FUNCTION__ );
+	}
+
+	/**
+	 * Return analytics for this Item
+	 *
+	 * @param $action
+	 *
+	 * @return array|object|\stdClass[]|null
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_analytics( $action = '' ) {
+		$args = [ 'object_type' => 'item', 'object_id' => $this->model->id ];
+
+		if ( $action ) {
+			$args[ 'action' ] = $action;
+		}
+
+		return Log::query( $args );
+	}
+
+	public function get_analytics_count( $action = '' ) {
+		$args = [ 'object_type' => 'item', 'object_id' => $this->model->id ];
+
+		if ( $action ) {
+			$args[ 'action' ] = $action;
+		}
+
+		return Log::count_by_action( $args );
 	}
 }

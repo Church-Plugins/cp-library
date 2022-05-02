@@ -53,6 +53,7 @@ export function ItemWidgetContent ({
 	}, []);
 
 	const playVideo = () => {
+		cplLog( item.id, 'video_widget_play' );
 		passToPersistentPlayer({
 			item,
 			mode         : 'video',
@@ -62,6 +63,7 @@ export function ItemWidgetContent ({
 	};
 
 	const playAudio = () => {
+		cplLog( item.id, 'audio_widget_play' );
 		passToPersistentPlayer({
       item,
       mode: "audio",

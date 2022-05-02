@@ -11,6 +11,7 @@ import { Cancel, Fullscreen, PictureInPicture, Forward30, Replay10, OpenInFull, 
 
 import useBreakpoints from '../Hooks/useBreakpoints';
 import formatDuration from '../utils/formatDuration';
+import { cplLog } from '../utils/helpers';
 
 import LoadingIndicator from '../Elements/LoadingIndicator';
 import ErrorDisplay from '../Elements/ErrorDisplay';
@@ -33,7 +34,6 @@ export default function PersistentPlayer(props) {
   const [mode, setMode] = useState();
 
 	const onMouseMove = (e) => {
-		debugger;
 		if (showFSControls) return;
 		showControls();
 	};
@@ -74,6 +74,7 @@ export default function PersistentPlayer(props) {
 	};
 
 	const handleClickFullscreen = () => {
+		cplLog( item.id, 'fullscreen' );
 		const instance = ReactDOM.findDOMNode(playerInstance.current);
 		screenfull.request( instance.parentElement )
 		return false;

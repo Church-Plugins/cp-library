@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { cplVar } from '../../utils/helpers';
+import { cplVar, cplLog } from '../../utils/helpers';
 
 import { Play, Volume1, Share2 } from "react-feather"
 import VideoPlayer from "react-player";
@@ -33,6 +33,7 @@ export default function Player({
   // Video or audio
   const [mode, setMode] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [hasPlayed, setHasPlayed] = useState(false);
   const [playedSeconds, setPlayedSeconds] = useState(0.0);
   const [duration, setDuration] = useState(0.0);
   const [playingURL, setPlayingURL] = useState('');
@@ -78,6 +79,7 @@ export default function Player({
   };
 
 	const handleClickFullscreen = () => {
+		cplLog(item.id, 'fullscreen');
 		const instance = ReactDOM.findDOMNode(playerInstance.current);
 		screenfull.request( instance.parentElement );
 		return false;
@@ -99,16 +101,21 @@ export default function Player({
 	};
 
 	const handleFBShare = () => {
+		cplLog(item.id, 'share_facebook');
 		window.open('http://www.facebook.com/sharer.php?u='+encodeURIComponent( item.permalink )+'&t='+encodeURIComponent( item.title ),'sharer','toolbar=0,status=0,width=626,height=436');
     setAnchorEl(null);
 	};
 
 	const handleTwitterShare = () => {
+		cplLog(item.id, 'share_twitter');
+
 		window.open( "http://twitter.com/intent/tweet?text=" + encodeURIComponent( item.title + ' ' + item.permalink ),'sharer','toolbar=0,status=0,width=626,height=436');
     setAnchorEl(null);
 	};
 
 	const handleFileDownload = () => {
+		cplLog(item.id, 'download');
+
 		const link = document.createElement('a');
     link.href = item.audio;
 
@@ -162,22 +169,15 @@ export default function Player({
 		}
 	};
 
-  // Fetch the individual item when mounted.
-  useEffect(() => {
-		(async () => {
-      try {
-        setLoading(true);
-        const restRequest = new Controllers_WP_REST_Request();
-        const data = await restRequest.get( {endpoint: `items/${itemId}`} );
-        setItem(data);
-      } catch (error) {
-        setError(error);
-      } finally {
-        setLoading(false);
-				itemContainer.current.scrollIntoView({behavior: "smooth"});
-			}
-    })();
-  }, []);
+	// log initial play
+	useEffect(() => {
+		if ( hasPlayed || ! isPlaying ) {
+			return;
+		}
+
+		cplLog(item.id, 'play');
+		setHasPlayed(true);
+	}, [isPlaying])
 
   // Sync some states to be possibly passed to the persistent player. These states could be gone by
   // the time the clean up function is done during unmounting.
