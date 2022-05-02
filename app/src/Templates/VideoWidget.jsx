@@ -7,6 +7,7 @@ import ReactDOM from 'react-dom';
 
 import useBreakpoints from '../Hooks/useBreakpoints';
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
+import { cplLog } from '../utils/helpers';
 
 import LoadingIndicator from '../Elements/LoadingIndicator';
 import ErrorDisplay from '../Elements/ErrorDisplay';

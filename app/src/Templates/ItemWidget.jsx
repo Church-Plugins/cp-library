@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import { Play, Volume1, Share2 } from 'react-feather';
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
+import { cplLog } from '../utils/helpers';
 
 import LoadingIndicator from '../Elements/LoadingIndicator';
 import ErrorDisplay from '../Elements/ErrorDisplay';
