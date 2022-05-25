@@ -51,11 +51,14 @@ class ItemType extends PostType  {
 			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
 		}
 
-		$item_type   = Item::get_instance()->post_type;
-		$source_type = Speaker::get_instance()->post_type;
+		if ( $this->show_in_menu() ) {
+			$item_type   = Item::get_instance()->post_type;
+			$source_type = Speaker::get_instance()->post_type;
 
-		add_filter( "{$item_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
-		add_filter( "{$source_type}_args", [ $this, 'cpt_menu_position' ], 10 , 2 );
+			add_filter( "{$item_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
+			add_filter( "{$source_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
+		}
+
 	}
 
 	/**

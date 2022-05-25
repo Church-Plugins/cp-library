@@ -244,6 +244,11 @@ class Init {
 	 */
 	protected function includes() {
 		Admin\Init::get_instance();
+
+		if ( function_exists( 'cp_locations' ) ) {
+			Integrations\Locations::get_instance();
+		}
+
 	}
 
 	/**
