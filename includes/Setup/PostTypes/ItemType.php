@@ -99,14 +99,14 @@ class ItemType extends PostType  {
 			return;
 		}
 
-		$cmb->add_field( [
+		$cmb->add_field( apply_filters( "{$this->post_type}_metabox_field_args", [
 			'name' => __( 'Add to', 'cp-library' ) . ' ' . $this->single_label,
 			'id'   => 'cpl_series',
 			'desc' => sprintf( __( 'Create a new %s <a target="_blank" href="%s">here</a>.', 'cp-library' ), $this->plural_label, add_query_arg( [ 'post_type' => $this->post_type ], admin_url( 'post-new.php' ) )  ),
 			'type' => 'multicheck',
 			'select_all_button' => false,
 			'options' => $series
-		] );
+		], $this ) );
 
 	}
 

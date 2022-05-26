@@ -91,23 +91,29 @@ class Item extends PostType  {
 			'type' => 'file',
 		] );
 
-		$cmb->add_field( [
-			'name' => __( 'Facebook video permalink', 'cp-library' ),
-			'id'   => 'video_id_facebook',
-			'type' => 'text_medium',
-		] );
+		if ( apply_filters( "{$this->post_type}_use_facebook", false ) ) {
+			$cmb->add_field( [
+				'name' => __( 'Facebook video permalink', 'cp-library' ),
+				'id'   => 'video_id_facebook',
+				'type' => 'text_medium',
+			] );
+		}
 
-		$cmb->add_field( [
-			'name' => __( 'Youtube video permalink', 'cp-library' ),
-			'id'   => 'video_id_youtube',
-			'type' => 'text_medium',
-		] );
+		if ( apply_filters( "{$this->post_type}_use_youtube", false ) ) {
+			$cmb->add_field( [
+				'name' => __( 'Youtube video permalink', 'cp-library' ),
+				'id'   => 'video_id_youtube',
+				'type' => 'text_medium',
+			] );
+		}
 
-		$cmb->add_field( [
-			'name' => __( 'Vimeo video id', 'cp-library' ),
-			'id'   => 'video_id_vimeo',
-			'type' => 'text_medium',
-		] );
+		if ( apply_filters( "{$this->post_type}_use_vimeo", false ) ) {
+			$cmb->add_field( [
+				'name' => __( 'Vimeo video id', 'cp-library' ),
+				'id'   => 'video_id_vimeo',
+				'type' => 'text_medium',
+			] );
+		}
 	}
 
 	protected function analytics() {
