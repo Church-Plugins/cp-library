@@ -1,6 +1,7 @@
 <?php
 
 use CP_Library\Models\Item;
+use CP_Library\Models\ItemType;
 
 // Make the `cp` command available to WP-CLI
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -25,6 +26,87 @@ class RE_Migrate {
 	 * @author Landon Otis
 	 */
 	public function __construct() {
+	}
+
+	public function import_series( $args, $assoc_args ) {
+		require_once( ABSPATH . 'wp-admin/includes/media.php' );
+		require_once( ABSPATH . 'wp-admin/includes/file.php' );
+		require_once( ABSPATH . 'wp-admin/includes/image.php' );
+
+		$args = wp_parse_args( [
+			0 => 'series.csv',
+		], $args );
+
+		$filename = ABSPATH . $args[0];
+
+		if ( ! $file = fopen( $filename, 'r' ) ) {
+			WP_CLI::error('Could not locate the file');
+		}
+
+		$row = 0;
+		while( $data = fgetcsv( $file ) ) {
+			count( $data );
+
+			if ( ++ $row == 1 ) {
+				$headers = array_flip( $data ); // Get the column names from the header.
+				continue;
+			}
+
+			$data = array_map( 'trim', $data );
+
+			$slug = array_pop( explode( '/', $data[ $headers['URL'] ] ) );
+			$title = $data[ $headers['Title'] ];
+			$desc = $data[ $headers['Description'] ];
+			$thumb = $data[ $headers['Thumbnail'] ];
+			$study_guide = str_replace( 'https://christpres.mediahttps:', 'https:', $data[ $headers['Study Guide'] ] );
+
+			WP_CLI::log( 'Importing ' . $title );
+			if ( get_page_by_path( $slug, OBJECT, ItemType::get_prop( 'post_type' ) ) ) {
+				WP_CLI::warning( 'This content already exists' );
+				continue;
+			}
+
+			$series_id = wp_insert_post( [
+				'post_type'    => ItemType::get_prop( 'post_type' ),
+				'post_title'   => $title,
+				'post_content' => $desc,
+				'post_status'  => 'publish',
+				'post_name'     => $slug,
+			], true );
+
+			WP_CLI::log( '--- series created' );
+
+			// save to our tables
+			ItemType::get_instance_from_origin( $series_id );
+
+			if ( is_wp_error( $series_id ) ) {
+				WP_CLI::warning( $series_id->get_error_message() );
+			}
+
+			// Handle thumbnail
+			$thumb_id = media_sideload_image( $thumb, $series_id, $title . ' Thumbnail', 'id' );
+
+			if ( is_wp_error( $thumb_id ) ) {
+				WP_CLI::warning( $thumb_id->get_error_message() );
+			} else {
+				WP_CLI::log( '--- imported thumbnail' );
+			}
+
+			set_post_thumbnail( $series_id, $thumb_id );
+
+			// Handle study guide
+			$study_guide_url = media_sideload_image( $study_guide, $series_id, $title . ' Study Guide', 'src' );
+
+			if ( is_wp_error( $study_guide_url ) ) {
+				WP_CLI::warning( $study_guide_url->get_error_message() );
+			} else {
+				WP_CLI::log( '--- imported study guide' );
+			}
+
+			update_post_meta( $series_id, 'cp_study_guide', $study_guide_url );
+
+		}
+
 	}
 
 	/**
