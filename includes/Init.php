@@ -79,7 +79,7 @@ class Init {
 		Download::get_instance();
 		Templates::init();
 
-		include_once( CP_LIBRARY_INCLUDES . '/CLI/RE_Migrate.php' );
+		include_once( CP_LIBRARY_INCLUDES . '/CLI/CP_Migrate.php' );
 	}
 
 	/**

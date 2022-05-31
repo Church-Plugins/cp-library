@@ -151,6 +151,15 @@ abstract class Table {
 		return new $class( $object );
 	}
 
+	public static function search( $column, $value, $soundex = false ) {
+		global $wpdb;
+
+		if ( $soundex ) {
+			return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM " . static::get_prop('table_name' ) . " WHERE soundex($column) LIKE soundex(%s);", "%" . $value . "%" ) );
+		} else {
+			return $wpdb->get_results( $wpdb->prepare( "SELECT * FROM " . static::get_prop('table_name' ) . " WHERE $column LIKE %s;", "%" . $value . "%" ) );
+		}
+	}
 
 	/**
 	 * Get things started
@@ -378,7 +387,6 @@ abstract class Table {
 	 * @param $column string
 	 *
 	 * @return bool
-	 * @throws Exception
 	 * @since  1.0.0
 	 *
 	 * @author Tanner Moushey
@@ -386,11 +394,7 @@ abstract class Table {
 	public function delete_meta( $value, $column = 'key' ) {
 		global $wpdb;
 
-		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM " . $this->meta_table_name . " WHERE `item_id` = %d AND `{$column}` = %s", $this->id, $value ) ) ) {
-			throw new Exception( sprintf( 'The row (%d) was not deleted.', absint( $this->id ) ) );
-		}
-
-		return true;
+		return $wpdb->query( $wpdb->prepare( "DELETE FROM " . $this->meta_table_name . " WHERE `item_id` = %d AND `{$column}` = %s", $this->id, $value ) );
 	}
 
 	/**
@@ -400,7 +404,6 @@ abstract class Table {
 	 * @param $column
 	 *
 	 * @return bool
-	 * @throws Exception
 	 * @since  1.0.0
 	 *
 	 * @author Tanner Moushey
@@ -408,11 +411,7 @@ abstract class Table {
 	public function delete_all_meta( $value, $column ) {
 		global $wpdb;
 
-		if ( false === $wpdb->query( $wpdb->prepare( "DELETE FROM " . $this->meta_table_name . " WHERE `{$column}` = %s", $value ) ) ) {
-			throw new Exception( sprintf( 'The row (%d) was not deleted.', absint( $this->id ) ) );
-		}
-
-		return true;
+		return $wpdb->query( $wpdb->prepare( "DELETE FROM " . $this->meta_table_name . " WHERE `{$column}` = %s", $value ) );
 	}
 
 	/**

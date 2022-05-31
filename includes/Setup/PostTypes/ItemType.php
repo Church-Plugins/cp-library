@@ -294,6 +294,10 @@ class ItemType extends PostType  {
 
 			$data = get_post_meta( $object_id, 'cpl_series_items', true );
 
+			if ( empty( $data ) ) {
+				return;
+			}
+
 			foreach ( $data as $index => $item_data ) {
 
 				if ( empty( $item_data['content'] ) ) {

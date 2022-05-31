@@ -48,7 +48,7 @@ class Item extends Table  {
 	/**
 	 * Update the speakers associated with this item
 	 *
-	 * @param $speakers array
+	 * @param $speakers array Array of speaker IDs (source_type_id) to add
 	 *
 	 * @return bool
 	 * @throws Exception
@@ -167,10 +167,11 @@ class Item extends Table  {
 	 *
 	 * @author Tanner Moushey
 	 */
+
 	/**
-	 * Add new time to item
+	 * Add new type to item
 	 *
-	 * @param $type
+	 * @param $type Integer The id of the type to add
 	 *
 	 * @return bool
 	 * @throws Exception
@@ -201,7 +202,7 @@ class Item extends Table  {
 	 */
 	public function delete() {
 		do_action( "cpl_{$this->type}_delete_meta_before" );
-		$source = new Source();
+		$source = new Speaker();
 		$source->delete_all_meta( $this->id, 'item_id' );
 		$this->delete_all_meta( $this->id, 'item_id' );
 		do_action( "cpl_{$this->type}_delete_meta_after" );
