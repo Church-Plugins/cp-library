@@ -244,6 +244,7 @@ class Item {
 					$type = new ItemType( $type_id, false );
 					$types[] = [
 						'id'        => $type->model->id,
+						'origin_id' => $type->model->origin_id,
 						'title'     => $type->get_title(),
 						'permalink' => $type->get_permalink(),
 					];

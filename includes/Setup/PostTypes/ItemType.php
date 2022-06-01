@@ -44,6 +44,8 @@ class ItemType extends PostType  {
 	public function add_actions() {
 		parent::add_actions();
 
+		$item_type = Item::get_instance()->post_type;
+
 		// give other code a chance to hook into sources
 		add_action( 'save_post', function() {
 			foreach ( $this->get_sources() as $key => $source ) {
@@ -52,17 +54,97 @@ class ItemType extends PostType  {
 		}, 5);
 
 		add_filter( 'cmb2_save_post_fields_cpl_series_data', [ $this, 'save_item_series' ], 10 );
+		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'item_type_column' ] );
+		add_action( "manage_{$item_type}_posts_custom_column", [ $this, 'item_type_column_cb' ], 10, 2 );
+		add_filter( 'pre_get_posts', [ $this, 'item_item_type_query' ] );
 
 		if ( empty( $_GET['cpl-recovery'] ) ) {
 			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
 		}
 
 		if ( $this->show_in_menu() ) {
-			$item_type   = Item::get_instance()->post_type;
 			$source_type = Speaker::get_instance()->post_type;
 
 			add_filter( "{$item_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 			add_filter( "{$source_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
+		}
+
+	}
+
+	/**
+	 * @param $columns
+	 *
+	 * @return array
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function item_type_column( $columns ) {
+		$new_columns = [];
+		foreach( $columns as $key => $column ) {
+			if ( 'date' === $key ) {
+				$new_columns['item_type'] = $this->plural_label;
+			}
+
+			$new_columns[ $key ] = $column;
+		}
+
+		// in case date isn't set
+		if ( ! isset( $columns['date'] ) ) {
+			$new_columns['item_type'] = $this->plural_label;
+		}
+
+		return $new_columns;
+	}
+
+	public function item_type_column_cb( $column, $post_id ) {
+		switch( $column ) {
+			case 'item_type' :
+				 $item = new \CP_Library\Controllers\Item( $post_id );
+				$types = $item->get_types();
+
+				 if ( empty( $types ) ) {
+					 _e( '—', 'cp-library' );
+				 } else {
+					 $url = add_query_arg( $_GET, 'edit.php' );
+					 $list = [];
+					 foreach ( $types as $type ) {
+						 $list[] = sprintf( '<a href="%s">%s</a>', add_query_arg( 'type', $type['id'], $url ), $type['title'] );
+					 }
+
+					 echo implode( ', ', $list );
+				 }
+
+				break;
+		}
+	}
+
+	public function item_item_type_query( $query ) {
+		if ( empty( $_GET['type'] ) ) {
+			return;
+		}
+
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		if ( ! $query->is_main_query() ) {
+			return;
+		}
+
+		if ( ! in_array( $query->get('post_type'), [ Item::get_instance()->post_type ] ) ) {
+			return;
+		}
+
+		$type = absint( $_GET['type'] );
+
+		try {
+			$type = Model::get_instance( $type );
+			$items = wp_list_pluck( $type->get_items(), 'origin_id' );
+
+			$query->set( 'post__in', $items );
+		} catch ( Exception $e ) {
+			error_log( $e );
 		}
 
 	}
