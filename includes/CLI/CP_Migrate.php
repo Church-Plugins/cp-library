@@ -5,8 +5,6 @@ use CP_Library\Models\ItemType;
 use CP_Library\Models\Speaker;
 use CP_Locations\Models\Location;
 
-use WP_CLI;
-
 // Make the `cp` command available to WP-CLI
 if ( defined( 'WP_CLI' ) && WP_CLI ) {
 	WP_CLI::add_command( 'cp', 'CP_Migrate' );
@@ -32,6 +30,97 @@ class CP_Migrate {
 	public function __construct() {
 	}
 
+	public function update_series_meta( $args, $assoc_args ) {
+
+		$speakers = wp_list_pluck(  Speaker::get_all_speakers(), 'title', 'id' );
+		$locations = wp_list_pluck(  Location::get_all_locations(), 'title', 'id' );
+		$types = wp_list_pluck(  ItemType::get_all_types(), 'title', 'id' );
+
+		$types = array_map( 'strtolower', $types );
+
+		$series = wp_json_file_decode( ABSPATH . 'series.json' );
+		$topics = wp_list_pluck( \CP_Library\Setup\Taxonomies\Topic::get_instance()->get_term_data(), 'term' );
+		$scripture = \CP_Library\Setup\Taxonomies\Scripture::get_instance()->get_terms();
+		$seasons = wp_list_pluck( \CP_Library\Setup\Taxonomies\Season::get_instance()->get_term_data(), 'term' );
+		$not_found = [];
+		foreach( $series as $s ) {
+			if ( false === $id = array_search( strtolower( $s->title ), $types ) ) {
+				continue;
+			}
+
+			try {
+				$series_object = ItemType::get_instance( $id );
+				$terms = [];
+
+				foreach ( $s->category as $term ) {
+					$name  = $term->__cdata;
+
+					if ( in_array( $name, [
+						2010,
+						2011,
+						2012,
+						2013,
+						2014,
+						2015,
+						2016,
+						2017,
+						2018,
+						2019,
+						2020,
+						2021,
+						2022,
+						'all',
+						'recent',
+						'featured',
+						'Songs'
+					] ) ) {
+						continue;
+					}
+
+					if ( in_array( $name, $locations ) || in_array( $name, $speakers ) ) {
+						continue;
+					}
+
+					$name = preg_replace( '/([0-9])([^ ])/', '$1 $2', $name );
+					$tax = false;
+
+					if ( in_array( $name, $topics ) ) {
+						$tax = 'cpl_topic';
+					} else if ( in_array( $name, $scripture ) ) {
+						$tax = 'cpl_scripture';
+					} else if ( in_array( $name, $seasons ) ) {
+						$tax = 'cpl_season';
+					}
+
+					if ( ! $tax ) {
+						$not_found[] = $name;
+						WP_CLI::log( 'Not found: ' . $name );
+					} else {
+						$terms[ $tax ][] = $name;
+					}
+				}
+
+				$items = $series_object->get_items();
+
+				foreach ( $terms as $tax => $names ) {
+					wp_set_post_terms( $series_object->origin_id, $names, $tax );
+					foreach( $items as $item ) {
+						wp_set_post_terms( $item->origin_id, $names, $tax );
+					}
+				}
+
+			} catch ( Exception $e ) {
+				WP_CLI::error( $e->getMessage() );
+			}
+
+
+		}
+
+		asort( $not_found );
+		$not_found = array_unique( $not_found );
+		WP_CLI::log( implode( ', ', $not_found ) );
+
+	}
 	public function import_series( $args, $assoc_args ) {
 		require_once( ABSPATH . 'wp-admin/includes/media.php' );
 		require_once( ABSPATH . 'wp-admin/includes/file.php' );

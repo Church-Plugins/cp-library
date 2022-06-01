@@ -43,6 +43,6 @@ class Locations {
 	/** Actions ***************************************************/
 
 	public function tax_types( $types ) {
-		return array_merge( $types, cp_library()->setup->post_types->get_post_types() );
+		return array_merge( $types, [ cp_library()->setup->post_types->item->post_type, cp_library()->setup->post_types->speaker->post_type ]  );
 	}
 }
