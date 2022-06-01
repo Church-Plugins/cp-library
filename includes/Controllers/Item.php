@@ -83,7 +83,7 @@ class Item {
 
 		if ( ! $thumb && ! empty( $this->get_types() ) ) {
 			try {
-				$type = new ItemType( $this->get_types()[0]['id'] );
+				$type = new ItemType( $this->get_types()[0]['id'], false );
 				$thumb = $type->get_thumbnail();
 			} catch( Exception $e ) {
 				error_log( $e );

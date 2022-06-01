@@ -13,7 +13,7 @@ try {
 <div class="cpl-list-item">
 
 	<div class="cpl-list-item--thumb" onclick="window.location = jQuery(this).parent().find('a').attr('href');">
-		<div class="cpl-list-item--thumb--canvas">
+		<div class="cpl-list-item--thumb--canvas" style="background: url(<?php echo esc_url( $item['thumb'] ); ?>) 0% 0% / cover;">
 			<?php if ( $item['thumb'] ) : ?>
 				<img alt="<?php esc_attr( $item['title'] ); ?>" src="<?php echo esc_url( $item['thumb'] ); ?>">
 			<?php endif; ?>
