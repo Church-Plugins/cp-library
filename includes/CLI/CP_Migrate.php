@@ -121,6 +121,7 @@ class CP_Migrate {
 		WP_CLI::log( implode( ', ', $not_found ) );
 
 	}
+
 	public function import_series( $args, $assoc_args ) {
 		require_once( ABSPATH . 'wp-admin/includes/media.php' );
 		require_once( ABSPATH . 'wp-admin/includes/file.php' );

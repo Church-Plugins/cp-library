@@ -44,7 +44,13 @@ class ItemType extends PostType  {
 	public function add_actions() {
 		parent::add_actions();
 
-		add_filter( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ], 10 );
+		// give other code a chance to hook into sources
+		add_action( 'save_post', function() {
+			foreach ( $this->get_sources() as $key => $source ) {
+				add_filter( 'cmb2_save_post_fields_cpl_series_items_data' . $key, [ $this, 'save_series_items' ], 10 );
+			}
+		}, 5);
+
 		add_filter( 'cmb2_save_post_fields_cpl_series_data', [ $this, 'save_item_series' ], 10 );
 
 		if ( empty( $_GET['cpl-recovery'] ) ) {
@@ -113,18 +119,41 @@ class ItemType extends PostType  {
 	public function register_metaboxes() {
 		$this->sermon_series_metabox();
 
+		// allow for multiple sources for series (ie. locations)
+		foreach( $this->get_sources() as $key => $source ) {
+			$this->series_items( $key, $source );
+		}
+	}
+
+	public function get_sources() {
+		$sources = apply_filters( 'cpl_item_type_sources', [] );
+
+		// save a default value
+		if ( empty( $sources ) ) {
+			$sources = [ '' => '' ];
+		}
+
+		return $sources;
+	}
+
+	public function series_items( $key, $source ) {
+
+		$label = $source ? Item::get_instance()->plural_label . " ($source)" : Item::get_instance()->plural_label;
+		$label = apply_filters( 'cpl_series_items_label', $label, $key, $source );
+
 		$cmb = new_cmb2_box( array(
-			'id'           => 'cpl_series_items_data',
+			'id'           => 'cpl_series_items_data' . $key,
 			'object_types' => [ $this->post_type ],
-			'title'        => Item::get_instance()->plural_label,
+			'title'        => $label,
 			'context'      => 'normal',
 			'show_names'   => true,
 			'priority'     => 'low',
-			'closed' => false,
+			'closed'       => false,
+			'classes'      => 'cpl_series_items_data',
 		) );
 
 		$group_field_id = $cmb->add_field( [
-			'id'         => 'cpl_series_items',
+			'id'         => 'cpl_series_items' . $key,
 			'type'       => 'group',
 			'repeatable' => true,
 			'options'    => [
@@ -221,24 +250,6 @@ class ItemType extends PostType  {
 			'type' => 'file',
 		] );
 
-		$cmb->add_group_field( $group_field_id, [
-			'name' => __( 'Youtube video permalink', 'cp-library' ),
-			'id'   => 'video_id_youtube',
-			'type' => 'text_medium',
-		] );
-
-		$cmb->add_group_field( $group_field_id, [
-			'name' => __( 'Facebook video permalink', 'cp-library' ),
-			'id'   => 'video_id_facebook',
-			'type' => 'text_medium',
-		] );
-
-		$cmb->add_group_field( $group_field_id, [
-			'name' => __( 'Vimeo video id', 'cp-library' ),
-			'id'   => 'video_id_vimeo',
-			'type' => 'text_medium',
-		] );
-
 		foreach( cp_library()->setup->taxonomies->get_objects() as $tax ) {
 			/** @var $tax Taxonomy */
 			$cmb->add_group_field( $group_field_id, [
@@ -287,14 +298,25 @@ class ItemType extends PostType  {
 	 * @author Tanner Moushey
 	 */
 	public function save_series_items( $object_id ) {
-		remove_action( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ] );
+		global $wp_current_filter;
+
+		$current_filter = 'cmb2_save_post_fields_cpl_series_items_data';
+
+		foreach( $wp_current_filter as $filter ) {
+			if ( strstr( $filter, $current_filter ) ) {
+				$current_filter = $filter;
+			}
+		}
+
+		remove_action( $current_filter, [ $this, 'save_series_items' ] );
+		$source = str_replace( 'cmb2_save_post_fields_cpl_series_items_data', '', $current_filter );
 
 		try {
 			$type = Model::get_instance_from_origin( $object_id );
 
-			$data = get_post_meta( $object_id, 'cpl_series_items', true );
+			$data = get_post_meta( $object_id, 'cpl_series_items' . $source, true );
 
-			if ( empty( $data ) ) {
+			if ( empty( $data ) || apply_filters( 'cpl_save_series_items_break', false, $object_id, $source ) ) {
 				return;
 			}
 
@@ -358,6 +380,8 @@ class ItemType extends PostType  {
 				$item->add_type( $type->id );
 				$item->update_type_order( $type->id, $index );
 
+				do_action( 'cpl_save_series_items_item', $item, $object_id, $source );
+
 			}
 
 		} catch ( Exception $e ) {
@@ -381,10 +405,18 @@ class ItemType extends PostType  {
 	 */
 	public function meta_get_override( $data, $object_id, $data_args, $field ) {
 
+		// look for a source suffix
+		$source = str_replace( 'cpl_series_items', '', $data_args['field_id'] );
+
+		// if a source was found, remove it from the field ID
+		if ( $source !== $data_args['field_id'] ) {
+			$data_args['field_id'] = str_replace( $source, '', $data_args['field_id'] );
+		}
+
 		try {
 			switch ( $data_args['field_id'] ) {
 				case 'cpl_series_items':
-					return $this->get_series_items( $data, $object_id );
+					return $this->get_series_items( $data, $object_id, $source );
 				case 'cpl_series':
 					$item = ItemModel::get_instance_from_origin( $object_id );
 					return $item->get_types();
@@ -399,6 +431,7 @@ class ItemType extends PostType  {
 	/**
 	 * @param $data
 	 * @param $object_id
+	 * @param $source String
 	 *
 	 * @return array
 	 * @throws Exception
@@ -406,11 +439,17 @@ class ItemType extends PostType  {
 	 *
 	 * @author Tanner Moushey
 	 */
-	protected function get_series_items( $data, $object_id ) {
+	protected function get_series_items( $data, $object_id, $source = '' ) {
 		$series = Model::get_instance_from_origin( $object_id );
 		$data   = [];
 
 		foreach ( $series->get_items() as $i ) {
+
+			// Allow custom sources to filter out items
+			if ( ! apply_filters( 'cpl_item_type_get_items_use_item', true, $i, $source, $object_id, $data ) ) {
+				continue;
+			}
+
 			$item = new ItemController( $i->origin_id );
 
 			$item_data = [
