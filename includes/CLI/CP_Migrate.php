@@ -50,6 +50,11 @@ class CP_Migrate {
 			$location = $location[0];
 
 			foreach( $messages as $duplicate ) {
+				// already deleted this one
+				if ( in_array( $duplicate->ID,  $deleted ) ) {
+					continue;
+				}
+
 				if ( $duplicate->ID === $message->ID ) {
 					continue;
 				}
@@ -77,7 +82,7 @@ class CP_Migrate {
 
 				if ( $different ) {
 //					$maybe_delete[ $duplicate->ID ] = $duplicate->post_title;
-					continue;
+//					continue;
 				}
 
 				wp_delete_post( $duplicate->ID, true );
