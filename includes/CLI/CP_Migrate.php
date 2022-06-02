@@ -80,6 +80,7 @@ class CP_Migrate {
 					continue;
 				}
 
+				wp_delete_post( $duplicate->ID, true );
 				$deleted[ $duplicate->ID ] = $duplicate->post_title;
 				WP_CLI::log( 'Duplicate: ' . $duplicate->post_title );
 			}
