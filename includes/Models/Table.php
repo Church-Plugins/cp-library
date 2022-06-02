@@ -437,7 +437,7 @@ abstract class Table {
 	}
 
 	/**
-	 * Sets the last_changed cache key for customers.
+	 * Sets the last_changed cache key
 	 *
 	 * @since  1.0
 	 */
@@ -446,7 +446,7 @@ abstract class Table {
 	}
 
 	/**
-	 * Retrieves the value of the last_changed cache key for customers.
+	 * Retrieves the value of the last_changed cache key
 	 *
 	 * @since  1.0.0
 	 */

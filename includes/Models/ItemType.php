@@ -69,6 +69,37 @@ ORDER BY %2$s.order ASC';
 	}
 
 	/**
+	 * Update the ItemType to match the most recent Item. Save the date from the first and last item.
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function update_dates() {
+		$items = $this->get_items();
+		$dates = [];
+
+		if ( empty( $items ) ) {
+			wp_update_post( [ 'ID' => $this->origin_id, 'post_status' => 'draft' ] );
+			return;
+		}
+
+		foreach( $items as $item ) {
+			$dates[] = get_the_date( 'U', $item->origin_id );
+		}
+
+		asort( $dates );
+
+		$first = array_shift( $dates );
+		$last  = array_pop( $dates );
+
+		$this->update_meta_value( 'first_item_date', $first );
+		$this->update_meta_value( 'last_item_date', $last );
+
+		wp_update_post( [ 'ID' => $this->origin_id, 'post_date' => date( 'Y-m-d H:i:s', $last ), 'post_status' => 'publish' ] );
+	}
+
+	/**
 	 * Also delete all item associated meta
 	 *
 	 * @return bool|void

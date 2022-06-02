@@ -21,6 +21,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  */
 class ItemType extends PostType  {
 
+	protected static $_update_dates = [];
+
 	/**
 	 * Child class constructor. Punts to the parent.
 	 *
@@ -53,6 +55,8 @@ class ItemType extends PostType  {
 			}
 		}, 5);
 
+		add_action( 'shutdown', [ $this, 'save_post_date'] );
+		add_action( 'save_post', [ $this, 'post_date' ] );
 		add_filter( 'cmb2_save_post_fields_cpl_series_data', [ $this, 'save_item_series' ], 10 );
 		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'item_type_column' ] );
 		add_action( "manage_{$item_type}_posts_custom_column", [ $this, 'item_type_column_cb' ], 10, 2 );
@@ -567,4 +571,56 @@ class ItemType extends PostType  {
 
 	}
 
+	/**
+	 * Trigger post date calculation
+	 *
+	 * @param $object_id
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function post_date( $object_id ) {
+
+		$post_type = get_post_type( $object_id );
+
+		try {
+			if ( $post_type === $this->post_type ) {
+				$type = Model::get_instance_from_origin( $object_id );
+				self::$_update_dates[] = $type->id;
+			}
+
+			if ( $post_type === Item::get_instance()->post_type ) {
+				$item = ItemModel::get_instance_from_origin( $object_id );
+				foreach ( $item->get_types() as $type_id ) {
+					self::$_update_dates[] = $type_id;
+				}
+			}
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
+
+	}
+
+	/**
+	 * When saving a series, multiple items are saved, this allows us to only run the action once.
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function save_post_date() {
+		remove_action( 'save_post', [ $this, 'post_date' ] );
+
+		$types = array_unique( self::$_update_dates );
+
+		try {
+			foreach ( $types as $type_id ) {
+				$type = Model::get_instance( $type_id );
+				$type->update_dates();
+			}
+		} catch( Exception $e ) {
+			error_log( $e );
+		}
+	}
 }
