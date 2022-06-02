@@ -2,9 +2,9 @@
 Church library plugin for sermons, talks, and other media.
 
 ### Developer info ###
-[![Deployment status from DeployBot](https://iwitness-design.deploybot.com/badge/02267418037485/200896.svg)](https://deploybot.com)
-[![Deployment status from DeployBot](https://iwitness-design.deploybot.com/badge/77558060124950/197383.svg)](https://deploybot.com)
-[![Deployment status from DeployBot](https://iwitness-design.deploybot.com/badge/56046448099960/197530.svg)](https://deploybot.com)
+[![Deployment status from DeployBot](https://iwitness-design.deploybot.com/badge/02267418037485/200896.svg)](https://iwitness-design.deploybot.com/)
+[![Deployment status from DeployBot](https://iwitness-design.deploybot.com/badge/77558060124950/197383.svg)](https://iwitness-design.deploybot.com/)
+[![Deployment status from DeployBot](https://iwitness-design.deploybot.com/badge/56046448099960/197530.svg)](https://iwitness-design.deploybot.com/)
 
 ##### First-time installation  #####
 
