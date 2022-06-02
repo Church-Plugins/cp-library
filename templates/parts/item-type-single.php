@@ -77,7 +77,7 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 						<div class="itemPlayer__video MuiBox-root css-122y91a">
 							<div class="itemDetail__video" style="width: 100%; height: 100%;"></div>
 							<div class="itemDetail__audio MuiBox-root css-1aueuth">
-								<img alt="Richard Ellis logo" src="<?php echo $item_type['thumb']; ?>">
+								<img alt="site logo" src="<?php echo $item_type['thumb']; ?>">
 							</div>
 						</div>
 					</div>
