@@ -2,15 +2,15 @@
 
 }
 
+.file-status {
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
 .cpl_series_items_data {
 
 	.cmb-remove-group-row {
 		display: none;
-	}
-
-	.file-status {
-		text-overflow: ellipsis;
-    overflow: hidden;
 	}
 
 	.cmb-repeatable-grouping {

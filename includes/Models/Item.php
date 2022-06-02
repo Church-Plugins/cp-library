@@ -3,6 +3,7 @@
 namespace CP_Library\Models;
 
 use CP_Library\Exception;
+use ChurchPlugins\Models\Table;
 
 /**
  * Item DB Class

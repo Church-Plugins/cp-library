@@ -30,6 +30,15 @@ class CP_Migrate {
 	public function __construct() {
 	}
 
+	public function delete_messages() {
+		$messages = get_posts( [ 'post_type' => Item::get_prop( 'post_type' ), 'posts_per_page' => -1 ] );
+		foreach ( $messages as $message ) {
+			wp_delete_post( $message->ID, true );
+		}
+
+		WP_CLI::success( 'Deleted ' . count( $messages ) . ' messages' );
+	}
+
 	public function duplicate_message_series( $args, $assoc_args ) {
 		$messages = get_posts( [ 'post_type' => Item::get_prop( 'post_type' ), 'posts_per_page' => -1 ] );
 		$deleted = $maybe_delete = [];
@@ -39,7 +48,7 @@ class CP_Migrate {
 			$title = $message->post_title;
 
 			// already deleted this one
-			if ( in_array( $message->ID, $deleted ) ) {
+			if ( isset( $deleted[ $message->ID ] ) ) {
 				continue;
 			}
 
@@ -51,7 +60,7 @@ class CP_Migrate {
 
 			foreach( $messages as $duplicate ) {
 				// already deleted this one
-				if ( in_array( $duplicate->ID,  $deleted ) ) {
+				if ( isset( $deleted[ $duplicate->ID ] ) ) {
 					continue;
 				}
 
@@ -370,17 +379,15 @@ class CP_Migrate {
 
 				$series_id = $default_series;
 
-				if ( $title !== $series ) {
+				$results = ItemType::search( 'title', $series );
+
+
+				if ( empty( $results ) ) {
 					$results = ItemType::search( 'title', $series, true );
+				}
 
-
-					if ( empty( $results ) ) {
-						$results = ItemType::search( 'title', $series );
-					}
-
-					if ( isset( $results[0] ) ) {
-						$series_id = $results[0]->id;
-					}
+				if ( isset( $results[0] ) ) {
+					$series_id = $results[0]->id;
 				}
 
 				WP_CLI::log( 'Importing ' . $title );
@@ -434,6 +441,10 @@ class CP_Migrate {
 					WP_CLI::log( '--- added video' );
 				}
 
+				if ( strstr( $audio, 'w.soundcloud.com/player' ) ) {
+					$audio = $this->get_soundcloud_url( $audio );
+				}
+
 				if ( $audio ) {
 					update_post_meta( $message_id, 'audio_url', $audio );
 					$item->update_meta_value( 'audio_url', $audio );
@@ -445,6 +456,30 @@ class CP_Migrate {
 			}
 		}
 
+	}
+
+	/**
+	 * Get SoundCloud canonical url from embed code
+	 *
+	 * @param $embed
+	 *
+	 * @return mixed
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_soundcloud_url( $embed ) {
+		$response = wp_remote_get( $embed );
+
+		if ( is_wp_error( $response ) ) {
+			WP_CLI::warnign( 'Could not get connect to ' . $embed );
+		}
+
+		if ( ! preg_match( '/<link rel="canonical" href="([^"]*)/', $response['body'], $url ) ) {
+			WP_CLI::warnign( 'Could not get url from ' . $embed );
+		}
+
+		return $url[1];
 	}
 
 	/**

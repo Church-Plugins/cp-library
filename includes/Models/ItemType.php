@@ -5,6 +5,7 @@ namespace CP_Library\Models;
 use CP_Library\Exception;
 use CP_Library\Setup\Tables\ItemMeta;
 use CP_Library\Setup\Tables\Item;
+use ChurchPlugins\Models\Table;
 
 /**
  * Item DB Class
@@ -90,8 +91,8 @@ ORDER BY %2$s.order ASC';
 
 		asort( $dates );
 
-		$first = array_shift( $dates );
-		$last  = array_pop( $dates );
+		$first = $dates[0];
+		$last  = $dates[ count( $dates ) - 1 ];
 
 		$this->update_meta_value( 'first_item_date', $first );
 		$this->update_meta_value( 'last_item_date', $last );
