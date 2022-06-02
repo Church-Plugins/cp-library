@@ -302,7 +302,7 @@ class ItemType extends PostType  {
 				$cmb->add_group_field( $group_field_id, [
 					'name'              => Speaker::get_instance()->single_label,
 					'id'                => 'speakers',
-					'type'              => 'multicheck_inline',
+					'type'              => 'pw_multiselect',
 					'select_all_button' => false,
 					'options'           => $speakers,
 					'desc' => sprintf( __( '<br />Create a new %s <a href="%s">here</a>.', 'cp-library' ), Speaker::get_instance()->plural_label, add_query_arg( [ 'post_type' => Speaker::get_instance()->post_type ], admin_url( 'post-new.php' ) ) ),
@@ -344,7 +344,7 @@ class ItemType extends PostType  {
 			$cmb->add_group_field( $group_field_id, [
 				'name'              => $tax->plural_label,
 				'id'                => $tax->taxonomy,
-				'type'              => 'multicheck_inline',
+				'type'              => 'pw_multiselect',
 				'select_all_button' => false,
 				'options'           => $tax->get_terms_for_metabox(),
 			] );
