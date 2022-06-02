@@ -30,6 +30,66 @@ class CP_Migrate {
 	public function __construct() {
 	}
 
+	public function duplicate_message_series( $args, $assoc_args ) {
+		$messages = get_posts( [ 'post_type' => Item::get_prop( 'post_type' ), 'posts_per_page' => -1 ] );
+		$deleted = $maybe_delete = [];
+
+		foreach ( $messages as $message ) {
+			$location = wp_get_post_terms( $message->ID, 'cp_location' );
+			$title = $message->post_title;
+
+			// already deleted this one
+			if ( in_array( $message->ID, $deleted ) ) {
+				continue;
+			}
+
+			if ( empty( $location ) ) {
+				continue;
+			}
+
+			$location = $location[0];
+
+			foreach( $messages as $duplicate ) {
+				if ( $duplicate->ID === $message->ID ) {
+					continue;
+				}
+
+				if ( $duplicate->post_title !== $title ) {
+					continue;
+				}
+
+				if ( $duplicate->post_date !== $message->post_date ) {
+					continue;
+				}
+
+				if ( ! has_term( $location->term_id, 'cp_location', $duplicate->ID ) ) {
+					continue;
+				}
+
+				$meta      = [ 'video_url', 'audio_url' ];
+				$different = false;
+
+				foreach( $meta as $key ) {
+					if ( get_post_meta( $message->ID, $key, true ) !== get_post_meta( $duplicate->ID, $key, true ) ) {
+						$different = true;
+					}
+				}
+
+				if ( $different ) {
+//					$maybe_delete[ $duplicate->ID ] = $duplicate->post_title;
+					continue;
+				}
+
+				$deleted[ $duplicate->ID ] = $duplicate->post_title;
+				WP_CLI::log( 'Duplicate: ' . $duplicate->post_title );
+			}
+		}
+
+//		WP_CLI::warning( 'Maybe remove ' . count( $maybe_delete ) . ' messages' );
+//		WP_CLI::log( implode( ', ', $maybe_delete ) );
+		WP_CLI::success( 'Removed ' . count( $deleted ) . ' messages' );
+	}
+
 	public function update_series_meta( $args, $assoc_args ) {
 
 		$speakers = wp_list_pluck(  Speaker::get_all_speakers(), 'title', 'id' );
