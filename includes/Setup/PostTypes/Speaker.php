@@ -100,7 +100,7 @@ class Speaker extends PostType {
 			'name' => __( 'Assign', 'cp-library' ) . ' ' . $this->single_label,
 			'desc' => sprintf( __( 'Create a new %s <a target="_blank" href="%s">here</a>.', 'cp-library' ), $this->plural_label, add_query_arg( [ 'post_type' => $this->post_type ], admin_url( 'post-new.php' ) )  ),
 			'id'   => 'cpl_speaker',
-			'type' => 'multicheck',
+			'type' => 'multiselect',
 			'select_all_button' => false,
 			'options' => $speakers
 		], $this ) );
