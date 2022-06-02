@@ -424,7 +424,7 @@ class CP_Migrate {
 
 				// add taxonomy
 				wp_set_post_terms( $message_id, $location_id, 'cp_location' );
-				wp_set_post_terms( $speaker_id, $location_id, 'cp_location', true );
+				wp_set_post_terms( Speaker::get_instance( $speaker_id )->origin_id, $location_id, 'cp_location', true );
 
 				WP_CLI::log( '--- message created' );
 

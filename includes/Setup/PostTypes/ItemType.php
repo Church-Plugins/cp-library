@@ -57,7 +57,7 @@ class ItemType extends PostType  {
 
 		add_action( 'shutdown', [ $this, 'save_post_date'] );
 		add_action( 'save_post', [ $this, 'post_date' ] );
-		add_filter( 'cmb2_save_post_fields_cpl_series_data', [ $this, 'save_item_series' ], 10 );
+		add_filter( 'cmb2_save_field_cpl_series', [ $this, 'save_item_series' ], 10, 3 );
 		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'item_type_column' ] );
 		add_action( "manage_{$item_type}_posts_custom_column", [ $this, 'item_type_column_cb' ], 10, 2 );
 		add_filter( 'pre_get_posts', [ $this, 'item_item_type_query' ] );
@@ -195,9 +195,12 @@ class ItemType extends PostType  {
 			'name' => __( 'Add to', 'cp-library' ) . ' ' . $this->single_label,
 			'id'   => 'cpl_series',
 			'desc' => sprintf( __( 'Create a new %s <a target="_blank" href="%s">here</a>.', 'cp-library' ), $this->plural_label, add_query_arg( [ 'post_type' => $this->post_type ], admin_url( 'post-new.php' ) )  ),
-			'type' => 'multicheck',
+			'type' => 'pw_multiselect',
 			'select_all_button' => false,
-			'options' => $series
+			'options' => $series,
+			'attributes' => [
+				'placeholder' => sprintf( __( 'Select a %s', 'cp-library' ), $this->single_label ),
+			]
 		], $this ) );
 
 	}
@@ -352,18 +355,15 @@ class ItemType extends PostType  {
 	/**
 	 * Save item series to the item_meta table
 	 *
-	 * @param $object_id
-	 *
 	 * @since  1.0.0
 	 *
 	 * @author Tanner Moushey
 	 */
-	public function save_item_series( $object_id ) {
-		remove_filter( 'cmb2_save_post_fields_cpl_series_data', [ $this, 'save_item_series' ] );
+	public function save_item_series( $updated, $actions, $field ) {
 		try {
-			$item = ItemModel::get_instance_from_origin( $object_id );
+			$item = ItemModel::get_instance_from_origin( $field->object_id );
 
-			if ( ! $series = get_post_meta( $object_id, 'cpl_series', true ) ) {
+			if ( ! $series = array_map( 'absint', $field->data_to_save[ $field->id( true ) ] ) ) {
 				$series = [];
 			}
 

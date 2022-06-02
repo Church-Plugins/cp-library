@@ -37,7 +37,7 @@ class Speaker extends PostType {
 	public function add_actions() {
 		parent::add_actions();
 
-		add_filter( 'cmb2_save_post_fields_cpl_speaker_data', [ $this, 'save_item_speaker' ], 10 );
+		add_filter( 'cmb2_save_field_cpl_speaker', [ $this, 'save_item_speaker' ], 10, 3 );
 		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
 	}
 
@@ -100,9 +100,12 @@ class Speaker extends PostType {
 			'name' => __( 'Assign', 'cp-library' ) . ' ' . $this->single_label,
 			'desc' => sprintf( __( 'Create a new %s <a target="_blank" href="%s">here</a>.', 'cp-library' ), $this->plural_label, add_query_arg( [ 'post_type' => $this->post_type ], admin_url( 'post-new.php' ) )  ),
 			'id'   => 'cpl_speaker',
-			'type' => 'multiselect',
+			'type' => 'pw_multiselect',
 			'select_all_button' => false,
-			'options' => $speakers
+			'options' => $speakers,
+			'attributes' => [
+				'placeholder' => sprintf( __( 'Select a %s', 'cp-library' ), $this->single_label ),
+			]
 		], $this ) );
 	}
 
@@ -137,18 +140,15 @@ class Speaker extends PostType {
 	/**
 	 * Save item series to the item_meta table
 	 *
-	 * @param $object_id
-	 *
 	 * @since  1.0.0
 	 *
 	 * @author Tanner Moushey
 	 */
-	public function save_item_speaker( $object_id ) {
-		remove_filter( 'cmb2_save_post_fields_cpl_speaker_data', [ $this, 'save_item_speaker' ] );
+	public function save_item_speaker( $updated, $action, $field ) {
 		try {
-			$item = ItemModel::get_instance_from_origin( $object_id );
+			$item = ItemModel::get_instance_from_origin( $field->object_id );
 
-			if ( ! $speakers = get_post_meta( $object_id, 'cpl_speaker', true ) ) {
+			if ( ! $speakers = array_map( 'absint', $field->data_to_save[ $field->id( true ) ] ) ) {
 				$speakers = [];
 			}
 
