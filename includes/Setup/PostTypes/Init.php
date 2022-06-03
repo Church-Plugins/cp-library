@@ -107,7 +107,7 @@ class Init {
 	 */
 	protected function actions() {
 		add_filter( 'use_block_editor_for_post_type', [ $this, 'disable_gutenberg' ], 10, 2 );
-		add_action( 'init', [ $this, 'register_post_types' ] );
+		add_action( 'init', [ $this, 'register_post_types' ], 4 );
 	}
 
 	public function register_post_types() {
