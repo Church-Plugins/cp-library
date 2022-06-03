@@ -21,7 +21,18 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  */
 class Item extends Table  {
 
+	/**
+	 * Item speakers
+	 *
+	 * @var bool
+	 */
 	protected $speakers = false;
+
+	/**
+	 * Item types
+	 * 
+	 * @var bool
+	 */
 	protected $types = false;
 
 	public function init() {
