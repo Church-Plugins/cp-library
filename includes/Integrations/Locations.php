@@ -61,8 +61,12 @@ class Locations {
 	 * @author Tanner Moushey
 	 */
 	public function item_type_sources( $sources ) {
+		$user_locations = cp_locations()->setup->permissions::get_user_locations( false, true );
+
 		foreach( cp_locations()->setup->taxonomies->location->get_terms() as $term_id => $location ) {
-			$sources[ $term_id ] = $location;
+			if ( empty( $user_locations ) || in_array( $term_id, $user_locations ) ) {
+				$sources[ $term_id ] = $location;
+			}
 		}
 
 		return $sources;

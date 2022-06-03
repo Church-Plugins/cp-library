@@ -60,7 +60,8 @@ class ItemType extends PostType  {
 		add_filter( 'cmb2_save_field_cpl_series', [ $this, 'save_item_series' ], 10, 3 );
 		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'item_type_column' ] );
 		add_action( "manage_{$item_type}_posts_custom_column", [ $this, 'item_type_column_cb' ], 10, 2 );
-		add_filter( 'pre_get_posts', [ $this, 'item_item_type_query' ] );
+		add_action( 'pre_get_posts', [ $this, 'default_posts_per_page' ] );
+		add_action( 'pre_get_posts', [ $this, 'item_item_type_query' ] );
 
 		if ( empty( $_GET['cpl-recovery'] ) ) {
 			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
@@ -151,6 +152,14 @@ class ItemType extends PostType  {
 			error_log( $e );
 		}
 
+	}
+
+	public function default_posts_per_page( $query ) {
+		if ( ! in_array( $query->get( 'post_type' ), [ $this->post_type ] ) ) {
+			return;
+		}
+
+		$query->set( 'posts_per_page', 12 );
 	}
 
 	/**
@@ -310,7 +319,6 @@ class ItemType extends PostType  {
 			}
 
 		}
-
 
 		$cmb->add_group_field( $group_field_id, [
 			'name' => 'Date',
