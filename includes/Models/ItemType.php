@@ -5,6 +5,7 @@ namespace CP_Library\Models;
 use CP_Library\Exception;
 use CP_Library\Setup\Tables\ItemMeta;
 use CP_Library\Setup\Tables\Item;
+use CP_Library\Models\Item as ItemModel;
 use ChurchPlugins\Models\Table;
 
 /**
@@ -74,6 +75,12 @@ WHERE %2$s.key = "item_type" AND %2$s.item_type_id = %3$d
 ORDER BY %2$s.order ASC';
 
 			$this->items = $wpdb->get_results( $wpdb->prepare( $sql, $item->table_name, $meta->table_name, $this->id ) );
+
+			foreach( $this->items as $item ) {
+				$item = new ItemModel( $item );
+				$item->update_cache();
+			}
+
 			$this->update_cache();
 		}
 
