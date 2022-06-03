@@ -155,6 +155,10 @@ class ItemType extends PostType  {
 	}
 
 	public function default_posts_per_page( $query ) {
+		if ( is_admin() ) {
+			return;
+		}
+
 		if ( ! in_array( $query->get( 'post_type' ), [ $this->post_type ] ) ) {
 			return;
 		}
