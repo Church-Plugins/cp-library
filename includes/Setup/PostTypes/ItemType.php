@@ -639,14 +639,16 @@ class ItemType extends PostType  {
 				$type = Model::get_instance( $type_id );
 				$update = $type->update_dates();
 
-				if ( 'draft' === $update ) {
-					wp_redirect( $this->message__set_to_draft( $type->origin_id ) );
-					exit;
-				}
+				if ( count( $types ) === 1 ) {
+					if ( 'draft' === $update ) {
+						wp_redirect( $this->message__set_to_draft( $type->origin_id ) );
+						exit;
+					}
 
-				if ( 'publish' === $update ) {
-					wp_redirect( $this->message__set_to_publish( $type->origin_id ) );
-					exit;
+					if ( 'publish' === $update ) {
+						wp_redirect( $this->message__set_to_publish( $type->origin_id ) );
+						exit;
+					}
 				}
 			}
 		} catch( Exception $e ) {
