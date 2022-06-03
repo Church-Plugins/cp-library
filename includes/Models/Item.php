@@ -2,7 +2,7 @@
 
 namespace CP_Library\Models;
 
-use CP_Library\Exception;
+use ChurchPlugins\Exception;
 use ChurchPlugins\Models\Table;
 
 /**
@@ -30,7 +30,7 @@ class Item extends Table  {
 
 	/**
 	 * Item types
-	 * 
+	 *
 	 * @var bool
 	 */
 	protected $types = false;
@@ -150,11 +150,26 @@ class Item extends Table  {
 			];
 
 			$this->update_meta( $data, false );
+
+			// update cache for this type
+			try {
+				$typeModel = ItemType::get_instance( absint( $type ) );
+				$typeModel->get_items( true );
+			} catch ( Exception $e ) {
+				error_log( $e );
+			}
 		}
 
 		// remove any types which should no longer be attached
 		foreach( $existing_types as $type ) {
 			$this->delete_meta( absint( $type ), 'item_type_id' );
+
+			try {
+				$typeModel = ItemType::get_instance( absint( $type ) );
+				$typeModel->get_items( true );
+			} catch ( Exception $e ) {
+				error_log( $e );
+			}
 		}
 
 		$this->types = $types;

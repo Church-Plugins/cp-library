@@ -23,6 +23,8 @@ class ItemType extends PostType  {
 
 	protected static $_update_dates = [];
 
+	protected static $_did_save = false;
+
 	/**
 	 * Child class constructor. Punts to the parent.
 	 *
@@ -50,6 +52,11 @@ class ItemType extends PostType  {
 
 		// give other code a chance to hook into sources
 		add_action( 'save_post', function() {
+			if ( self::$_did_save ) {
+				return;
+			}
+
+			self::$_did_save = true;
 			foreach ( $this->get_sources() as $key => $source ) {
 				add_filter( 'cmb2_save_post_fields_cpl_series_items_data' . $key, [ $this, 'save_series_items' ], 10 );
 			}
@@ -62,6 +69,7 @@ class ItemType extends PostType  {
 		add_action( "manage_{$item_type}_posts_custom_column", [ $this, 'item_type_column_cb' ], 10, 2 );
 		add_action( 'pre_get_posts', [ $this, 'default_posts_per_page' ] );
 		add_action( 'pre_get_posts', [ $this, 'item_item_type_query' ] );
+		add_filter( 'post_updated_messages', [ $this, 'post_update_messages' ] );
 
 		if ( empty( $_GET['cpl-recovery'] ) ) {
 			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
@@ -436,7 +444,7 @@ class ItemType extends PostType  {
 					wp_update_post( [
 						'ID'           => $item_data['id'],
 						'post_title'   => $item_data['title'],
-						'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ),
+						'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ? $item_data['date'] : current_time( 'timestamp' ) ),
 						'post_content' => $item_data['content'],
 					] );
 				}
@@ -629,10 +637,37 @@ class ItemType extends PostType  {
 		try {
 			foreach ( $types as $type_id ) {
 				$type = Model::get_instance( $type_id );
-				$type->update_dates();
+				$update = $type->update_dates();
+
+				if ( 'draft' === $update ) {
+					wp_redirect( $this->message__set_to_draft( $type->origin_id ) );
+					exit;
+				}
+
+				if ( 'publish' === $update ) {
+					wp_redirect( $this->message__set_to_publish( $type->origin_id ) );
+					exit;
+				}
 			}
 		} catch( Exception $e ) {
 			error_log( $e );
 		}
+	}
+
+	public function message__set_to_draft( $post_id ) {
+		return add_query_arg( 'message', '99', get_edit_post_link( $post_id, 'url' ) );
+	}
+
+	public function message__set_to_publish( $post_id ) {
+		return add_query_arg( 'message', '98', get_edit_post_link( $post_id, 'url' ) );
+	}
+
+	public function post_update_messages( $messages ) {
+		global $post;
+
+		$messages['post'][99] = sprintf( __( '%s was set to draft because there were no associated %s', 'cp-library'), get_the_title( $post->ID ), Item::get_instance()->plural_label );
+		$messages['post'][98] = sprintf( __( '%s was set to publish it contains %s', 'cp-library' ), get_the_title( $post->ID ), Item::get_instance()->plural_label );
+
+		return $messages;
 	}
 }

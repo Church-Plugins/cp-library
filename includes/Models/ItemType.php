@@ -61,10 +61,10 @@ class ItemType extends Table  {
 		return apply_filters( 'cpl_get_all_item_types', self::$_all_types );
 	}
 
-	public function get_items() {
+	public function get_items( $force = false ) {
 		global $wpdb;
 
-		if ( false === $this->items ) {
+		if ( false === $this->items || $force ) {
 			$meta = ItemMeta::get_instance();
 			$item = Item::get_instance();
 
@@ -98,9 +98,14 @@ ORDER BY %2$s.order ASC';
 		$items = $this->get_items();
 		$dates = [];
 
+		$status = get_post_status( $this->origin_id );
 		if ( empty( $items ) ) {
-			wp_update_post( [ 'ID' => $this->origin_id, 'post_status' => 'draft' ] );
-			return;
+			if ( 'publish' === $status && apply_filters( 'cpl_item_type_require_items', true, $this ) ) {
+				wp_update_post( [ 'ID' => $this->origin_id, 'post_status' => 'draft' ] );
+				return 'draft';
+			}
+
+			return true;
 		}
 
 		foreach( $items as $item ) {
@@ -116,6 +121,8 @@ ORDER BY %2$s.order ASC';
 		$this->update_meta_value( 'last_item_date', $last );
 
 		wp_update_post( [ 'ID' => $this->origin_id, 'post_date' => date( 'Y-m-d H:i:s', $last ), 'post_status' => 'publish' ] );
+
+		return 'publish' == $status ? true : 'publish';
 	}
 
 	/**
