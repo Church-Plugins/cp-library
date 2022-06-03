@@ -21,6 +21,9 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  */
 class Item extends Table  {
 
+	protected $speakers = false;
+	protected $types = false;
+
 	public function init() {
 		$this->type = 'item';
 		$this->post_type = 'cpl_item';
@@ -39,11 +42,14 @@ class Item extends Table  {
 	public function get_speakers() {
 		global $wpdb;
 
-		$speaker = Speaker::get_instance();
-		$speaker_type = Speaker::get_type_id();
-		$speakers = $wpdb->get_col( $wpdb->prepare( "SELECT `source_id` FROM " . $speaker->get_prop( 'meta_table_name' ) . " WHERE `key` = 'source_item' AND `item_id` = %d AND `source_type_id` = %d;", $this->id, $speaker_type ) );
+		if ( false === $this->speakers ) {
+			$speaker        = Speaker::get_instance();
+			$speaker_type   = Speaker::get_type_id();
+			$this->speakers = $wpdb->get_col( $wpdb->prepare( "SELECT `source_id` FROM " . $speaker->get_prop( 'meta_table_name' ) . " WHERE `key` = 'source_item' AND `item_id` = %d AND `source_type_id` = %d;", $this->id, $speaker_type ) );
+			$this->update_cache();
+		}
 
-		return apply_filters( 'cpl_item_get_speakers', $speakers, $this );
+		return apply_filters( 'cpl_item_get_speakers', $this->speakers, $this );
 	}
 
 	/**
@@ -82,6 +88,9 @@ class Item extends Table  {
 			$speaker_model->delete_meta( absint( $this->id ), 'item_id' );
 		}
 
+		$this->speakers = $speakers;
+		$this->update_cache();
+
 		return true;
 	}
 
@@ -96,9 +105,12 @@ class Item extends Table  {
 	public function get_types() {
 		global $wpdb;
 
-		$types = $wpdb->get_col( $wpdb->prepare( "SELECT `item_type_id` FROM " . $this->meta_table_name . " WHERE `key` = 'item_type' AND `item_id` = %d;", $this->id ) );
+		if ( false === $this->types ) {
+			$this->types = $wpdb->get_col( $wpdb->prepare( "SELECT `item_type_id` FROM " . $this->meta_table_name . " WHERE `key` = 'item_type' AND `item_id` = %d;", $this->id ) );
+			$this->update_cache();
+		}
 
-		return apply_filters( 'cpl_item_get_types', $types, $this );
+		return apply_filters( 'cpl_item_get_types', $this->types, $this );
 	}
 
 	/**
@@ -133,6 +145,9 @@ class Item extends Table  {
 		foreach( $existing_types as $type ) {
 			$this->delete_meta( absint( $type ), 'item_type_id' );
 		}
+
+		$this->types = $types;
+		$this->update_cache();
 
 		return true;
 	}

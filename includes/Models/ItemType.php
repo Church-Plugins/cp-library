@@ -23,6 +23,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  */
 class ItemType extends Table  {
 
+	protected $items = false;
+
+	protected static $_all_types = false;
+
 	public function init() {
 		$this->type = 'item_type';
 		$this->post_type = 'cpl_item_type';
@@ -41,32 +45,39 @@ class ItemType extends Table  {
 	public static function get_all_types() {
 		global $wpdb;
 
-		$instance = new self();
+		if ( false === self::$_all_types ) {
+			$instance = new self();
 
-		$types = $wpdb->get_results( "SELECT * FROM " . $instance->table_name );
+			$types = $wpdb->get_results( "SELECT * FROM " . $instance->table_name );
 
-		if ( ! $types ) {
-			$types = [];
+			if ( ! $types ) {
+				$types = [];
+			}
+
+			self::$_all_types = $types;
 		}
 
-		return apply_filters( 'cpl_get_all_item_types', $types );
+		return apply_filters( 'cpl_get_all_item_types', self::$_all_types );
 	}
 
 	public function get_items() {
 		global $wpdb;
 
-		$meta  = ItemMeta::get_instance();
-		$item  = Item::get_instance();
+		if ( false === $this->items ) {
+			$meta = ItemMeta::get_instance();
+			$item = Item::get_instance();
 
-		$sql = 'SELECT %1$s.* FROM %1$s
+			$sql = 'SELECT %1$s.* FROM %1$s
 INNER JOIN %2$s
 ON %1$s.id = %2$s.item_id
 WHERE %2$s.key = "item_type" AND %2$s.item_type_id = %3$d
 ORDER BY %2$s.order ASC';
 
-		$items = $wpdb->get_results( $wpdb->prepare( $sql, $item->table_name, $meta->table_name, $this->id ) );
+			$this->items = $wpdb->get_results( $wpdb->prepare( $sql, $item->table_name, $meta->table_name, $this->id ) );
+			$this->update_cache();
+		}
 
-		return apply_filters( 'cpl_item_type_get_items', $items, $this );
+		return apply_filters( 'cpl_item_type_get_items', $this->items, $this );
 	}
 
 	/**
