@@ -330,7 +330,7 @@ export default function PersistentPlayer(props) {
 
         {mode === "audio" &&
          <Box>
-	         <FilePlayer
+	         <VideoPlayer
 		         ref={playerInstance}
 		         controls={false}
 		         url={item.audio}
@@ -350,7 +350,7 @@ export default function PersistentPlayer(props) {
 		         progressInterval={100}
 	         >
 		         Your browser does not support the audio element.
-	         </FilePlayer>
+	         </VideoPlayer>
 
 	         <Box position='absolute' zIndex={50} top={0} right={0} className='persistentPlayer__close'>
 		         <IconButton onClick={closePlayer}><Cancel/></IconButton>
