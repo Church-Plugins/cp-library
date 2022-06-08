@@ -43,6 +43,9 @@ class Locations {
 		add_filter( 'cpl_item_type_sources', [ $this, 'item_type_sources' ] );
 		add_filter( 'cpl_item_type_get_items_use_item', [ $this, 'check_item_source' ], 10, 3 );
 		add_action( 'cpl_save_series_items_item', [ $this, 'item_save_location' ], 10, 3 );
+		add_filter( 'cpl_item_type_get_items', [ $this, 'messages_by_location' ], 10, 2 );
+		add_filter( 'cploc_add_location_to_query', [ $this, 'taxonomies_for_location_query' ], 10, 2 );
+
 	}
 
 	/** Actions ***************************************************/
@@ -107,5 +110,56 @@ class Locations {
 		}
 
 		wp_set_post_terms( $item->origin_id, $source, cp_locations()->setup->taxonomies->location->taxonomy, true );
+	}
+
+	/**
+	 * Only return the messages for the given location
+	 *
+	 * @param $items
+	 * @param $item_type
+	 *
+	 * @return array|mixed
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function messages_by_location( $items, $item_type ) {
+		if ( ! function_exists( 'cp_locations' ) ) {
+			return $items;
+		}
+
+		$tax = cp_locations()->setup->taxonomies->location->taxonomy;
+		if ( ! $location = cp_locations()->setup->taxonomies->location::get_rewrite_location() ) {
+			return $items;
+		}
+
+		$location_items = [];
+		foreach ( $items as $item ) {
+			if ( has_term( $location['term'], $tax, $item->origin_id ) ) {
+				$location_items[] = $item;
+			}
+		}
+
+		return $location_items;
+	}
+
+	/**
+	 * Check if query is for taxonomies attached to the library
+	 *
+	 * @param $return
+	 * @param $query
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function taxonomies_for_location_query( $return, $query ) {
+		foreach( cp_library()->setup->taxonomies->get_taxonomies() as $taxonomy ) {
+			if ( ! empty( $query->query_vars[ $taxonomy ] ) ) {
+				return true;
+			}
+		}
+
+		return $return;
 	}
 }

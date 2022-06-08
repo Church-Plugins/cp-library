@@ -7,10 +7,13 @@ try {
 	return;
 }
 
-function cpl_item_back() {
-	?>
-	<a class="back-link cpl-single-item--back" href="<?php echo get_post_type_archive_link( cp_library()->setup->post_types->item->post_type ); ?>"><?php printf( __('Back to all %s', 'cp-library' ), strtolower( cp_library()->setup->post_types->item->plural_label ) ); ?></a>
-	<?php
+if ( ! function_exists( 'cpl_item_back' ) ) {
+	function cpl_item_back() {
+		?>
+		<a class="back-link cpl-single-item--back"
+		   href="<?php echo get_post_type_archive_link( cp_library()->setup->post_types->item->post_type ); ?>"><?php printf( __( 'Back to all %s', 'cp-library' ), strtolower( cp_library()->setup->post_types->item->plural_label ) ); ?></a>
+		<?php
+	}
 }
 add_action( 'cpl_single_item_before', 'cpl_item_back' );
 ?>
