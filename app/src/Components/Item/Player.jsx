@@ -204,7 +204,7 @@ export default function Player({
     if (!item) return;
 
     if ( item.thumb ) {
-    	setDisplayBG( { background: "url(" + item.thumb + ")", backgroundSize: "cover" } );
+    	setDisplayBG( { background: "url(" + item.thumb + ")", backgroundSize: "cover", backgroundPosition: "center center" } );
     }
 
   }, [item]);
