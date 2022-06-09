@@ -12,12 +12,11 @@
 	}
 
 	&--back {
-		margin-bottom: 1rem;
+		margin-bottom: var(--cp-gap--md);
 		display: inline-block;
 
 		&:before {
-			content: '←';
-			margin-right: .5em;
+			content: '← ';
 		}
 	}
 }

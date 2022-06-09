@@ -86,10 +86,6 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 			</div>
 
 			<div class="cpl-single-type--content">
-				<div class="cpl-single-type--title">
-					<h1><?php the_title(); ?></h1>
-				</div>
-
 				<div class="cpl-meta">
 					<div class="cpl-meta--date">
 						<span class="material-icons-outlined">calendar_today</span>
@@ -118,16 +114,19 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 					<?php endif; ?>
 				</div>
 
+				<div class="cpl-single-type--title">
+					<h1><?php the_title(); ?></h1>
+				</div>
+
 				<div class="cpl-single-type--desc">
 					<?php the_content(); ?>
 				</div>
 			</div>
 
-
 		</div>
 	<?php endif; ?>
 
-	<h2 class="cpl-single-type--items-title"><?php printf( __( '%s: %s', 'cp-library' ), cp_library()->setup->post_types->item_type->plural_label, get_the_title() ); ?></h2>
+	<p class="cpl-single-type--items-title"><?php printf( '%s: %s', cp_library()->setup->post_types->item->plural_label, count( $item_type['items'] ) ); ?></p>
 
 	<section class="cpl-single-type--items">
 		<?php foreach ( $item_type['items'] as $item ) : $post = get_post( $item['originID'] );setup_postdata( $post ); ?>

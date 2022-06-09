@@ -1,5 +1,10 @@
 .cpl-single-type {
 
+	&--media {
+		border-radius: var(--cp-border-radius);
+		overflow: hidden;
+	}
+
 	&--container {
 		display: flex;
 		flex-direction: row;
@@ -9,17 +14,9 @@
 	&--back {
 		margin-bottom: 1rem;
 		display: inline-block;
+
 		&:before {
-			content: '←';
-			margin-right: .5em;
-		}
-	}
-
-	&--meta {
-		display: flex;
-
-		> * {
-			margin-right: 1rem;
+			content: '← ';
 		}
 	}
 

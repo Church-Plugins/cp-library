@@ -53,6 +53,10 @@ class Item extends Table  {
 	public function get_speakers() {
 		global $wpdb;
 
+		if ( ! cp_library()->setup->post_types->speaker_enabled() ) {
+			return [];
+		}
+
 		if ( false === $this->speakers ) {
 			$speaker        = Speaker::get_instance();
 			$speaker_type   = Speaker::get_type_id();

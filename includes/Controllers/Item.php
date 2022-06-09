@@ -6,6 +6,7 @@ use ChurchPlugins\Models\Log;
 use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Models\Item as ItemModel;
+use CP_Library\Models\Speaker;
 use CP_Library\Util\Convenience;
 
 class Item {
@@ -258,6 +259,31 @@ class Item {
 
 	}
 
+	/**
+	 * Get speakers for this Item
+	 *
+	 * @return mixed|void
+	 * @throws \ChurchPlugins\Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_speakers() {
+		$speaker_ids = $this->model->get_speakers();
+		$speakers = [];
+
+		foreach( $speaker_ids as $id ) {
+			$speaker  = Speaker::get_instance( $id );
+			$speakers[] = [
+				'id'    => $speaker->id,
+				'title' => $speaker->title,
+				'origin_id' => $speaker->origin_id,
+			];
+		}
+
+		return $this->filter( $speakers, __FUNCTION__ );
+	}
+
 	public function get_api_data() {
 		$data = [
 			'id'        => $this->model->id,
@@ -269,6 +295,7 @@ class Item {
 			'desc'      => $this->get_content(),
 			'date'      => [ 'desc' => Convenience::relative_time( $this->get_publish_date() ), 'timestamp' => $this->get_publish_date() ],
 			'category'  => $this->get_categories(),
+			'speakers'  => $this->get_speakers(),
 			'video'     => $this->get_video(),
 			'audio'     => $this->get_audio(),
 			'types'     => $this->get_types(),

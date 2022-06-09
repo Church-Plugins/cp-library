@@ -31,33 +31,13 @@ try {
 			</div>
 		<?php endif; ?>
 
-		<div class="cpl-meta">
-			<div class="cpl-meta--date">
-				<span class="material-icons-outlined">calendar_today</span>
-
-				<span class="MuiBox-root css-1isemmb"><?php echo $item["date"]["desc"]; ?></span>
+		<?php if ( ! empty( $item['speakers'] ) ) : ?>
+			<div class="cpl-meta--speakers">
+				<?php echo implode( ', ', wp_list_pluck( $item['speakers'], 'title' ) ); ?>
 			</div>
+		<?php endif; ?>
 
-			<?php if ( ! empty( $item['topics'] ) ) : ?>
-				<div class="cpl-meta--topics">
-					<span class="material-icons-outlined">sell</span>
-
-					<?php foreach ( $item['topics'] as $topic ) : ?>
-						<a href="<?php echo esc_url( $topic['url'] ); ?>"><?php echo esc_html( $topic['name'] ); ?></a>
-					<?php endforeach; ?>
-				</div>
-			<?php endif; ?>
-
-			<?php if ( ! empty( $item['scripture'] ) ) : ?>
-				<div class="cpl-meta--scripture">
-					<span class="material-icons-outlined">menu_book</span>
-
-					<?php foreach ( $item['scripture'] as $scripture ) : ?>
-						<a href="<?php echo esc_url( $scripture['url'] ); ?>"><?php echo esc_html( $scripture['name'] ); ?></a><span class="cpl-separator">, </span>
-					<?php endforeach; ?>
-				</div>
-			<?php endif; ?>
-		</div>
+		<?php \CP_Library\Templates::get_template_part( 'parts/item-single/meta' ); ?>
 	</div>
 
 	<div class="cpl_item_actions" data-item="<?php echo esc_attr( json_encode( $item ) ); ?>" ></div>

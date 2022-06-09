@@ -1,9 +1,18 @@
 .cpl-single-item {
 
+	&--details {
+		margin-top: var(--cp-gap--sm);
+	}
+
+	&--media {
+		border-radius: var(--cp-border-radius);
+		overflow: hidden;
+	}
+
 	&--title {
 		h1 {
-			font-size: 1.5rem;
-			margin: 0.5rem 0;
+			font-size: var(--cp-font-size-h3);
+			margin: var(--cp-gap-base) 0;
 		}
 
 		@include media-breakpoint-down(md) {
@@ -19,10 +28,6 @@
 
 	}
 
-	&--types {
-		font-size: 1.25em;
-	}
-
 	@include media-breakpoint-up(lg) {
 		&--content {
 			padding-right: 10%;
@@ -30,8 +35,8 @@
 		}
 
 		&--media {
-			margin-top: -2rem;
-			flex: 1 0 60%;
+			//margin-top: -2rem;
+			flex: 0 0 60%;
 		}
 	}
 
