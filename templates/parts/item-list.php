@@ -1,5 +1,5 @@
 <?php
-
+use ChurchPlugins\Helpers;
 try {
 	$item = new \CP_Library\Controllers\Item( get_the_ID() );
 	$item = $item->get_api_data();
@@ -23,7 +23,8 @@ try {
 	<div class="cpl-list-item--details">
 		<h3 class="cpl-list-item--title"><a href="<?php the_permalink(); ?>"><?php echo $item['title']; ?></a></h3>
 
-		<?php if ( ! empty( $item['types'] ) ) : ?>
+		<?php \CP_Library\Templates::get_template_part( 'parts/item-single/info' ); ?>
+		<?php if ( 0 && ! empty( $item['types'] ) ) : ?>
 			<div class="cpl-list-item--types">
 				<?php foreach ( $item['types'] as $type ) : ?>
 					<a href="<?php echo esc_url( $type['permalink'] ); ?>"><?php echo esc_html( $type['title'] ); ?></a><span class="cpl-separator">, </span>
@@ -31,7 +32,7 @@ try {
 			</div>
 		<?php endif; ?>
 
-		<?php if ( ! empty( $item['speakers'] ) ) : ?>
+		<?php if ( 0 && ! empty( $item['speakers'] ) ) : ?>
 			<div class="cpl-meta--speakers">
 				<?php echo implode( ', ', wp_list_pluck( $item['speakers'], 'title' ) ); ?>
 			</div>

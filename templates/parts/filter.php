@@ -4,13 +4,21 @@ use ChurchPlugins\Helpers;
 $taxonomies = cp_library()->setup->taxonomies->get_objects();
 $uri = explode( '?', $_SERVER['REQUEST_URI'] )[0];
 $get = $_GET;
+
+$display = '';
+
+if ( empty( $get ) ) {
+	$display = 'style="display: none;"';
+}
+
+$display = apply_filters( 'cpl_filters_display', $display );
 ?>
 <div class="cpl-filter">
 
 	<form method="get" class="cpl-filter--form">
 
-		<div class="cpl-filter--submit">
-			<button type="submit" class="cpl-filter--submit--button cpl-button"><?php _e( 'Filter', 'cp-library' ); ?></button>
+		<div class="cpl-filter--toggle">
+			<a href="#" class="cpl-filter--toggle--button cpl-button"><span><?php _e( 'Filter', 'cp-library' ); ?></span> <?php echo Helpers::get_icon( 'filter' ); ?></a>
 		</div>
 
 		<?php foreach( $taxonomies as $tax ) :
@@ -20,8 +28,8 @@ $get = $_GET;
 				continue;
 			} ?>
 
-			<div class="cpl-filter--<?php echo esc_attr( $tax->taxonomy ); ?> cpl-filter--has-dropdown">
-				<button class="cpl-filter--dropdown-button cpl-button cpl-button--transparent"><?php echo $tax->plural_label; ?></button>
+			<div class="cpl-filter--<?php echo esc_attr( $tax->taxonomy ); ?> cpl-filter--has-dropdown" <?php echo $display; ?>>
+				<a href="#" class="cpl-filter--dropdown-button cpl-button is-light"><?php echo $tax->plural_label; ?></a>
 				<div class="cpl-filter--dropdown">
 					<?php foreach ( $terms as $term ) : ?>
 						<label>
@@ -35,18 +43,24 @@ $get = $_GET;
 		<div class="cpl-filter--search">
 			<div class="cpl-filter--search--box">
 				<button type="submit"><span class="material-icons-outlined">search</span></button>
-				<input type="text" name="s" value="<?php echo Helpers::get_param( $_GET, 's' ); ?>" />
+				<input type="text" name="s" value="<?php echo Helpers::get_param( $_GET, 's' ); ?>" placeholder="<?php _e( 'Search', 'cp-library' ); ?>"/>
 			</div>
 		</div>
 
 	</form>
 
 	<script>
+
+	  	jQuery('.cpl-filter--toggle--button').on('click', function(e) {
+			e.preventDefault();
+			jQuery('.cpl-filter--has-dropdown').toggle();
+		});
+
 	  	jQuery('.cpl-filter--form input[type=checkbox]').on('change', function() {
 			jQuery('.cpl-filter--form').submit();
 		});
 
-		jQuery('.cpl-filter--has-dropdown button').on( 'click', function(e) {
+		jQuery('.cpl-filter--has-dropdown a').on( 'click', function(e) {
 			e.preventDefault();
 			jQuery(this).parent().toggleClass('open');
 		})

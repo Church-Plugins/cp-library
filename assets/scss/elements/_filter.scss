@@ -10,7 +10,7 @@
 
 		> * {
 			&:not(:first-child) {
-				margin-left: .75rem;
+				margin-left: var(--cp-gap--sm);
 			}
 		}
 
@@ -49,14 +49,19 @@
 	&--dropdown {
 		display: none;
 		background: white;
-		padding: .75em;
-		box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.05);
+		padding: var(--cp-gap--sm) var(--cp-gap--md);
+		box-shadow: var(--cp-box-shadow);
 		border-radius: .5em;
 		margin-top: .25em;
 		position: absolute;
 		top: 100%;
 		left: 0;
 		min-width: 100%;
+		z-index: 5555;
+		width: calc( 100% + var(--cp-gap--xl) );
+		margin-left: calc(var(--cp-gap--xl) / 2 * -1);
+		max-height: 50vh;
+		overflow: scroll;
 
 		label {
 			display: block;
@@ -77,17 +82,23 @@
 			background: white;
 			display: flex;
 			align-items: center;
-			padding: .5em;
-			border-radius: 20px;
+			padding: var(--cp-ui--gap-y-x);
+			border-radius: var(--cp-border-radius);
+			border: 1px solid var(--cp-color-text-disabled);
 
 			svg, button {
 				padding: 0;
 				margin: 0 .5em 0 0;
 				background: transparent;
 				color: inherit;
+
+				> * {
+					display: block;
+				}
 			}
 
 			input[type=text] {
+				width: 8em;
 				padding: 0;
 				background: transparent;
 				border: none !important;

@@ -34,24 +34,7 @@ add_action( 'cpl_single_item_before', 'cpl_item_back' );
 				<h1><?php the_title(); ?></h1>
 			</div>
 
-			<div class="cpl-single-item--info cpl-info">
-				<?php if ( ! empty( $item['speakers'] ) ) : ?>
-					<div class="cpl-single-item--speakers">
-						<?php echo Helpers::get_icon( 'speaker' ); ?>
-						<?php echo implode( ', ', wp_list_pluck( $item['speakers'], 'title' ) ); ?>
-					</div>
-				<?php endif; ?>
-
-				<?php if ( ! empty( $item['types'] ) ) : ?>
-					<div class="cpl-single-item--types">
-						<?php echo Helpers::get_icon( 'type' ); ?>
-						<?php foreach ( $item['types'] as $type ) : ?>
-							<a href="<?php echo esc_url( $type['permalink'] ); ?>"><?php echo esc_html( $type['title'] ); ?></a>
-							<span class="cpl-separator">, </span>
-						<?php endforeach; ?>
-					</div>
-				<?php endif; ?>
-			</div>
+			<?php \CP_Library\Templates::get_template_part( 'parts/item-single/info' ); ?>
 
 			<div class="cpl-single-item--desc">
 				<?php the_content(); ?>
