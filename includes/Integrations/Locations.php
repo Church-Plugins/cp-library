@@ -45,11 +45,21 @@ class Locations {
 		add_action( 'cpl_save_series_items_item', [ $this, 'item_save_location' ], 10, 3 );
 		add_filter( 'cpl_item_type_get_items', [ $this, 'messages_by_location' ], 10, 2 );
 		add_filter( 'cploc_add_location_to_query', [ $this, 'taxonomies_for_location_query' ], 10, 2 );
-
+		add_filter( 'post_type_archive_title', [ $this, 'location_archive_title' ], 10, 2 );
 	}
 
 	/** Actions ***************************************************/
 
+	/**
+	 * add our post types to the location taxonomy
+	 *
+	 * @param $types
+	 *
+	 * @return mixed
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
 	public function tax_types( $types ) {
 		return array_merge( $types, [ cp_library()->setup->post_types->item->post_type, cp_library()->setup->post_types->speaker->post_type ]  );
 	}
@@ -154,6 +164,11 @@ class Locations {
 	 * @author Tanner Moushey
 	 */
 	public function taxonomies_for_location_query( $return, $query ) {
+		// if the post type is defined, fall back to normal behavior
+		if ( ! empty( $query->query['post_type'] ) ) {
+			return $return;
+		}
+
 		foreach( cp_library()->setup->taxonomies->get_taxonomies() as $taxonomy ) {
 			if ( ! empty( $query->query_vars[ $taxonomy ] ) ) {
 				return true;
@@ -161,5 +176,27 @@ class Locations {
 		}
 
 		return $return;
+	}
+
+	/**
+	 * Add location to archive title
+	 *
+	 * @param $title
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function location_archive_title( $title, $type ) {
+		// don't mess with doc title
+		if ( doing_action( 'wp_head' ) ) {
+			return $title;
+		}
+
+		if ( ! $location_id = get_query_var( 'cp_location_id' ) ) {
+			return $title;
+		}
+
+		return sprintf( '<span class="location">%s<br />%s</span>', get_the_title( $location_id ), $title );
 	}
 }

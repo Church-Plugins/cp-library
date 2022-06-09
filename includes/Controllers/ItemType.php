@@ -49,7 +49,7 @@ class ItemType {
 	}
 
 	public function get_thumbnail() {
-		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID ) ) {
+		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID, 'large' ) ) {
 			return $this->filter( $thumb, __FUNCTION__ );
 		}
 

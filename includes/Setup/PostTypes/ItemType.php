@@ -70,6 +70,7 @@ class ItemType extends PostType  {
 		add_action( 'pre_get_posts', [ $this, 'default_posts_per_page' ] );
 		add_action( 'pre_get_posts', [ $this, 'item_item_type_query' ] );
 		add_filter( 'post_updated_messages', [ $this, 'post_update_messages' ] );
+		add_filter( "{$this->post_type}_slug", [ $this, 'custom_slug' ] );
 
 		if ( empty( $_GET['cpl-recovery'] ) ) {
 			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
@@ -175,14 +176,25 @@ class ItemType extends PostType  {
 	}
 
 	/**
+	 * Allow for user defined slug
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function custom_slug() {
+		return Settings::get_item_type( 'slug', strtolower( sanitize_title( $this->plural_label ) ) );
+	}
+
+	/**
 	 * Setup arguments for this CPT
 	 *
 	 * @return array
 	 * @author costmo
 	 */
 	public function get_args() {
-		$args              = parent::get_args();
-		$args['menu_icon'] = apply_filters( "{$this->post_type}_icon", 'dashicons-list-view' );
+		$args                    = parent::get_args();
+		$args['menu_icon']       = apply_filters( "{$this->post_type}_icon", 'dashicons-list-view' );
 
 		return $args;
 	}

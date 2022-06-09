@@ -260,9 +260,16 @@ class Settings {
 		$options->add_field( array(
 			'name'    => __( 'Plural Label', 'cp-library' ),
 			'id'      => 'plural_label',
-			'desc'    => __( 'Caution: changing this value will also adjust the url structure and may affect your SEO.', 'cp-library' ),
 			'type'    => 'text',
 			'default' => cp_library()->setup->post_types->item_type->plural_label,
+		) );
+
+		$options->add_field( array(
+			'name'    => __( 'Slug', 'cp-library' ),
+			'id'      => 'slug',
+			'desc'    => __( 'Caution: changing this value will also adjust the url structure and may affect your SEO.', 'cp-library' ),
+			'type'    => 'text',
+			'default' => strtolower( sanitize_title( cp_library()->setup->post_types->item_type->plural_label ) ),
 		) );
 
 	}

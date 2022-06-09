@@ -314,12 +314,12 @@ class Templates {
 			$types     = cp_library()->setup->post_types->get_post_types();
 			$taxonomies = cp_library()->setup->taxonomies->get_taxonomies();
 
-			if ( $wp_query->is_post_type_archive( $types ) ) {
-				$template = self::get_template_hierarchy( 'archive', [ 'disable_view_check' => true ] );
-			}
-
 			if ( $wp_query->is_tax( $taxonomies ) ) {
 				$template = self::get_template_hierarchy( 'archive-tax', [ 'disable_view_check' => true ] );
+			}
+
+			if ( $wp_query->is_post_type_archive( $types ) ) {
+				$template = self::get_template_hierarchy( 'archive', [ 'disable_view_check' => true ] );
 			}
 
 			if ( $wp_query->is_singular( $types ) ) {
