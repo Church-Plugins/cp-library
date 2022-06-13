@@ -239,6 +239,13 @@ class Templates {
 		self::$wpHeadComplete = true;
 	}
 
+	/**
+	 * Add type switcher to archive header
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
 	public function type_switcher() {
 		$type   = self::get_type();
 		$link   = '';

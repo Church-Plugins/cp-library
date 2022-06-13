@@ -71,18 +71,7 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 	<?php else : ?>
 		<div class="cpl-single-type--container">
 			<div class="cpl-single-type--media">
-
-				<div class="itemDetail__rightContent MuiBox-root css-1la7bni">
-					<div class="itemDetail__featureImage MuiBox-root css-iy0loh">
-						<div class="itemPlayer__video MuiBox-root css-122y91a">
-							<div class="itemDetail__video" style="width: 100%; height: 100%;"></div>
-							<div class="itemDetail__audio MuiBox-root css-1aueuth">
-								<img alt="site logo" src="<?php echo $item_type['thumb']; ?>">
-							</div>
-						</div>
-					</div>
-				</div>
-
+				<img alt="site logo" src="<?php echo $item_type['thumb']; ?>">
 			</div>
 
 			<div class="cpl-single-type--content">
