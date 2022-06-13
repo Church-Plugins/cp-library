@@ -52,6 +52,7 @@ class Templates {
 
 		add_action( 'wp_head', [ __CLASS__, 'wpHeadFinished' ], 999 );
 		add_action( 'cpl_after_archive', 'the_posts_pagination' );
+		add_action( 'cpl_before_archive', [ __CLASS__, 'type_switcher' ] );
 
 		// add the theme name to the body class when needed
 		if ( self::needs_compatibility_fix() ) {
@@ -236,6 +237,31 @@ class Templates {
 	 */
 	public static function wpHeadFinished() {
 		self::$wpHeadComplete = true;
+	}
+
+	public function type_switcher() {
+		$type   = self::get_type();
+		$link   = '';
+		$button = '';
+		$item_cpt = get_post_type_object(cp_library()->setup->post_types->item->post_type);
+		$item_type_cpt = get_post_type_object(cp_library()->setup->post_types->item_type->post_type);
+
+		switch( $type ) {
+			case 'item':
+				$link = str_replace( $item_cpt->rewrite['slug'], $item_type_cpt->rewrite['slug'], $_SERVER['REQUEST_URI'] );
+				$button = sprintf( __( 'Switch to %s' ), $item_type_cpt->label );
+				break;
+			case 'item-type':
+				$link = str_replace( $item_type_cpt->rewrite['slug'], $item_cpt->rewrite['slug'], $_SERVER['REQUEST_URI'] );
+				$button = sprintf( __( 'Switch to %s' ), $item_cpt->label );
+				break;
+		}
+
+		if ( empty( $link ) ) {
+			return;
+		}
+
+		printf( '<a class="cpl-archive--item-switcher" href="%s">%s</a>', $link, $button );
 	}
 
 
