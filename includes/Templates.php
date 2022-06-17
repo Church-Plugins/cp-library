@@ -246,7 +246,7 @@ class Templates {
 	 *
 	 * @author Tanner Moushey
 	 */
-	public function type_switcher() {
+	public static function type_switcher() {
 		$type   = self::get_type();
 		$link   = '';
 		$button = '';
