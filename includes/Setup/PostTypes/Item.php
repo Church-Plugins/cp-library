@@ -133,7 +133,7 @@ class Item extends PostType  {
 	}
 
 	public function analytics_cb( $field, $escaped_value, $object_id ) {
-		if ( ! $object_id ) {
+		if ( ! $object_id || 'auto-draft' == get_post_status( $object_id ) ) {
 			return;
 		}
 

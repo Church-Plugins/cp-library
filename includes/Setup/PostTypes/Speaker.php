@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 use ChurchPlugins\Setup\Tables\SourceMeta;
 use CP_Library\Admin\Settings;
-use CP_Library\Exception;
+use ChurchPlugins\Exception;
 use CP_Library\Models\Item as ItemModel;
 use CP_Library\Models\Speaker as Speaker_Model;
 

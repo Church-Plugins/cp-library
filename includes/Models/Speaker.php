@@ -27,7 +27,6 @@ class Speaker extends Source {
 
 	public function init() {
 		$this->post_type = 'cpl_speaker';
-		$this->type = 'cpl_source';
 
 		parent::init();
 	}

@@ -2,46 +2,20 @@
 
 namespace CP_Library\Controllers;
 
+use ChurchPlugins\Controllers\Controller;
 use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Models\ItemType as Model;
 use CP_Library\Util\Convenience;
 
-class ItemType {
-
-	/**
-	 * @var bool|Model
-	 */
-	public $model;
-
-	/**
-	 * @var array|\WP_Post|null
-	 */
-	public $post;
-
-	/**
-	 * Item constructor.
-	 *
-	 * @param $id
-	 * @param bool $use_origin whether or not to use the origin id
-	 *
-	 * @throws Exception
-	 */
-	public function __construct( $id, $use_origin = true ) {
-		$this->model = $use_origin ? Model::get_instance_from_origin( $id ) : Model::get_instance( $id );
-		$this->post  = get_post( $this->model->origin_id );
-	}
-
-	protected function filter( $value, $function ) {
-		return apply_filters( 'cpl_item_' . $function, $value, $this );
-	}
+class ItemType extends Controller{
 
 	public function get_content() {
 		return $this->filter( get_the_content( null, false, $this->post ), __FUNCTION__ );
 	}
 
 	public function get_title() {
-		return $this->filter( get_the_title( $this->post->ID ), __FUNCTION__ );
+		return $this->filter( apply_filters( 'the_title', $this->post->post_title, $this->post->ID ), __FUNCTION__ );
 	}
 
 	public function get_permalink() {
@@ -119,7 +93,7 @@ class ItemType {
 
 		foreach( $this->model->get_items() as $i ) {
 			try {
-				$item = new Item( $i->origin_id );
+				$item = new Item( $i->id, false );
 				$data['items'][] = $item->get_api_data();
 			} catch( Exception $e ) {
 				error_log( $e );

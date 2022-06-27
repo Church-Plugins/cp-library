@@ -2,7 +2,7 @@
 namespace CP_Library\Setup\PostTypes;
 
 use CP_Library\Admin\Settings;
-use CP_Library\Exception;
+use ChurchPlugins\Exception;
 use CP_Library\Models\ItemType as Model;
 use CP_Library\Models\Item as ItemModel;
 use CP_Library\Models\Speaker as Speaker_Model;
@@ -22,6 +22,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class ItemType extends PostType  {
 
 	protected static $_update_dates = [];
+
+	protected static $_updated_dates = [];
+
+	protected static $_doing_update_dates = false;
 
 	protected static $_did_save = false;
 
@@ -62,7 +66,7 @@ class ItemType extends PostType  {
 			}
 		}, 5);
 
-		add_action( 'shutdown', [ $this, 'save_post_date'] );
+		add_action( 'shutdown', [ $this, 'save_post_date'], 99 );
 		add_action( 'save_post', [ $this, 'post_date' ] );
 		add_filter( 'cmb2_save_field_cpl_series', [ $this, 'save_item_series' ], 10, 3 );
 		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'item_type_column' ] );
@@ -114,7 +118,7 @@ class ItemType extends PostType  {
 	public function item_type_column_cb( $column, $post_id ) {
 		switch( $column ) {
 			case 'item_type' :
-				 $item = new \CP_Library\Controllers\Item( $post_id );
+				$item = new \CP_Library\Controllers\Item( $post_id );
 				$types = $item->get_types();
 
 				 if ( empty( $types ) ) {
@@ -154,7 +158,7 @@ class ItemType extends PostType  {
 
 		try {
 			$type = Model::get_instance( $type );
-			$items = wp_list_pluck( $type->get_items(), 'origin_id' );
+			$items = apply_filters( 'cpl_item_type_get_item_ids', wp_list_pluck( $type->get_items(), 'origin_id' ), $this );
 
 			$query->set( 'post__in', $items );
 		} catch ( Exception $e ) {
@@ -614,12 +618,26 @@ class ItemType extends PostType  {
 	 */
 	public function post_date( $object_id ) {
 
+		if ( self::$_doing_update_dates ) {
+			return;
+		}
+
+		if ( 'auto-draft' == get_post_status( $object_id ) || wp_is_post_autosave( $object_id ) ) {
+			return;
+		}
+
+		if ( ! apply_filters( 'cpl_update_item_type_date', true, $object_id ) ) {
+			return;
+		}
+
 		$post_type = get_post_type( $object_id );
 
 		try {
 			if ( $post_type === $this->post_type ) {
+				self::$_doing_update_dates = true;
 				$type = Model::get_instance_from_origin( $object_id );
-				self::$_update_dates[] = $type->id;
+				self::$_updated_dates[ $type->origin_id ] = $type->update_dates();
+				self::$_doing_update_dates = false;
 			}
 
 			if ( $post_type === Item::get_instance()->post_type ) {
@@ -642,29 +660,35 @@ class ItemType extends PostType  {
 	 * @author Tanner Moushey
 	 */
 	public function save_post_date() {
+		// only do this once.
 		remove_action( 'save_post', [ $this, 'post_date' ] );
 
 		$types = array_unique( self::$_update_dates );
 
-		try {
-			foreach ( $types as $type_id ) {
-				$type = Model::get_instance( $type_id );
-				$update = $type->update_dates();
-
-				if ( count( $types ) === 1 ) {
-					if ( 'draft' === $update ) {
-						wp_redirect( $this->message__set_to_draft( $type->origin_id ) );
-						exit;
-					}
-
-					if ( 'publish' === $update ) {
-						wp_redirect( $this->message__set_to_publish( $type->origin_id ) );
-						exit;
-					}
+		if ( ! empty( $types ) ) {
+			try {
+				foreach ( $types as $type_id ) {
+					self::$_updated_dates[] = Model::get_instance( $type_id )->update_dates();
 				}
+			} catch ( Exception $e ) {
+				error_log( $e );
 			}
-		} catch( Exception $e ) {
-			error_log( $e );
+		}
+
+		// if we have just one updated post and it was set to draft or publish, handle the redirect.
+		if ( count( self::$_updated_dates ) === 1 && apply_filters( 'cpl_save_post_date_redirect', current_user_can( 'edit_post' ) ) ) {
+			$update = reset( self::$_updated_dates );
+			$origin_id = key( self::$_updated_dates );
+
+			if ( 'draft' === $update ) {
+				wp_redirect( $this->message__set_to_draft( $origin_id ) );
+				exit;
+			}
+
+			if ( 'publish' === $update ) {
+				wp_redirect( $this->message__set_to_publish( $origin_id ) );
+				exit;
+			}
 		}
 	}
 

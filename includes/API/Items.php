@@ -4,6 +4,7 @@ namespace CP_Library\API;
 
 use ChurchPlugins\Models\Log;
 use CP_Library\Controllers\Item;
+use CP_Library\Models\Item as ItemModel;
 use CP_Library\Exception;
 use CP_Library\Models\ItemType;
 use WP_REST_Controller;
@@ -284,25 +285,28 @@ class Items extends WP_REST_Controller {
 
 			if( !empty( $formats ) && !in_array( 'format__all', $formats ) && count( $formats ) == 1 ) {
 
-				$format = str_replace( 'filter__', '', $formats[0] );
-				$sql = '';
+				$format     = str_replace( 'filter__', '', $formats[0] );
+				$sql        = '';
+				$table      = ItemModel::get_prop( 'table_name' );
+				$meta_table = ItemModel::get_prop( 'meta_table_name' );
+
 				global $wpdb;
 				if( $format == 'audio' ) {
 					$sql = $wpdb->prepare(
 						"
 						SELECT		origin_id
-						FROM 		" . $wpdb->prefix . "cpl_item, " . $wpdb->prefix . "cpl_item_meta
-						WHERE		wp_cpl_item_meta.`key` IN ( %s ) AND
-									wp_cpl_item.`id` = wp_cpl_item_meta.item_id",
+						FROM 		$table, $meta_table
+						WHERE		$meta_table.`key` IN ( %s ) AND
+									$table.`id` = $meta_table.item_id",
 						'audio_url'
 					);
 				} else {
 					$sql = $wpdb->prepare(
 						"
 						SELECT		origin_id
-						FROM 		" . $wpdb->prefix . "cpl_item, " . $wpdb->prefix . "cpl_item_meta
-						WHERE		wp_cpl_item_meta.`key` IN ( %s, %s ) AND
-									wp_cpl_item.`id` = wp_cpl_item_meta.item_id",
+						FROM 		$table, $meta_table
+						WHERE		$meta_table.`key` IN ( %s, %s ) AND
+									$table.`id` = $meta_table.item_id",
 						'video_id_vimeo', 'video_id_facebook'
 					);
 				}

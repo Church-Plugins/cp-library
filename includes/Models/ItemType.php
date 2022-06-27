@@ -29,10 +29,15 @@ class ItemType extends Table  {
 	protected static $_all_types = false;
 
 	public function init() {
+		global $wpdb;
+
 		$this->type = 'item_type';
 		$this->post_type = 'cpl_item_type';
 
 		parent::init();
+
+		$this->table_name  = $wpdb->base_prefix . 'cpl_' . $this->type;
+		$this->meta_table_name  = $wpdb->base_prefix . 'cpl_' . $this->type . "_meta";
 	}
 
 	/**
@@ -76,6 +81,10 @@ ORDER BY %2$s.order ASC';
 
 			$this->items = $wpdb->get_results( $wpdb->prepare( $sql, $item->table_name, $meta->table_name, $this->id ) );
 
+			if ( ! $this->items ) {
+				$this->items = [];
+			}
+
 			foreach( $this->items as $item ) {
 				$item = new ItemModel( $item );
 				$item->update_cache();
@@ -117,8 +126,8 @@ ORDER BY %2$s.order ASC';
 		$first = $dates[0];
 		$last  = $dates[ count( $dates ) - 1 ];
 
-		$this->update_meta_value( 'first_item_date', $first );
-		$this->update_meta_value( 'last_item_date', $last );
+		update_post_meta( $this->origin_id, 'first_item_date', $first );
+		update_post_meta( $this->origin_id, 'last_item_date', $last );
 
 		wp_update_post( [ 'ID' => $this->origin_id, 'post_date' => date( 'Y-m-d H:i:s', $last ), 'post_status' => 'publish' ] );
 

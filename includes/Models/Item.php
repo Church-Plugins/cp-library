@@ -40,6 +40,9 @@ class Item extends Table  {
 		$this->post_type = 'cpl_item';
 
 		parent::init();
+
+		$this->table_name  = $this->prefix . 'cpl_' . $this->type;
+		$this->meta_table_name  = $this->prefix . 'cpl_' . $this->type . "_meta";
 	}
 
 	/**

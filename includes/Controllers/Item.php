@@ -3,40 +3,14 @@
 namespace CP_Library\Controllers;
 
 use ChurchPlugins\Models\Log;
+use ChurchPlugins\Controllers\Controller;
 use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Models\Item as ItemModel;
 use CP_Library\Models\Speaker;
 use CP_Library\Util\Convenience;
 
-class Item {
-
-	/**
-	 * @var bool|ItemModel
-	 */
-	public $model;
-
-	/**
-	 * @var array|\WP_Post|null
-	 */
-	public $post;
-
-	/**
-	 * Item constructor.
-	 *
-	 * @param $id
-	 * @param bool $use_origin whether or not to use the origin id
-	 *
-	 * @throws Exception
-	 */
-	public function __construct( $id, $use_origin = true ) {
-		$this->model = $use_origin ? ItemModel::get_instance_from_origin( $id ) : ItemModel::get_instance( $id );
-		$this->post  = get_post( $this->model->origin_id );
-	}
-
-	protected function filter( $value, $function ) {
-		return apply_filters( 'cpl_item_' . $function, $value, $this );
-	}
+class Item extends Controller{
 
 	public function get_content( $raw = false ) {
 		$content = get_the_content( null, false, $this->post );
