@@ -154,6 +154,7 @@
 	&__share {
 		svg {
 			margin: -0.25em 0;
+			font-size: 1em;
 		}
 	}
 
@@ -167,7 +168,7 @@
 		}
 
 		button {
-			display: inline-flex;
+			display: flex;
 			height: 100%;
 			align-items: center;
 		}

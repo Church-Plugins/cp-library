@@ -23,6 +23,9 @@ import screenfull from 'screenfull';
 import formatDuration from '../../utils/formatDuration';
 import PlayPause from '../../Elements/Buttons/PlayPause';
 
+import PlayAudio from '../../Elements/Buttons/PlayAudio';
+import PlayVideo from '../../Elements/Buttons/PlayVideo';
+
 
 export default function Player({
   item,
@@ -365,9 +368,7 @@ export default function Player({
 
 	          {item.video.value && (
 		          <Box className="itemDetail__playVideo" marginRight={1}>
-			          <Rectangular
-				          leftIcon={<Play/>}
-				          variant="primary"
+			          <PlayVideo
 				          onClick={() => {
 					          if (persistentPlayerIsActive) {
 						          passToPersistentPlayer({
@@ -381,17 +382,13 @@ export default function Player({
 					          }
 				          }}
 				          fullWidth
-			          >
-				          Play Video
-			          </Rectangular>
+			          />
 		          </Box>
 	          )}
 
 	          {item.audio && (
 		          <Box className="itemDetail__playAudio" >
-			          <Rectangular
-				          variant="outlined"
-				          leftIcon={<Volume1/>}
+			          <PlayAudio
 				          onClick={() => {
 					          if (persistentPlayerIsActive) {
 						          passToPersistentPlayer({
@@ -404,10 +401,7 @@ export default function Player({
 						          updateMode('audio');
 					          }
 				          }}
-				          fullWidth
-			          >
-				          Play Audio
-			          </Rectangular>
+			          />
 		          </Box>
 	          )}
 

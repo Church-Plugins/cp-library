@@ -11,7 +11,7 @@ export default function Rectangular({
 }) {
   return (
     <button
-      className={`cpl-button cpl-button--${variant} cpl-button--rectangle`}
+      className={`cpl-button cpl-button--${variant} is-${variant} cpl-button--rectangle`}
 //      variant={variant}
 //      startIcon={leftIcon}
 //      fullWidth={fullWidth}
@@ -19,7 +19,7 @@ export default function Rectangular({
       disabled={disabled}
     >
 	    {leftIcon && ( leftIcon )}
-      {children}
+	    <span>{children}</span>
     </button>
   );
 }
