@@ -68,6 +68,12 @@
 			height: auto;
 			display: block;
 		}
+
+		button {
+			svg {
+				color: var(--cp-button--bg);
+			}
+		}
 	}
 
 	&__duration {

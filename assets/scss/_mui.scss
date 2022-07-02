@@ -1,7 +1,7 @@
 
 body {
 	.MuiSlider-root {
-		color: var(--cpl-color--primary);
+		color: var(--cp-color-ui-secondary);
 	}
 
 	.MuiButton-root {
@@ -20,4 +20,7 @@ body {
 		}
 	}
 
+	.MuiSlider-thumb {
+		background-color: var( --cp-color-ui-primary );
+	}
 }

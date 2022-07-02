@@ -1,8 +1,12 @@
 <?php
-namespace CP_Library\Views;
+namespace CP_Library\Setup;
+
+use CP_Library\Init as Init;
+use CP_Library\Templates;
+use CP_Library\Views\Shortcode as Shortcode_View;
 
 /**
- * Shortcode view/render class
+ * Shortcode controller class
  *
  * @author costmo
  */
@@ -19,7 +23,7 @@ class Shortcode
 	/**
 	 * Enforce singleton instantiation
 	 *
-	 * @return Init
+	 * @return Shortcode
 	 */
 	public static function get_instance() {
 		if( !self::$_instance instanceof Shortcode ) {
@@ -36,8 +40,37 @@ class Shortcode
 	 * @return void
 	 */
 	protected function __construct() {
-
+		$this->add_shortcodes();
 	}
+
+	/**
+	 * Add the app's custom shortcodes to WP
+	 *
+	 * @param array $params
+	 * @return void
+	 * @author costmo
+	 */
+	public function add_shortcodes() {
+
+		// An array of mappings from `shortcode` => `handler method`
+		$codes = [
+			'cpl_root'         => 'render_root',
+			'cpl_item_list'    => 'render_item_list',
+			'cpl_item'         => 'render_item',
+			'cpl_item_widget'  => 'render_item_widget',
+			'cpl_video_widget' => 'render_video_widget',
+			'cpl_source_list'  => 'render_source_list',
+			'cpl_source'       => 'render_source',
+			'cpl_player'       => 'render_player',
+		];
+
+		foreach( $codes as $shortcode => $handler ) {
+			add_shortcode( $shortcode, [ $this, $handler ] );
+		}
+
+		add_action( 'wp_footer', [ $this, 'render_persistent_player' ] );
+	}
+
 
 	/**
 	 * Generate static JS to feed parameters between PHP and JS
@@ -95,10 +128,43 @@ class Shortcode
 
 	public function render_item( $args ) {
 
-		$output  = self::staticScript( $args );
-		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_item"></div>';
+		wp_parse_args( [], $args );
 
-		return $output;
+		$args = shortcode_atts( [
+			'id' => 'false',
+			'player' => 'true',
+			'details' => 'true',
+		], $args, 'cpl_item' );
+
+		if ( 'false' === $args['id'] || empty( $args['id'] ) ) {
+			$request = new \WP_REST_Request( 'GET', '/' . cp_library()->get_api_namespace() . '/items' );
+			$request->set_query_params( [ 'count' => 1 ] );
+			$response = rest_do_request( $request );
+			$server   = rest_get_server();
+			$data     = $server->response_to_data( $response, false );
+
+			if ( ! empty( $data['items'] ) ) {
+				$item = $data['items'][0];
+			}
+		} else {
+			$request = new \WP_REST_Request( 'GET', '/' . cp_library()->get_api_namespace() . '/items/' . $args['id'] );
+			$request->set_query_params( [ 'count' => 1 ] );
+			$response = rest_do_request( $request );
+			$server   = rest_get_server();
+			$item     = $server->response_to_data( $response, false );
+		}
+
+		if ( empty( $item ) ) {
+			return 'No ' . cp_library()->setup->post_types->item->plural_label . ' found.';
+		}
+
+		$args['item'] = $item;
+
+		ob_start();
+
+		Templates::get_template_part( 'widgets/item-single', $args );
+
+		return ob_get_clean();
 
 	}
 
@@ -163,6 +229,5 @@ class Shortcode
 
 		return $output;
 	}
-
 
 }

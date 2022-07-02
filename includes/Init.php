@@ -108,9 +108,6 @@ class Init {
 		add_action( 'wp_enqueue_scripts', [ $this, 'app_enqueue' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'admin_scripts' ] );
 		add_action( 'init', [ $this, 'rewrite_rules' ], 100 );
-
-		$shortcode = Shortcode_Controller::get_instance();
-		$shortcode->add_shortcodes();
 	}
 
 	public function rewrite_rules() {
