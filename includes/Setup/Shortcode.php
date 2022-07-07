@@ -1,6 +1,8 @@
 <?php
 namespace CP_Library\Setup;
 
+use CP_Library\Controllers\Item;
+use ChurchPlugins\Exception;
 use CP_Library\Init as Init;
 use CP_Library\Templates;
 use CP_Library\Views\Shortcode as Shortcode_View;
@@ -126,43 +128,48 @@ class Shortcode
 		return $output;
 	}
 
-	public function render_item( $args ) {
+	public function render_item( $atts ) {
 
-		wp_parse_args( [], $args );
-
-		$args = shortcode_atts( [
+		$atts = shortcode_atts( [
 			'id' => 'false',
 			'player' => 'true',
 			'details' => 'true',
-		], $args, 'cpl_item' );
+			'location' => 0,
+		], $atts, 'cpl_item' );
 
-		if ( 'false' === $args['id'] || empty( $args['id'] ) ) {
-			$request = new \WP_REST_Request( 'GET', '/' . cp_library()->get_api_namespace() . '/items' );
-			$request->set_query_params( [ 'count' => 1 ] );
-			$response = rest_do_request( $request );
-			$server   = rest_get_server();
-			$data     = $server->response_to_data( $response, false );
+		if ( 'false' === $atts['id'] || empty( $atts['id'] ) ) {
+			$args = [
+				'post_type' => cp_library()->setup->post_types->item->post_type,
+				'posts_per_page' => 1,
+				'post_status' => 'publish',
+			];
 
-			if ( ! empty( $data['items'] ) ) {
-				$item = $data['items'][0];
+			if ( ! empty( $atts['location'] ) ) {
+				$args['cp_location'] = 'location_' . $atts['location'];
 			}
+
+			$items = get_posts( $args );
+
+			if ( empty( $items ) ) {
+				return 'No ' . cp_library()->setup->post_types->item->plural_label . ' found.';
+			}
+
+			$id = $items[0]->ID;
 		} else {
-			$request = new \WP_REST_Request( 'GET', '/' . cp_library()->get_api_namespace() . '/items/' . $args['id'] );
-			$request->set_query_params( [ 'count' => 1 ] );
-			$response = rest_do_request( $request );
-			$server   = rest_get_server();
-			$item     = $server->response_to_data( $response, false );
+			$id = $atts['id'];
 		}
 
-		if ( empty( $item ) ) {
+
+		try {
+			$item = new Item( $id );
+		} catch( Exception $e ) {
 			return 'No ' . cp_library()->setup->post_types->item->plural_label . ' found.';
 		}
 
-		$args['item'] = $item;
-
+		$atts['item'] = $item->get_api_data();
 		ob_start();
 
-		Templates::get_template_part( 'widgets/item-single', $args );
+		Templates::get_template_part( 'widgets/item-single', $atts );
 
 		return ob_get_clean();
 
