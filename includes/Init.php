@@ -64,6 +64,8 @@ class Init {
 
 		$cp = CP_Setup::get_instance();
 
+		Setup\Tables\Init::get_instance();
+
 		// make sure needed tables are installed
 		if ( ! $cp->is_installed() ) {
 			return;
