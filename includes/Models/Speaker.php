@@ -47,13 +47,13 @@ class Speaker extends Source {
 		$meta     = SourceMetaTable::get_instance();
 		$instance = new self();
 
-		$sql = 'SELECT %1$s.* FROM %1$s
+		$sql = sprintf( 'SELECT %1$s.* FROM %1$s
 INNER JOIN %2$s
 ON %1$s.id = %2$s.source_id
 WHERE %2$s.key = "source_type" AND %2$s.source_type_id = %3$d
-ORDER BY %2$s.order ASC';
+ORDER BY %2$s.order ASC', $instance->table_name, $meta->table_name, $type_id );
 
-		$speakers = $wpdb->get_results( $wpdb->prepare( $sql, $instance->table_name, $meta->table_name, $type_id ) );
+		$speakers = $wpdb->get_results( $sql );
 
 		if ( ! $speakers ) {
 			$speakers = [];
