@@ -53,6 +53,7 @@ class Locations {
 		add_filter( 'cploc_sync_content_locations', [ $this, 'sync_item_type_locations' ], 10, 3 );
 		add_filter( 'cploc_sync_content', [ $this, 'sync_item_type' ], 10, 2 );
 		add_filter( 'cploc_multisite_sync_post_after', [ $this, 'sync_item_type_status' ], 10, 2 );
+		add_filter( 'post_type_link', [ $this, 'series_location_link' ], 10, 2 );
 	}
 
 	/** Actions ***************************************************/
@@ -298,4 +299,27 @@ class Locations {
 		return sprintf( '<span class="location">%s<br />%s</span>', get_the_title( $location_id ), $title );
 	}
 
+	/**
+	 * Add location to series permalink if we are in a location context
+	 *
+	 * @param $link
+	 * @param $post
+	 *
+	 * @return array|mixed|string|string[]
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function series_location_link( $link, $post ) {
+
+		if ( get_post_type( $post ) !== cp_library()->setup->post_types->item_type->post_type ) {
+			return $link;
+		}
+
+		if ( ! $location = cp_locations()->setup->taxonomies->location::get_rewrite_location() ) {
+			return $link;
+		}
+
+		return str_replace( home_url( '/' ), home_url( trailingslashit( $location['path'] ) ), $link );
+	}
 }
