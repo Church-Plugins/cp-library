@@ -79,7 +79,7 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 					<div class="cpl-meta--date">
 						<span class="material-icons-outlined">calendar_today</span>
 
-						<span class="MuiBox-root css-1isemmb"><?php echo $item_type["date"]["desc"]; ?></span>
+						<span class="MuiBox-root css-1isemmb"><?php echo ( $item_type["date"]["first"] == $item_type["date"]["last"] ) ? $item_type["date"]["first"] : sprintf( "%s - %s", $item_type["date"]["first"], $item_type["date"]["last"] ); ?></span>
 					</div>
 
 					<?php if ( ! empty( $item_type['topics'] ) ) : ?>

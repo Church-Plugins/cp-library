@@ -47,6 +47,50 @@ class ItemType extends Controller{
 		return $this->filter( $date->getTimestamp(), __FUNCTION__ );
 	}
 
+	/**
+	 * Get the first date in this series
+	 *
+	 * @param $format
+	 *
+	 * @return false|string
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_date_first( $format = false ) {
+		if ( ! $date = get_post_meta( $this->post->ID, 'first_item_date', true ) ) {
+			$this->model->update_dates();
+			if ( ! $date = get_post_meta( $this->post->ID, 'first_item_date', true ) ) {
+				return '';
+			}
+		}
+
+		$_format = ! empty( $format ) ? $format : get_option( 'date_format' );
+		return date( $_format, $date );
+	}
+
+	/**
+	 * Get the last date in this series
+	 *
+	 * @param $format
+	 *
+	 * @return false|string
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_date_last( $format = false ) {
+		if ( ! $date = get_post_meta( $this->post->ID, 'last_item_date', true ) ) {
+			$this->model->update_dates();
+			if ( ! $date = get_post_meta( $this->post->ID, 'last_item_date', true ) ) {
+				return '';
+			}
+		}
+
+		$_format = ! empty( $format ) ? $format : get_option( 'date_format' );
+		return date( $_format, $date );
+	}
+
 	public function get_scripture() {
 		$return = [];
 		$terms  = get_the_terms( $this->post->ID, cp_library()->setup->taxonomies->scripture->taxonomy );
@@ -85,7 +129,7 @@ class ItemType extends Controller{
 			'thumb'     => $this->get_thumbnail(),
 			'title'     => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
 			'desc'      => $this->get_content(),
-			'date'      => [ 'desc' => Convenience::relative_time( $this->get_publish_date() ), 'timestamp' => $this->get_publish_date() ],
+			'date'      => [ 'desc' => Convenience::relative_time( $this->get_publish_date() ), 'timestamp' => $this->get_publish_date(), 'first' => $this->get_date_first(), 'last' => $this->get_date_last() ],
 			'items'     => [],
 			'season'    => $this->get_seasons(),
 			'scripture' => $this->get_scripture(),

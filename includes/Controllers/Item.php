@@ -29,6 +29,31 @@ class Item extends Controller{
 		return $this->filter( get_permalink( $this->post->ID ), __FUNCTION__ );
 	}
 
+	public function get_locations() {
+		if ( ! function_exists( 'cp_locations' ) ) {
+			return $this->filter( [], __FUNCTION__ );
+		}
+
+		$tax = cp_locations()->setup->taxonomies->location->taxonomy;
+		$locations = wp_get_post_terms( $this->post->ID, $tax );
+
+		if ( is_wp_error( $locations ) || empty( $locations ) ) {
+			return $this->filter( [], __FUNCTION__ );
+		}
+
+		$item_locations = [];
+		foreach ( $locations as $location ) {
+			$location_id = \CP_Locations\Setup\Taxonomies\Location::get_id_from_term( $location->slug );
+			$location    = new \CP_Locations\Controllers\Location( $location_id );
+			$item_locations[ $location_id ] = [
+				'title' => $location->get_title(),
+				'url'   => $location->get_permalink(),
+			];
+		}
+
+		return $this->filter( $item_locations, __FUNCTION__ );
+	}
+
 	/**
 	 * Get default thumbnail for items
 	 *
@@ -259,23 +284,33 @@ class Item extends Controller{
 	}
 
 	public function get_api_data() {
-		$data = [
-			'id'        => $this->model->id,
-			'originID'  => $this->post->ID,
-			'permalink' => $this->get_permalink(),
-			'slug'      => $this->post->post_name,
-			'thumb'     => $this->get_thumbnail(),
-			'title'     => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
-			'desc'      => $this->get_content(),
-			'date'      => [ 'desc' => Convenience::relative_time( $this->get_publish_date() ), 'timestamp' => $this->get_publish_date() ],
-			'category'  => $this->get_categories(),
-			'speakers'  => $this->get_speakers(),
-			'video'     => $this->get_video(),
-			'audio'     => $this->get_audio(),
-			'types'     => $this->get_types(),
-			'topics'    => $this->get_topics(),
-			'scripture' => $this->get_scripture(),
-		];
+		$date = [];
+
+		try {
+			$data = [
+				'id'        => $this->model->id,
+				'originID'  => $this->post->ID,
+				'permalink' => $this->get_permalink(),
+				'slug'      => $this->post->post_name,
+				'thumb'     => $this->get_thumbnail(),
+				'title'     => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
+				'desc'      => $this->get_content(),
+				'date'      => [
+					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
+					'timestamp' => $this->get_publish_date()
+				],
+				'category'  => $this->get_categories(),
+				'speakers'  => $this->get_speakers(),
+				'locations' => $this->get_locations(),
+				'video'     => $this->get_video(),
+				'audio'     => $this->get_audio(),
+				'types'     => $this->get_types(),
+				'topics'    => $this->get_topics(),
+				'scripture' => $this->get_scripture(),
+			];
+		} catch ( \ChurchPlugins\Exception $e ) {
+			error_log( $e );
+		}
 
 		return $this->filter( $data, __FUNCTION__ );
 	}

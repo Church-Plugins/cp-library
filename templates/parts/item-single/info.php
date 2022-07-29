@@ -22,6 +22,13 @@ if ( empty( $args['item'] ) ) {
 		</div>
 	<?php endif; ?>
 
+	<?php if ( ! empty( $item['locations'] ) ) : ?>
+		<div class="cpl-item--locations">
+			<?php echo Helpers::get_icon( 'location' ); ?>
+			<?php echo implode( ', ', wp_list_pluck( $item['locations'], 'title' ) ); ?>
+		</div>
+	<?php endif; ?>
+
 	<?php if ( ! empty( $item['types'] ) ) : ?>
 		<div class="cpl-item--types">
 			<?php echo Helpers::get_icon( 'type' ); ?>
