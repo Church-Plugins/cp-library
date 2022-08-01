@@ -364,10 +364,10 @@ export default function Player({
 
           </Box>
 
-          <Box className="itemDetail__actions" display="flex" alignItems="stretch" marginTop={2}>
+          <Box className="itemDetail__actions">
 
 	          {item.video.value && (
-		          <Box className="itemDetail__playVideo" marginRight={1}>
+		          <Box className="itemDetail__playVideo">
 			          <PlayVideo
 				          onClick={() => {
 					          if (persistentPlayerIsActive) {
@@ -407,7 +407,6 @@ export default function Player({
 
             <Box
               className="itemDetail__share"
-              marginLeft={1}
             >
               <Rectangular
 	              aria-controls="itemDetail__share"
