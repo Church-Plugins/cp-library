@@ -579,7 +579,7 @@ class ItemType extends PostType  {
 				'title'   => $item->get_title(),
 				'content' => $item->get_content( true ),
 				'speaker' => '',
-				'date'    => date( 'Y-m-d\TH:i:sP', $item->get_publish_date() ),
+				'date'    => date( 'Y-m-d\TH:i:s', $item->get_publish_date() ),
 			];
 
 			$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo' ];
