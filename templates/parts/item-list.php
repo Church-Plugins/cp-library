@@ -21,22 +21,22 @@ try {
 	</div>
 
 	<div class="cpl-list-item--details">
+
+		<?php if ( ! empty( $item['types'] ) ) : // for mobile ?>
+			<div class="cpl-info">
+				<div class="cpl-item--types">
+					<?php echo Helpers::get_icon( 'type' ); ?>
+					<?php foreach ( $item['types'] as $type ) : ?>
+						<a href="<?php echo esc_url( $type['permalink'] ); ?>"><?php echo esc_html( $type['title'] ); ?></a>
+						<span class="cpl-separator">, </span>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		<?php endif; ?>
+
 		<h3 class="cpl-list-item--title"><a href="<?php the_permalink(); ?>"><?php echo $item['title']; ?></a></h3>
 
 		<?php \CP_Library\Templates::get_template_part( 'parts/item-single/info' ); ?>
-		<?php if ( 0 && ! empty( $item['types'] ) ) : ?>
-			<div class="cpl-list-item--types">
-				<?php foreach ( $item['types'] as $type ) : ?>
-					<a href="<?php echo esc_url( $type['permalink'] ); ?>"><?php echo esc_html( $type['title'] ); ?></a><span class="cpl-separator">, </span>
-				<?php endforeach; ?>
-			</div>
-		<?php endif; ?>
-
-		<?php if ( 0 && ! empty( $item['speakers'] ) ) : ?>
-			<div class="cpl-meta--speakers">
-				<?php echo implode( ', ', wp_list_pluck( $item['speakers'], 'title' ) ); ?>
-			</div>
-		<?php endif; ?>
 
 		<?php \CP_Library\Templates::get_template_part( 'parts/item-single/meta' ); ?>
 	</div>
