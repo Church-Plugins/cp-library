@@ -18,6 +18,16 @@ export default function Actions({
   const { passToPersistentPlayer } = usePersistentPlayer();
   const { isDesktop } = useBreakpoints();
 
+	const viewItem = (e) => {
+		e.stopPropagation();
+
+		if ( undefined !== history ) {
+			history.push(`${cplVar('path', 'site')}/${cplVar('slug', 'item')}/${item.slug}`);
+		} else {
+			window.location = item.permalink;
+		}
+	};
+
 	const playVideo = (e) => {
 		e.stopPropagation();
 		passToPersistentPlayer({
@@ -50,7 +60,7 @@ export default function Actions({
 						<PlayAudio onClick={playAudio}/>
 					)}
 				</Box>
-				<IconButton className="cpl-list-item--to-item cpl-touch-only" onClick={() => history.push(`${cplVar('path', 'site')}/${cplVar('slug', 'item')}/${item.slug}`)}>
+				<IconButton className="cpl-list-item--to-item cpl-touch-only" onClick={viewItem}>
 					<ChevronRight/>
 				</IconButton>
 		</Box>

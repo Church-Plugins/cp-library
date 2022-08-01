@@ -3,14 +3,15 @@
 	&--form {
 		display: flex;
 		justify-content: flex-start;
-
+		flex-flow: row wrap;
 		border-bottom: 1px solid;
-		padding-bottom: .75rem;
-		margin-bottom: .75rem;
+		margin-bottom: var(--cp-gap--sm);
 
 		> * {
-			&:not(:first-child) {
-				margin-left: var(--cp-gap--sm);
+			margin-bottom: var(--cp-gap--sm);
+
+			&:not(:last-child) {
+				margin-right: var(--cp-gap--sm);
 			}
 		}
 
@@ -58,8 +59,8 @@
 		left: 0;
 		min-width: 100%;
 		z-index: 5555;
-		width: calc( 100% + var(--cp-gap--xl) );
-		margin-left: calc(var(--cp-gap--xl) / 2 * -1);
+		width: calc( 100% + var(--cp-gap--md) * 2 );
+		margin-left: calc(var(--cp-gap--md) * -1);
 		max-height: 50vh;
 		overflow: scroll;
 
@@ -76,16 +77,17 @@
 
 		@include media-breakpoint-down(md) {
 			flex-grow: 1;
-			margin-left: var(--cp-gap--md) !important;
 		}
 
 		&--box {
 			background: white;
 			display: flex;
 			align-items: center;
-			padding: var(--cp-ui--gap-y-x);
+			padding: var(--cp-button--padding);
 			border-radius: var(--cp-border-radius);
 			border: 1px solid var(--cp-color-text-disabled);
+			line-height: var(--cp-button--line-height);
+			height: 100%;
 
 			svg, button {
 				padding: 0;

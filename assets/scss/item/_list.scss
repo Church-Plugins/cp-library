@@ -145,6 +145,7 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 		}
 
 		.cpl-info {
+			font-size: min(2.75vw, var(--cp-font-size--sm));
 			white-space: nowrap;
 			overflow: hidden;
 			flex-flow: row;
@@ -154,6 +155,14 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 				overflow: hidden;
 				text-overflow: ellipsis;
 				display: block;
+			}
+		}
+	}
+
+	@include media-breakpoint-down(xs) {
+		.cpl-item--info {
+			.cpl-item--locations {
+				display: none;
 			}
 		}
 	}
