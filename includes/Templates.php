@@ -252,14 +252,15 @@ class Templates {
 		$button = '';
 		$item_cpt = get_post_type_object(cp_library()->setup->post_types->item->post_type);
 		$item_type_cpt = get_post_type_object(cp_library()->setup->post_types->item_type->post_type);
+		list( $req_uri, $query_params ) = explode( '?', $_SERVER['REQUEST_URI'] );
 
 		switch( $type ) {
 			case 'item':
-				$link = str_replace( $item_cpt->rewrite['slug'], $item_type_cpt->rewrite['slug'], $_SERVER['REQUEST_URI'] );
+				$link = str_replace( $item_cpt->rewrite['slug'], $item_type_cpt->rewrite['slug'], $req_uri );
 				$button = sprintf( __( 'Switch to %s' ), $item_type_cpt->label );
 				break;
 			case 'item-type':
-				$link = str_replace( $item_type_cpt->rewrite['slug'], $item_cpt->rewrite['slug'], $_SERVER['REQUEST_URI'] );
+				$link = str_replace( $item_type_cpt->rewrite['slug'], $item_cpt->rewrite['slug'], $req_uri );
 				$button = sprintf( __( 'Switch to %s' ), $item_cpt->label );
 				break;
 		}
