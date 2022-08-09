@@ -44,6 +44,11 @@ class Item extends Controller{
 		$item_locations = [];
 		foreach ( $locations as $location ) {
 			$location_id = \CP_Locations\Setup\Taxonomies\Location::get_id_from_term( $location->slug );
+
+			if ( 'global' === $location_id ) {
+				continue;
+			}
+
 			$location    = new \CP_Locations\Controllers\Location( $location_id );
 			$item_locations[ $location_id ] = [
 				'title' => $location->get_title(),
