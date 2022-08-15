@@ -34,7 +34,7 @@ if ( empty( $args['item'] ) ) {
 			<?php echo Helpers::get_icon( 'type' ); ?>
 			<?php foreach ( $item['types'] as $type ) : ?>
 				<a href="<?php echo esc_url( $type['permalink'] ); ?>"><?php echo esc_html( $type['title'] ); ?></a>
-				<span class="cpl-separator">, </span>
+				<span class="cpl-separator">,&nbsp;</span>
 			<?php endforeach; ?>
 		</div>
 	<?php endif; ?>

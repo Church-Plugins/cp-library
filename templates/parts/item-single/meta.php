@@ -28,6 +28,7 @@ if ( empty( $args['item'] ) ) {
 
 			<?php foreach ( $item['topics'] as $topic ) : ?>
 				<a href="<?php echo esc_url( $topic['url'] ); ?>"><?php echo esc_html( $topic['name'] ); ?></a>
+				<span class="cpl-separator">,&nbsp;</span>
 			<?php endforeach; ?>
 		</div>
 	<?php endif; ?>
@@ -38,7 +39,7 @@ if ( empty( $args['item'] ) ) {
 
 			<?php foreach ( $item['scripture'] as $scripture ) : ?>
 				<a href="<?php echo esc_url( $scripture['url'] ); ?>"><?php echo esc_html( $scripture['name'] ); ?></a>
-				<span class="cpl-separator">, </span>
+				<span class="cpl-separator">,&nbsp;</span>
 			<?php endforeach; ?>
 		</div>
 	<?php endif; ?>

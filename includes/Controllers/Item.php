@@ -187,6 +187,10 @@ class Item extends Controller{
 		$return = [];
 		$terms = get_the_terms( $this->post->ID, 'talk_categories' );
 
+		if ( is_wp_error( $terms ) ) {
+			return [];
+		}
+
 		if ( $terms ) {
 			foreach( $terms as $term ) {
 				$return[ $term->slug ] = $term->name;

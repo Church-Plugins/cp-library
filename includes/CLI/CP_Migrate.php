@@ -1,5 +1,8 @@
 <?php
 
+use CP_Library\Setup\Taxonomies\Scripture;
+use CP_Library\Setup\Taxonomies\Topic;
+use CP_Library\Setup\Taxonomies\Season;
 use CP_Library\Models\Item;
 use CP_Library\Models\ItemType;
 use CP_Library\Models\Speaker;
@@ -197,6 +200,185 @@ class CP_Migrate {
 
 	}
 
+	/**
+	 * Loop through taxonomy map file and make sure that all expected terms exist.
+	 *
+	 * @param $args
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function map_taxonomies( $args ) {
+		$args = wp_parse_args( [
+			0 => 'category_map.csv',
+		], $args );
+
+		$filename = ABSPATH . $args[0];
+
+		if ( ! $file = fopen( $filename, 'r' ) ) {
+			WP_CLI::error( 'Could not locate the file' );
+		}
+
+		$row = 0;
+
+		WP_CLI::log( 'Mapping taxonomy data' );
+
+		$taxonomies = [
+			'topic'     => [ 'updated' => false, 'terms' => array_map( 'strtolower', Topic::get_instance()->get_terms() ) ],
+			'season'    => [ 'updated' => false, 'terms' => array_map( 'strtolower', Season::get_instance()->get_terms() ) ],
+			'scripture' => [ 'updated' => false, 'terms' => array_map( 'strtolower', Scripture::get_instance()->get_terms() ) ],
+		];
+
+		while ( $data = fgetcsv( $file ) ) {
+			count( $data );
+
+			if ( ++ $row == 1 ) {
+				$headers = array_flip( $data ); // Get the column names from the header.
+				continue;
+			}
+
+			$data = array_map( 'trim', $data );
+
+			$action = strtolower( $data[ $headers['ACTION'] ] );
+			$old    = $data[ $headers['OLD'] ];
+			$_new   = array_map( 'trim', explode( ',', $data[ $headers['NEW'] ] ) );
+			$type   = strtolower( $data[ $headers['TYPE'] ] );
+
+			foreach ( $_new as $new ) {
+				if ( 'delete' == $action ) {
+					continue;
+				}
+
+				if ( empty( $taxonomies[ $type ] ) ) {
+					WP_CLI::warning( 'Could not find ' . $type . ' for ' . $new );
+					continue;
+				}
+
+				if ( array_search( strtolower( $new ), $taxonomies[ $type ]['terms'] ) ) {
+					continue;
+				}
+
+				// throw an error if no action was provided and we couldn't find the value
+				if ( 'none' == $type ) {
+					WP_CLI::warning( 'Could not find ' . $new . ' in ' . $type );
+					continue;
+				}
+
+				WP_CLI::log( 'Add ' . $new . ' to ' . $type . '. Replaces: ' . $old );
+			}
+
+		}
+
+		WP_CLI::success( 'Completed taxonomy map check' );
+	}
+
+	/**
+	 * Receives an array of tags that belong to one of our taxonomies.
+	 * @param $post_id
+	 * @param $terms
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	protected static function update_terms( $post_id, $terms ) {
+
+		$map = false;
+		$filename = ABSPATH . 'category_map.csv';
+
+		// handle term mapping
+		if ( $file = fopen( $filename, 'r' ) ) {
+			$row = 0;
+			while ( $data = fgetcsv( $file ) ) {
+				count( $data );
+
+				if ( ++ $row == 1 ) {
+					$headers = array_flip( $data ); // Get the column names from the header.
+					continue;
+				}
+
+				$data = array_map( 'trim', $data );
+
+				$action = strtolower( $data[ $headers['ACTION'] ] );
+				$old    = strtolower( $data[ $headers['OLD'] ] );
+				$_new   = array_map( 'trim', explode( ',', $data[ $headers['NEW'] ] ) );
+
+				$map[ $old ] = [];
+
+				if ( 'delete' === $action ) {
+					$map[ $old ] = 'delete';
+					continue;
+				}
+
+				foreach( $_new as $new ) {
+					$map[ $old ][] = $new;
+				}
+			}
+		}
+
+		$taxonomies = [
+			'topic'     => [
+				'tax'   => Topic::get_instance()->taxonomy,
+				'terms' => Topic::get_instance()->get_terms(),
+				'terms_lwr' => array_map( 'strtolower', Topic::get_instance()->get_terms() )
+			],
+			'season'    => [
+				'tax'   => Season::get_instance()->taxonomy,
+				'terms' => Season::get_instance()->get_terms(),
+				'terms_lwr' => array_map( 'strtolower', Season::get_instance()->get_terms() )
+			],
+			'scripture' => [
+				'tax'   => Scripture::get_instance()->taxonomy,
+				'terms' => Scripture::get_instance()->get_terms(),
+				'terms_lwr' => array_map( 'strtolower', Scripture::get_instance()->get_terms() )
+			],
+		];
+
+		$terms = array_map( 'trim', explode( ',', $terms ) );
+
+		// setup update array
+		$update = [];
+		foreach( $taxonomies as $taxonomy ) {
+			$update[ $taxonomy['tax'] ] = [];
+		}
+
+		foreach( $terms as $term ) {
+			$tax = false;
+
+			$_terms = [ $term ];
+
+			// find the mapped term if it exists... allow for multiple terms mapped to a single term
+			if ( isset( $map[ strtolower( $term ) ] ) ) {
+				$_terms = $map[ strtolower( $term ) ];
+
+				if ( 'delete' === $_terms ) {
+					continue;
+				}
+			}
+
+			foreach ( $_terms as $_term ) {
+				foreach ( $taxonomies as $taxonomy ) {
+					// search against lowercase terms but use normal case in update array
+					if ( $key = array_search( strtolower( $_term ), $taxonomy['terms_lwr'] ) ) {
+						$tax              = $taxonomy['tax'];
+						$update[ $tax ][] = $taxonomy['terms'][ $key ];
+						break;
+					}
+				}
+			}
+
+			if ( ! $tax ) {
+				WP_CLI::warning( 'Could not find ' . $term );
+			}
+
+		}
+
+		foreach( $update as $tax => $terms ) {
+			wp_set_post_terms( $post_id, $terms, $tax );
+		}
+	}
+
 	public function import_series( $args, $assoc_args ) {
 		require_once( ABSPATH . 'wp-admin/includes/media.php' );
 		require_once( ABSPATH . 'wp-admin/includes/file.php' );
@@ -314,7 +496,7 @@ class CP_Migrate {
 		}
 
 		$all_speakers = [];
-		$all_locations = [];
+		$all_locations = [ 'global' => 'global' ];
 
 		foreach( Speaker::get_all_speakers() as $speaker ) {
 			$all_speakers[ $speaker->id ] = strtolower( $speaker->title );
@@ -362,10 +544,12 @@ class CP_Migrate {
 				$data = array_map( 'trim', $data );
 
 				$title    = $data[ $headers['Title'] ];
+				$desc     = trim( $data[ $headers['Description'] ] );
 				$series   = explode( ':', $data[ $headers['Series'] ] )[0];
 				$date     = strtotime( $data[ $headers['Date'] ] );
 				$location = trim( strtolower( $data[ $headers['Location'] ] ) );
 				$speaker  = $data[ $headers['Speaker'] ];
+				$terms    = $data[ $headers['Tags'] ];
 				$video    = trim( $data[ $headers['Video'] ] );
 				$audio    = trim( $data[ $headers['Audio'] ] );
 
@@ -388,6 +572,21 @@ class CP_Migrate {
 
 				if ( isset( $results[0] ) ) {
 					$series_id = $results[0]->id;
+				} else { // create the series if it doesn't exist
+					$series_id = wp_insert_post( [
+						'post_type'   => ItemType::get_prop( 'post_type' ),
+						'post_title'  => $series,
+						'post_status' => 'publish',
+					], true );
+
+					if ( is_wp_error( $series_id ) ) {
+						WP_CLI::error( $series_id->get_error_message() );
+					}
+
+					// get the id
+					$series_id = ItemType::get_instance_from_origin( $series_id )->id;
+
+					WP_CLI::log( '--- Series created, ' . $series );
 				}
 
 				WP_CLI::log( 'Importing ' . $title );
@@ -411,10 +610,11 @@ class CP_Migrate {
 				}
 
 				$message_id = wp_insert_post( [
-					'post_type'   => Item::get_prop( 'post_type' ),
-					'post_title'  => $title,
-					'post_status' => 'publish',
-					'post_date'   => date( 'Y-m-d 9:00:00', $date ),
+					'post_type'    => Item::get_prop( 'post_type' ),
+					'post_title'   => $title,
+					'post_status'  => 'publish',
+					'post_date'    => date( 'Y-m-d 9:00:00', $date ),
+					'post_content' => wp_kses_post( $desc ),
 				], true );
 
 				if ( is_wp_error( $message_id ) ) {
@@ -449,6 +649,10 @@ class CP_Migrate {
 					update_post_meta( $message_id, 'audio_url', $audio );
 					$item->update_meta_value( 'audio_url', $audio );
 					WP_CLI::log( '--- added audio' );
+				}
+
+				if ( ! empty( $terms ) ) {
+					self::update_terms( $message_id, $terms );
 				}
 
 			} catch ( Exception $e ) {
