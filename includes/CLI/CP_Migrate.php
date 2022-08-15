@@ -548,7 +548,7 @@ class CP_Migrate {
 				$series   = explode( ':', $data[ $headers['Series'] ] )[0];
 				$date     = strtotime( $data[ $headers['Date'] ] );
 				$location = trim( strtolower( $data[ $headers['Location'] ] ) );
-				$speaker  = $data[ $headers['Speaker'] ];
+				$speakers = array_map( 'trim', explode( ',', $data[ $headers['Speaker'] ] ) );
 				$terms    = $data[ $headers['Tags'] ];
 				$video    = trim( $data[ $headers['Video'] ] );
 				$audio    = trim( $data[ $headers['Audio'] ] );
@@ -570,44 +570,7 @@ class CP_Migrate {
 					$results = ItemType::search( 'title', $series, true );
 				}
 
-				if ( isset( $results[0] ) ) {
-					$series_id = $results[0]->id;
-				} else { // create the series if it doesn't exist
-					$series_id = wp_insert_post( [
-						'post_type'   => ItemType::get_prop( 'post_type' ),
-						'post_title'  => $series,
-						'post_status' => 'publish',
-					], true );
-
-					if ( is_wp_error( $series_id ) ) {
-						WP_CLI::error( $series_id->get_error_message() );
-					}
-
-					// get the id
-					$series_id = ItemType::get_instance_from_origin( $series_id )->id;
-
-					WP_CLI::log( '--- Series created, ' . $series );
-				}
-
 				WP_CLI::log( 'Importing ' . $title );
-
-				if ( false === $speaker_id = array_search( $speaker, $all_speakers ) ) {
-					$speaker_id = wp_insert_post( [
-						'post_type'   => Speaker::get_prop( 'post_type' ),
-						'post_title'  => $speaker,
-						'post_status' => 'publish',
-					], true );
-
-					if ( is_wp_error( $speaker_id ) ) {
-						WP_CLI::error( $speaker_id->get_error_message() );
-					}
-
-					// get the id and save it to our array
-					$speaker_id = Speaker::get_instance_from_origin( $speaker_id )->id;
-					$all_speakers[ $speaker_id ] = $speaker;
-
-					WP_CLI::log( '--- speaker created, ' . $speaker );
-				}
 
 				$message_id = wp_insert_post( [
 					'post_type'    => Item::get_prop( 'post_type' ),
@@ -624,14 +587,64 @@ class CP_Migrate {
 
 				// add taxonomy
 				wp_set_post_terms( $message_id, $location_id, 'cp_location' );
-				wp_set_post_terms( Speaker::get_instance( $speaker_id )->origin_id, $location_id, 'cp_location', true );
-
-				WP_CLI::log( '--- message created' );
 
 				// save to our tables
 				$item = Item::get_instance_from_origin( $message_id );
 
-				$item->update_speakers( [ $speaker_id ] );
+				WP_CLI::log( '--- message created' );
+
+				// Speakers
+				$speaker_ids = [];
+				foreach( $speakers as $speaker ) {
+					if ( false === $speaker_id = array_search( $speaker, $all_speakers ) ) {
+						$speaker_id = wp_insert_post( [
+							'post_type'   => Speaker::get_prop( 'post_type' ),
+							'post_title'  => $speaker,
+							'post_status' => 'publish',
+						], true );
+
+						if ( is_wp_error( $speaker_id ) ) {
+							WP_CLI::error( $speaker_id->get_error_message() );
+							continue;
+						}
+
+						// get the id and save it to our array
+						$speaker_id                  = Speaker::get_instance_from_origin( $speaker_id )->id;
+						$all_speakers[ $speaker_id ] = $speaker;
+
+						WP_CLI::log( '--- speaker created, ' . $speaker );
+					}
+
+					if ( $speaker_id ) {
+						$speaker_ids[] = $speaker_id;
+
+						// add the current location to the speaker's location
+						wp_set_post_terms( Speaker::get_instance( $speaker_id )->origin_id, $location_id, 'cp_location', true );
+					}
+				}
+
+				$item->update_speakers( $speaker_ids );
+
+
+				// Series / ItemType
+				if ( isset( $results[0] ) ) {
+					$series_id = $results[0]->id;
+				} elseif ( ! empty( $series ) ) { // create the series if it doesn't exist
+					$series_id = wp_insert_post( [
+						'post_type'   => ItemType::get_prop( 'post_type' ),
+						'post_title'  => $series,
+						'post_status' => 'publish',
+					], true );
+
+					if ( is_wp_error( $series_id ) ) {
+						WP_CLI::error( $series_id->get_error_message() );
+					}
+
+					// get the id
+					$series_id = ItemType::get_instance_from_origin( $series_id )->id;
+
+					WP_CLI::log( '--- Series created, ' . $series );
+				}
 
 				$item->add_type( $series_id );
 
