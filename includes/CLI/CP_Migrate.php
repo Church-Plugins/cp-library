@@ -561,14 +561,6 @@ class CP_Migrate {
 					$title = $series;
 				}
 
-				$series_id = $default_series;
-
-				$results = ItemType::search( 'title', $series );
-
-
-				if ( empty( $results ) ) {
-					$results = ItemType::search( 'title', $series, true );
-				}
 
 				WP_CLI::log( 'Importing ' . $title );
 
@@ -596,7 +588,7 @@ class CP_Migrate {
 				// Speakers
 				$speaker_ids = [];
 				foreach( $speakers as $speaker ) {
-					if ( false === $speaker_id = array_search( $speaker, $all_speakers ) ) {
+					if ( false === $speaker_id = array_search( strtolower( $speaker ), $all_speakers ) ) {
 						$speaker_id = wp_insert_post( [
 							'post_type'   => Speaker::get_prop( 'post_type' ),
 							'post_title'  => $speaker,
@@ -627,6 +619,15 @@ class CP_Migrate {
 
 
 				// Series / ItemType
+
+				$series_id = $default_series;
+
+				$results = ItemType::search( 'title', $series );
+
+				if ( empty( $results ) ) {
+					$results = ItemType::search( 'title', $series, true );
+				}
+
 				if ( isset( $results[0] ) ) {
 					$series_id = $results[0]->id;
 				} elseif ( ! empty( $series ) ) { // create the series if it doesn't exist
