@@ -76,7 +76,7 @@ class Item extends PostType  {
 	public function quick_edit_save( $post_id ) {
 
 		// check inlint edit nonce
-		if ( ! wp_verify_nonce( $_POST['_inline_edit'], 'inlineeditnonce' ) ) {
+		if ( empty( $_POST['_inline_edit'] ) || ! wp_verify_nonce( $_POST['_inline_edit'], 'inlineeditnonce' ) ) {
 			return;
 		}
 
