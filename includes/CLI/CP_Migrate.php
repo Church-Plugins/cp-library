@@ -609,7 +609,7 @@ class CP_Migrate {
 
 						// get the id and save it to our array
 						$speaker_id                  = Speaker::get_instance_from_origin( $speaker_id )->id;
-						$all_speakers[ $speaker_id ] = $speaker;
+						$all_speakers[ $speaker_id ] = strtolower( $speaker );
 
 						WP_CLI::log( '--- speaker created, ' . $speaker );
 					}
