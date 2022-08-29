@@ -502,9 +502,14 @@ class CP_Migrate {
 			$all_speakers[ $speaker->id ] = strtolower( $speaker->title );
 		}
 
-		foreach( Location::get_all_locations() as $location ) {
-			// set the term id as the key
-			$all_locations[ 'location_' . $location->origin_id ] = strtolower( $location->title );
+		if ( class_exists( 'CP_Locations\Models\Location' ) ) {
+			$has_locations = true;
+			foreach ( Location::get_all_locations() as $location ) {
+				// set the term id as the key
+				$all_locations[ 'location_' . $location->origin_id ] = strtolower( $location->title );
+			}
+		} else {
+			$has_locations = false;
 		}
 
 		$results = ItemType::search( 'title', 'No Series' );
@@ -553,7 +558,7 @@ class CP_Migrate {
 				$video    = trim( $data[ $headers['Video'] ] );
 				$audio    = trim( $data[ $headers['Audio'] ] );
 
-				if ( false === $location_id = array_search( $location, $all_locations ) ) {
+				if ( $has_locations && false === $location_id = array_search( $location, $all_locations ) ) {
 					WP_CLI::error( 'Could not find location.' );
 				}
 
@@ -578,7 +583,9 @@ class CP_Migrate {
 				}
 
 				// add taxonomy
-				wp_set_post_terms( $message_id, $location_id, 'cp_location' );
+				if ( $has_locations ) {
+					wp_set_post_terms( $message_id, $location_id, 'cp_location' );
+				}
 
 				// save to our tables
 				$item = Item::get_instance_from_origin( $message_id );
@@ -607,7 +614,7 @@ class CP_Migrate {
 						WP_CLI::log( '--- speaker created, ' . $speaker );
 					}
 
-					if ( $speaker_id ) {
+					if ( $has_locations && $speaker_id ) {
 						$speaker_ids[] = $speaker_id;
 
 						// add the current location to the speaker's location
