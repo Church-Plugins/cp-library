@@ -134,6 +134,22 @@ export default function PersistentPlayer(props) {
     });
   }, [item, mode]);
 
+  let markPosition = 0;
+  let snapDiff = 60;
+  const videoMarks = [];
+
+  if( item && item.video && item.video.marker ) {
+	markPosition = item.video.marker;
+  }
+  if( markPosition > 0 ) {
+	videoMarks.push(
+		{
+			value: markPosition,
+			label: "Sermon Start"
+		}
+	);
+  }
+
   return loading ? (
     <LoadingIndicator />
   ) : error ? (
@@ -232,13 +248,18 @@ export default function PersistentPlayer(props) {
 								     min={0}
 								     defaultValue={0}
 								     max={duration}
-								     step={.01}
+									 step={.01}
 								     size="medium"
 								     value={playedSeconds}
 								     sx={{padding: '10px 0 !important'}}
+									 marks={videoMarks}
 								     onChange={(_, value) => {
 									     setIsPlaying(false);
-									     setPlayedSeconds(value);
+										 if( markPosition > 0 && Math.abs( (value - markPosition) ) < snapDiff ) {
+											setPlayedSeconds( markPosition );
+										} else {
+											setPlayedSeconds( value );
+										}
 								     }}
 								     onChangeCommitted={(_, value) => {
 									     setIsPlaying(true);
@@ -293,13 +314,18 @@ export default function PersistentPlayer(props) {
               min={0}
               defaultValue={0}
               max={duration}
-              step={.01}
+			  step={.01}
               size="small"
               value={playedSeconds}
               sx={{padding: "10px 0 !important"}}
+			  marks={videoMarks}
               onChange={(_, value) => {
                 setIsPlaying(false);
-                setPlayedSeconds(value)
+				if( markPosition > 0 && Math.abs( (value - markPosition) ) < snapDiff ) {
+					setPlayedSeconds( markPosition );
+				} else {
+					setPlayedSeconds( value );
+				}
               }}
               onChangeCommitted={(_, value) => {
                 setIsPlaying(true);

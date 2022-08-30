@@ -202,9 +202,13 @@ class Item extends Controller{
 	}
 
 	public function get_video() {
+
+		$timestamp = get_post_meta( $this->model->origin_id, 'message_timestamp', true );
+		$timestamp = ItemModel::duration_to_seconds( $timestamp );
 		$return = [
-			'type'  => 'url',
-			'value' => false,
+			'type'  	=> 'url',
+			'value' 	=> false,
+			'marker'	=> $timestamp
 		];
 
 		if ( $url = $this->model->get_meta_value( 'video_url' ) ) {
