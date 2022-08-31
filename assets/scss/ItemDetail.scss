@@ -147,6 +147,20 @@
 			content: '-';
 		}
 	}
+
+	&__video {
+		span {
+			&.MuiSlider-markLabel {
+				z-index: 1;
+				background-color: white;
+				border: 1px solid lightgray;
+				margin-top: -14px;
+				font-size: 0.7rem;
+				padding: 2px;
+				border-radius: 3px;
+			}
+		}
+	}
 }
 
 .itemDetail {

@@ -357,6 +357,29 @@ class Item extends Table  {
 		);
 	}
 
+	/**
+	 * Convert a string in the format of HH:MM:SS into a number of seconds
+	 *
+	 * @param string $input
+	 * @return void
+	 * @author costmo
+	 */
+	public static function duration_to_seconds( $input ) {
+
+		$return_value = 0;
+
+		$split = explode( ":", $input );
+		if( count( $split ) !== 3 ) {
+			return $return_value;
+		}
+
+		$return_value	= ($split[0] * 3600) +
+						  ($split[1] * 60) +
+						  $split[2];
+
+		return $return_value;
+	}
+
 
 
 }

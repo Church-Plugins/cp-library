@@ -19,6 +19,7 @@ import PlayPause from '../Elements/Buttons/PlayPause';
 import Logo from '../Elements/Logo';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../Templates/Theme";
+import throttle from 'lodash.throttle';
 
 export default function PersistentPlayer(props) {
   const { isDesktop } = useBreakpoints();
@@ -134,6 +135,36 @@ export default function PersistentPlayer(props) {
     });
   }, [item, mode]);
 
+  let markPosition = 0;
+  let snapDiff = 60;
+  const videoMarks = [];
+
+  if( item && item.video && item.video.marker ) {
+	markPosition = item.video.marker;
+  }
+  if( 'video' === mode && markPosition > 0 ) {
+	videoMarks.push(
+		{
+			value: markPosition,
+			label: "Sermon Start"
+		}
+	);
+  }
+
+  	let doScroll = ( scrollValue ) => {
+		if( markPosition > 0 && Math.abs( (scrollValue - markPosition) ) < snapDiff ) {
+			setPlayedSeconds( markPosition );
+		} else {
+			setPlayedSeconds( scrollValue );
+		}
+	}
+
+	let throttleScroll = throttle(
+		(scrollValue) => {
+			doScroll( scrollValue );
+		}, 10
+	);
+
   return loading ? (
     <LoadingIndicator />
   ) : error ? (
@@ -228,24 +259,24 @@ export default function PersistentPlayer(props) {
 					     <Box className="itemPlayer__progress" flex={1} display="flex" flexDirection="column">
 						     <Box display="flex" flexDirection="row" alignItems="center">
 
-							     <Slider
-								     min={0}
-								     defaultValue={0}
-								     max={duration}
-								     step={.01}
-								     size="medium"
-								     value={playedSeconds}
-								     sx={{padding: '10px 0 !important'}}
-								     onChange={(_, value) => {
-									     setIsPlaying(false);
-									     setPlayedSeconds(value);
-								     }}
-								     onChangeCommitted={(_, value) => {
-									     setIsPlaying(true);
-									     playerInstance.current.seekTo(playedSeconds);
-									     setPlayedSeconds(value);
-								     }}
-							     />
+							 <Slider
+								min={0}
+								defaultValue={0}
+								max={duration}
+								step={.01}
+								size="medium"
+								value={playedSeconds}
+								sx={{padding: "10px 0 !important"}}
+								onChange={(_, value) => {
+									setIsPlaying(false);
+									setPlayedSeconds( value );
+								}}
+								onChangeCommitted={(_, value) => {
+									setIsPlaying(true);
+									playerInstance.current.seekTo(playedSeconds);
+									setPlayedSeconds(value);
+								}}
+							/>
 
 							     <Box
 								     display="flex"
@@ -289,24 +320,29 @@ export default function PersistentPlayer(props) {
 			    </Box>
           <Box display="flex" flexDirection="row" alignItems="center">
 
-            <Slider
-              min={0}
-              defaultValue={0}
-              max={duration}
-              step={.01}
-              size="small"
-              value={playedSeconds}
-              sx={{padding: "10px 0 !important"}}
-              onChange={(_, value) => {
-                setIsPlaying(false);
-                setPlayedSeconds(value)
-              }}
-              onChangeCommitted={(_, value) => {
-                setIsPlaying(true);
-                playerInstance.current.seekTo(playedSeconds);
-                setPlayedSeconds(value);
-              }}
-            />
+			<Slider
+				min={0}
+				defaultValue={0}
+				max={duration}
+				step={.01}
+				size="small"
+				value={playedSeconds}
+				sx={{padding: "10px 0 !important"}}
+				marks={videoMarks}
+				onChange={(_, value) => {
+					setIsPlaying(false);
+					throttleScroll( value );
+				}}
+				onChangeCommitted={(_, value) => {
+					setTimeout(
+						() => {
+							playerInstance.current.seekTo(playedSeconds);
+							setPlayedSeconds(value);
+							setIsPlaying(true);
+						}, 10
+					);
+				}}
+			/>
 
           </Box>
 			    <Box className="persistentPlayer__duration" display="flex" flexDirection="row" justifyContent="space-between">
