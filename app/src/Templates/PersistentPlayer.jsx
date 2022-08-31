@@ -19,6 +19,7 @@ import PlayPause from '../Elements/Buttons/PlayPause';
 import Logo from '../Elements/Logo';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../Templates/Theme";
+import throttle from 'lodash.throttle';
 
 export default function PersistentPlayer(props) {
   const { isDesktop } = useBreakpoints();
@@ -149,6 +150,20 @@ export default function PersistentPlayer(props) {
 		}
 	);
   }
+
+  	let doScroll = ( scrollValue ) => {
+		if( markPosition > 0 && Math.abs( (scrollValue - markPosition) ) < snapDiff ) {
+			setPlayedSeconds( markPosition );
+		} else {
+			setPlayedSeconds( scrollValue );
+		}
+	}
+
+	let throttleScroll = throttle(
+		(scrollValue) => {
+			doScroll( scrollValue );
+		}, 10
+	);
 
   return loading ? (
     <LoadingIndicator />
@@ -316,16 +331,16 @@ export default function PersistentPlayer(props) {
 				marks={videoMarks}
 				onChange={(_, value) => {
 					setIsPlaying(false);
-					if( markPosition > 0 && Math.abs( (value - markPosition) ) < snapDiff ) {
-						setPlayedSeconds( markPosition );
-					} else {
-						setPlayedSeconds( value );
-					}
+					throttleScroll( value );
 				}}
 				onChangeCommitted={(_, value) => {
-					setIsPlaying(true);
-					playerInstance.current.seekTo(playedSeconds);
-					setPlayedSeconds(value);
+					setTimeout(
+						() => {
+							playerInstance.current.seekTo(playedSeconds);
+							setPlayedSeconds(value);
+							setIsPlaying(true);
+						}, 10
+					);
 				}}
 			/>
 
