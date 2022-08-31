@@ -336,7 +336,6 @@ export default function PersistentPlayer(props) {
           <Box display="flex" flexDirection="row" alignItems="center">
 
 			<Slider
-				title="Jump to Sermon"
 				min={0}
 				defaultValue={0}
 				max={duration}

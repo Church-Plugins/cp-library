@@ -11,6 +11,8 @@ import { usePersistentPlayer } from '../../Contexts/PersistentPlayerContext';
 import PlayAudio from '../../Elements/Buttons/PlayAudio';
 import PlayVideo from '../../Elements/Buttons/PlayVideo';
 
+import jQuery from 'jquery';
+
 export default function Actions({
   item,
 }) {
@@ -36,6 +38,15 @@ export default function Actions({
 			isPlaying    : true,
 			playedSeconds: 0.0,
 		});
+
+		// Slider mark may load up to a second after the frame is open
+		setTimeout(
+			() => {
+				let element = jQuery( '.MuiSlider-root.MuiSlider-marked .MuiSlider-mark' );
+				jQuery( element ).attr( 'title', 'Jump to Sermon' );
+			}, 1500
+		);
+
 	};
 
 	const playAudio = (e) => {
