@@ -351,18 +351,20 @@ export default function PersistentPlayer(props) {
 
 					// Slider clicked
 					if( _ && _.type && 'mousedown' === _.type ) {
-						playerInstance.current.seekTo(playedSeconds);
+
 						setPlayedSeconds(value);
-						setIsPlaying(true);
+						playerInstance.current.seekTo(playedSeconds);
+
 					} else { // Slider dragged/otherwise moved
 						throttleScroll( value );
 					}
 				}}
 				onChangeCommitted={(_, value) => {
+					setIsPlaying(false);
 					setTimeout(
 						() => {
-							playerInstance.current.seekTo(playedSeconds);
 							setPlayedSeconds(value);
+							playerInstance.current.seekTo(playedSeconds);
 							setIsPlaying(true);
 						}, 5
 					);
