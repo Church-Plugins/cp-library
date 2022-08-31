@@ -142,11 +142,26 @@ export default function PersistentPlayer(props) {
   if( item && item.video && item.video.marker ) {
 	markPosition = item.video.marker;
   }
+
+  let markerLabel = "Sermon";
+
+  if( markPosition > 0 ) {
+	let relativeDistance = (markPosition / duration);
+
+	if( relativeDistance < 0.05 || relativeDistance >= 0.95 ) {
+		// Do not show marker or label
+		markPosition = 0;
+	} else if ( relativeDistance < 0.2 || relativeDistance >= 0.8 ) {
+		// Do not show label
+		markerLabel = null;
+	}
+  }
+
   if( 'video' === mode && markPosition > 0 ) {
 	videoMarks.push(
 		{
 			value: markPosition,
-			label: "Sermon Start"
+			label: markerLabel
 		}
 	);
   }
@@ -321,6 +336,7 @@ export default function PersistentPlayer(props) {
           <Box display="flex" flexDirection="row" alignItems="center">
 
 			<Slider
+				title="Jump to Sermon"
 				min={0}
 				defaultValue={0}
 				max={duration}
