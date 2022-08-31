@@ -346,8 +346,17 @@ export default function PersistentPlayer(props) {
 				sx={{padding: "10px 0 !important"}}
 				marks={videoMarks}
 				onChange={(_, value) => {
+
 					setIsPlaying(false);
-					throttleScroll( value );
+
+					// Slider clicked
+					if( _ && _.type && 'mousedown' === _.type ) {
+						playerInstance.current.seekTo(playedSeconds);
+						setPlayedSeconds(value);
+						setIsPlaying(true);
+					} else { // Slider dragged/otherwise moved
+						throttleScroll( value );
+					}
 				}}
 				onChangeCommitted={(_, value) => {
 					setTimeout(
@@ -355,7 +364,7 @@ export default function PersistentPlayer(props) {
 							playerInstance.current.seekTo(playedSeconds);
 							setPlayedSeconds(value);
 							setIsPlaying(true);
-						}, 10
+						}, 5
 					);
 				}}
 			/>
