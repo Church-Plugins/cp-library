@@ -374,8 +374,8 @@ class Item extends Table  {
 		}
 
 		if( 2 === count( $split ) ) {
-			$return_value	= ($split[1] * 60) +
-							  $split[2];
+			$return_value	= ($split[0] * 60) +
+							  $split[1];
 
 		} else if( 3 === count( $split ) ) {
 			$return_value	= ($split[0] * 3600) +

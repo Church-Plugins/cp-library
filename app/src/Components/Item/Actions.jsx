@@ -63,7 +63,7 @@ export default function Actions({
 
 	return (
 		<Box className="cpl-list-item--actions">
-				<Box className="cpl-list-item--actions--buttons cpl-touch-hide">
+				<Box className="cpl-list-item--actions--buttons">
 					{item.video.value && (
 						<PlayVideo onClick={playVideo}/>
 					)}
@@ -71,9 +71,6 @@ export default function Actions({
 						<PlayAudio onClick={playAudio}/>
 					)}
 				</Box>
-				<IconButton className="cpl-list-item--to-item cpl-touch-only" onClick={viewItem}>
-					<ChevronRight/>
-				</IconButton>
 		</Box>
 	);
 }
