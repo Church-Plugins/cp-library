@@ -80,8 +80,9 @@ class Item extends PostType  {
 			return;
 		}
 
-		// update the price
+		// update the timestamp
 		$timestamp = ! empty( $_POST['message_timestamp'] ) ? sanitize_text_field( $_POST['message_timestamp'] ) : '';
+
 		update_post_meta( $post_id, 'message_timestamp', $timestamp );
 	}
 
@@ -95,7 +96,7 @@ class Item extends PostType  {
 			<div class="inline-edit-col">
 				<label>
 					<span class="title"><?php _e( 'Timestamp', 'cp-library' ) ?></span>
-					<input type="text" name="message_timestamp"><span class="description">(hh:mm:ss) Sermon video timestamp.</span>
+					<input type="text" name="message_timestamp"><span class="description">(mm:ss) Sermon video timestamp.</span>
 				</label>
 			</div>
 		</fieldset>
@@ -209,9 +210,9 @@ class Item extends PostType  {
 
 		$cmb->add_field( [
 			'name' => __( 'Sermon Timestamp', 'cp-library' ),
-			'desc' => __( 'Enter the video timestamp that the sermon starts to show a quick navigation link on the video player', 'cp-library' ),
+			'desc' => __( 'Enter the timestamp (mm:ss or hh:mm:ss) where the sermon begins to show a quick navigation link on the video player', 'cp-library' ),
 			'id'   => 'message_timestamp',
-			'type' => 'text_time',
+			'type' => 'text',
 			'time_format' => 'H:i:s',
 		] );
 
