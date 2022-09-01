@@ -30,8 +30,6 @@ export default function Actions({
 		}
 	};
 
-	console.log( item );
-
 	const playVideo = (e) => {
 		e.stopPropagation();
 		passToPersistentPlayer({
