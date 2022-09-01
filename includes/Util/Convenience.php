@@ -117,4 +117,48 @@ class Convenience
 		}
 	}
 
+	/**
+	 * Normalize free-form timestamp input into HH:MM:SS or MM:SS format
+	 *
+	 * Returns an empty string if sense can't be made of the input
+	 *
+	 * @param string $input
+	 * @return string
+	 * @author costmo
+	 */
+	public static function normalize_timestamp( $input = '' ) {
+
+		$return_value = '';
+
+		// Sanity check the input
+		if( empty( $input ) ) {
+			return $return_value;
+		}
+
+		// Tokenize the input and sanity check the result
+		$tokens = explode( ':', $input );
+		$token_count = count( $tokens );
+		if( empty( $tokens ) || $token_count > 3 ) {
+			return $return_value;
+		}
+
+		if( 1 === $token_count ) {
+			$return_value = "00";
+		}
+		foreach( $tokens as $token ) {
+			$token = (int)$token;
+			if( $token < 0 || $token > 60 ) {
+				$token = 0;
+			}
+			if( $token < 10 ) {
+				$return_value .= ":0" . $token;
+			} else {
+				$return_value .= ":" . $token;
+			}
+		}
+
+		$return_value = preg_replace( "/^\:/", "", $return_value );
+		return $return_value;
+	}
+
 }

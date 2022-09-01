@@ -369,13 +369,21 @@ class Item extends Table  {
 		$return_value = 0;
 
 		$split = explode( ":", $input );
-		if( count( $split ) !== 3 ) {
+		if( count( $split ) < 2 ) {
 			return $return_value;
 		}
 
-		$return_value	= ($split[0] * 3600) +
-						  ($split[1] * 60) +
-						  $split[2];
+		if( 2 === count( $split ) ) {
+			$return_value	= ($split[1] * 60) +
+							  $split[2];
+
+		} else if( 3 === count( $split ) ) {
+			$return_value	= ($split[0] * 3600) +
+							  ($split[1] * 60) +
+							  $split[2];
+		}
+
+
 
 		return $return_value;
 	}
