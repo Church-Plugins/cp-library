@@ -11,7 +11,7 @@ import { Cancel, Fullscreen, PictureInPicture, Forward30, Replay10, OpenInFull, 
 
 import useBreakpoints from '../Hooks/useBreakpoints';
 import formatDuration from '../utils/formatDuration';
-import { cplLog } from '../utils/helpers';
+import { cplLog, cplMarker } from '../utils/helpers';
 
 import LoadingIndicator from '../Elements/LoadingIndicator';
 import ErrorDisplay from '../Elements/ErrorDisplay';
@@ -135,36 +135,11 @@ export default function PersistentPlayer(props) {
     });
   }, [item, mode]);
 
-  let markPosition = 0;
-  let snapDiff = 60;
-  const videoMarks = [];
+  let marker = cplMarker( item, mode, duration );
+  let markPosition	= marker.position;
+  let snapDiff		= marker.snapDistance;
+  let videoMarks	= marker.marks;
 
-  if( item && item.video && item.video.marker ) {
-	markPosition = item.video.marker;
-  }
-
-  let markerLabel = "Sermon";
-
-  if( markPosition > 0 ) {
-	let relativeDistance = (markPosition / duration);
-
-	if( relativeDistance < 0.05 || relativeDistance >= 0.95 ) {
-		// Do not show marker or label
-		markPosition = 0;
-	} else if ( relativeDistance < 0.2 || relativeDistance >= 0.8 ) {
-		// Do not show label
-		markerLabel = null;
-	}
-  }
-
-  if( 'video' === mode && markPosition > 0 ) {
-	videoMarks.push(
-		{
-			value: markPosition,
-			label: markerLabel
-		}
-	);
-  }
 
   	let doScroll = ( scrollValue ) => {
 		if( markPosition > 0 && Math.abs( (scrollValue - markPosition) ) < snapDiff ) {
