@@ -43,9 +43,6 @@ class Templates {
 		// Choose the wordpress theme template to use
 		add_filter( 'template_include', [ __CLASS__, 'template_include' ] );
 
-		// make sure we enter the loop by always having some posts in $wp_query
-		add_action( 'wp_head', [ __CLASS__, 'maybeSpoofQuery' ], 100 );
-
 		// don't query the database for the spoofed post
 		wp_cache_set( self::spoofed_post()->ID, self::spoofed_post(), 'posts' );
 		wp_cache_set( self::spoofed_post()->ID, [ true ], 'post_meta' );
@@ -280,13 +277,11 @@ class Templates {
 	 */
 	public static function setup_cpl_template( $query ) {
 
-		do_action( 'tribe_events_filter_the_page_title' );
-
 		if ( $query->is_main_query() && self::$wpHeadComplete ) {
 			// on loop start, unset the global post so that template tags don't work before the_content()
 			add_action( 'the_post', [ __CLASS__, 'spoof_the_post' ] );
 
-			// on the_content, load our events template
+			// on the_content, load our template
 			add_filter( 'the_content', [ __CLASS__, 'load_cpl_into_page_template' ] );
 
 			// only do this once
@@ -375,8 +370,6 @@ class Templates {
 	public static function load_cpl_into_page_template( $contents = '' ) {
 		// only run once!!!
 		remove_filter( 'the_content', [ __CLASS__, 'load_cpl_into_page_template' ] );
-
-		self::restoreQuery();
 
 		ob_start();
 
@@ -570,64 +563,4 @@ class Templates {
 		];
 	}
 
-
-	/**
-	 * Decide if we need to spoof the query.
-	 */
-	public static function maybeSpoofQuery() {
-
-		return;
-
-		// hijack this method right up front if it's a password protected post and the password isn't entered
-		if ( is_single() && post_password_required() || is_feed() ) {
-			return;
-		}
-
-		$wp_query = self::get_global_query_object();
-
-		if ( 0 && $wp_query->is_main_query() && self::is_cpl_query() ) {
-
-			// we need to ensure that we always enter the loop, whether or not there are any events in the actual query
-
-			$spoofed_post = self::spoofed_post();
-
-			$GLOBALS['post']      = $spoofed_post;
-			$wp_query->posts[]    = $spoofed_post;
-			$wp_query->post_count = count( $wp_query->posts );
-
-			$wp_query->spoofed = true;
-			$wp_query->rewind_posts();
-
-		}
-	}
-
-
-	/**
-	 * Restore the original query after spoofing it.
-	 */
-	public static function restoreQuery() {
-		$wp_query = self::get_global_query_object();
-
-		// If the query hasn't been spoofed we need take no action
-		if ( ! isset( $wp_query->spoofed ) || ! $wp_query->spoofed ) {
-			return;
-		}
-
-		// Remove the spoof post and fix the post count
-		array_pop( $wp_query->posts );
-		$wp_query->post_count = count( $wp_query->posts );
-
-		// If we have other posts besides the spoof, rewind and reset
-		if ( $wp_query->post_count > 0 ) {
-			$wp_query->rewind_posts();
-			wp_reset_postdata();
-		} // If there are no other posts, unset the $post property
-		elseif ( 0 === $wp_query->post_count ) {
-			$wp_query->current_post = - 1;
-			unset( $wp_query->post );
-		}
-
-		// Don't do this again
-		unset( $wp_query->spoofed );
-	}
 }
