@@ -25,6 +25,8 @@ class Speaker extends Source {
 
 	public static $type_key = 'speaker';
 
+	public $title = null;
+
 	public function init() {
 		$this->post_type = 'cpl_speaker';
 

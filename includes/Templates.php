@@ -244,12 +244,16 @@ class Templates {
 	 * @author Tanner Moushey
 	 */
 	public static function type_switcher() {
+
 		$type   = self::get_type();
 		$link   = '';
 		$button = '';
 		$item_cpt = get_post_type_object(cp_library()->setup->post_types->item->post_type);
 		$item_type_cpt = get_post_type_object(cp_library()->setup->post_types->item_type->post_type);
-		list( $req_uri, $query_params ) = explode( '?', $_SERVER['REQUEST_URI'] );
+
+		$split = explode( '?', $_SERVER['REQUEST_URI'] );
+		$req_uri = $split[0] ?? '';
+		$query_params = $split[1] ?? '';
 
 		switch( $type ) {
 			case 'item':
