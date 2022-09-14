@@ -4,7 +4,6 @@ use ChurchPlugins\Helpers;
 $taxonomies = cp_library()->setup->taxonomies->get_objects();
 $uri = explode( '?', $_SERVER['REQUEST_URI'] )[0];
 $get = $_GET;
-
 $display = '';
 
 if ( empty( $get ) ) {
@@ -51,18 +50,56 @@ $display = apply_filters( 'cpl_filters_display', $display );
 
 	<script>
 
-	  	jQuery('.cpl-filter--toggle--button').on('click', function(e) {
+		var $ = jQuery;
+	  	$('.cpl-filter--toggle--button').on('click', function(e) {
 			e.preventDefault();
-			jQuery('.cpl-filter--has-dropdown').toggle();
+			$('.cpl-filter--has-dropdown').toggle();
 		});
 
-	  	jQuery('.cpl-filter--form input[type=checkbox]').on('change', function() {
-			jQuery('.cpl-filter--form').submit();
-		});
+	  	$( '.cpl-filter--form input[type=checkbox]' ).on( 'change',
+			function() {
 
-		jQuery('.cpl-filter--has-dropdown a').on( 'click', function(e) {
+				// Munge the URL to discard pagination when fiilter options change
+				var form = $( this ).parents( 'form.cpl-filter--form' );
+				var location = window.location;
+				var baseUrl = location.protocol + '//' + location.hostname;
+				var pathSplit = location.pathname.split( '/' );
+				let finalPath = '';
+
+				// Get the URL before the `page` element
+				var gotBoundary = false;
+				$( pathSplit ).each(
+					function(index, token) {
+
+						if( 'page' === token ) {
+							gotBoundary = true;
+						}
+						if( !gotBoundary ) {
+
+							if( '' === token ) {
+								finalPath += '/';
+							} else {
+								finalPath += token;
+							}
+
+						}
+					}
+				);
+				// Finish and add already-used GET params
+				if( !finalPath.endsWith( '/' ) ) {
+					finalPath += '/';
+				}
+				if( location.search && location.search.length > 0 ) {
+					finalPath += location.search;
+				}
+				// Set form property and do it
+				$( form ).attr( 'action', baseUrl + finalPath );
+				$('.cpl-filter--form').submit();
+			});
+
+		$('.cpl-filter--has-dropdown a').on( 'click', function(e) {
 			e.preventDefault();
-			jQuery(this).parent().toggleClass('open');
+			$(this).parent().toggleClass('open');
 		})
 	</script>
 </div>
