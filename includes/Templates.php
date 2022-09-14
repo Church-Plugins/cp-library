@@ -257,11 +257,12 @@ class Templates {
 
 		switch( $type ) {
 			case 'item':
-				$link = str_replace( $item_cpt->rewrite['slug'], $item_type_cpt->rewrite['slug'], $req_uri );
+				$link = '/' . $item_type_cpt->rewrite['slug'] . '/';
 				$button = sprintf( __( 'Switch to %s' ), $item_type_cpt->label );
 				break;
 			case 'item-type':
-				$link = str_replace( $item_type_cpt->rewrite['slug'], $item_cpt->rewrite['slug'], $req_uri );
+				$link = '/' . $item_cpt->rewrite['slug'] . '/';
+				// $link = str_replace( $item_type_cpt->rewrite['slug'], $item_cpt->rewrite['slug'], $req_uri );
 				$button = sprintf( __( 'Switch to %s' ), $item_cpt->label );
 				break;
 		}
