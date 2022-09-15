@@ -22,15 +22,15 @@ $description = get_the_archive_description();
 			<?php Templates::get_template_part( "parts/filter-selected" ); ?>
 
 			<div class="cpl-archive--list">
-				<?php if ( have_posts() ) : ?>
+				<?php if ( have_posts() ) { ?>
 					<?php while( have_posts() ) : the_post();  ?>
 						<div class="cpl-archive--list--item">
 							<?php Templates::get_template_part( "parts/" . Templates::get_type() . "-list" ); ?>
 						</div>
 					<?php endwhile; ?>
-				<?php else : ?>
+				<?php } else if( !empty( $type ) && is_object( $type ) && !empty( $type->plural_label ) ) { ?>
 						<p><?php printf( __( "No %s found.", 'cp-library' ), $type->plural_label ); ?></p>
-				<?php endif; ?>
+				<?php }; ?>
 			</div>
 		</div>
 

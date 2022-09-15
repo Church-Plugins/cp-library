@@ -43,9 +43,6 @@ class Templates {
 		// Choose the wordpress theme template to use
 		add_filter( 'template_include', [ __CLASS__, 'template_include' ] );
 
-		// make sure we enter the loop by always having some posts in $wp_query
-		add_action( 'wp_head', [ __CLASS__, 'maybeSpoofQuery' ], 100 );
-
 		// don't query the database for the spoofed post
 		wp_cache_set( self::spoofed_post()->ID, self::spoofed_post(), 'posts' );
 		wp_cache_set( self::spoofed_post()->ID, [ true ], 'post_meta' );
@@ -247,20 +244,36 @@ class Templates {
 	 * @author Tanner Moushey
 	 */
 	public static function type_switcher() {
+
 		$type   = self::get_type();
 		$link   = '';
 		$button = '';
 		$item_cpt = get_post_type_object(cp_library()->setup->post_types->item->post_type);
 		$item_type_cpt = get_post_type_object(cp_library()->setup->post_types->item_type->post_type);
-		list( $req_uri, $query_params ) = explode( '?', $_SERVER['REQUEST_URI'] );
+
+		$split = explode( '?', $_SERVER['REQUEST_URI'] );
+		$req_uri = $split[0] ?? '';
+		$query_params = $split[1] ?? '';
+
+		// Extract all path components up to the page delimiter
+		$uri_split = explode( "/", $req_uri );
+		$exclusions = [ $item_type_cpt->rewrite['slug'], $item_cpt->rewrite['slug'] ];
+		$have_target = false;
+		foreach( $uri_split as $token ) {
+			if( 'page' === $token ) { $have_target = true; }
+			if( $have_target ) { continue; }
+			if( strlen( trim( $token ) ) > 0 && !in_array( $token, $exclusions ) ) {
+				$link .= trailingslashit( $token );
+			}
+		}
 
 		switch( $type ) {
 			case 'item':
-				$link = str_replace( $item_cpt->rewrite['slug'], $item_type_cpt->rewrite['slug'], $req_uri );
+				$link .= $item_type_cpt->rewrite['slug'];
 				$button = sprintf( __( 'Switch to %s' ), $item_type_cpt->label );
 				break;
 			case 'item-type':
-				$link = str_replace( $item_type_cpt->rewrite['slug'], $item_cpt->rewrite['slug'], $req_uri );
+				$link .= $item_cpt->rewrite['slug'];
 				$button = sprintf( __( 'Switch to %s' ), $item_cpt->label );
 				break;
 		}
@@ -268,6 +281,12 @@ class Templates {
 		if ( empty( $link ) ) {
 			return;
 		}
+
+		// normalize the output
+		if( 1 !== preg_match( "/^\//", $link ) ) {
+			$link = '/' . $link;
+		}
+		$link = trailingslashit( $link );
 
 		printf( '<a class="cpl-archive--item-switcher" href="%s">%s</a>', $link, $button );
 	}
@@ -280,13 +299,11 @@ class Templates {
 	 */
 	public static function setup_cpl_template( $query ) {
 
-		do_action( 'tribe_events_filter_the_page_title' );
-
 		if ( $query->is_main_query() && self::$wpHeadComplete ) {
 			// on loop start, unset the global post so that template tags don't work before the_content()
 			add_action( 'the_post', [ __CLASS__, 'spoof_the_post' ] );
 
-			// on the_content, load our events template
+			// on the_content, load our template
 			add_filter( 'the_content', [ __CLASS__, 'load_cpl_into_page_template' ] );
 
 			// only do this once
@@ -375,8 +392,6 @@ class Templates {
 	public static function load_cpl_into_page_template( $contents = '' ) {
 		// only run once!!!
 		remove_filter( 'the_content', [ __CLASS__, 'load_cpl_into_page_template' ] );
-
-		self::restoreQuery();
 
 		ob_start();
 
@@ -570,64 +585,4 @@ class Templates {
 		];
 	}
 
-
-	/**
-	 * Decide if we need to spoof the query.
-	 */
-	public static function maybeSpoofQuery() {
-
-		return;
-
-		// hijack this method right up front if it's a password protected post and the password isn't entered
-		if ( is_single() && post_password_required() || is_feed() ) {
-			return;
-		}
-
-		$wp_query = self::get_global_query_object();
-
-		if ( 0 && $wp_query->is_main_query() && self::is_cpl_query() ) {
-
-			// we need to ensure that we always enter the loop, whether or not there are any events in the actual query
-
-			$spoofed_post = self::spoofed_post();
-
-			$GLOBALS['post']      = $spoofed_post;
-			$wp_query->posts[]    = $spoofed_post;
-			$wp_query->post_count = count( $wp_query->posts );
-
-			$wp_query->spoofed = true;
-			$wp_query->rewind_posts();
-
-		}
-	}
-
-
-	/**
-	 * Restore the original query after spoofing it.
-	 */
-	public static function restoreQuery() {
-		$wp_query = self::get_global_query_object();
-
-		// If the query hasn't been spoofed we need take no action
-		if ( ! isset( $wp_query->spoofed ) || ! $wp_query->spoofed ) {
-			return;
-		}
-
-		// Remove the spoof post and fix the post count
-		array_pop( $wp_query->posts );
-		$wp_query->post_count = count( $wp_query->posts );
-
-		// If we have other posts besides the spoof, rewind and reset
-		if ( $wp_query->post_count > 0 ) {
-			$wp_query->rewind_posts();
-			wp_reset_postdata();
-		} // If there are no other posts, unset the $post property
-		elseif ( 0 === $wp_query->post_count ) {
-			$wp_query->current_post = - 1;
-			unset( $wp_query->post );
-		}
-
-		// Don't do this again
-		unset( $wp_query->spoofed );
-	}
 }

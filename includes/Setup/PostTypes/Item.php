@@ -42,7 +42,9 @@ class Item extends PostType  {
 		add_action( 'add_inline_data',  [ $this, 'inline_data' ] );
 		add_action( 'save_post', [ $this, 'quick_edit_save' ] );
 
+
 		add_action( 'save_post', [ $this, 'normalize_input' ], 20 ); // Set high priority so we can act before CMB
+		add_filter( "{$this->post_type}_slug", [ $this, 'custom_slug' ] );
 
 		add_filter( "manage_{$this->post_type}_posts_columns", [ $this, 'item_data_column' ], 20 );
 		add_action( "manage_{$this->post_type}_posts_custom_column", [ $this, 'item_data_column_cb' ], 10, 2 );
@@ -51,6 +53,7 @@ class Item extends PostType  {
 	}
 
 	/**
+
 	 * Normalizes form input and saves before moving on in the admin UI
 	 *
 	 * @param int $post_id
@@ -70,6 +73,16 @@ class Item extends PostType  {
 				update_post_meta( $post_id, 'message_timestamp', $normalized );
 			}
 		}
+  }
+
+	 * Allow for user defined slug
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function custom_slug() {
+		return Settings::get_item( 'slug', strtolower( sanitize_title( $this->plural_label ) ) );
 	}
 
 	/**
