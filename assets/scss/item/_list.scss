@@ -17,6 +17,7 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 		flex-flow: column;
 		justify-content: space-between;
 		width: 100%;
+		overflow: hidden;
 	}
 
 	&--columns {
