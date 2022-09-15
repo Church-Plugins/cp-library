@@ -16,3 +16,15 @@
 	border: 0;
 }
 
+body.single-cploc_location {
+	.cpl-list-item--actions {
+		.cpl-list-item--actions--buttons.cpl-touch-hide {
+			display: flex !important;
+		}
+		.cpl-list-item--to-item.cpl-touch-only {
+			display: none !important;
+		}
+	}
+
+}
+

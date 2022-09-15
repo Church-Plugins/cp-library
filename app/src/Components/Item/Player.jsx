@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { cplVar, cplLog } from '../../utils/helpers';
+import { cplVar, cplLog, cplMarker } from '../../utils/helpers';
 
 import { Play, Volume1, Share2 } from "react-feather"
 import VideoPlayer from "react-player";
@@ -25,6 +25,8 @@ import PlayPause from '../../Elements/Buttons/PlayPause';
 
 import PlayAudio from '../../Elements/Buttons/PlayAudio';
 import PlayVideo from '../../Elements/Buttons/PlayVideo';
+
+import throttle from 'lodash.throttle';
 
 
 export default function Player({
@@ -212,6 +214,26 @@ export default function Player({
 
   }, [item]);
 
+	let marker = cplMarker( item, mode, duration );
+	let markPosition	= marker.position;
+	let snapDiff		= marker.snapDistance;
+	let videoMarks	= marker.marks;
+
+
+	let doScroll = ( scrollValue ) => {
+		if( markPosition > 0 && Math.abs( (scrollValue - markPosition) ) < snapDiff ) {
+			setPlayedSeconds( markPosition );
+		} else {
+			setPlayedSeconds( scrollValue );
+		}
+	}
+
+	let throttleScroll = throttle(
+		(scrollValue) => {
+			doScroll( scrollValue );
+		}, 10
+	);
+
   return (
     // Margin bottom is to account for audio player. Making sure all content is still visible with
     // the player is up.
@@ -298,14 +320,27 @@ export default function Player({
 							          size="medium"
 							          value={playedSeconds}
 							          sx={{padding: '10px 0 !important'}}
+									  marks={videoMarks}
 							          onChange={(_, value) => {
 								          setIsPlaying(false);
-								          setPlayedSeconds(value);
+
+										  if( _ && _.type && 'mousedown' === _.type ) {
+											setPlayedSeconds(value);
+											playerInstance.current.seekTo(playedSeconds);
+										  } else {
+											throttleScroll( value );
+										  }
+
 							          }}
 							          onChangeCommitted={(_, value) => {
-								          setIsPlaying(true);
-								          playerInstance.current.seekTo(playedSeconds);
-								          setPlayedSeconds(value);
+								          setIsPlaying( false );
+										  setTimeout(
+											() => {
+												setPlayedSeconds(value);
+												playerInstance.current.seekTo(playedSeconds);
+												setIsPlaying( true );
+											}
+										  );
 							          }}
 						          />
 
@@ -455,14 +490,26 @@ export default function Player({
 					         size="medium"
 					         value={playedSeconds}
 					         sx={{padding: '10px 0 !important'}}
+							 marks={videoMarks}
 					         onChange={(_, value) => {
-						         setIsPlaying(false);
-						         setPlayedSeconds(value);
+								setIsPlaying(false);
+
+								if( _ && _.type && 'mousedown' === _.type ) {
+								  setPlayedSeconds(value);
+								  playerInstance.current.seekTo(playedSeconds);
+								} else {
+								  throttleScroll( value );
+								}
 					         }}
 					         onChangeCommitted={(_, value) => {
-						         setIsPlaying(true);
-						         playerInstance.current.seekTo(playedSeconds);
-						         setPlayedSeconds(value);
+								setIsPlaying( false );
+								setTimeout(
+								  () => {
+									  setPlayedSeconds(value);
+									  playerInstance.current.seekTo(playedSeconds);
+									  setIsPlaying( true );
+								  }
+								);
 					         }}
 				         />
 

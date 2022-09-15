@@ -10,6 +10,7 @@ use CP_Library\Exception;
 use CP_Library\Setup\Tables\ItemMeta;
 use CP_Library\Templates;
 use CP_Library\Controllers\Item as ItemController;
+use CP_Library\Util\Convenience;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -41,6 +42,8 @@ class Item extends PostType  {
 		add_action( 'add_inline_data',  [ $this, 'inline_data' ] );
 		add_action( 'save_post', [ $this, 'quick_edit_save' ] );
 
+
+		add_action( 'save_post', [ $this, 'normalize_input' ], 20 ); // Set high priority so we can act before CMB
 		add_filter( "{$this->post_type}_slug", [ $this, 'custom_slug' ] );
 
 		add_filter( "manage_{$this->post_type}_posts_columns", [ $this, 'item_data_column' ], 20 );
@@ -50,6 +53,28 @@ class Item extends PostType  {
 	}
 
 	/**
+
+	 * Normalizes form input and saves before moving on in the admin UI
+	 *
+	 * @param int $post_id
+	 * @return void
+	 * @author costmo
+	 */
+	public function normalize_input( $post_id ) {
+
+		if( empty( $_REQUEST ) || !is_array( $_REQUEST ) || empty( $_REQUEST['post_type'] ) || 'cpl_item' !== $_REQUEST['post_type'] ) {
+			return;
+		}
+
+		// Normalize the "Sermon starts here" timestamp
+		if( !empty( $_REQUEST['message_timestamp'] ) ) {
+			$normalized = Convenience::normalize_timestamp( $_REQUEST['message_timestamp'] );
+			if( !empty( $normalized ) ) {
+				update_post_meta( $post_id, 'message_timestamp', $normalized );
+			}
+		}
+  }
+
 	 * Allow for user defined slug
 	 *
 	 * @since  1.0.0
@@ -93,8 +118,10 @@ class Item extends PostType  {
 			return;
 		}
 
-		// update the price
+		// update the timestamp
 		$timestamp = ! empty( $_POST['message_timestamp'] ) ? sanitize_text_field( $_POST['message_timestamp'] ) : '';
+		$timestamp = Convenience::normalize_timestamp( $timestamp );
+
 		update_post_meta( $post_id, 'message_timestamp', $timestamp );
 	}
 
@@ -108,7 +135,7 @@ class Item extends PostType  {
 			<div class="inline-edit-col">
 				<label>
 					<span class="title"><?php _e( 'Timestamp', 'cp-library' ) ?></span>
-					<input type="text" name="message_timestamp"><span class="description">(hh:mm:ss) Sermon video timestamp.</span>
+					<input type="text" name="message_timestamp"><span class="description">(mm:ss) Sermon video timestamp.</span>
 				</label>
 			</div>
 		</fieldset>
@@ -222,9 +249,9 @@ class Item extends PostType  {
 
 		$cmb->add_field( [
 			'name' => __( 'Sermon Timestamp', 'cp-library' ),
-			'desc' => __( 'Enter the video timestamp that the sermon starts to show a quick navigation link on the video player', 'cp-library' ),
+			'desc' => __( 'Enter the timestamp (mm:ss or hh:mm:ss) where the sermon begins to show a quick navigation link on the video player', 'cp-library' ),
 			'id'   => 'message_timestamp',
-			'type' => 'text_time',
+			'type' => 'text',
 			'time_format' => 'H:i:s',
 		] );
 

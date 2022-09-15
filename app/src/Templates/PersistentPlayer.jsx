@@ -11,7 +11,7 @@ import { Cancel, Fullscreen, PictureInPicture, Forward30, Replay10, OpenInFull, 
 
 import useBreakpoints from '../Hooks/useBreakpoints';
 import formatDuration from '../utils/formatDuration';
-import { cplLog } from '../utils/helpers';
+import { cplLog, cplMarker } from '../utils/helpers';
 
 import LoadingIndicator from '../Elements/LoadingIndicator';
 import ErrorDisplay from '../Elements/ErrorDisplay';
@@ -135,21 +135,11 @@ export default function PersistentPlayer(props) {
     });
   }, [item, mode]);
 
-  let markPosition = 0;
-  let snapDiff = 60;
-  const videoMarks = [];
+  let marker = cplMarker( item, mode, duration );
+  let markPosition	= marker.position;
+  let snapDiff		= marker.snapDistance;
+  let videoMarks	= marker.marks;
 
-  if( item && item.video && item.video.marker ) {
-	markPosition = item.video.marker;
-  }
-  if( 'video' === mode && markPosition > 0 ) {
-	videoMarks.push(
-		{
-			value: markPosition,
-			label: "Sermon Start"
-		}
-	);
-  }
 
   	let doScroll = ( scrollValue ) => {
 		if( markPosition > 0 && Math.abs( (scrollValue - markPosition) ) < snapDiff ) {
@@ -330,16 +320,27 @@ export default function PersistentPlayer(props) {
 				sx={{padding: "10px 0 !important"}}
 				marks={videoMarks}
 				onChange={(_, value) => {
+
 					setIsPlaying(false);
-					throttleScroll( value );
+
+					// Slider clicked
+					if( _ && _.type && 'mousedown' === _.type ) {
+
+						setPlayedSeconds(value);
+						playerInstance.current.seekTo(playedSeconds);
+
+					} else { // Slider dragged/otherwise moved
+						throttleScroll( value );
+					}
 				}}
 				onChangeCommitted={(_, value) => {
+					setIsPlaying(false);
 					setTimeout(
 						() => {
-							playerInstance.current.seekTo(playedSeconds);
 							setPlayedSeconds(value);
+							playerInstance.current.seekTo(playedSeconds);
 							setIsPlaying(true);
-						}, 10
+						}, 5
 					);
 				}}
 			/>
