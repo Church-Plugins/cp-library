@@ -20,27 +20,37 @@ try {
 		</div>
 	</div>
 
-	<div class="cpl-list-item--details">
+	<div class="cpl-list-item--main">
 
-		<?php if ( ! empty( $item['types'] ) ) : // for mobile ?>
-			<div class="cpl-info">
-				<div class="cpl-item--types">
-					<?php echo Helpers::get_icon( 'type' ); ?>
-					<?php foreach ( $item['types'] as $type ) : ?>
-						<a href="<?php echo esc_url( $type['permalink'] ); ?>"><?php echo esc_html( $type['title'] ); ?></a>
-						<span class="cpl-separator">,&nbsp;</span>
-					<?php endforeach; ?>
-				</div>
+		<div class="cpl-list-item--columns">
+
+			<div class="cpl-list-item--details">
+
+				<?php if ( ! empty( $item['types'] ) ) : // for mobile ?>
+					<div class="cpl-info">
+						<div class="cpl-item--types">
+							<?php echo Helpers::get_icon( 'type' ); ?>
+							<?php foreach ( $item['types'] as $type ) : ?>
+								<a href="<?php echo esc_url( $type['permalink'] ); ?>"><?php echo esc_html( $type['title'] ); ?></a>
+								<span class="cpl-separator">,&nbsp;</span>
+							<?php endforeach; ?>
+						</div>
+					</div>
+				<?php endif; ?>
+
+				<h3 class="cpl-list-item--title"><a href="<?php the_permalink(); ?>"><?php echo $item['title']; ?></a></h3>
+
+				<?php \CP_Library\Templates::get_template_part( 'parts/item-single/info' ); ?>
+
 			</div>
-		<?php endif; ?>
 
-		<h3 class="cpl-list-item--title"><a href="<?php the_permalink(); ?>"><?php echo $item['title']; ?></a></h3>
+			<div class="cpl_item_actions" data-item="<?php echo esc_attr( json_encode( $item ) ); ?>" ></div>
 
-		<?php \CP_Library\Templates::get_template_part( 'parts/item-single/info' ); ?>
+		</div>
 
 		<?php \CP_Library\Templates::get_template_part( 'parts/item-single/meta' ); ?>
+
 	</div>
 
-	<div class="cpl_item_actions" data-item="<?php echo esc_attr( json_encode( $item ) ); ?>" ></div>
 
 </div>

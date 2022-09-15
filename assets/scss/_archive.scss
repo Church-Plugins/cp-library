@@ -1,5 +1,8 @@
 .cpl-archive {
 
+	.cpl-meta {
+		white-space: nowrap;
+	}
 	&--item-switcher {
 		@include media-breakpoint-up(md) {
 			float: right;
