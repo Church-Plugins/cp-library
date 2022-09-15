@@ -244,20 +244,36 @@ class Templates {
 	 * @author Tanner Moushey
 	 */
 	public static function type_switcher() {
+
 		$type   = self::get_type();
 		$link   = '';
 		$button = '';
 		$item_cpt = get_post_type_object(cp_library()->setup->post_types->item->post_type);
 		$item_type_cpt = get_post_type_object(cp_library()->setup->post_types->item_type->post_type);
-		list( $req_uri, $query_params ) = explode( '?', $_SERVER['REQUEST_URI'] );
+
+		$split = explode( '?', $_SERVER['REQUEST_URI'] );
+		$req_uri = $split[0] ?? '';
+		$query_params = $split[1] ?? '';
+
+		// Extract all path components up to the page delimiter
+		$uri_split = explode( "/", $req_uri );
+		$exclusions = [ $item_type_cpt->rewrite['slug'], $item_cpt->rewrite['slug'] ];
+		$have_target = false;
+		foreach( $uri_split as $token ) {
+			if( 'page' === $token ) { $have_target = true; }
+			if( $have_target ) { continue; }
+			if( strlen( trim( $token ) ) > 0 && !in_array( $token, $exclusions ) ) {
+				$link .= trailingslashit( $token );
+			}
+		}
 
 		switch( $type ) {
 			case 'item':
-				$link = str_replace( $item_cpt->rewrite['slug'], $item_type_cpt->rewrite['slug'], $req_uri );
+				$link .= $item_type_cpt->rewrite['slug'];
 				$button = sprintf( __( 'Switch to %s' ), $item_type_cpt->label );
 				break;
 			case 'item-type':
-				$link = str_replace( $item_type_cpt->rewrite['slug'], $item_cpt->rewrite['slug'], $req_uri );
+				$link .= $item_cpt->rewrite['slug'];
 				$button = sprintf( __( 'Switch to %s' ), $item_cpt->label );
 				break;
 		}
@@ -265,6 +281,12 @@ class Templates {
 		if ( empty( $link ) ) {
 			return;
 		}
+
+		// normalize the output
+		if( 1 !== preg_match( "/^\//", $link ) ) {
+			$link = '/' . $link;
+		}
+		$link = trailingslashit( $link );
 
 		printf( '<a class="cpl-archive--item-switcher" href="%s">%s</a>', $link, $button );
 	}

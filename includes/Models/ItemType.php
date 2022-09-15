@@ -73,13 +73,16 @@ class ItemType extends Table  {
 			$meta = ItemMeta::get_instance();
 			$item = Item::get_instance();
 
-			$sql = 'SELECT %1$s.* FROM %1$s
-INNER JOIN %2$s
-ON %1$s.id = %2$s.item_id
-WHERE %2$s.key = "item_type" AND %2$s.item_type_id = %3$d
-ORDER BY %2$s.order ASC';
-
-			$this->items = $wpdb->get_results( $wpdb->prepare( $sql, $item->table_name, $meta->table_name, $this->id ) );
+			$prepared = $wpdb->prepare(
+				"SELECT		{$item->table_name}.* FROM {$item->table_name}
+				 INNER JOIN	{$meta->table_name}
+				 ON 		{$item->table_name}.id = {$meta->table_name}.item_id
+				 WHERE 		{$meta->table_name}.key = 'item_type' AND
+				 			{$meta->table_name}.item_type_id = %d
+				 ORDER BY 	{$meta->table_name}.order ASC",
+				$this->id
+			);
+			$this->items = $wpdb->get_results( $prepared );
 
 			if ( ! $this->items ) {
 				$this->items = [];
