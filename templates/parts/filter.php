@@ -77,9 +77,14 @@ $display = apply_filters( 'cpl_filters_display', $display );
 						if( !gotBoundary ) {
 
 							if( '' === token ) {
-								finalPath += '/';
+								if( !finalPath.endsWith( '/' ) ) {
+									finalPath += '/';
+								}
 							} else {
 								finalPath += token;
+								if( !finalPath.endsWith( '/' ) ) {
+									finalPath += '/';
+								}
 							}
 
 						}

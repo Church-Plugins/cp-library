@@ -255,14 +255,25 @@ class Templates {
 		$req_uri = $split[0] ?? '';
 		$query_params = $split[1] ?? '';
 
+		// Extract all path components up to the page delimiter
+		$uri_split = explode( "/", $req_uri );
+		$exclusions = [ $item_type_cpt->rewrite['slug'], $item_cpt->rewrite['slug'] ];
+		$have_target = false;
+		foreach( $uri_split as $token ) {
+			if( 'page' === $token ) { $have_target = true; }
+			if( $have_target ) { continue; }
+			if( strlen( trim( $token ) ) > 0 && !in_array( $token, $exclusions ) ) {
+				$link .= trailingslashit( $token );
+			}
+		}
+
 		switch( $type ) {
 			case 'item':
-				$link = '/' . $item_type_cpt->rewrite['slug'] . '/';
+				$link .= $item_type_cpt->rewrite['slug'];
 				$button = sprintf( __( 'Switch to %s' ), $item_type_cpt->label );
 				break;
 			case 'item-type':
-				$link = '/' . $item_cpt->rewrite['slug'] . '/';
-				// $link = str_replace( $item_type_cpt->rewrite['slug'], $item_cpt->rewrite['slug'], $req_uri );
+				$link .= $item_cpt->rewrite['slug'];
 				$button = sprintf( __( 'Switch to %s' ), $item_cpt->label );
 				break;
 		}
@@ -270,6 +281,12 @@ class Templates {
 		if ( empty( $link ) ) {
 			return;
 		}
+
+		// normalize the output
+		if( 1 !== preg_match( "/^\//", $link ) ) {
+			$link = '/' . $link;
+		}
+		$link = trailingslashit( $link );
 
 		printf( '<a class="cpl-archive--item-switcher" href="%s">%s</a>', $link, $button );
 	}
