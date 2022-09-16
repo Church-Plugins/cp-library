@@ -138,6 +138,16 @@ class ItemType extends PostType  {
 	}
 
 	public function item_item_type_query( $query ) {
+
+		// For ItemType/Series, order by metadata (contained item date)
+		if( $query->is_main_query() ) {
+			if( !empty( $query->query_vars ) && !empty( $query->query_vars['post_type'] ) && $query->query_vars['post_type'] == 'cpl_item_type' ) {
+				$query->set( 'orderby', 'meta_value' );
+        		$query->set( 'order', 'DESC' );
+        		$query->set( 'meta_key', 'last_item_date' );
+			}
+		}
+
 		if ( empty( $_GET['type'] ) ) {
 			return;
 		}
@@ -161,6 +171,7 @@ class ItemType extends PostType  {
 			$items = apply_filters( 'cpl_item_type_get_item_ids', wp_list_pluck( $type->get_items(), 'origin_id' ), $this );
 
 			$query->set( 'post__in', $items );
+
 		} catch ( Exception $e ) {
 			error_log( $e );
 		}
