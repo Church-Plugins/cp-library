@@ -33,6 +33,21 @@ class CP_Migrate {
 	public function __construct() {
 	}
 
+	/**
+	 * Iterate all Sermon Series' and update their first and last sermon times for housekeeping
+	 *
+	 * @return void
+	 * @author costmo
+	 */
+	public function update_series_times() {
+
+		$types = ItemType::get_all_types();
+		foreach( $types as $type_data ) {
+			$type = new ItemType( $type_data );
+			$type->update_dates();
+		}
+	}
+
 	public function delete_messages() {
 		$messages = get_posts( [ 'post_type' => Item::get_prop( 'post_type' ), 'posts_per_page' => -1 ] );
 		foreach ( $messages as $message ) {

@@ -75,7 +75,7 @@ class Item extends PostType  {
 		}
   }
 
-	 * Allow for user defined slug
+	 /* Allow for user defined slug
 	 *
 	 * @since  1.0.0
 	 *

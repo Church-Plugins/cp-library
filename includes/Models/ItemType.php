@@ -73,15 +73,18 @@ class ItemType extends Table  {
 			$meta = ItemMeta::get_instance();
 			$item = Item::get_instance();
 
+			// Return items for this Type in POST date order
 			$prepared = $wpdb->prepare(
-				"SELECT		{$item->table_name}.* FROM {$item->table_name}
-				 INNER JOIN	{$meta->table_name}
-				 ON 		{$item->table_name}.id = {$meta->table_name}.item_id
+				"SELECT		{$item->table_name}.*
+				 FROM		{$item->table_name}, {$meta->table_name}, {$wpdb->prefix}posts
 				 WHERE 		{$meta->table_name}.key = 'item_type' AND
-				 			{$meta->table_name}.item_type_id = %d
-				 ORDER BY 	{$meta->table_name}.order ASC",
+				 			{$meta->table_name}.item_type_id = %d AND
+							{$item->table_name}.id = {$meta->table_name}.item_id AND
+							{$wpdb->prefix}posts.ID = {$item->table_name}.origin_id
+				 ORDER BY 	{$wpdb->prefix}posts.post_date ASC",
 				$this->id
 			);
+
 			$this->items = $wpdb->get_results( $prepared );
 
 			if ( ! $this->items ) {
