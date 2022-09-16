@@ -118,6 +118,10 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 	<p class="cpl-single-type--items-title"><?php printf( '%s: %s', cp_library()->setup->post_types->item->plural_label, count( $item_type['items'] ) ); ?></p>
 
 	<section class="cpl-single-type--items">
+		<?php
+			// Items come in ASC order, show in DESC
+			$item_type['items'] = array_reverse( $item_type['items'] );
+		?>
 		<?php foreach ( $item_type['items'] as $item ) : $post = get_post( $item['originID'] );setup_postdata( $post ); ?>
 			<?php \CP_Library\Templates::get_template_part( "parts/item-list" ); ?>
 		<?php endforeach; $post = $original_post; wp_reset_postdata(); ?>
