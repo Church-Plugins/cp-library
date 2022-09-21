@@ -202,6 +202,19 @@ export default function Player({
     }
   }, [])
 
+	const isIOS_device = () => {
+
+		if( navigator && navigator.platform ) {
+			let platform = navigator.platform.toLowerCase();
+			if( platform.indexOf( "iphone" ) >= 0 || platform.indexOf( "ipad" ) >= 0 ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	const isIOS = isIOS_device();
+
   // If item has both video and audio, prefer video.
   useEffect(() => {
     if (!item) return;
@@ -221,12 +234,18 @@ export default function Player({
 
           <div className="cpl-touch-hide" dangerouslySetInnerHTML={{__html: cplVar( 'mobileTop', 'components' ) }} />
 
+
+
           <Box
             className="itemDetail__featureImage"
             position="relative"
             paddingTop="56.26%"
             backgroundColor={mode === "audio" ? "#C4C4C4" : "transparent"}
           >
+			{!isIOS ? null : (
+				<iframe frameborder="0" allowfullscreen="1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" title="Wisdom Psalms | July 24, 2022 | Koinonia" width="100%" height="100%" src="https://www.youtube.com/embed/aCT5ihS8YB4?autoplay=1&mute=0&controls=1&origin=https%3A%2F%2Fcp.local&playsinline=1&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&enablejsapi=1&widgetid=1" id="cp_ios_video_embed"></iframe>
+			)}
+			{isIOS ? null : (
 	          <Box className="itemPlayer__video"
 	               position="absolute"
 	               top={0}
@@ -360,13 +379,15 @@ export default function Player({
 			          </Box>
 		          )}
 	          </Box>
-
+		)} {/* End of iOS check - display non-iOS */}
 
           </Box>
 
+
+
           <Box className="itemDetail__actions">
 
-	          {item.video.value && (
+	          {!isIOS && item.video.value && (
 		          <Box className="itemDetail__playVideo">
 			          <PlayVideo
 				          onClick={() => {
