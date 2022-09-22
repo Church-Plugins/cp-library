@@ -27,6 +27,7 @@ import PlayAudio from '../../Elements/Buttons/PlayAudio';
 import PlayVideo from '../../Elements/Buttons/PlayVideo';
 
 import throttle from 'lodash.throttle';
+import jQuery from 'jquery';
 
 
 export default function Player({
@@ -234,6 +235,35 @@ export default function Player({
 		}, 10
 	);
 
+	let forcePlay = () => {
+
+		console.log( "EXTRA CLICK" );
+		const $ = jQuery;
+		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button' );
+		let stateIcon = $( target ).find( 'svg.MuiSvgIcon-root' );
+		let currentStateId = $( stateIcon ).attr( 'data-testid' );
+		let currentState = ('PauseCircleIcon' === currentStateId) ? 'playing' : 'paused';
+
+		if( 'playing' === currentState ) {
+			setTimeout(
+				() => {
+					$( target ).trigger( 'click' );
+				}, 50
+			);
+			setTimeout(
+				() => {
+					$( target ).trigger( 'click' );
+				}, 150
+			);
+		} else {
+			setTimeout(
+				() => {
+					$( target ).trigger( 'click' );
+				}, 50
+			);
+		}
+	}
+
   return (
     // Margin bottom is to account for audio player. Making sure all content is still visible with
     // the player is up.
@@ -415,6 +445,11 @@ export default function Player({
 					          } else {
 						          updateMode('video');
 					          }
+							  setTimeout(
+								() => {
+									forcePlay();
+								}, 500
+							  );
 				          }}
 				          fullWidth
 			          />
