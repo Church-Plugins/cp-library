@@ -156,6 +156,14 @@ export default function Player({
 		setPlayingURL( 'video' === mode ? item.video.value : item.audio );
 		setIsPlaying(false);
 		setIsPlaying(true);
+
+		setTimeout(
+			() => {
+				forcePlay();
+			}, 500
+		);
+		// TODO: Maybe move forced playing to here
+
 	};
 
 	const updatePlaybackRate = () => {
@@ -243,30 +251,43 @@ export default function Player({
 	let forcePlay = () => {
 
 		const $ = jQuery;
-		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button' );
-		let stateIcon = $( target ).find( 'svg.MuiSvgIcon-root' );
-		let currentStateId = $( stateIcon ).attr( 'data-testid' ).toLocaleLowerCase();
-		let currentState = (currentStateId.indexOf( 'pause' ) >- 0) ? 'playing' : 'paused';
 
-		// If the player is currently playing, "click" pause and play again
-		if( 'playing' === currentState ) {
-			setTimeout(
-				() => {
-					$( target ).trigger( 'click' );
-				}, 50
-			);
-			setTimeout(
-				() => {
-					$( target ).trigger( 'click' );
-				}, 150
-			);
-		} else { // If the player is currently paused, "click" play
-			setTimeout(
-				() => {
-					$( target ).trigger( 'click' );
-				}, 50
-			);
-		}
+		// setTimeout(
+		// 	() => {
+				let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button' );
+				let stateIcon = $( target ).find( 'svg.MuiSvgIcon-root' );
+				let currentStateId = $( stateIcon ).attr( 'data-testid' ).toLocaleLowerCase();
+				let currentState = (currentStateId.indexOf( 'play' ) >= 0) ? 'paused' : 'playing';
+
+				// If the player is currently playing, "click" pause and play again
+				if( 'playing' === currentState ) {
+					console.log( "CLICK TWICE" );
+					setTimeout(
+						() => {
+							$( target ).trigger( 'click' );
+						}, 50
+					);
+					setTimeout(
+						() => {
+							$( target ).trigger( 'click' );
+						}, 150
+					);
+				} else { // If the player is currently paused, "click" play
+					console.log( "CLICK ONCE" );
+					setTimeout(
+						() => {
+							$( target ).trigger( 'click' );
+						}, 50
+					);
+				}
+		// 	}, 100
+		// );
+
+
+
+
+
+
 	}
 
 	/**
@@ -494,11 +515,6 @@ export default function Player({
 					          } else {
 						          updateMode('video');
 					          }
-							  setTimeout(
-								() => {
-									forcePlay();
-								}, 500
-							  );
 				          }}
 				          fullWidth
 			          />
@@ -519,11 +535,6 @@ export default function Player({
 					          } else {
 						          updateMode('audio');
 					          }
-							  setTimeout(
-								() => {
-									forcePlay();
-								}, 2000
-							  );
 				          }}
 			          />
 		          </Box>
