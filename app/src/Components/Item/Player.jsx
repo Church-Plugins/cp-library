@@ -157,12 +157,13 @@ export default function Player({
 		setIsPlaying(false);
 		setIsPlaying(true);
 
-		setTimeout(
-			() => {
-				forcePlay();
-			}, 500
-		);
-		// TODO: Maybe move forced playing to here
+		// if( isIOS ) {
+			setTimeout(
+				() => {
+					forcePlay();
+				}, 500
+			);
+		// }
 
 	};
 
@@ -252,41 +253,33 @@ export default function Player({
 
 		const $ = jQuery;
 
-		// setTimeout(
-		// 	() => {
-				let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button' );
-				let stateIcon = $( target ).find( 'svg.MuiSvgIcon-root' );
-				let currentStateId = $( stateIcon ).attr( 'data-testid' ).toLocaleLowerCase();
-				let currentState = (currentStateId.indexOf( 'play' ) >= 0) ? 'paused' : 'playing';
 
-				// If the player is currently playing, "click" pause and play again
-				if( 'playing' === currentState ) {
-					console.log( "CLICK TWICE" );
-					setTimeout(
-						() => {
-							$( target ).trigger( 'click' );
-						}, 50
-					);
-					setTimeout(
-						() => {
-							$( target ).trigger( 'click' );
-						}, 150
-					);
-				} else { // If the player is currently paused, "click" play
-					console.log( "CLICK ONCE" );
-					setTimeout(
-						() => {
-							$( target ).trigger( 'click' );
-						}, 50
-					);
-				}
-		// 	}, 100
-		// );
+		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button' );
+		let stateIcon = $( target ).find( 'svg.MuiSvgIcon-root' );
+		let currentStateId = $( stateIcon ).attr( 'data-testid' ).toLocaleLowerCase();
+		let currentState = (currentStateId.indexOf( 'play' ) >= 0) ? 'paused' : 'playing';
 
-
-
-
-
+		// If the player is currently playing, "click" pause and play again
+		if( 'playing' === currentState ) {
+			console.log( "CLICK TWICE" );
+			setTimeout(
+				() => {
+					$( target ).trigger( 'click' );
+				}, 50
+			);
+			setTimeout(
+				() => {
+					$( target ).trigger( 'click' );
+				}, 150
+			);
+		} else { // If the player is currently paused, "click" play
+			console.log( "CLICK ONCE" );
+			setTimeout(
+				() => {
+					$( target ).trigger( 'click' );
+				}, 50
+			);
+		}
 
 	}
 
@@ -315,24 +308,6 @@ export default function Player({
 			return false;
 		}
 		const isIOS = isIOS_device();
-
-	// /**
-	//  * Return true for an actual iPhone or iPad
-	//  *
-	//  * @returns bool
-	//  */
-	// const isIOS_device = () => {
-
-	// 	if( navigator && navigator.platform ) {
-	// 		let platform = navigator.platform.toLowerCase();
-	// 		if( platform.indexOf( "iphone" ) >= 0 || platform.indexOf( "ipad" ) >= 0 ) {
-	// 			return true;
-	// 		}
-	// 	}
-	// 	return false;
-	// }
-	// const isIOS = isIOS_device();
-
 
   return (
     // Margin bottom is to account for audio player. Making sure all content is still visible with
