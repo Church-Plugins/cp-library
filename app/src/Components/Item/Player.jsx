@@ -235,15 +235,20 @@ export default function Player({
 		}, 10
 	);
 
+	/**
+	 * Simulate end-user Player Control interactions to force media play
+	 *
+	 * @returns void
+	 */
 	let forcePlay = () => {
 
-		console.log( "EXTRA CLICK" );
 		const $ = jQuery;
 		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button' );
 		let stateIcon = $( target ).find( 'svg.MuiSvgIcon-root' );
-		let currentStateId = $( stateIcon ).attr( 'data-testid' );
-		let currentState = ('PauseCircleIcon' === currentStateId) ? 'playing' : 'paused';
+		let currentStateId = $( stateIcon ).attr( 'data-testid' ).toLocaleLowerCase();
+		let currentState = (currentStateId.indexOf( 'pause' ) >- 0) ? 'playing' : 'paused';
 
+		// If the player is currently playing, "click" pause and play again
 		if( 'playing' === currentState ) {
 			setTimeout(
 				() => {
@@ -255,7 +260,7 @@ export default function Player({
 					$( target ).trigger( 'click' );
 				}, 150
 			);
-		} else {
+		} else { // If the player is currently paused, "click" play
 			setTimeout(
 				() => {
 					$( target ).trigger( 'click' );
@@ -263,6 +268,50 @@ export default function Player({
 			);
 		}
 	}
+
+	/**
+	 * Return true for an actual iPhone or iPad
+	 *
+	 * @returns bool
+	 */
+		 const isIOS_device = () => {
+			return true;
+			if( navigator && navigator.platform ) {
+				let platform = navigator.platform.toLowerCase();
+				// iPhone and old iPad
+				if( platform.indexOf( "iphone" ) >= 0 || platform.indexOf( "ipad" ) >= 0 ) {
+					return true;
+				}
+				// Current iPad
+				if( platform.indexOf( "mac" ) >= 0 ) {
+					let maxTouchPoints = navigator.maxTouchPoints ?? 0;
+					if( maxTouchPoints > 2 ) {
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+		const isIOS = isIOS_device();
+
+	// /**
+	//  * Return true for an actual iPhone or iPad
+	//  *
+	//  * @returns bool
+	//  */
+	// const isIOS_device = () => {
+
+	// 	if( navigator && navigator.platform ) {
+	// 		let platform = navigator.platform.toLowerCase();
+	// 		if( platform.indexOf( "iphone" ) >= 0 || platform.indexOf( "ipad" ) >= 0 ) {
+	// 			return true;
+	// 		}
+	// 	}
+	// 	return false;
+	// }
+	// const isIOS = isIOS_device();
+
 
   return (
     // Margin bottom is to account for audio player. Making sure all content is still visible with
@@ -470,6 +519,11 @@ export default function Player({
 					          } else {
 						          updateMode('audio');
 					          }
+							  setTimeout(
+								() => {
+									forcePlay();
+								}, 2000
+							  );
 				          }}
 			          />
 		          </Box>
