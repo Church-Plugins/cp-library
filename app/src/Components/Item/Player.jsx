@@ -245,6 +245,15 @@ export default function Player({
 	);
 
 	/**
+	 * Abstract clicks of the Play/Pause button to side-step DOM mutations
+	 */
+	let playPauseClick = () => {
+		const $ = jQuery;
+		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button' );
+		$( target ).trigger( 'click' );
+	}
+
+	/**
 	 * Simulate end-user Player Control interactions to force media play
 	 *
 	 * @returns void
@@ -252,7 +261,6 @@ export default function Player({
 	let forcePlay = () => {
 
 		const $ = jQuery;
-
 
 		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button' );
 		let stateIcon = $( target ).find( 'svg.MuiSvgIcon-root' );
@@ -264,19 +272,19 @@ export default function Player({
 			console.log( "CLICK TWICE" );
 			setTimeout(
 				() => {
-					$( target ).trigger( 'click' );
+					playPauseClick();
 				}, 50
 			);
 			setTimeout(
 				() => {
-					$( target ).trigger( 'click' );
+					playPauseClick();
 				}, 150
 			);
 		} else { // If the player is currently paused, "click" play
 			console.log( "CLICK ONCE" );
 			setTimeout(
 				() => {
-					$( target ).trigger( 'click' );
+					playPauseClick();
 				}, 50
 			);
 		}
