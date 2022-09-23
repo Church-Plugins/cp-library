@@ -157,13 +157,13 @@ export default function Player({
 		setIsPlaying(false);
 		setIsPlaying(true);
 
-		// if( isIOS ) {
+		if( isIOS ) {
 			setTimeout(
 				() => {
 					forcePlay();
 				}, 500
 			);
-		// }
+		}
 
 	};
 
@@ -249,7 +249,8 @@ export default function Player({
 	 */
 	let playPauseClick = () => {
 		const $ = jQuery;
-		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button' );
+		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button:visible' );
+		// console.log( $( target ) );
 		$( target ).trigger( 'click' );
 	}
 
@@ -262,10 +263,13 @@ export default function Player({
 
 		const $ = jQuery;
 
-		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button' );
+		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button:visible' );
 		let stateIcon = $( target ).find( 'svg.MuiSvgIcon-root' );
 		let currentStateId = $( stateIcon ).attr( 'data-testid' ).toLocaleLowerCase();
 		let currentState = (currentStateId.indexOf( 'play' ) >= 0) ? 'paused' : 'playing';
+
+		console.log( $( target ) );
+		console.log( currentStateId + ":::" + currentState );
 
 		// If the player is currently playing, "click" pause and play again
 		if( 'playing' === currentState ) {
@@ -273,12 +277,12 @@ export default function Player({
 			setTimeout(
 				() => {
 					playPauseClick();
+					setTimeout(
+						() => {
+							playPauseClick();
+						}, 150
+					);
 				}, 50
-			);
-			setTimeout(
-				() => {
-					playPauseClick();
-				}, 150
 			);
 		} else { // If the player is currently paused, "click" play
 			console.log( "CLICK ONCE" );
@@ -516,7 +520,7 @@ export default function Player({
 							          playedSeconds: 0.0,
 						          });
 					          } else {
-						          updateMode('audio');
+								updateMode('audio');
 					          }
 				          }}
 			          />
