@@ -245,6 +245,10 @@ class Templates {
 	 */
 	public static function type_switcher() {
 
+		if( is_tax() ) {
+			return;
+		}
+
 		$type   = self::get_type();
 		$link   = '';
 		$button = '';
