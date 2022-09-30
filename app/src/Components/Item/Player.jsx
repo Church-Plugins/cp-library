@@ -302,7 +302,7 @@ export default function Player({
 	 * @returns bool
 	 */
 		 const isIOS_device = () => {
-			return true;
+
 			if( navigator && navigator.platform ) {
 				let platform = navigator.platform.toLowerCase();
 				// iPhone and old iPad
