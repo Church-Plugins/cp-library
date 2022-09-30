@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -80,6 +81,8 @@ export default function Player({
     setAnchorEl(event.currentTarget);
   };
 
+  let progressIntervalHandle = null;
+
   const handleClose = () => {
     setAnchorEl(null);
   };
@@ -150,6 +153,23 @@ export default function Player({
     setAnchorEl(null);
 	};
 
+	const forceProgress = () => {
+
+		let instance = playerInstance.current;
+		let playedDuration = instance.getCurrentTime();
+
+		console.log( "FP" );
+		console.log( playedDuration );
+
+		if( !playedDuration || playedDuration <= 0.0 ) {
+			console.log( "TRYING FORCE" );
+			forcePlay();
+		} else {
+			clearInterval( progressIntervalHandle );
+		}
+
+	}
+
 	const updateMode = (mode) => {
 		setMode(mode);
 		setPlayedSeconds(0);
@@ -158,11 +178,16 @@ export default function Player({
 		setIsPlaying(true);
 
 		if( isIOS ) {
+
 			setTimeout(
 				() => {
 					forcePlay();
 				}, 500
 			);
+			if( 'audio' === mode ) {
+				clearInterval( progressIntervalHandle );
+				progressIntervalHandle = setInterval( forceProgress, 3000 );
+			}
 		}
 
 	};
@@ -250,8 +275,7 @@ export default function Player({
 	let playPauseClick = () => {
 		const $ = jQuery;
 		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button:visible' );
-		// console.log( $( target ) );
-		$( target ).trigger( 'click' );
+		$( target ).trigger( 'click touchstart' );
 	}
 
 	/**
@@ -525,6 +549,7 @@ export default function Player({
 					          }
 				          }}
 			          />
+
 		          </Box>
 	          )}
 
