@@ -277,12 +277,13 @@ export default function Player({
 			setTimeout(
 				() => {
 					playPauseClick();
-					setTimeout(
-						() => {
-							playPauseClick();
-						}, 150
-					);
 				}, 50
+			);
+			setTimeout(
+				() => {
+					console.log( "SECOND CLICK" );
+					playPauseClick();
+				}, 200
 			);
 		} else { // If the player is currently paused, "click" play
 			console.log( "CLICK ONCE" );
