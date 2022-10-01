@@ -275,7 +275,7 @@ export default function Player({
 	let playPauseClick = () => {
 		const $ = jQuery;
 		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button:visible' );
-		$( target ).trigger( 'click touchstart tap' );
+		$( target ).trigger( 'click' );
 	}
 
 	/**
