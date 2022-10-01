@@ -158,11 +158,11 @@ export default function Player({
 		let instance = playerInstance.current;
 		let playedDuration = instance.getCurrentTime();
 
-		console.log( "FP" );
-		console.log( playedDuration );
+		// console.log( "FP" );
+		// console.log( playedDuration );
 
 		if( !playedDuration || playedDuration <= 0.0 ) {
-			console.log( "TRYING FORCE" );
+			// console.log( "TRYING FORCE" );
 			forcePlay();
 		} else {
 			clearInterval( progressIntervalHandle );
@@ -184,10 +184,10 @@ export default function Player({
 					forcePlay();
 				}, 500
 			);
-			if( 'audio' === mode ) {
-				clearInterval( progressIntervalHandle );
-				progressIntervalHandle = setInterval( forceProgress, 3000 );
-			}
+			// if( 'audio' === mode ) {
+			// 	clearInterval( progressIntervalHandle );
+			// 	progressIntervalHandle = setInterval( forceProgress, 3000 );
+			// }
 		}
 
 	};
@@ -275,7 +275,7 @@ export default function Player({
 	let playPauseClick = () => {
 		const $ = jQuery;
 		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button:visible' );
-		$( target ).trigger( 'click touchstart' );
+		$( target ).trigger( 'click touchstart tap' );
 	}
 
 	/**
@@ -292,12 +292,12 @@ export default function Player({
 		let currentStateId = $( stateIcon ).attr( 'data-testid' ).toLocaleLowerCase();
 		let currentState = (currentStateId.indexOf( 'play' ) >= 0) ? 'paused' : 'playing';
 
-		console.log( $( target ) );
-		console.log( currentStateId + ":::" + currentState );
+		// console.log( $( target ) );
+		// console.log( currentStateId + ":::" + currentState );
 
 		// If the player is currently playing, "click" pause and play again
 		if( 'playing' === currentState ) {
-			console.log( "CLICK TWICE" );
+			// console.log( "CLICK TWICE" );
 			setTimeout(
 				() => {
 					playPauseClick();
@@ -305,12 +305,12 @@ export default function Player({
 			);
 			setTimeout(
 				() => {
-					console.log( "SECOND CLICK" );
+					// console.log( "SECOND CLICK" );
 					playPauseClick();
 				}, 200
 			);
 		} else { // If the player is currently paused, "click" play
-			console.log( "CLICK ONCE" );
+			// console.log( "CLICK ONCE" );
 			setTimeout(
 				() => {
 					playPauseClick();
