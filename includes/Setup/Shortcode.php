@@ -4,6 +4,7 @@ namespace CP_Library\Setup;
 use CP_Library\Controllers\Item;
 use ChurchPlugins\Exception;
 use CP_Library\Init as Init;
+use CP_Library\Models\ServiceType;
 use CP_Library\Templates;
 use CP_Library\Views\Shortcode as Shortcode_View;
 
@@ -129,12 +130,12 @@ class Shortcode
 	}
 
 	public function render_item( $atts ) {
-
 		$atts = shortcode_atts( [
 			'id' => 'false',
 			'player' => 'true',
 			'details' => 'true',
 			'location' => 0,
+			'service-type' => '',
 		], $atts, 'cpl_item' );
 
 		if ( 'false' === $atts['id'] || empty( $atts['id'] ) ) {
@@ -146,6 +147,15 @@ class Shortcode
 
 			if ( ! empty( $atts['location'] ) ) {
 				$args['cp_location'] = 'location_' . $atts['location'];
+			}
+
+			if ( ! empty( $atts['service-type'] ) ) {
+				try {
+					$type = ServiceType::get_instance_from_origin( $atts['service-type'] );
+					$args['post__in'] = $type->get_all_items();
+				} catch( \Exception $e ) {
+					error_log( $e );
+				}
 			}
 
 			$items = get_posts( $args );
