@@ -223,10 +223,6 @@ class ServiceType extends PostType {
 			return;
 		}
 
-		if ( ! is_admin() ) {
-			return;
-		}
-
 		if ( ! $query->is_main_query() ) {
 			return;
 		}
@@ -235,13 +231,34 @@ class ServiceType extends PostType {
 			return;
 		}
 
-		$type = absint( $_GET['service-type'] );
+		$types = $_GET['service-type'];
 
-		try {
-			$type = ServiceType_Model::get_instance( $type );
-			$query->set( 'post__in', $type->get_all_items() );
-		} catch ( Exception $e ) {
-			error_log( $e );
+		if ( ! is_array( $types ) ) {
+			$types = [ $types ];
+		}
+
+		$post_in_orig = $query->get( 'post__in' );
+		$post_in = [];
+
+		foreach( $types as $type ) {
+			$type = absint( $type );
+
+			try {
+				$type = ServiceType_Model::get_instance( $type );
+				$post_in = array_merge( $post_in, $type->get_all_items() );
+			} catch ( Exception $e ) {
+				error_log( $e );
+			}
+
+		}
+
+		if ( ! empty( $post_in ) ) {
+			if ( ! empty( $post_in_orig ) ) {
+				$post_in = array_intersect( $post_in_orig, $post_in );
+				$post_in[] = '-1';
+			}
+
+			$query->set( 'post__in', $post_in );
 		}
 
 	}

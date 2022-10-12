@@ -218,10 +218,6 @@ class Speaker extends PostType {
 			return;
 		}
 
-		if ( ! is_admin() ) {
-			return;
-		}
-
 		if ( ! $query->is_main_query() ) {
 			return;
 		}
@@ -230,14 +226,35 @@ class Speaker extends PostType {
 			return;
 		}
 
-		$speaker = absint( $_GET['speaker'] );
+		$speakers = $_GET['speaker'];
 
-		try {
-			$speaker = Speaker_Model::get_instance( $speaker );
-			$query->set( 'post__in', $speaker->get_all_items() );
-		} catch ( Exception $e ) {
-			error_log( $e );
+		if ( ! is_array( $speakers ) ) {
+			$speakers = [ $speakers ];
 		}
+
+		$post_in_orig = $query->get( 'post__in' );
+		$post_in = [];
+
+		foreach( $speakers as $speaker ) {
+			$speaker = absint( $speaker );
+
+			try {
+				$speaker = Speaker_Model::get_instance( $speaker );
+				$post_in = array_merge( $post_in, $speaker->get_all_items() );
+			} catch ( Exception $e ) {
+				error_log( $e );
+			}
+
+		}
+
+		if ( ! empty( $post_in ) ) {
+			if ( ! empty( $post_in_orig ) ) {
+				$post_in = array_intersect( $post_in_orig, $post_in );
+				$post_in[] = '-1';
+			}
+			$query->set( 'post__in', $post_in );
+		}
+
 
 	}
 }
