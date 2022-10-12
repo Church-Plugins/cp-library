@@ -7,6 +7,7 @@ use ChurchPlugins\Controllers\Controller;
 use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Models\Item as ItemModel;
+use CP_Library\Models\ServiceType;
 use CP_Library\Models\Speaker;
 use CP_Library\Util\Convenience;
 
@@ -294,6 +295,31 @@ class Item extends Controller{
 		}
 
 		return $this->filter( $speakers, __FUNCTION__ );
+	}
+
+	/**
+	 * Get service type for this Item
+	 *
+	 * @return mixed|void
+	 * @throws \ChurchPlugins\Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_service_types() {
+		$service_type_ids = $this->model->get_service_types();
+		$service_types = [];
+
+		foreach( $service_type_ids as $id ) {
+			$service_type  = ServiceType::get_instance( $id );
+			$service_types[] = [
+				'id'    => $service_type->id,
+				'title' => $service_type->title,
+				'origin_id' => $service_type->origin_id,
+			];
+		}
+
+		return $this->filter( $service_types, __FUNCTION__ );
 	}
 
 	public function get_api_data() {

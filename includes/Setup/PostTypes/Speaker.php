@@ -39,6 +39,11 @@ class Speaker extends PostType {
 
 		add_filter( 'cmb2_save_field_cpl_speaker', [ $this, 'save_item_speaker' ], 10, 3 );
 		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
+
+		$item_type = Item::get_instance()->post_type;
+		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'speaker_column' ] );
+		add_action( "manage_{$item_type}_posts_custom_column", [ $this, 'speaker_column_cb' ], 10, 2 );
+		add_action( 'pre_get_posts', [ $this, 'speaker_query' ] );
 	}
 
 	/**
@@ -159,4 +164,80 @@ class Speaker extends PostType {
 		}
 	}
 
+	/**
+	 * @param $columns
+	 *
+	 * @return array
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function speaker_column( $columns ) {
+		$new_columns = [];
+		foreach( $columns as $key => $column ) {
+			if ( 'date' === $key ) {
+				$new_columns['speaker'] = $this->plural_label;
+			}
+
+			$new_columns[ $key ] = $column;
+		}
+
+		// in case date isn't set
+		if ( ! isset( $columns['date'] ) ) {
+			$new_columns['speaker'] = $this->plural_label;
+		}
+
+		return $new_columns;
+	}
+
+	public function speaker_column_cb( $column, $post_id ) {
+		switch( $column ) {
+			case 'speaker' :
+				$item = new \CP_Library\Controllers\Item( $post_id );
+				$speakers = $item->get_speakers();
+
+				 if ( empty( $speakers ) ) {
+					 _e( '—', 'cp-library' );
+				 } else {
+					 $url = add_query_arg( $_GET, 'edit.php' );
+					 $list = [];
+					 foreach ( $speakers as $speaker ) {
+						 $list[] = sprintf( '<a href="%s">%s</a>', add_query_arg( 'speaker', $speaker['id'], $url ), $speaker['title'] );
+					 }
+
+					 echo implode( ', ', $list );
+				 }
+
+				break;
+		}
+	}
+
+	public function speaker_query( $query ) {
+
+		if ( empty( $_GET['speaker'] ) ) {
+			return;
+		}
+
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		if ( ! $query->is_main_query() ) {
+			return;
+		}
+
+		if ( ! in_array( $query->get('post_type'), [ Item::get_instance()->post_type ] ) ) {
+			return;
+		}
+
+		$speaker = absint( $_GET['speaker'] );
+
+		try {
+			$speaker = Speaker_Model::get_instance( $speaker );
+			$query->set( 'post__in', $speaker->get_all_items() );
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
+
+	}
 }

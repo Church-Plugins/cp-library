@@ -39,6 +39,11 @@ class ServiceType extends PostType {
 
 		add_filter( 'cmb2_save_field_cpl_service_type', [ $this, 'save_item_service_type' ], 10, 3 );
 		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
+
+		$item_type = Item::get_instance()->post_type;
+		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'service_type_column' ] );
+		add_action( "manage_{$item_type}_posts_custom_column", [ $this, 'service_type_column_cb' ], 10, 2 );
+		add_action( 'pre_get_posts', [ $this, 'service_type_query' ] );
 	}
 
 	/**
@@ -161,6 +166,84 @@ class ServiceType extends PostType {
 		} catch ( Exception $e ) {
 			error_log( $e );
 		}
+	}
+
+
+	/**
+	 * @param $columns
+	 *
+	 * @return array
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function service_type_column( $columns ) {
+		$new_columns = [];
+		foreach( $columns as $key => $column ) {
+			if ( 'date' === $key ) {
+				$new_columns['service_type'] = $this->single_label;
+			}
+
+			$new_columns[ $key ] = $column;
+		}
+
+		// in case date isn't set
+		if ( ! isset( $columns['date'] ) ) {
+			$new_columns['service_type'] = $this->single_label;
+		}
+
+		return $new_columns;
+	}
+
+	public function service_type_column_cb( $column, $post_id ) {
+		switch( $column ) {
+			case 'service_type' :
+				$item = new \CP_Library\Controllers\Item( $post_id );
+				$service_types = $item->get_service_types();
+
+				 if ( empty( $service_types ) ) {
+					 _e( '—', 'cp-library' );
+				 } else {
+					 $url = add_query_arg( $_GET, 'edit.php' );
+					 $list = [];
+					 foreach ( $service_types as $type ) {
+						 $list[] = sprintf( '<a href="%s">%s</a>', add_query_arg( 'service-type', $type['id'], $url ), $type['title'] );
+					 }
+
+					 echo implode( ', ', $list );
+				 }
+
+				break;
+		}
+	}
+
+	public function service_type_query( $query ) {
+
+		if ( empty( $_GET['service-type'] ) ) {
+			return;
+		}
+
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		if ( ! $query->is_main_query() ) {
+			return;
+		}
+
+		if ( ! in_array( $query->get('post_type'), [ Item::get_instance()->post_type ] ) ) {
+			return;
+		}
+
+		$type = absint( $_GET['service-type'] );
+
+		try {
+			$type = ServiceType_Model::get_instance( $type );
+			$query->set( 'post__in', $type->get_all_items() );
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
+
 	}
 
 }
