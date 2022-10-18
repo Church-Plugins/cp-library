@@ -29,6 +29,13 @@ class Item extends Table  {
 	protected $speakers = false;
 
 	/**
+	 * Item service type
+	 *
+	 * @var bool
+	 */
+	protected $service_types = false;
+
+	/**
 	 * Item types
 	 *
 	 * @var bool
@@ -107,6 +114,73 @@ class Item extends Table  {
 		}
 
 		$this->speakers = $speakers;
+		$this->update_cache();
+
+		return true;
+	}
+
+	/**
+	 *
+	 * @return mixed|void
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_service_types() {
+		global $wpdb;
+
+		if ( ! cp_library()->setup->post_types->service_type_enabled() ) {
+			return [];
+		}
+
+		if ( false === $this->service_types ) {
+			$service_type        = ServiceType::get_instance();
+			$service_type_type   = ServiceType::get_type_id();
+			$this->service_types = $wpdb->get_col( $wpdb->prepare( "SELECT `source_id` FROM " . $service_type->get_prop( 'meta_table_name' ) . " WHERE `key` = 'source_item' AND `item_id` = %d AND `source_type_id` = %d;", $this->id, $service_type_type ) );
+			$this->update_cache();
+		}
+
+		return apply_filters( 'cpl_item_get_service_types', $this->service_types, $this );
+	}
+
+	/**
+	 * Update the service_types associated with this item
+	 *
+	 * @param $service_types array Array of speaker IDs (source_type_id) to add
+	 *
+	 * @return bool
+	 * @throws Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function update_service_types( $service_types ) {
+		$existing_service_types = $this->get_service_types();
+
+		foreach( (array) $service_types as $service_type ) {
+			if ( false !== $key = array_search( $service_type, $existing_service_types ) ) {
+				unset( $existing_service_types[ $key ] );
+				continue;
+			}
+
+			$data = [
+				'key' => 'source_item',
+				'item_id' => absint( $this->id ),
+				'source_type_id' => ServiceType::get_type_id(),
+			];
+
+			$service_type_model = ServiceType::get_instance( $service_type );
+			$service_type_model->update_meta( $data, false );
+		}
+
+		// remove any service_types which should no longer be attached
+		foreach( $existing_service_types as $service_type ) {
+			$service_type_model = ServiceType::get_instance( $service_type );
+			$service_type_model->delete_meta( absint( $this->id ), 'item_id' );
+		}
+
+		$this->service_types = $service_types;
 		$this->update_cache();
 
 		return true;
@@ -252,6 +326,10 @@ class Item extends Table  {
 	public function delete() {
 		do_action( "cpl_{$this->type}_delete_meta_before" );
 		$source = new Speaker();
+		$source->delete_all_meta( $this->id, 'item_id' );
+		$this->delete_all_meta( $this->id, 'item_id' );
+
+		$source = new ServiceType();
 		$source->delete_all_meta( $this->id, 'item_id' );
 		$this->delete_all_meta( $this->id, 'item_id' );
 		do_action( "cpl_{$this->type}_delete_meta_after" );
