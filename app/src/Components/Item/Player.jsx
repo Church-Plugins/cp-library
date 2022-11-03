@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -27,6 +28,7 @@ import PlayAudio from '../../Elements/Buttons/PlayAudio';
 import PlayVideo from '../../Elements/Buttons/PlayVideo';
 
 import throttle from 'lodash.throttle';
+import jQuery from 'jquery';
 
 
 export default function Player({
@@ -78,6 +80,8 @@ export default function Player({
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
+
+  let progressIntervalHandle = null;
 
   const handleClose = () => {
     setAnchorEl(null);
@@ -149,12 +153,43 @@ export default function Player({
     setAnchorEl(null);
 	};
 
+	const forceProgress = () => {
+
+		let instance = playerInstance.current;
+		let playedDuration = instance.getCurrentTime();
+
+		// console.log( "FP" );
+		// console.log( playedDuration );
+
+		if( !playedDuration || playedDuration <= 0.0 ) {
+			// console.log( "TRYING FORCE" );
+			forcePlay();
+		} else {
+			clearInterval( progressIntervalHandle );
+		}
+
+	}
+
 	const updateMode = (mode) => {
 		setMode(mode);
 		setPlayedSeconds(0);
 		setPlayingURL( 'video' === mode ? item.video.value : item.audio );
 		setIsPlaying(false);
 		setIsPlaying(true);
+
+		if( isIOS ) {
+
+			setTimeout(
+				() => {
+					forcePlay();
+				}, 500
+			);
+			// if( 'audio' === mode ) {
+			// 	clearInterval( progressIntervalHandle );
+			// 	progressIntervalHandle = setInterval( forceProgress, 3000 );
+			// }
+		}
+
 	};
 
 	const updatePlaybackRate = () => {
@@ -233,6 +268,83 @@ export default function Player({
 			doScroll( scrollValue );
 		}, 10
 	);
+
+	/**
+	 * Abstract clicks of the Play/Pause button to side-step DOM mutations
+	 */
+	let playPauseClick = () => {
+		const $ = jQuery;
+		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button:visible' );
+		$( target ).trigger( 'click' );
+	}
+
+	/**
+	 * Simulate end-user Player Control interactions to force media play
+	 *
+	 * @returns void
+	 */
+	let forcePlay = () => {
+
+		const $ = jQuery;
+
+		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button:visible' );
+		let stateIcon = $( target ).find( 'svg.MuiSvgIcon-root' );
+		let currentStateId = $( stateIcon ).attr( 'data-testid' ).toLocaleLowerCase();
+		let currentState = (currentStateId.indexOf( 'play' ) >= 0) ? 'paused' : 'playing';
+
+		// console.log( $( target ) );
+		// console.log( currentStateId + ":::" + currentState );
+
+		// If the player is currently playing, "click" pause and play again
+		if( 'playing' === currentState ) {
+			// console.log( "CLICK TWICE" );
+			setTimeout(
+				() => {
+					playPauseClick();
+				}, 50
+			);
+			setTimeout(
+				() => {
+					// console.log( "SECOND CLICK" );
+					playPauseClick();
+				}, 200
+			);
+		} else { // If the player is currently paused, "click" play
+			// console.log( "CLICK ONCE" );
+			setTimeout(
+				() => {
+					playPauseClick();
+				}, 50
+			);
+		}
+
+	}
+
+	/**
+	 * Return true for an actual iPhone or iPad
+	 *
+	 * @returns bool
+	 */
+		 const isIOS_device = () => {
+
+			if( navigator && navigator.platform ) {
+				let platform = navigator.platform.toLowerCase();
+				// iPhone and old iPad
+				if( platform.indexOf( "iphone" ) >= 0 || platform.indexOf( "ipad" ) >= 0 ) {
+					return true;
+				}
+				// Current iPad
+				if( platform.indexOf( "mac" ) >= 0 ) {
+					let maxTouchPoints = navigator.maxTouchPoints ?? 0;
+					if( maxTouchPoints > 2 ) {
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+		const isIOS = isIOS_device();
 
   return (
     // Margin bottom is to account for audio player. Making sure all content is still visible with
@@ -433,10 +545,11 @@ export default function Player({
 							          playedSeconds: 0.0,
 						          });
 					          } else {
-						          updateMode('audio');
+								updateMode('audio');
 					          }
 				          }}
 			          />
+
 		          </Box>
 	          )}
 
