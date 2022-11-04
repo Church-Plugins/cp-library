@@ -246,6 +246,10 @@ class Init {
 		if ( function_exists( 'cp_locations' ) ) {
 			Integrations\Locations::get_instance();
 		}
+
+		if ( defined( 'TRIBE_EVENTS_FILE' ) ) {
+			Integrations\EventsCalendar::get_instance();
+		}
 	}
 
 	/**
