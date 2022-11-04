@@ -66,6 +66,15 @@ class ItemType extends PostType  {
 			}
 		}, 5);
 
+		// Update Event Series slug if it's the same as ours
+		add_filter( 'tribe_events_register_series_type_args', function ( $args ) {
+			if ( 'series' == $this->custom_slug() ) {
+				$args['rewrite']['slug'] = 'event-series';
+			}
+
+			return $args;
+		} );
+
 		add_action( 'shutdown', [ $this, 'save_post_date'], 99 );
 		add_action( 'save_post', [ $this, 'post_date' ] );
 		add_filter( 'cmb2_save_field_cpl_series', [ $this, 'save_item_series' ], 10, 3 );
