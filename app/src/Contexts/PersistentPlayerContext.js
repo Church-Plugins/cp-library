@@ -75,13 +75,15 @@ function PersistentPlayerProvider({children}) {
       ReactDOM.render(<PersistentPlayer />, player);
     }
 
-    window.top.postMessage({
-      action: "CPL_HANDOVER_TO_PERSISTENT",
-      item,
-      mode,
-      isPlaying,
-      playedSeconds,
-    });
+ 	  setTimeout(() => {
+		  window.top.postMessage({
+			  action: 'CPL_HANDOVER_TO_PERSISTENT',
+			  item,
+			  mode,
+			  isPlaying,
+			  playedSeconds,
+		  });
+	  }, 50);
 
 		cplLog( item.id, 'persistent' );
 
