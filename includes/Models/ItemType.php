@@ -115,6 +115,9 @@ class ItemType extends Table  {
 
 		$status = get_post_status( $this->origin_id );
 		if ( empty( $items ) ) {
+			// we need this meta value for sorting
+			update_post_meta( $this->origin_id, 'last_item_date', 0 );
+
 			if ( 'publish' === $status && apply_filters( 'cpl_item_type_require_items', true, $this ) ) {
 				wp_update_post( [ 'ID' => $this->origin_id, 'post_status' => 'draft' ] );
 				return 'draft';

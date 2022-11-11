@@ -40,7 +40,6 @@ class CP_Migrate {
 	 * @author costmo
 	 */
 	public function update_series_times() {
-
 		$types = ItemType::get_all_types();
 		foreach( $types as $type_data ) {
 			$type = new ItemType( $type_data );
@@ -48,6 +47,13 @@ class CP_Migrate {
 		}
 	}
 
+	/**
+	 * Delete all messages
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
 	public function delete_messages() {
 		$messages = get_posts( [ 'post_type' => Item::get_prop( 'post_type' ), 'posts_per_page' => -1 ] );
 		foreach ( $messages as $message ) {
@@ -55,164 +61,6 @@ class CP_Migrate {
 		}
 
 		WP_CLI::success( 'Deleted ' . count( $messages ) . ' messages' );
-	}
-
-	public function duplicate_message_series( $args, $assoc_args ) {
-		$messages = get_posts( [ 'post_type' => Item::get_prop( 'post_type' ), 'posts_per_page' => -1 ] );
-		$deleted = $maybe_delete = [];
-
-		foreach ( $messages as $message ) {
-			$location = wp_get_post_terms( $message->ID, 'cp_location' );
-			$title = $message->post_title;
-
-			// already deleted this one
-			if ( isset( $deleted[ $message->ID ] ) ) {
-				continue;
-			}
-
-			if ( empty( $location ) ) {
-				continue;
-			}
-
-			$location = $location[0];
-
-			foreach( $messages as $duplicate ) {
-				// already deleted this one
-				if ( isset( $deleted[ $duplicate->ID ] ) ) {
-					continue;
-				}
-
-				if ( $duplicate->ID === $message->ID ) {
-					continue;
-				}
-
-				if ( $duplicate->post_title !== $title ) {
-					continue;
-				}
-
-				if ( $duplicate->post_date !== $message->post_date ) {
-					continue;
-				}
-
-				if ( ! has_term( $location->term_id, 'cp_location', $duplicate->ID ) ) {
-					continue;
-				}
-
-				$meta      = [ 'video_url', 'audio_url' ];
-				$different = false;
-
-				foreach( $meta as $key ) {
-					if ( get_post_meta( $message->ID, $key, true ) !== get_post_meta( $duplicate->ID, $key, true ) ) {
-						$different = true;
-					}
-				}
-
-				if ( $different ) {
-//					$maybe_delete[ $duplicate->ID ] = $duplicate->post_title;
-//					continue;
-				}
-
-				wp_delete_post( $duplicate->ID, true );
-				$deleted[ $duplicate->ID ] = $duplicate->post_title;
-				WP_CLI::log( 'Duplicate: ' . $duplicate->post_title );
-			}
-		}
-
-//		WP_CLI::warning( 'Maybe remove ' . count( $maybe_delete ) . ' messages' );
-//		WP_CLI::log( implode( ', ', $maybe_delete ) );
-		WP_CLI::success( 'Removed ' . count( $deleted ) . ' messages' );
-	}
-
-	public function update_series_meta( $args, $assoc_args ) {
-
-		$speakers = wp_list_pluck(  Speaker::get_all_speakers(), 'title', 'id' );
-		$locations = wp_list_pluck(  Location::get_all_locations(), 'title', 'id' );
-		$types = wp_list_pluck(  ItemType::get_all_types(), 'title', 'id' );
-
-		$types = array_map( 'strtolower', $types );
-
-		$series = wp_json_file_decode( ABSPATH . 'series.json' );
-		$topics = wp_list_pluck( \CP_Library\Setup\Taxonomies\Topic::get_instance()->get_term_data(), 'term' );
-		$scripture = \CP_Library\Setup\Taxonomies\Scripture::get_instance()->get_terms();
-		$seasons = wp_list_pluck( \CP_Library\Setup\Taxonomies\Season::get_instance()->get_term_data(), 'term' );
-		$not_found = [];
-		foreach( $series as $s ) {
-			if ( false === $id = array_search( strtolower( $s->title ), $types ) ) {
-				continue;
-			}
-
-			try {
-				$series_object = ItemType::get_instance( $id );
-				$terms = [];
-
-				foreach ( $s->category as $term ) {
-					$name  = $term->__cdata;
-
-					if ( in_array( $name, [
-						2010,
-						2011,
-						2012,
-						2013,
-						2014,
-						2015,
-						2016,
-						2017,
-						2018,
-						2019,
-						2020,
-						2021,
-						2022,
-						'all',
-						'recent',
-						'featured',
-						'Songs'
-					] ) ) {
-						continue;
-					}
-
-					if ( in_array( $name, $locations ) || in_array( $name, $speakers ) ) {
-						continue;
-					}
-
-					$name = preg_replace( '/([0-9])([^ ])/', '$1 $2', $name );
-					$tax = false;
-
-					if ( in_array( $name, $topics ) ) {
-						$tax = 'cpl_topic';
-					} else if ( in_array( $name, $scripture ) ) {
-						$tax = 'cpl_scripture';
-					} else if ( in_array( $name, $seasons ) ) {
-						$tax = 'cpl_season';
-					}
-
-					if ( ! $tax ) {
-						$not_found[] = $name;
-						WP_CLI::log( 'Not found: ' . $name );
-					} else {
-						$terms[ $tax ][] = $name;
-					}
-				}
-
-				$items = $series_object->get_items();
-
-				foreach ( $terms as $tax => $names ) {
-					wp_set_post_terms( $series_object->origin_id, $names, $tax );
-					foreach( $items as $item ) {
-						wp_set_post_terms( $item->origin_id, $names, $tax );
-					}
-				}
-
-			} catch ( Exception $e ) {
-				WP_CLI::error( $e->getMessage() );
-			}
-
-
-		}
-
-		asort( $not_found );
-		$not_found = array_unique( $not_found );
-		WP_CLI::log( implode( ', ', $not_found ) );
-
 	}
 
 	/**
@@ -394,7 +242,28 @@ class CP_Migrate {
 		}
 	}
 
+	/**
+	 * Import provided series
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--skip-thumbs]
+	 * : use this parameter to skip sideloading the thumbnail
+	 *
+	 * [--update]
+	 * : use this parameter to update existing items
+	 *
+	 * @param $args
+	 * @param $assoc_args
+	 *
+	 * @throws \ChurchPlugins\Exception
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
 	public function import_series( $args, $assoc_args ) {
+		global $wpdb;
+
 		require_once( ABSPATH . 'wp-admin/includes/media.php' );
 		require_once( ABSPATH . 'wp-admin/includes/file.php' );
 		require_once( ABSPATH . 'wp-admin/includes/image.php' );
@@ -409,6 +278,10 @@ class CP_Migrate {
 			WP_CLI::error('Could not locate the file');
 		}
 
+		$import_id = time();
+
+		WP_CLI::log( 'Batch ID: ' . $import_id );
+
 		$row = 0;
 		while( $data = fgetcsv( $file ) ) {
 			count( $data );
@@ -420,85 +293,184 @@ class CP_Migrate {
 
 			$data = array_map( 'trim', $data );
 
-			$url_data = explode( '/', $data[ $headers['URL'] ] );
+			// @todo add better handling for url
+			$url_data = explode( '/', untrailingslashit( $data[ $headers['URL'] ] ) );
 			$slug = array_pop( $url_data );
-			$title = $data[ $headers['Title'] ];
-			$desc = $data[ $headers['Description'] ];
-			$thumb = $data[ $headers['Thumbnail'] ];
-			$study_guide = str_replace( 'https://christpres.mediahttps:', 'https:', $data[ $headers['Study Guide'] ] );
+
+			$title       = $data[ $headers['Title'] ];
+			$desc        = $data[ $headers['Description'] ];
+			$thumb       = $data[ $headers['Thumbnail'] ];
+			$study_guide = $data[ $headers['Study Guide'] ];
+			$cp_hash     = md5( $title );
+			$post_id     = $wpdb->get_var( $wpdb->prepare( "SELECT post_id from $wpdb->postmeta WHERE `meta_key` = '_cp_import_id' AND `meta_value` = %s", $cp_hash ) );
+
+			if ( $post_id && empty( $assoc_args['update'] ) ) {
+				WP_CLI::warning( $title . ' already exists. Skipping this item.' );
+				continue;
+			}
 
 			WP_CLI::log( 'Importing ' . $title );
-			if ( get_page_by_path( $slug, OBJECT, ItemType::get_prop( 'post_type' ) ) ) {
+			if ( $slug && get_page_by_path( $slug, OBJECT, ItemType::get_prop( 'post_type' ) ) ) {
 				WP_CLI::warning( 'This content already exists' );
 				continue;
 			}
 
-			$series_id = wp_insert_post( [
+			$args = [
 				'post_type'    => ItemType::get_prop( 'post_type' ),
 				'post_title'   => $title,
-				'post_content' => $desc,
+				'post_content' => $desc ?? '',
 				'post_status'  => 'publish',
-				'post_name'     => $slug,
-			], true );
+			];
 
+			if ( ! empty( $post_id ) ) {
+				$args['ID'] = $post_id;
+			}
 
+			if ( ! empty( $slug ) ) {
+				$args['post_name'] = $slug;
+			}
+
+			$series_id = wp_insert_post( $args, true );
 
 			if ( is_wp_error( $series_id ) ) {
 				WP_CLI::warning( $series_id->get_error_message() );
 				continue;
 			}
 
+			update_post_meta( $series_id, '_cp_import_id', $cp_hash );
+			update_post_meta( $series_id, '_cp_import_batch_id', $import_id );
+			update_post_meta( $series_id, '_cp_import_data', $data );
+			update_post_meta( $series_id, '_cp_import_headers', $headers );
+
 			// save to our tables
 			ItemType::get_instance_from_origin( $series_id );
 
 			WP_CLI::log( '--- series created' );
 
-			// Handle thumbnail
-			$thumb_id = media_sideload_image( $thumb, $series_id, $title . ' Thumbnail', 'id' );
+			if ( $thumb && empty( $assoc_args['skip-thumbs'] ) ) {
+				// Handle thumbnail
+				$thumb_id = media_sideload_image( $thumb, $series_id, $title . ' Thumbnail', 'id' );
 
-			if ( is_wp_error( $thumb_id ) ) {
-				WP_CLI::warning( $thumb_id->get_error_message() );
-			} else {
-				WP_CLI::log( '--- imported thumbnail' );
+				if ( is_wp_error( $thumb_id ) ) {
+					WP_CLI::warning( $thumb_id->get_error_message() );
+				} else {
+					WP_CLI::log( '--- imported thumbnail' );
+				}
+
+				set_post_thumbnail( $series_id, $thumb_id );
 			}
-
-			set_post_thumbnail( $series_id, $thumb_id );
 
 			// Handle study guide
+			if ( $study_guide ) {
+				$tmp = download_url( $study_guide );
 
-			$tmp = download_url( $study_guide );
+				if ( is_wp_error( $tmp ) ) {
+					WP_CLI::warning( $tmp->get_error_message() );
+					continue;
+				}
 
-			if ( is_wp_error( $tmp ) ) {
-				WP_CLI::warning( $tmp->get_error_message() );
-				continue;
+				$file_array = [
+					'name'     => basename( $study_guide ),
+					'tmp_name' => $tmp,
+				];
+
+				$id = media_handle_sideload( $file_array, $series_id );
+
+				if ( is_wp_error( $id ) ) {
+					WP_CLI::warning( $id->get_error_message() );
+					continue;
+				}
+
+				$study_guide_url = wp_get_attachment_url( $id );
+				update_post_meta( $series_id, 'cp_study_guide', $study_guide_url );
+
+				WP_CLI::log( '--- imported study guide' );
 			}
-
-			$file_array = [
-				'name' => basename( $study_guide ),
-				'tmp_name' => $tmp,
-			];
-
-			$id = media_handle_sideload( $file_array, $series_id );
-
-			if ( is_wp_error( $id ) ) {
-				WP_CLI::warning( $id->get_error_message() );
-				continue;
-			}
-
-			$study_guide_url = wp_get_attachment_url( $id );
-			update_post_meta( $series_id, 'cp_study_guide', $study_guide_url );
-
-			WP_CLI::log( '--- imported study guide' );
 
 		}
 
 	}
 
+	/**
+	 * Assemble a list of all the terms provided with the messages
+	 *
+	 * @param $args
+	 * @param $assoc_args
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_message_terms( $args, $assoc_args ) {
+		$args = wp_parse_args( [
+			0 => 'messages.csv',
+		], $args );
 
+		$filename = ABSPATH . $args[0];
+
+		if ( ! $file = fopen( $filename, 'r' ) ) {
+			WP_CLI::error( 'Could not locate the file' );
+		}
+
+		$all_terms = [];
+
+		$row = 0;
+		while ( $data = fgetcsv( $file ) ) {
+			count( $data );
+
+			if ( ++ $row == 1 ) {
+				$headers = array_flip( $data ); // Get the column names from the header.
+				continue;
+			}
+
+			$data  = array_map( 'trim', $data );
+			$terms = $data[ $headers['Tags'] ];
+
+			$terms = array_map( 'trim', explode( ',', $terms ) );
+
+			foreach( $terms as $term ) {
+				if ( empty( $all_terms[ $term ] ) ) {
+					$all_terms[ $term ] = 0;
+				}
+
+				$all_terms[ $term ] ++;
+			}
+		}
+
+		WP_CLI::log( 'Term,Usage' );
+
+		foreach( $all_terms as $term => $count ) {
+			WP_CLI::log( $term . ',' . $count );
+		}
+	}
+
+	/**
+	 * Import messages from csv
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--skip-thumbs]
+	 * : use this parameter to skip sideloading the thumbnail
+	 *
+	 * [--skip-tags]
+	 * : use this parameter to skip importing tags
+	 *
+	 * [--update]
+	 * : use this parameter to update existing items
+	 *
+	 * @param $args
+	 * @param $assoc_args
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
 	public function import_messages( $args, $assoc_args ) {
-//		require_once( ABSPATH . 'wp-admin/includes/media.php' );
-//		require_once( ABSPATH . 'wp-admin/includes/file.php' );
-//		require_once( ABSPATH . 'wp-admin/includes/image.php' );
+		global $wpdb;
+
+		require_once( ABSPATH . 'wp-admin/includes/media.php' );
+		require_once( ABSPATH . 'wp-admin/includes/file.php' );
+		require_once( ABSPATH . 'wp-admin/includes/image.php' );
 
 		$args = wp_parse_args( [
 			0 => 'messages.csv',
@@ -528,6 +500,9 @@ class CP_Migrate {
 		}
 
 		$results = ItemType::search( 'title', 'No Series' );
+		$import_id = time();
+
+		WP_CLI::log( 'Batch ID: ' . $import_id );
 
 		if ( empty( $results ) ) {
 			$series_id = wp_insert_post( [
@@ -570,6 +545,7 @@ class CP_Migrate {
 				$location = trim( strtolower( $data[ $headers['Location'] ] ) );
 				$speakers = array_map( 'trim', explode( ',', $data[ $headers['Speaker'] ] ) );
 				$terms    = $data[ $headers['Tags'] ];
+				$thumb    = $data[ $headers['Thumbnail'] ];
 				$video    = trim( $data[ $headers['Video'] ] );
 				$audio    = trim( $data[ $headers['Audio'] ] );
 
@@ -581,16 +557,34 @@ class CP_Migrate {
 					$title = $series;
 				}
 
+				$cp_hash = md5( $title . $date );
+				$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT post_id from $wpdb->postmeta WHERE `meta_key` = '_cp_import_id' AND `meta_value` = %s", $cp_hash ) );
+
+				if ( $post_id && empty( $assoc_args['update'] ) ) {
+					WP_CLI::warning( $title . ' already exists. Skipping this item.' );
+					continue;
+				}
 
 				WP_CLI::log( 'Importing ' . $title );
 
-				$message_id = wp_insert_post( [
+				$args = [
 					'post_type'    => Item::get_prop( 'post_type' ),
 					'post_title'   => $title,
 					'post_status'  => 'publish',
 					'post_date'    => date( 'Y-m-d 9:00:00', $date ),
 					'post_content' => wp_kses_post( $desc ),
-				], true );
+				];
+
+				if ( $post_id ) {
+					$args['ID'] = $post_id;
+				}
+
+				$message_id = wp_insert_post( $args, true );
+
+				update_post_meta( $message_id, '_cp_import_id', $cp_hash );
+				update_post_meta( $message_id, '_cp_import_batch_id', $import_id );
+				update_post_meta( $message_id, '_cp_import_data', $data );
+				update_post_meta( $message_id, '_cp_import_headers', $headers );
 
 				if ( is_wp_error( $message_id ) ) {
 					WP_CLI::warning( $message_id->get_error_message() );
@@ -606,6 +600,20 @@ class CP_Migrate {
 				$item = Item::get_instance_from_origin( $message_id );
 
 				WP_CLI::log( '--- message created' );
+
+				if ( $thumb && empty( $assoc_args['skip-thumbs'] ) && $thumb !== get_post_meta( $message_id, '_cp_import_thumb', true ) ) {
+					// Handle thumbnail
+					$thumb_id = media_sideload_image( $thumb, $message_id, $title . ' Thumbnail', 'id' );
+
+					if ( is_wp_error( $thumb_id ) ) {
+						WP_CLI::warning( $thumb_id->get_error_message() );
+					} else {
+						WP_CLI::log( '--- imported thumbnail' );
+					}
+
+					set_post_thumbnail( $message_id, $thumb_id );
+					update_post_meta( $message_id, '_cp_import_thumb', $thumb );
+				}
 
 				// Speakers
 				$speaker_ids = [];
@@ -630,46 +638,54 @@ class CP_Migrate {
 					}
 
 					if ( $has_locations && $speaker_id ) {
-						$speaker_ids[] = $speaker_id;
-
 						// add the current location to the speaker's location
 						wp_set_post_terms( Speaker::get_instance( $speaker_id )->origin_id, $location_id, 'cp_location', true );
 					}
+
+					$speaker_ids[] = $speaker_id;
 				}
 
 				$item->update_speakers( $speaker_ids );
 
-
 				// Series / ItemType
-
 				$series_id = $default_series;
 
-				$results = ItemType::search( 'title', $series );
+				if ( ! empty( $series ) ) {
+					$results = ItemType::search( 'title', $series );
 
-				if ( empty( $results ) ) {
-					$results = ItemType::search( 'title', $series, true );
-				}
-
-				if ( isset( $results[0] ) ) {
-					$series_id = $results[0]->id;
-				} elseif ( ! empty( $series ) ) { // create the series if it doesn't exist
-					$series_id = wp_insert_post( [
-						'post_type'   => ItemType::get_prop( 'post_type' ),
-						'post_title'  => $series,
-						'post_status' => 'publish',
-					], true );
-
-					if ( is_wp_error( $series_id ) ) {
-						WP_CLI::error( $series_id->get_error_message() );
+					if ( empty( $results ) ) {
+						$results = ItemType::search( 'title', $series, true );
 					}
 
-					// get the id
-					$series_id = ItemType::get_instance_from_origin( $series_id )->id;
+					if ( count( $results ) ) {
+						// default to first result
+						$series_id = $results[0]->id;
 
-					WP_CLI::log( '--- Series created, ' . $series );
+						// see if there is a direct match
+						foreach( $results as $result ) {
+							if ( $result->title == $series ) {
+								$series_id = $result->id;
+							}
+						}
+					} elseif ( ! empty( $series ) ) { // create the series if it doesn't exist
+						$series_id = wp_insert_post( [
+							'post_type'   => ItemType::get_prop( 'post_type' ),
+							'post_title'  => $series,
+							'post_status' => 'publish',
+						], true );
+
+						if ( is_wp_error( $series_id ) ) {
+							WP_CLI::error( $series_id->get_error_message() );
+						}
+
+						// get the id
+						$series_id = ItemType::get_instance_from_origin( $series_id )->id;
+
+						WP_CLI::log( '--- Series created, ' . $series );
+					}
 				}
 
-				$item->add_type( $series_id );
+				$item->update_types( [ $series_id ] );
 
 				if ( $video ) {
 					update_post_meta( $message_id, 'video_url', $video );
@@ -687,7 +703,7 @@ class CP_Migrate {
 					WP_CLI::log( '--- added audio' );
 				}
 
-				if ( ! empty( $terms ) ) {
+				if ( ! empty( $terms ) && empty( $assoc_args['skip-tags'] ) ) {
 					self::update_terms( $message_id, $terms );
 				}
 
@@ -723,83 +739,79 @@ class CP_Migrate {
 	}
 
 	/**
-	 * Script for migrating old sermons and talks to new CP Items
+	 * Remove duplicate sermons
 	 *
 	 * @param $args
 	 * @param $assoc_args
 	 *
-	 * @throws \WP_CLI\ExitException
+	 * @since  1.0.0
+	 *
 	 * @author Tanner Moushey
 	 */
-	public function migrate( $args, $assoc_args ) {
-		$talks = get_posts( [
-			'post_type' => 'talk',
-			'posts_per_page' => -1
-		] );
+	public function duplicate_message_series( $args, $assoc_args ) {
+		$messages = get_posts( [ 'post_type' => Item::get_prop( 'post_type' ), 'posts_per_page' => -1 ] );
+		$deleted = $maybe_delete = [];
 
-		$sermons = get_posts( [
-			'post_type' => 'sermon',
-			'posts_per_page' => -1
-		] );
+		foreach ( $messages as $message ) {
+			$location = wp_get_post_terms( $message->ID, 'cp_location' );
+			$title = $message->post_title;
 
-		$total = count( $talks ) + count( $sermons );
-
-		$progress = WP_CLI\Utils\make_progress_bar( "Migrating " . $total . " items", $total );
-
-		foreach( $talks as $talk ) {
-			$progress->tick();
-			$talk->post_type = 'cpl_item';
-			$audio = get_post_meta( $talk->ID, 'talk_file', true );
-
-			wp_update_post( $talk );
-
-			if ( ! $audio ) {
-				WP_CLI::warning( 'no audio' );
+			// already deleted this one
+			if ( isset( $deleted[ $message->ID ] ) ) {
+				continue;
 			}
 
-			try {
-				$item = Item::get_instance_from_origin( $talk->ID );
-
-				if ( ! $audio ) {
-					WP_CLI::warning( 'no audio' );
-				} else {
-					$item->update_meta_value( 'audio_url', $audio['url'] );
-					wp_set_object_terms( $talk->ID, 'audio', 're_media_type' );
-				}
-			} catch ( Exception $e ) {
-				WP_CLI::warning( $e->getMessage() );
+			if ( empty( $location ) ) {
+				continue;
 			}
-		}
 
-		foreach( $sermons as $sermon ) {
-			$progress->tick();
-			$sermon->post_type = 'cpl_item';
-			$vimeo = get_post_meta( $sermon->ID, 'vimeo_video_id', true );
-			$facebook = get_post_meta( $sermon->ID, 'facebook_video_id', true );
+			$location = $location[0];
 
-			wp_update_post( $sermon );
-
-			try {
-				$item = Item::get_instance_from_origin( $sermon->ID );
-
-				if ( $facebook ) {
-					$item->update_meta_value( 'video_id_facebook', $facebook );
+			foreach( $messages as $duplicate ) {
+				// already deleted this one
+				if ( isset( $deleted[ $duplicate->ID ] ) ) {
+					continue;
 				}
 
-				if ( $vimeo ) {
-					$item->update_meta_value( 'video_id_vimeo', $vimeo );
+				if ( $duplicate->ID === $message->ID ) {
+					continue;
 				}
 
-				wp_set_object_terms( $sermon->ID, 'video', 're_media_type' );
+				if ( $duplicate->post_title !== $title ) {
+					continue;
+				}
 
-			} catch ( Exception $e ) {
-				WP_CLI::warning( $e->getMessage() );
+				if ( $duplicate->post_date !== $message->post_date ) {
+					continue;
+				}
+
+				if ( ! has_term( $location->term_id, 'cp_location', $duplicate->ID ) ) {
+					continue;
+				}
+
+				$meta      = [ 'video_url', 'audio_url' ];
+				$different = false;
+
+				foreach( $meta as $key ) {
+					if ( get_post_meta( $message->ID, $key, true ) !== get_post_meta( $duplicate->ID, $key, true ) ) {
+						$different = true;
+					}
+				}
+
+				if ( $different ) {
+//					$maybe_delete[ $duplicate->ID ] = $duplicate->post_title;
+//					continue;
+				}
+
+				wp_delete_post( $duplicate->ID, true );
+				$deleted[ $duplicate->ID ] = $duplicate->post_title;
+				WP_CLI::log( 'Duplicate: ' . $duplicate->post_title );
 			}
 		}
 
-		$progress->finish();
-
-		WP_CLI::log( 'Finished' );
-
+//		WP_CLI::warning( 'Maybe remove ' . count( $maybe_delete ) . ' messages' );
+//		WP_CLI::log( implode( ', ', $maybe_delete ) );
+		WP_CLI::success( 'Removed ' . count( $deleted ) . ' messages' );
 	}
+
 }
