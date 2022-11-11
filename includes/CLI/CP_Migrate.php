@@ -685,7 +685,7 @@ class CP_Migrate {
 					}
 				}
 
-				$item->add_type( $series_id );
+				$item->update_types( [ $series_id ] );
 
 				if ( $video ) {
 					update_post_meta( $message_id, 'video_url', $video );
