@@ -650,29 +650,39 @@ class CP_Migrate {
 				// Series / ItemType
 				$series_id = $default_series;
 
-				$results = ItemType::search( 'title', $series );
+				if ( ! empty( $series ) ) {
+					$results = ItemType::search( 'title', $series );
 
-				if ( empty( $results ) ) {
-					$results = ItemType::search( 'title', $series, true );
-				}
-
-				if ( isset( $results[0] ) ) {
-					$series_id = $results[0]->id;
-				} elseif ( ! empty( $series ) ) { // create the series if it doesn't exist
-					$series_id = wp_insert_post( [
-						'post_type'   => ItemType::get_prop( 'post_type' ),
-						'post_title'  => $series,
-						'post_status' => 'publish',
-					], true );
-
-					if ( is_wp_error( $series_id ) ) {
-						WP_CLI::error( $series_id->get_error_message() );
+					if ( empty( $results ) ) {
+						$results = ItemType::search( 'title', $series, true );
 					}
 
-					// get the id
-					$series_id = ItemType::get_instance_from_origin( $series_id )->id;
+					if ( count( $results ) ) {
+						// default to first result
+						$series_id = $results[0]->id;
 
-					WP_CLI::log( '--- Series created, ' . $series );
+						// see if there is a direct match
+						foreach( $results as $result ) {
+							if ( $result->title == $series ) {
+								$series_id = $result->id;
+							}
+						}
+					} elseif ( ! empty( $series ) ) { // create the series if it doesn't exist
+						$series_id = wp_insert_post( [
+							'post_type'   => ItemType::get_prop( 'post_type' ),
+							'post_title'  => $series,
+							'post_status' => 'publish',
+						], true );
+
+						if ( is_wp_error( $series_id ) ) {
+							WP_CLI::error( $series_id->get_error_message() );
+						}
+
+						// get the id
+						$series_id = ItemType::get_instance_from_origin( $series_id )->id;
+
+						WP_CLI::log( '--- Series created, ' . $series );
+					}
 				}
 
 				$item->add_type( $series_id );
