@@ -144,7 +144,6 @@ class ItemType extends PostType  {
 		// For ItemType/Series, order by metadata (contained item date)
 		if( $query->is_main_query() ) {
 			if( !empty( $query->query_vars ) && !empty( $query->query_vars['post_type'] ) && $query->query_vars['post_type'] == 'cpl_item_type' ) {
-
 				if( empty( $query->query_vars['cpl_item_type'] ) ) {
 					$query->set( 'orderby', 'meta_value' );
 					$query->set( 'order', 'DESC' );
