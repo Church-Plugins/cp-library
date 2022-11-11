@@ -145,7 +145,7 @@ class ItemType extends PostType  {
 		if( $query->is_main_query() ) {
 			if( !empty( $query->query_vars ) && !empty( $query->query_vars['post_type'] ) && $query->query_vars['post_type'] == 'cpl_item_type' ) {
 				if( empty( $query->query_vars['cpl_item_type'] ) ) {
-					$query->set( 'orderby', 'meta_value' );
+					$query->set( 'orderby', 'meta_value_num' );
 					$query->set( 'order', 'DESC' );
 					$query->set( 'meta_key', 'last_item_date' );
 				}
