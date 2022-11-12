@@ -220,7 +220,7 @@ class Items extends WP_REST_Controller {
 	 */
 	public function get_search_results( $find ) {
 
-		$find = rawurlencode( rawurldecode( $find ) );
+//		$find = rawurlencode( rawurldecode( $find ) );
 		$return_value = [];
 
 		$request  = new WP_REST_Request( 'GET', "/wp/v2/search", [] );
