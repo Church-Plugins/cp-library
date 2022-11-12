@@ -94,9 +94,7 @@ export default function ItemDetail({
 
 	      <Box className="cpl-columns">
 	        <Box className="cpl-single-item--content">
-	          <Box className="cpl-meta" >
-	            <ItemMeta date={item.date.desc} category={item.category || []} />
-	          </Box>
+	          <ItemMeta date={item.date.desc} category={item.category || []} />
 
 	          <Box className="cpl-single-item--desc" dangerouslySetInnerHTML={{ __html: item.desc }} />
 	        </Box>

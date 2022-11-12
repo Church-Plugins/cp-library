@@ -12,6 +12,11 @@
 		white-space: nowrap;
 		margin-top: 0;
 		margin-bottom: var(--cp-gap--md);
+
+		> * {
+			flex-flow: row wrap;
+		}
+
 	}
 
 	.cpl-item--info {
@@ -19,7 +24,6 @@
 	}
 
 	&--media {
-		border-radius: var(--cp-border-radius);
 		overflow: hidden;
 
 		&--wrapper {
