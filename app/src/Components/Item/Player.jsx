@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -9,7 +8,6 @@ import { Play, Volume1, Share2 } from "react-feather"
 import VideoPlayer from "react-player";
 
 import useBreakpoints from '../../Hooks/useBreakpoints';
-import Controllers_WP_REST_Request from '../../Controllers/WP_REST_Request';
 import { usePersistentPlayer } from '../../Contexts/PersistentPlayerContext';
 
 import Rectangular from '../../Elements/Buttons/Rectangular';
@@ -401,7 +399,7 @@ export default function Player({
 				               justifyContent="space-around" margin="auto">
 
 					          <Box display="flex" alignItems="center">
-						          <PlayPause flex={0} padding={2} isPlaying={isPlaying} circleIcon={false} onClick={() => setIsPlaying(!isPlaying)}/>
+						          <PlayPause playedSeconds={playedSeconds} flex={0} padding={2} isPlaying={isPlaying} circleIcon={false} onClick={() => setIsPlaying(!isPlaying)}/>
 					          </Box>
 
 					          <IconButton
@@ -432,27 +430,27 @@ export default function Player({
 							          size="medium"
 							          value={playedSeconds}
 							          sx={{padding: '10px 0 !important'}}
-									  marks={videoMarks}
+							          marks={videoMarks}
 							          onChange={(_, value) => {
 								          setIsPlaying(false);
 
-										  if( _ && _.type && 'mousedown' === _.type ) {
-											setPlayedSeconds(value);
-											playerInstance.current.seekTo(playedSeconds);
-										  } else {
-											throttleScroll( value );
-										  }
+								          if (_ && _.type && 'mousedown' === _.type) {
+									          setPlayedSeconds(value);
+									          playerInstance.current.seekTo(playedSeconds);
+								          } else {
+									          throttleScroll(value);
+								          }
 
 							          }}
 							          onChangeCommitted={(_, value) => {
-								          setIsPlaying( false );
-										  setTimeout(
-											() => {
-												setPlayedSeconds(value);
-												playerInstance.current.seekTo(playedSeconds);
-												setIsPlaying( true );
-											}
-										  );
+								          setIsPlaying(false);
+								          setTimeout(
+									          () => {
+										          setPlayedSeconds(value);
+										          playerInstance.current.seekTo(playedSeconds);
+										          setIsPlaying(true);
+									          }
+								          );
 							          }}
 						          />
 
@@ -498,7 +496,20 @@ export default function Player({
 						          {isPlaying ? (
 							          <></>
 						          ) : (
-							          <PlayCircleOutline sx={{fontSize: 40}}/>
+							          <PlayCircleOutline onClick={() => {
+													let defaultMode = ( item.video.value ) ? 'video' : 'audio';
+
+								          if (persistentPlayerIsActive) {
+									          passToPersistentPlayer({
+										          item         : mediaState.current.item,
+										          mode         : defaultMode,
+										          isPlaying    : true,
+										          playedSeconds: 0.0,
+									          });
+								          } else {
+									          updateMode( defaultMode );
+								          }
+							          }} sx={{fontSize: 75}}/>
 						          )}
 					          </>
 				          ) : (
@@ -603,26 +614,26 @@ export default function Player({
 					         size="medium"
 					         value={playedSeconds}
 					         sx={{padding: '10px 0 !important'}}
-							 marks={videoMarks}
+					         marks={videoMarks}
 					         onChange={(_, value) => {
-								setIsPlaying(false);
+						         setIsPlaying(false);
 
-								if( _ && _.type && 'mousedown' === _.type ) {
-								  setPlayedSeconds(value);
-								  playerInstance.current.seekTo(playedSeconds);
-								} else {
-								  throttleScroll( value );
-								}
+						         if (_ && _.type && 'mousedown' === _.type) {
+							         setPlayedSeconds(value);
+							         playerInstance.current.seekTo(playedSeconds);
+						         } else {
+							         throttleScroll(value);
+						         }
 					         }}
 					         onChangeCommitted={(_, value) => {
-								setIsPlaying( false );
-								setTimeout(
-								  () => {
-									  setPlayedSeconds(value);
-									  playerInstance.current.seekTo(playedSeconds);
-									  setIsPlaying( true );
-								  }
-								);
+						         setIsPlaying(false);
+						         setTimeout(
+							         () => {
+								         setPlayedSeconds(value);
+								         playerInstance.current.seekTo(playedSeconds);
+								         setIsPlaying(true);
+							         }
+						         );
 					         }}
 				         />
 
@@ -655,7 +666,7 @@ export default function Player({
 			         </IconButton>
 
 			         <Box display="flex" alignItems="center">
-				         <PlayPause isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
+				         <PlayPause playedSeconds={playedSeconds} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
 			         </Box>
 			         <IconButton size='large' onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')}>
 				         <Forward30 fontSize="inherit"/>

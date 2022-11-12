@@ -198,7 +198,7 @@ export default function PersistentPlayer(props) {
 					     <>
 						     <Box display="flex" alignItems="center" justifyContent="space-around" height="100%" width="100%"
 						          position="absolute" zIndex={50} top={0} right={0}>
-							     <PlayPause size={48} flex={0} padding={2} isPlaying={isPlaying}
+							     <PlayPause playedSeconds={playedSeconds} size={48} flex={0} padding={2} isPlaying={isPlaying}
 							                onClick={() => setIsPlaying(!isPlaying)}/>
 						     </Box>
 
@@ -225,7 +225,7 @@ export default function PersistentPlayer(props) {
 					          justifyContent="space-around" margin="auto">
 
 						     <Box display="flex" alignItems="center">
-							     <PlayPause flex={0} padding={2} isPlaying={isPlaying} circleIcon={false}
+							     <PlayPause playedSeconds={playedSeconds} flex={0} padding={2} isPlaying={isPlaying} circleIcon={false}
 							                onClick={() => setIsPlaying(!isPlaying)}/>
 						     </Box>
 
@@ -299,7 +299,7 @@ export default function PersistentPlayer(props) {
 
 		    {(isDesktop || 'audio' === mode) && (
 			    <Box display="flex" alignItems="center">
-				    <PlayPause flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
+				    <PlayPause playedSeconds={playedSeconds} flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
 			    </Box>
 		    )}
 
