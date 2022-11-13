@@ -20,7 +20,7 @@ export default function PlayPause({
   return (
 	  isPlaying && !playedSeconds ? (
 		  <IconButton
-			  className={`roundButton__root roundButton__${variant} button__play`}
+			  className={`roundButton__root roundButton__${variant} button__play button__loading`}
 			  variant={variant}
 			  disabled={true}
 			  sx={{padding: circleIcon ? size * .25 + 'px' : 0}}
