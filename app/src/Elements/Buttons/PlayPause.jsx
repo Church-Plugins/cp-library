@@ -22,7 +22,7 @@ export default function PlayPause({
 		  <IconButton
 			  className={`roundButton__root roundButton__${variant} button__play button__loading`}
 			  variant={variant}
-			  disabled={true}
+			  onClick={onClick}
 			  sx={{padding: circleIcon ? size * .25 + 'px' : 0}}
 		  >
 			  <CircularProgress size={size * .5}/>

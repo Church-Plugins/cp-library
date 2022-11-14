@@ -285,16 +285,16 @@ export default function Player({
 
 		const $ = jQuery;
 
-		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button:visible' );
-		let stateIcon = $( target ).find( 'svg.MuiSvgIcon-root' );
-		let currentStateId = $( stateIcon ).attr( 'data-testid' ).toLocaleLowerCase();
-		let currentState = (currentStateId.indexOf( 'play' ) >= 0) ? 'paused' : 'playing';
+//		let target = $( '.itemPlayer__controlsWrapper .itemPlayer__controls div.MuiBox-root button:visible' );
+//		let stateIcon = $( target ).find( 'svg.MuiSvgIcon-root' );
+//		let currentStateId = $( stateIcon ).attr( 'data-testid' ).toLocaleLowerCase();
+//		let currentState = (currentStateId.indexOf( 'play' ) >= 0) ? 'paused' : 'playing';
 
 		// console.log( $( target ) );
 		// console.log( currentStateId + ":::" + currentState );
 
 		// If the player is currently playing, "click" pause and play again
-		if( 'playing' === currentState ) {
+		if( isPlaying ) {
 			// console.log( "CLICK TWICE" );
 			setTimeout(
 				() => {
