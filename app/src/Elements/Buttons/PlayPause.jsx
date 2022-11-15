@@ -17,8 +17,7 @@ export default function PlayPause({
 	playedSeconds = 1,
 }) {
 
-  return (
-	  isPlaying && !playedSeconds ? (
+  return isPlaying && !playedSeconds ? (
 		  <IconButton
 			  className={`roundButton__root roundButton__${variant} button__play button__loading`}
 			  variant={variant}
@@ -47,7 +46,5 @@ export default function PlayPause({
 				  </>
 			  )}
 		  </IconButton>
-	  )
-
-  );
+	  );
 }
