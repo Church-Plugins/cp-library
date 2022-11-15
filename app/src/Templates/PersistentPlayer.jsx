@@ -11,7 +11,7 @@ import { Cancel, Fullscreen, PictureInPicture, Forward30, Replay10, OpenInFull, 
 
 import useBreakpoints from '../Hooks/useBreakpoints';
 import formatDuration from '../utils/formatDuration';
-import { cplLog } from '../utils/helpers';
+import { cplLog, cplMarker } from '../utils/helpers';
 
 import LoadingIndicator from '../Elements/LoadingIndicator';
 import ErrorDisplay from '../Elements/ErrorDisplay';
@@ -19,6 +19,7 @@ import PlayPause from '../Elements/Buttons/PlayPause';
 import Logo from '../Elements/Logo';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../Templates/Theme";
+import throttle from 'lodash.throttle';
 
 export default function PersistentPlayer(props) {
   const { isDesktop } = useBreakpoints();
@@ -134,6 +135,26 @@ export default function PersistentPlayer(props) {
     });
   }, [item, mode]);
 
+  let marker = cplMarker( item, mode, duration );
+  let markPosition	= marker.position;
+  let snapDiff		= marker.snapDistance;
+  let videoMarks	= marker.marks;
+
+
+  	let doScroll = ( scrollValue ) => {
+		if( markPosition > 0 && Math.abs( (scrollValue - markPosition) ) < snapDiff ) {
+			setPlayedSeconds( markPosition );
+		} else {
+			setPlayedSeconds( scrollValue );
+		}
+	}
+
+	let throttleScroll = throttle(
+		(scrollValue) => {
+			doScroll( scrollValue );
+		}, 10
+	);
+
   return loading ? (
     <LoadingIndicator />
   ) : error ? (
@@ -177,7 +198,7 @@ export default function PersistentPlayer(props) {
 					     <>
 						     <Box display="flex" alignItems="center" justifyContent="space-around" height="100%" width="100%"
 						          position="absolute" zIndex={50} top={0} right={0}>
-							     <PlayPause size={48} flex={0} padding={2} isPlaying={isPlaying}
+							     <PlayPause playedSeconds={playedSeconds} size={48} flex={0} padding={2} isPlaying={isPlaying}
 							                onClick={() => setIsPlaying(!isPlaying)}/>
 						     </Box>
 
@@ -204,7 +225,7 @@ export default function PersistentPlayer(props) {
 					          justifyContent="space-around" margin="auto">
 
 						     <Box display="flex" alignItems="center">
-							     <PlayPause flex={0} padding={2} isPlaying={isPlaying} circleIcon={false}
+							     <PlayPause playedSeconds={playedSeconds} flex={0} padding={2} isPlaying={isPlaying} circleIcon={false}
 							                onClick={() => setIsPlaying(!isPlaying)}/>
 						     </Box>
 
@@ -228,24 +249,24 @@ export default function PersistentPlayer(props) {
 					     <Box className="itemPlayer__progress" flex={1} display="flex" flexDirection="column">
 						     <Box display="flex" flexDirection="row" alignItems="center">
 
-							     <Slider
-								     min={0}
-								     defaultValue={0}
-								     max={duration}
-								     step={.01}
-								     size="medium"
-								     value={playedSeconds}
-								     sx={{padding: '10px 0 !important'}}
-								     onChange={(_, value) => {
-									     setIsPlaying(false);
-									     setPlayedSeconds(value);
-								     }}
-								     onChangeCommitted={(_, value) => {
-									     setIsPlaying(true);
-									     playerInstance.current.seekTo(playedSeconds);
-									     setPlayedSeconds(value);
-								     }}
-							     />
+							 <Slider
+								min={0}
+								defaultValue={0}
+								max={duration}
+								step={.01}
+								size="medium"
+								value={playedSeconds}
+								sx={{padding: "10px 0 !important"}}
+								onChange={(_, value) => {
+									setIsPlaying(false);
+									setPlayedSeconds( value );
+								}}
+								onChangeCommitted={(_, value) => {
+									setIsPlaying(true);
+									playerInstance.current.seekTo(playedSeconds);
+									setPlayedSeconds(value);
+								}}
+							/>
 
 							     <Box
 								     display="flex"
@@ -278,7 +299,7 @@ export default function PersistentPlayer(props) {
 
 		    {(isDesktop || 'audio' === mode) && (
 			    <Box display="flex" alignItems="center">
-				    <PlayPause flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
+				    <PlayPause playedSeconds={playedSeconds} flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
 			    </Box>
 		    )}
 
@@ -289,24 +310,40 @@ export default function PersistentPlayer(props) {
 			    </Box>
           <Box display="flex" flexDirection="row" alignItems="center">
 
-            <Slider
-              min={0}
-              defaultValue={0}
-              max={duration}
-              step={.01}
-              size="small"
-              value={playedSeconds}
-              sx={{padding: "10px 0 !important"}}
-              onChange={(_, value) => {
-                setIsPlaying(false);
-                setPlayedSeconds(value)
-              }}
-              onChangeCommitted={(_, value) => {
-                setIsPlaying(true);
-                playerInstance.current.seekTo(playedSeconds);
-                setPlayedSeconds(value);
-              }}
-            />
+			<Slider
+				min={0}
+				defaultValue={0}
+				max={duration}
+				step={.01}
+				size="small"
+				value={playedSeconds}
+				sx={{padding: "10px 0 !important"}}
+				marks={videoMarks}
+				onChange={(_, value) => {
+
+					setIsPlaying(false);
+
+					// Slider clicked
+					if( _ && _.type && 'mousedown' === _.type ) {
+
+						setPlayedSeconds(value);
+						playerInstance.current.seekTo(playedSeconds);
+
+					} else { // Slider dragged/otherwise moved
+						throttleScroll( value );
+					}
+				}}
+				onChangeCommitted={(_, value) => {
+					setIsPlaying(false);
+					setTimeout(
+						() => {
+							setPlayedSeconds(value);
+							playerInstance.current.seekTo(playedSeconds);
+							setIsPlaying(true);
+						}, 5
+					);
+				}}
+			/>
 
           </Box>
 			    <Box className="persistentPlayer__duration" display="flex" flexDirection="row" justifyContent="space-between">
@@ -330,7 +367,7 @@ export default function PersistentPlayer(props) {
 
         {mode === "audio" &&
          <Box>
-	         <FilePlayer
+	         <VideoPlayer
 		         ref={playerInstance}
 		         controls={false}
 		         url={item.audio}
@@ -350,7 +387,7 @@ export default function PersistentPlayer(props) {
 		         progressInterval={100}
 	         >
 		         Your browser does not support the audio element.
-	         </FilePlayer>
+	         </VideoPlayer>
 
 	         <Box position='absolute' zIndex={50} top={0} right={0} className='persistentPlayer__close'>
 		         <IconButton onClick={closePlayer}><Cancel/></IconButton>

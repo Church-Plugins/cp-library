@@ -2,13 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { cplVar, cplLog } from '../../utils/helpers';
+import { cplVar, cplLog, cplMarker } from '../../utils/helpers';
 
 import { Play, Volume1, Share2 } from "react-feather"
 import VideoPlayer from "react-player";
 
 import useBreakpoints from '../../Hooks/useBreakpoints';
-import Controllers_WP_REST_Request from '../../Controllers/WP_REST_Request';
 import { usePersistentPlayer } from '../../Contexts/PersistentPlayerContext';
 
 import Rectangular from '../../Elements/Buttons/Rectangular';
@@ -22,6 +21,12 @@ import screenfull from 'screenfull';
 
 import formatDuration from '../../utils/formatDuration';
 import PlayPause from '../../Elements/Buttons/PlayPause';
+
+import PlayAudio from '../../Elements/Buttons/PlayAudio';
+import PlayVideo from '../../Elements/Buttons/PlayVideo';
+
+import throttle from 'lodash.throttle';
+import jQuery from 'jquery';
 
 
 export default function Player({
@@ -73,6 +78,8 @@ export default function Player({
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
+
+  let progressIntervalHandle = null;
 
   const handleClose = () => {
     setAnchorEl(null);
@@ -149,7 +156,9 @@ export default function Player({
 		setPlayedSeconds(0);
 		setPlayingURL( 'video' === mode ? item.video.value : item.audio );
 		setIsPlaying(false);
-		setIsPlaying(true);
+
+		// give the player a chance to initialize before we set it to play
+		setTimeout(() => { setIsPlaying(true); }, 50 );
 	};
 
 	const updatePlaybackRate = () => {
@@ -204,10 +213,30 @@ export default function Player({
     if (!item) return;
 
     if ( item.thumb ) {
-    	setDisplayBG( { background: "url(" + item.thumb + ")", backgroundSize: "cover" } );
+    	setDisplayBG( { background: "url(" + item.thumb + ")", backgroundSize: "cover", backgroundPosition: "center center" } );
     }
 
   }, [item]);
+
+	let marker = cplMarker( item, mode, duration );
+	let markPosition	= marker.position;
+	let snapDiff		= marker.snapDistance;
+	let videoMarks	= marker.marks;
+
+
+	let doScroll = ( scrollValue ) => {
+		if( markPosition > 0 && Math.abs( (scrollValue - markPosition) ) < snapDiff ) {
+			setPlayedSeconds( markPosition );
+		} else {
+			setPlayedSeconds( scrollValue );
+		}
+	}
+
+	let throttleScroll = throttle(
+		(scrollValue) => {
+			doScroll( scrollValue );
+		}, 10
+	);
 
   return (
     // Margin bottom is to account for audio player. Making sure all content is still visible with
@@ -264,7 +293,7 @@ export default function Player({
 				               justifyContent="space-around" margin="auto">
 
 					          <Box display="flex" alignItems="center">
-						          <PlayPause flex={0} padding={2} isPlaying={isPlaying} circleIcon={false} onClick={() => setIsPlaying(!isPlaying)}/>
+						          <PlayPause playedSeconds={playedSeconds} flex={0} padding={2} isPlaying={isPlaying} circleIcon={false} onClick={() => setIsPlaying(!isPlaying)}/>
 					          </Box>
 
 					          <IconButton
@@ -295,14 +324,27 @@ export default function Player({
 							          size="medium"
 							          value={playedSeconds}
 							          sx={{padding: '10px 0 !important'}}
+							          marks={videoMarks}
 							          onChange={(_, value) => {
 								          setIsPlaying(false);
-								          setPlayedSeconds(value);
+
+								          if (_ && _.type && 'mousedown' === _.type) {
+									          setPlayedSeconds(value);
+									          playerInstance.current.seekTo(playedSeconds);
+								          } else {
+									          throttleScroll(value);
+								          }
+
 							          }}
 							          onChangeCommitted={(_, value) => {
-								          setIsPlaying(true);
-								          playerInstance.current.seekTo(playedSeconds);
-								          setPlayedSeconds(value);
+								          setIsPlaying(false);
+								          setTimeout(
+									          () => {
+										          setPlayedSeconds(value);
+										          playerInstance.current.seekTo(playedSeconds);
+										          setIsPlaying(true);
+									          }
+								          );
 							          }}
 						          />
 
@@ -348,7 +390,20 @@ export default function Player({
 						          {isPlaying ? (
 							          <></>
 						          ) : (
-							          <PlayCircleOutline sx={{fontSize: 40}}/>
+							          <PlayCircleOutline onClick={() => {
+													let defaultMode = ( item.video.value ) ? 'video' : 'audio';
+
+								          if (persistentPlayerIsActive) {
+									          passToPersistentPlayer({
+										          item         : mediaState.current.item,
+										          mode         : defaultMode,
+										          isPlaying    : true,
+										          playedSeconds: 0.0,
+									          });
+								          } else {
+									          updateMode( defaultMode );
+								          }
+							          }} sx={{fontSize: 75}}/>
 						          )}
 					          </>
 				          ) : (
@@ -361,13 +416,11 @@ export default function Player({
 
           </Box>
 
-          <Box className="itemDetail__actions" display="flex" alignItems="stretch" marginTop={2}>
+          <Box className="itemDetail__actions">
 
 	          {item.video.value && (
-		          <Box className="itemDetail__playVideo" marginRight={1}>
-			          <Rectangular
-				          leftIcon={<Play/>}
-				          variant="primary"
+		          <Box className="itemDetail__playVideo">
+			          <PlayVideo
 				          onClick={() => {
 					          if (persistentPlayerIsActive) {
 						          passToPersistentPlayer({
@@ -381,17 +434,13 @@ export default function Player({
 					          }
 				          }}
 				          fullWidth
-			          >
-				          Play Video
-			          </Rectangular>
+			          />
 		          </Box>
 	          )}
 
 	          {item.audio && (
 		          <Box className="itemDetail__playAudio" >
-			          <Rectangular
-				          variant="outlined"
-				          leftIcon={<Volume1/>}
+			          <PlayAudio
 				          onClick={() => {
 					          if (persistentPlayerIsActive) {
 						          passToPersistentPlayer({
@@ -401,19 +450,16 @@ export default function Player({
 							          playedSeconds: 0.0,
 						          });
 					          } else {
-						          updateMode('audio');
+								updateMode('audio');
 					          }
 				          }}
-				          fullWidth
-			          >
-				          Play Audio
-			          </Rectangular>
+			          />
+
 		          </Box>
 	          )}
 
             <Box
               className="itemDetail__share"
-              marginLeft={1}
             >
               <Rectangular
 	              aria-controls="itemDetail__share"
@@ -462,14 +508,26 @@ export default function Player({
 					         size="medium"
 					         value={playedSeconds}
 					         sx={{padding: '10px 0 !important'}}
+					         marks={videoMarks}
 					         onChange={(_, value) => {
 						         setIsPlaying(false);
-						         setPlayedSeconds(value);
+
+						         if (_ && _.type && 'mousedown' === _.type) {
+							         setPlayedSeconds(value);
+							         playerInstance.current.seekTo(playedSeconds);
+						         } else {
+							         throttleScroll(value);
+						         }
 					         }}
 					         onChangeCommitted={(_, value) => {
-						         setIsPlaying(true);
-						         playerInstance.current.seekTo(playedSeconds);
-						         setPlayedSeconds(value);
+						         setIsPlaying(false);
+						         setTimeout(
+							         () => {
+								         setPlayedSeconds(value);
+								         playerInstance.current.seekTo(playedSeconds);
+								         setIsPlaying(true);
+							         }
+						         );
 					         }}
 				         />
 
@@ -502,7 +560,7 @@ export default function Player({
 			         </IconButton>
 
 			         <Box display="flex" alignItems="center">
-				         <PlayPause isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
+				         <PlayPause playedSeconds={playedSeconds} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
 			         </Box>
 			         <IconButton size='large' onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')}>
 				         <Forward30 fontSize="inherit"/>

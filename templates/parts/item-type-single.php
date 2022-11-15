@@ -71,30 +71,15 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 	<?php else : ?>
 		<div class="cpl-single-type--container">
 			<div class="cpl-single-type--media">
-
-				<div class="itemDetail__rightContent MuiBox-root css-1la7bni">
-					<div class="itemDetail__featureImage MuiBox-root css-iy0loh">
-						<div class="itemPlayer__video MuiBox-root css-122y91a">
-							<div class="itemDetail__video" style="width: 100%; height: 100%;"></div>
-							<div class="itemDetail__audio MuiBox-root css-1aueuth">
-								<img alt="Richard Ellis logo" src="<?php echo $item_type['thumb']; ?>">
-							</div>
-						</div>
-					</div>
-				</div>
-
+				<img alt="site logo" src="<?php echo $item_type['thumb']; ?>">
 			</div>
 
 			<div class="cpl-single-type--content">
-				<div class="cpl-single-type--title">
-					<h1><?php the_title(); ?></h1>
-				</div>
-
 				<div class="cpl-meta">
 					<div class="cpl-meta--date">
 						<span class="material-icons-outlined">calendar_today</span>
 
-						<span class="MuiBox-root css-1isemmb"><?php echo $item_type["date"]["desc"]; ?></span>
+						<span class="MuiBox-root css-1isemmb"><?php echo ( $item_type["date"]["first"] == $item_type["date"]["last"] ) ? $item_type["date"]["first"] : sprintf( "%s - %s", $item_type["date"]["first"], $item_type["date"]["last"] ); ?></span>
 					</div>
 
 					<?php if ( ! empty( $item_type['topics'] ) ) : ?>
@@ -112,10 +97,14 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 							<span class="material-icons-outlined">menu_book</span>
 
 							<?php foreach ( $item_type['scripture'] as $scripture ) : ?>
-								<a href="<?php echo esc_url( $scripture['url'] ); ?>"><?php echo esc_html( $scripture['name'] ); ?></a><span class="cpl-separator">, </span>
+								<a href="<?php echo esc_url( $scripture['url'] ); ?>"><?php echo esc_html( $scripture['name'] ); ?></a><span class="cpl-separator">,&nbsp;</span>
 							<?php endforeach; ?>
 						</div>
 					<?php endif; ?>
+				</div>
+
+				<div class="cpl-single-type--title">
+					<h1><?php the_title(); ?></h1>
 				</div>
 
 				<div class="cpl-single-type--desc">
@@ -123,13 +112,16 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 				</div>
 			</div>
 
-
 		</div>
 	<?php endif; ?>
 
-	<h2 class="cpl-single-type--items-title"><?php printf( __( '%s: %s', 'cp-library' ), cp_library()->setup->post_types->item_type->plural_label, get_the_title() ); ?></h2>
+	<p class="cpl-single-type--items-title"><?php printf( '%s: %s', cp_library()->setup->post_types->item->plural_label, count( $item_type['items'] ) ); ?></p>
 
 	<section class="cpl-single-type--items">
+		<?php
+			// Items come in ASC order, show in DESC
+			$item_type['items'] = array_reverse( $item_type['items'] );
+		?>
 		<?php foreach ( $item_type['items'] as $item ) : $post = get_post( $item['originID'] );setup_postdata( $post ); ?>
 			<?php \CP_Library\Templates::get_template_part( "parts/item-list" ); ?>
 		<?php endforeach; $post = $original_post; wp_reset_postdata(); ?>

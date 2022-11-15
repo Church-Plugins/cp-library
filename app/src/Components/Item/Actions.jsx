@@ -11,12 +11,24 @@ import { usePersistentPlayer } from '../../Contexts/PersistentPlayerContext';
 import PlayAudio from '../../Elements/Buttons/PlayAudio';
 import PlayVideo from '../../Elements/Buttons/PlayVideo';
 
+import jQuery from 'jquery';
+
 export default function Actions({
   item,
 }) {
 
   const { passToPersistentPlayer } = usePersistentPlayer();
   const { isDesktop } = useBreakpoints();
+
+	const viewItem = (e) => {
+		e.stopPropagation();
+
+		if ( undefined !== history ) {
+			history.push(`${cplVar('path', 'site')}/${cplVar('slug', 'item')}/${item.slug}`);
+		} else {
+			window.location = item.permalink;
+		}
+	};
 
 	const playVideo = (e) => {
 		e.stopPropagation();
@@ -26,6 +38,15 @@ export default function Actions({
 			isPlaying    : true,
 			playedSeconds: 0.0,
 		});
+
+		// Slider mark may load up to a second after the frame is open
+		setTimeout(
+			() => {
+				let element = jQuery( '.MuiSlider-root.MuiSlider-marked .MuiSlider-mark' );
+				jQuery( element ).attr( 'title', 'Jump to Sermon' );
+			}, 1500
+		);
+
 	};
 
 	const playAudio = (e) => {
@@ -50,9 +71,10 @@ export default function Actions({
 						<PlayAudio onClick={playAudio}/>
 					)}
 				</Box>
-				<IconButton className="cpl-list-item--to-item cpl-touch-only" onClick={() => history.push(`${cplVar('path', 'site')}/${cplVar('slug', 'item')}/${item.slug}`)}>
+				<IconButton className="cpl-list-item--to-item cpl-touch-only" onClick={viewItem}>
 					<ChevronRight/>
 				</IconButton>
 		</Box>
+
 	);
 }

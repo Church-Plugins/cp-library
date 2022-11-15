@@ -1,8 +1,15 @@
 <?php
-namespace CP_Library\Views;
+namespace CP_Library\Setup;
+
+use CP_Library\Controllers\Item;
+use ChurchPlugins\Exception;
+use CP_Library\Init as Init;
+use CP_Library\Models\ServiceType;
+use CP_Library\Templates;
+use CP_Library\Views\Shortcode as Shortcode_View;
 
 /**
- * Shortcode view/render class
+ * Shortcode controller class
  *
  * @author costmo
  */
@@ -19,7 +26,7 @@ class Shortcode
 	/**
 	 * Enforce singleton instantiation
 	 *
-	 * @return Init
+	 * @return Shortcode
 	 */
 	public static function get_instance() {
 		if( !self::$_instance instanceof Shortcode ) {
@@ -36,8 +43,37 @@ class Shortcode
 	 * @return void
 	 */
 	protected function __construct() {
-
+		$this->add_shortcodes();
 	}
+
+	/**
+	 * Add the app's custom shortcodes to WP
+	 *
+	 * @param array $params
+	 * @return void
+	 * @author costmo
+	 */
+	public function add_shortcodes() {
+
+		// An array of mappings from `shortcode` => `handler method`
+		$codes = [
+			'cpl_root'         => 'render_root',
+			'cpl_item_list'    => 'render_item_list',
+			'cpl_item'         => 'render_item',
+			'cpl_item_widget'  => 'render_item_widget',
+			'cpl_video_widget' => 'render_video_widget',
+			'cpl_source_list'  => 'render_source_list',
+			'cpl_source'       => 'render_source',
+			'cpl_player'       => 'render_player',
+		];
+
+		foreach( $codes as $shortcode => $handler ) {
+			add_shortcode( $shortcode, [ $this, $handler ] );
+		}
+
+		add_action( 'wp_footer', [ $this, 'render_persistent_player' ] );
+	}
+
 
 	/**
 	 * Generate static JS to feed parameters between PHP and JS
@@ -93,12 +129,59 @@ class Shortcode
 		return $output;
 	}
 
-	public function render_item( $args ) {
+	public function render_item( $atts ) {
+		$atts = shortcode_atts( [
+			'id' => 'false',
+			'player' => 'true',
+			'details' => 'true',
+			'location' => 0,
+			'service-type' => '',
+		], $atts, 'cpl_item' );
 
-		$output  = self::staticScript( $args );
-		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_item"></div>';
+		if ( 'false' === $atts['id'] || empty( $atts['id'] ) ) {
+			$args = [
+				'post_type' => cp_library()->setup->post_types->item->post_type,
+				'posts_per_page' => 1,
+				'post_status' => 'publish',
+			];
 
-		return $output;
+			if ( ! empty( $atts['location'] ) ) {
+				$args['cp_location'] = 'location_' . $atts['location'];
+			}
+
+			if ( ! empty( $atts['service-type'] ) ) {
+				try {
+					$type = ServiceType::get_instance_from_origin( $atts['service-type'] );
+					$args['post__in'] = $type->get_all_items();
+				} catch( \Exception $e ) {
+					error_log( $e );
+				}
+			}
+
+			$items = get_posts( $args );
+
+			if ( empty( $items ) ) {
+				return 'No ' . cp_library()->setup->post_types->item->plural_label . ' found.';
+			}
+
+			$id = $items[0]->ID;
+		} else {
+			$id = $atts['id'];
+		}
+
+
+		try {
+			$item = new Item( $id );
+		} catch( Exception $e ) {
+			return 'No ' . cp_library()->setup->post_types->item->plural_label . ' found.';
+		}
+
+		$atts['item'] = $item->get_api_data();
+		ob_start();
+
+		Templates::get_template_part( 'widgets/item-single', $atts );
+
+		return ob_get_clean();
 
 	}
 
@@ -163,6 +246,5 @@ class Shortcode
 
 		return $output;
 	}
-
 
 }

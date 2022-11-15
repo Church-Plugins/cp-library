@@ -64,6 +64,8 @@ class Init {
 
 		$cp = CP_Setup::get_instance();
 
+		Setup\Tables\Init::get_instance();
+
 		// make sure needed tables are installed
 		if ( ! $cp->is_installed() ) {
 			return;
@@ -76,10 +78,11 @@ class Init {
 		$this->setup = Setup\Init::get_instance();
 		$this->api   = API\Init::get_instance();
 
+		Admin\Init::get_instance();
 		Download::get_instance();
 		Templates::init();
 
-		include_once( CP_LIBRARY_INCLUDES . '/CLI/RE_Migrate.php' );
+		include_once( CP_LIBRARY_INCLUDES . '/CLI/CP_Migrate.php' );
 	}
 
 	/**
@@ -107,9 +110,6 @@ class Init {
 		add_action( 'wp_enqueue_scripts', [ $this, 'app_enqueue' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'admin_scripts' ] );
 		add_action( 'init', [ $this, 'rewrite_rules' ], 100 );
-
-		$shortcode = Shortcode_Controller::get_instance();
-		$shortcode->add_shortcodes();
 	}
 
 	public function rewrite_rules() {
@@ -243,7 +243,13 @@ class Init {
 	 * @return void
 	 */
 	protected function includes() {
-		Admin\Init::get_instance();
+		if ( function_exists( 'cp_locations' ) ) {
+			Integrations\Locations::get_instance();
+		}
+
+		if ( defined( 'TRIBE_EVENTS_FILE' ) ) {
+			Integrations\EventsCalendar::get_instance();
+		}
 	}
 
 	/**

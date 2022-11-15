@@ -2,6 +2,8 @@
 
 namespace CP_Library\Admin;
 
+use CP_Library\Models\ServiceType;
+
 /**
  * Plugin settings
  *
@@ -75,6 +77,10 @@ class Settings {
 
 	public static function get_speaker( $key, $default = '' ) {
 		return self::get( $key, $default, 'cpl_speaker_options' );
+	}
+
+	public static function get_service_type( $key, $default = '' ) {
+		return self::get( $key, $default, 'cpl_service_type_options' );
 	}
 
 	/**
@@ -162,6 +168,10 @@ class Settings {
 			$this->speaker_options();
 		}
 
+		if ( cp_library()->setup->post_types->service_type_enabled() ) {
+			$this->service_type_options();
+		}
+
 		$this->advanced_options();
 
 		/**
@@ -220,9 +230,16 @@ class Settings {
 		$options->add_field( array(
 			'name'    => __( 'Plural Label', 'cp-library' ),
 			'id'      => 'plural_label',
-			'desc'    => __( 'Caution: changing this value will also adjust the url structure and may affect your SEO.', 'cp-library' ),
 			'type'    => 'text',
 			'default' => cp_library()->setup->post_types->item->plural_label,
+		) );
+
+		$options->add_field( array(
+			'name'    => __( 'Slug', 'cp-library' ),
+			'id'      => 'slug',
+			'desc'    => __( 'Caution: changing this value will also adjust the url structure and may affect your SEO.', 'cp-library' ),
+			'type'    => 'text',
+			'default' => strtolower( sanitize_title( cp_library()->setup->post_types->item_type->plural_label ) ),
 		) );
 
 	}
@@ -260,9 +277,16 @@ class Settings {
 		$options->add_field( array(
 			'name'    => __( 'Plural Label', 'cp-library' ),
 			'id'      => 'plural_label',
-			'desc'    => __( 'Caution: changing this value will also adjust the url structure and may affect your SEO.', 'cp-library' ),
 			'type'    => 'text',
 			'default' => cp_library()->setup->post_types->item_type->plural_label,
+		) );
+
+		$options->add_field( array(
+			'name'    => __( 'Slug', 'cp-library' ),
+			'id'      => 'slug',
+			'desc'    => __( 'Caution: changing this value will also adjust the url structure and may affect your SEO.', 'cp-library' ),
+			'type'    => 'text',
+			'default' => strtolower( sanitize_title( cp_library()->setup->post_types->item_type->plural_label ) ),
 		) );
 
 	}
@@ -307,6 +331,65 @@ class Settings {
 
 	}
 
+	protected function service_type_options() {
+		/**
+		 * Registers secondary options page, and set main item as parent.
+		 */
+		$args = array(
+			'id'           => 'cpl_service_type_options_page',
+			'title'        => 'Settings',
+			'object_types' => array( 'options-page' ),
+			'option_key'   => 'cpl_service_type_options',
+			'parent_slug'  => 'cpl_main_options',
+			'tab_group'    => 'cpl_main_options',
+			'tab_title'    => cp_library()->setup->post_types->service_type->plural_label,
+			'display_cb'   => [ $this, 'options_display_with_tabs' ],
+		);
+
+		$options = new_cmb2_box( $args );
+
+		$options->add_field( array(
+			'name' => __( 'Labels' ),
+			'id'   => 'labels',
+			'type' => 'title',
+		) );
+
+		$options->add_field( array(
+			'name'    => __( 'Singular Label', 'cp-library' ),
+			'id'      => 'singular_label',
+			'type'    => 'text',
+			'default' => cp_library()->setup->post_types->service_type->single_label,
+		) );
+
+		$options->add_field( array(
+			'name'    => __( 'Plural Label', 'cp-library' ),
+			'id'      => 'plural_label',
+			'type'    => 'text',
+			'default' => cp_library()->setup->post_types->service_type->plural_label,
+		) );
+
+		$service_types = ServiceType::get_all_service_types();
+
+		if ( empty( $service_types ) ) {
+			$options->add_field( [
+				'desc' => sprintf( __( 'No %s have been created yet. <a href="%s">Create one here.</a>', 'cp-library' ), cp_library()->setup->post_types->service_type->plural_label, add_query_arg( [ 'post_type' => cp_library()->setup->post_types->service_type->post_type ], admin_url( 'post-new.php' ) )  ),
+				'type' => 'title',
+				'id' => 'cpl_no_service_types',
+			] );
+		} else {
+			$service_types = array_combine( wp_list_pluck( $service_types, 'id' ), wp_list_pluck( $service_types, 'title' ) );
+
+			$options->add_field( array(
+				'name'             => __( 'Default Service Type', 'cp-library' ),
+				'id'               => 'default_service_type',
+				'type'             => 'select',
+				'show_option_none' => true,
+				'options'          => $service_types,
+			) );
+		}
+
+	}
+
 	protected function advanced_options() {
 		/**
 		 * Registers secondary options page, and set main item as parent.
@@ -346,6 +429,17 @@ class Settings {
 			'id'      => 'speaker_enabled',
 			'type'    => 'radio_inline',
 			'default' => 1,
+			'options' => [
+				1 => __( 'Enable', 'cp-library' ),
+				0 => __( 'Disable', 'cp-library' ),
+			]
+		) );
+
+		$advanced_options->add_field( array(
+			'name'    => __( 'Enable' ) . ' ' . cp_library()->setup->post_types->service_type->plural_label,
+			'id'      => 'service_type_enabled',
+			'type'    => 'radio_inline',
+			'default' => 0,
 			'options' => [
 				1 => __( 'Enable', 'cp-library' ),
 				0 => __( 'Disable', 'cp-library' ),

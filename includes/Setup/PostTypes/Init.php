@@ -40,6 +40,12 @@ class Init {
 	public $item_type;
 
 	/**
+	 * Setup Service Type CPT
+	 * @var ServiceType
+	 */
+	public $service_type;
+
+	/**
 	 * Only make one instance of Init
 	 *
 	 * @return Init
@@ -75,14 +81,14 @@ class Init {
 	}
 
 	public function get_post_types() {
-		return [ $this->item->post_type, $this->speaker->post_type, $this->item_type->post_type ];
+		return [ $this->item->post_type, $this->speaker->post_type, $this->item_type->post_type, $this->service_type->post_type ];
 	}
 
 	/**
 	 * @param $type
 	 * @param $id
 	 *
-	 * @return \CP_Library\Models\Item | \CP_Library\Models\ItemType
+	 * @return \CP_Library\Models\Item | \CP_Library\Models\ItemType | bool
 	 * @throws Exception
 	 * @since  1.0.0
 	 *
@@ -96,6 +102,8 @@ class Init {
 				return \CP_Library\Models\Speaker::get_instance_from_origin( $id );
 			case $this->item_type->post_type:
 				return \CP_Library\Models\ItemType::get_instance_from_origin( $id );
+			case $this->service_type->post_type:
+				return \CP_Library\Models\ServiceType::get_instance_from_origin( $id );
 		}
 	}
 
@@ -107,14 +115,15 @@ class Init {
 	 */
 	protected function actions() {
 		add_filter( 'use_block_editor_for_post_type', [ $this, 'disable_gutenberg' ], 10, 2 );
-		add_action( 'init', [ $this, 'register_post_types' ] );
+		add_action( 'init', [ $this, 'register_post_types' ], 4 );
 	}
 
 	public function register_post_types() {
 
-		$this->item = Item::get_instance();
-		$this->speaker = Speaker::get_instance();
-		$this->item_type = ItemType::get_instance();
+		$this->item         = Item::get_instance();
+		$this->speaker      = Speaker::get_instance();
+		$this->item_type    = ItemType::get_instance();
+		$this->service_type = ServiceType::get_instance();
 
 		$this->item->add_actions();
 
@@ -124,6 +133,10 @@ class Init {
 
 		if ( $this->item_type_enabled() ) {
 			$this->item_type->add_actions();
+		}
+
+		if ( $this->service_type_enabled() ) {
+			$this->service_type->add_actions();
 		}
 
 		do_action( 'cp_register_post_types' );
@@ -140,6 +153,19 @@ class Init {
 	public function item_type_enabled() {
 		$enabled = (bool) Settings::get( 'item_type_enabled', true, 'cpl_advanced_options' );
 		return apply_filters( 'cpl_enable_item_types', $enabled );
+	}
+
+	/**
+	 * If the service type post type is enabled
+	 *
+	 * @return mixed|void
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function service_type_enabled() {
+		$enabled = (bool) Settings::get( 'service_type_enabled', false, 'cpl_advanced_options' );
+		return apply_filters( 'cpl_enable_service_type', $enabled );
 	}
 
 	/**

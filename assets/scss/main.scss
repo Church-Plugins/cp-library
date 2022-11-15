@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons+Outlined');
 
+@import '../../includes/ChurchPlugins/assets/scss/vars';
 
 @import "variables";
 @import "mixins/breakpoints";
@@ -22,6 +23,8 @@
 @import "item-type/single";
 @import "item-type/list";
 
+@import "widgets/item-single";
+
 @import "App.scss";
 @import "Filter.scss";
 @import "index.scss";
@@ -31,4 +34,4 @@
 @import "SourceList.scss";
 @import "PersistentPlayer.scss";
 
-@import "themes/default";
+//@import "themes/default";

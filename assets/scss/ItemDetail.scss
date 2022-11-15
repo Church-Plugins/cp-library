@@ -147,6 +147,35 @@
 			content: '-';
 		}
 	}
+
+	&__video {
+		span {
+			&.MuiSlider-markLabel {
+				z-index: 1;
+				background-color: white;
+				border: 1px solid black;
+				margin-top: -12px;
+				font-size: 0.5rem;
+				padding: 2px 6px;
+				border-radius: 3px;
+				text-transform: uppercase;
+			    font-weight: bolder;
+			}
+		}
+	}
+}
+
+.MuiSlider-mark {
+	width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    color: white;
+    box-shadow: 0px 0px 6px 1px black;
+    margin-left: -3px;
+}
+
+.MuiSlider-root.MuiSlider-marked {
+	margin-bottom: 0px;
 }
 
 .itemDetail {
@@ -154,6 +183,7 @@
 	&__share {
 		svg {
 			margin: -0.25em 0;
+			font-size: 1em;
 		}
 	}
 
@@ -167,9 +197,17 @@
 		}
 
 		button {
-			display: inline-flex;
+			display: flex;
 			height: 100%;
 			align-items: center;
+		}
+
+		@include media-breakpoint-down(sm) {
+			display: block;
+
+			button {
+				width: 100%;
+			}
 		}
 	}
 
@@ -190,15 +228,22 @@
 		img {
 			max-height: 50%;
 		}
-	}
 
-	&__playAudio, &__playVideo {
-		max-width: 300px;
+		svg {
+			cursor: pointer;
+			filter: drop-shadow(1px 1px 0px rgb(0 0 0 / 0.4));
+		}
 	}
 
 	&__share__menu {
 		svg {
 			margin-right: 1rem;
+		}
+	}
+
+	@include media-breakpoint-up(md) {
+		&__playAudio, &__playVideo {
+			max-width: 300px;
 		}
 	}
 

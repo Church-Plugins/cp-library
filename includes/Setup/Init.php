@@ -58,6 +58,7 @@ class Init {
 	 * @return void
 	 */
 	protected function includes() {
+		Shortcode::get_instance();
 		$this->tables = Tables\Init::get_instance();
 		$this->post_types = PostTypes\Init::get_instance();
 		$this->taxonomies = Taxonomies\Init::get_instance();

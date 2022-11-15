@@ -1,25 +1,25 @@
 .cpl-single-type {
 
+	&--media {
+		border-radius: var(--cp-border-radius);
+		overflow: hidden;
+	}
+
 	&--container {
-		display: flex;
-		flex-direction: row;
 		margin-bottom: 2rem;
+
+		@include media-breakpoint-up(md) {
+			display: flex;
+			flex-direction: row;
+		}
 	}
 
 	&--back {
 		margin-bottom: 1rem;
 		display: inline-block;
+
 		&:before {
-			content: '←';
-			margin-right: .5em;
-		}
-	}
-
-	&--meta {
-		display: flex;
-
-		> * {
-			margin-right: 1rem;
+			content: '← ';
 		}
 	}
 
@@ -37,7 +37,7 @@
 	}
 
 	&--items {
-		.cpl-list-item--types {
+		.cpl-item--types {
 			display: none;
 		}
 		//display: flex;

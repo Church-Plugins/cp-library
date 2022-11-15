@@ -38,7 +38,7 @@ class Topic extends Taxonomy  {
 	 * @author Tanner Moushey
 	 */
 	public function get_object_types() {
-		return [ cp_library()->setup->post_types->item->post_type ];
+		return apply_filters( 'cpl_topic_object_types', [ cp_library()->setup->post_types->item->post_type ], $this );
 	}
 
 	/**

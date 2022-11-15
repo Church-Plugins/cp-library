@@ -2,7 +2,7 @@
 namespace CP_Library\Setup\PostTypes;
 
 use CP_Library\Admin\Settings;
-use CP_Library\Exception;
+use ChurchPlugins\Exception;
 use CP_Library\Models\ItemType as Model;
 use CP_Library\Models\Item as ItemModel;
 use CP_Library\Models\Speaker as Speaker_Model;
@@ -20,6 +20,14 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * @since 1.0
  */
 class ItemType extends PostType  {
+
+	protected static $_update_dates = [];
+
+	protected static $_updated_dates = [];
+
+	protected static $_doing_update_dates = false;
+
+	protected static $_did_save = false;
 
 	/**
 	 * Child class constructor. Punts to the parent.
@@ -44,18 +52,157 @@ class ItemType extends PostType  {
 	public function add_actions() {
 		parent::add_actions();
 
-		add_filter( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ], 10 );
-		add_filter( 'cmb2_save_post_fields_cpl_series_data', [ $this, 'save_item_series' ], 10 );
+		$item_type = Item::get_instance()->post_type;
+
+		// give other code a chance to hook into sources
+		add_action( 'save_post', function() {
+			if ( self::$_did_save ) {
+				return;
+			}
+
+			self::$_did_save = true;
+			foreach ( $this->get_sources() as $key => $source ) {
+				add_filter( 'cmb2_save_post_fields_cpl_series_items_data' . $key, [ $this, 'save_series_items' ], 10 );
+			}
+		}, 5);
+
+		add_action( 'shutdown', [ $this, 'save_post_date'], 99 );
+		add_action( 'save_post', [ $this, 'post_date' ] );
+		add_filter( 'cmb2_save_field_cpl_series', [ $this, 'save_item_series' ], 10, 3 );
+		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'item_type_column' ] );
+		add_action( "manage_{$item_type}_posts_custom_column", [ $this, 'item_type_column_cb' ], 10, 2 );
+		add_action( 'pre_get_posts', [ $this, 'default_posts_per_page' ] );
+		add_action( 'pre_get_posts', [ $this, 'item_item_type_query' ] );
+		add_filter( 'post_updated_messages', [ $this, 'post_update_messages' ] );
+		add_filter( "{$this->post_type}_slug", [ $this, 'custom_slug' ] );
 
 		if ( empty( $_GET['cpl-recovery'] ) ) {
 			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
 		}
 
-		$item_type   = Item::get_instance()->post_type;
-		$source_type = Speaker::get_instance()->post_type;
+		if ( $this->show_in_menu() ) {
+			$source_type  = Speaker::get_instance()->post_type;
+			$service_type = ServiceType::get_instance()->post_type;
 
-		add_filter( "{$item_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
-		add_filter( "{$source_type}_args", [ $this, 'cpt_menu_position' ], 10 , 2 );
+			add_filter( "{$item_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
+			add_filter( "{$source_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
+			add_filter( "{$service_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
+		}
+
+	}
+
+	/**
+	 * @param $columns
+	 *
+	 * @return array
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function item_type_column( $columns ) {
+		$new_columns = [];
+		foreach( $columns as $key => $column ) {
+			if ( 'date' === $key ) {
+				$new_columns['item_type'] = $this->plural_label;
+			}
+
+			$new_columns[ $key ] = $column;
+		}
+
+		// in case date isn't set
+		if ( ! isset( $columns['date'] ) ) {
+			$new_columns['item_type'] = $this->plural_label;
+		}
+
+		return $new_columns;
+	}
+
+	public function item_type_column_cb( $column, $post_id ) {
+		switch( $column ) {
+			case 'item_type' :
+				$item = new \CP_Library\Controllers\Item( $post_id );
+				$types = $item->get_types();
+
+				 if ( empty( $types ) ) {
+					 _e( '—', 'cp-library' );
+				 } else {
+					 $url = add_query_arg( $_GET, 'edit.php' );
+					 $list = [];
+					 foreach ( $types as $type ) {
+						 $list[] = sprintf( '<a href="%s">%s</a>', add_query_arg( 'type', $type['id'], $url ), $type['title'] );
+					 }
+
+					 echo implode( ', ', $list );
+				 }
+
+				break;
+		}
+	}
+
+	public function item_item_type_query( $query ) {
+
+		// For ItemType/Series, order by metadata (contained item date)
+		if( $query->is_main_query() ) {
+			if( !empty( $query->query_vars ) && !empty( $query->query_vars['post_type'] ) && $query->query_vars['post_type'] == 'cpl_item_type' ) {
+				if( empty( $query->query_vars['cpl_item_type'] ) ) {
+					$query->set( 'orderby', 'meta_value_num' );
+					$query->set( 'order', 'DESC' );
+					$query->set( 'meta_key', 'last_item_date' );
+				}
+			}
+		}
+
+		if ( empty( $_GET['type'] ) ) {
+			return;
+		}
+
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		if ( ! $query->is_main_query() ) {
+			return;
+		}
+
+		if ( ! in_array( $query->get('post_type'), [ Item::get_instance()->post_type ] ) ) {
+			return;
+		}
+
+		$type = absint( $_GET['type'] );
+
+		try {
+			$type = Model::get_instance( $type );
+			$items = apply_filters( 'cpl_item_type_get_item_ids', wp_list_pluck( $type->get_items(), 'origin_id' ), $this );
+
+			$query->set( 'post__in', $items );
+
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
+
+	}
+
+	public function default_posts_per_page( $query ) {
+		if ( is_admin() ) {
+			return;
+		}
+
+		if ( ! in_array( $query->get( 'post_type' ), [ $this->post_type ] ) ) {
+			return;
+		}
+
+		$query->set( 'posts_per_page', 12 );
+	}
+
+	/**
+	 * Allow for user defined slug
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function custom_slug() {
+		return Settings::get_item_type( 'slug', strtolower( sanitize_title( $this->plural_label ) ) );
 	}
 
 	/**
@@ -65,8 +212,8 @@ class ItemType extends PostType  {
 	 * @author costmo
 	 */
 	public function get_args() {
-		$args              = parent::get_args();
-		$args['menu_icon'] = apply_filters( "{$this->post_type}_icon", 'dashicons-list-view' );
+		$args                    = parent::get_args();
+		$args['menu_icon']       = apply_filters( "{$this->post_type}_icon", 'dashicons-list-view' );
 
 		return $args;
 	}
@@ -96,32 +243,58 @@ class ItemType extends PostType  {
 			return;
 		}
 
-		$cmb->add_field( [
+		$cmb->add_field( apply_filters( "{$this->post_type}_metabox_field_args", [
 			'name' => __( 'Add to', 'cp-library' ) . ' ' . $this->single_label,
 			'id'   => 'cpl_series',
 			'desc' => sprintf( __( 'Create a new %s <a target="_blank" href="%s">here</a>.', 'cp-library' ), $this->plural_label, add_query_arg( [ 'post_type' => $this->post_type ], admin_url( 'post-new.php' ) )  ),
-			'type' => 'multicheck',
+			'type' => 'pw_multiselect',
 			'select_all_button' => false,
-			'options' => $series
-		] );
+			'options' => $series,
+			'attributes' => [
+				'placeholder' => sprintf( __( 'Select a %s', 'cp-library' ), $this->single_label ),
+			]
+		], $this ) );
 
 	}
 
 	public function register_metaboxes() {
 		$this->sermon_series_metabox();
 
+		// allow for multiple sources for series (ie. locations)
+		foreach( $this->get_sources() as $key => $source ) {
+			$this->series_items( $key, $source );
+		}
+	}
+
+	public function get_sources() {
+		$sources = apply_filters( 'cpl_item_type_sources', [] );
+
+		// save a default value
+		if ( empty( $sources ) ) {
+			$sources = [ '' => '' ];
+		}
+
+		return $sources;
+	}
+
+	public function series_items( $key, $source ) {
+
+		$label = $source ? Item::get_instance()->plural_label . " ($source)" : Item::get_instance()->plural_label;
+		$label = apply_filters( 'cpl_series_items_label', $label, $key, $source );
+
 		$cmb = new_cmb2_box( array(
-			'id'           => 'cpl_series_items_data',
+			'id'           => 'cpl_series_items_data' . $key,
 			'object_types' => [ $this->post_type ],
-			'title'        => Item::get_instance()->plural_label,
+			'title'        => $label,
 			'context'      => 'normal',
 			'show_names'   => true,
 			'priority'     => 'low',
-			'closed' => false,
+			'closed'       => false,
+			'classes'      => 'cpl_series_items_data',
 		) );
 
 		$group_field_id = $cmb->add_field( [
-			'id'         => 'cpl_series_items',
+			'id'         => 'cpl_series_items' . $key,
 			'type'       => 'group',
 			'repeatable' => true,
 			'options'    => [
@@ -181,7 +354,7 @@ class ItemType extends PostType  {
 				$cmb->add_group_field( $group_field_id, [
 					'name'              => Speaker::get_instance()->single_label,
 					'id'                => 'speakers',
-					'type'              => 'multicheck_inline',
+					'type'              => 'pw_multiselect',
 					'select_all_button' => false,
 					'options'           => $speakers,
 					'desc' => sprintf( __( '<br />Create a new %s <a href="%s">here</a>.', 'cp-library' ), Speaker::get_instance()->plural_label, add_query_arg( [ 'post_type' => Speaker::get_instance()->post_type ], admin_url( 'post-new.php' ) ) ),
@@ -189,7 +362,6 @@ class ItemType extends PostType  {
 			}
 
 		}
-
 
 		$cmb->add_group_field( $group_field_id, [
 			'name' => 'Date',
@@ -218,30 +390,12 @@ class ItemType extends PostType  {
 			'type' => 'file',
 		] );
 
-		$cmb->add_group_field( $group_field_id, [
-			'name' => __( 'Youtube video permalink', 'cp-library' ),
-			'id'   => 'video_id_youtube',
-			'type' => 'text_medium',
-		] );
-
-		$cmb->add_group_field( $group_field_id, [
-			'name' => __( 'Facebook video permalink', 'cp-library' ),
-			'id'   => 'video_id_facebook',
-			'type' => 'text_medium',
-		] );
-
-		$cmb->add_group_field( $group_field_id, [
-			'name' => __( 'Vimeo video id', 'cp-library' ),
-			'id'   => 'video_id_vimeo',
-			'type' => 'text_medium',
-		] );
-
 		foreach( cp_library()->setup->taxonomies->get_objects() as $tax ) {
 			/** @var $tax Taxonomy */
 			$cmb->add_group_field( $group_field_id, [
 				'name'              => $tax->plural_label,
 				'id'                => $tax->taxonomy,
-				'type'              => 'multicheck_inline',
+				'type'              => 'pw_multiselect',
 				'select_all_button' => false,
 				'options'           => $tax->get_terms_for_metabox(),
 			] );
@@ -252,18 +406,15 @@ class ItemType extends PostType  {
 	/**
 	 * Save item series to the item_meta table
 	 *
-	 * @param $object_id
-	 *
 	 * @since  1.0.0
 	 *
 	 * @author Tanner Moushey
 	 */
-	public function save_item_series( $object_id ) {
-		remove_filter( 'cmb2_save_post_fields_cpl_series_data', [ $this, 'save_item_series' ] );
+	public function save_item_series( $updated, $actions, $field ) {
 		try {
-			$item = ItemModel::get_instance_from_origin( $object_id );
+			$item = ItemModel::get_instance_from_origin( $field->object_id );
 
-			if ( ! $series = get_post_meta( $object_id, 'cpl_series', true ) ) {
+			if ( ! $series = array_map( 'absint', $field->data_to_save[ $field->id( true ) ] ) ) {
 				$series = [];
 			}
 
@@ -284,12 +435,27 @@ class ItemType extends PostType  {
 	 * @author Tanner Moushey
 	 */
 	public function save_series_items( $object_id ) {
-		remove_action( 'cmb2_save_post_fields_cpl_series_items_data', [ $this, 'save_series_items' ] );
+		global $wp_current_filter;
+
+		$current_filter = 'cmb2_save_post_fields_cpl_series_items_data';
+
+		foreach( $wp_current_filter as $filter ) {
+			if ( strstr( $filter, $current_filter ) ) {
+				$current_filter = $filter;
+			}
+		}
+
+		remove_action( $current_filter, [ $this, 'save_series_items' ] );
+		$source = str_replace( 'cmb2_save_post_fields_cpl_series_items_data', '', $current_filter );
 
 		try {
 			$type = Model::get_instance_from_origin( $object_id );
 
-			$data = get_post_meta( $object_id, 'cpl_series_items', true );
+			$data = get_post_meta( $object_id, 'cpl_series_items' . $source, true );
+
+			if ( empty( $data ) || apply_filters( 'cpl_save_series_items_break', false, $object_id, $source ) ) {
+				return;
+			}
 
 			foreach ( $data as $index => $item_data ) {
 
@@ -309,7 +475,7 @@ class ItemType extends PostType  {
 					wp_update_post( [
 						'ID'           => $item_data['id'],
 						'post_title'   => $item_data['title'],
-						'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ),
+						'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ? $item_data['date'] : current_time( 'timestamp' ) ),
 						'post_content' => $item_data['content'],
 					] );
 				}
@@ -351,6 +517,8 @@ class ItemType extends PostType  {
 				$item->add_type( $type->id );
 				$item->update_type_order( $type->id, $index );
 
+				do_action( 'cpl_save_series_items_item', $item, $object_id, $source );
+
 			}
 
 		} catch ( Exception $e ) {
@@ -374,10 +542,18 @@ class ItemType extends PostType  {
 	 */
 	public function meta_get_override( $data, $object_id, $data_args, $field ) {
 
+		// look for a source suffix
+		$source = str_replace( 'cpl_series_items', '', $data_args['field_id'] );
+
+		// if a source was found, remove it from the field ID
+		if ( $source !== $data_args['field_id'] ) {
+			$data_args['field_id'] = str_replace( $source, '', $data_args['field_id'] );
+		}
+
 		try {
 			switch ( $data_args['field_id'] ) {
 				case 'cpl_series_items':
-					return $this->get_series_items( $data, $object_id );
+					return $this->get_series_items( $data, $object_id, $source );
 				case 'cpl_series':
 					$item = ItemModel::get_instance_from_origin( $object_id );
 					return $item->get_types();
@@ -392,6 +568,7 @@ class ItemType extends PostType  {
 	/**
 	 * @param $data
 	 * @param $object_id
+	 * @param $source String
 	 *
 	 * @return array
 	 * @throws Exception
@@ -399,11 +576,17 @@ class ItemType extends PostType  {
 	 *
 	 * @author Tanner Moushey
 	 */
-	protected function get_series_items( $data, $object_id ) {
+	protected function get_series_items( $data, $object_id, $source = '' ) {
 		$series = Model::get_instance_from_origin( $object_id );
 		$data   = [];
 
 		foreach ( $series->get_items() as $i ) {
+
+			// Allow custom sources to filter out items
+			if ( ! apply_filters( 'cpl_item_type_get_items_use_item', true, $i, $source, $object_id, $data ) ) {
+				continue;
+			}
+
 			$item = new ItemController( $i->origin_id );
 
 			$item_data = [
@@ -411,7 +594,7 @@ class ItemType extends PostType  {
 				'title'   => $item->get_title(),
 				'content' => $item->get_content( true ),
 				'speaker' => '',
-				'date'    => date( 'Y-m-d\TH:i:sP', $item->get_publish_date() ),
+				'date'    => date( 'Y-m-d\TH:i:s', $item->get_publish_date() ),
 			];
 
 			$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo' ];
@@ -439,4 +622,105 @@ class ItemType extends PostType  {
 
 	}
 
+	/**
+	 * Trigger post date calculation
+	 *
+	 * @param $object_id
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function post_date( $object_id ) {
+
+		if ( self::$_doing_update_dates ) {
+			return;
+		}
+
+		if ( 'auto-draft' == get_post_status( $object_id ) || wp_is_post_autosave( $object_id ) ) {
+			return;
+		}
+
+		if ( ! apply_filters( 'cpl_update_item_type_date', true, $object_id ) ) {
+			return;
+		}
+
+		$post_type = get_post_type( $object_id );
+
+		try {
+			if ( $post_type === $this->post_type ) {
+				self::$_doing_update_dates = true;
+				$type = Model::get_instance_from_origin( $object_id );
+				self::$_updated_dates[ $type->origin_id ] = $type->update_dates();
+				self::$_doing_update_dates = false;
+			}
+
+			if ( $post_type === Item::get_instance()->post_type ) {
+				$item = ItemModel::get_instance_from_origin( $object_id );
+				foreach ( $item->get_types() as $type_id ) {
+					self::$_update_dates[] = $type_id;
+				}
+			}
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
+
+	}
+
+	/**
+	 * When saving a series, multiple items are saved, this allows us to only run the action once.
+	 *
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function save_post_date() {
+		// only do this once.
+		remove_action( 'save_post', [ $this, 'post_date' ] );
+
+		$types = array_unique( self::$_update_dates );
+
+		if ( ! empty( $types ) ) {
+			try {
+				foreach ( $types as $type_id ) {
+					self::$_updated_dates[] = Model::get_instance( $type_id )->update_dates();
+				}
+			} catch ( Exception $e ) {
+				error_log( $e );
+			}
+		}
+
+		// if we have just one updated post and it was set to draft or publish, handle the redirect.
+		if ( count( self::$_updated_dates ) === 1 && apply_filters( 'cpl_save_post_date_redirect', current_user_can( 'edit_post' ) ) ) {
+			$update = reset( self::$_updated_dates );
+			$origin_id = key( self::$_updated_dates );
+
+			if ( 'draft' === $update ) {
+				wp_redirect( $this->message__set_to_draft( $origin_id ) );
+				exit;
+			}
+
+			if ( 'publish' === $update ) {
+				wp_redirect( $this->message__set_to_publish( $origin_id ) );
+				exit;
+			}
+		}
+	}
+
+	public function message__set_to_draft( $post_id ) {
+		return add_query_arg( 'message', '99', get_edit_post_link( $post_id, 'url' ) );
+	}
+
+	public function message__set_to_publish( $post_id ) {
+		return add_query_arg( 'message', '98', get_edit_post_link( $post_id, 'url' ) );
+	}
+
+	public function post_update_messages( $messages ) {
+		global $post;
+
+		$messages['post'][99] = sprintf( __( '%s was set to draft because there were no associated %s', 'cp-library'), get_the_title( $post->ID ), Item::get_instance()->plural_label );
+		$messages['post'][98] = sprintf( __( '%s was set to publish it contains %s', 'cp-library' ), get_the_title( $post->ID ), Item::get_instance()->plural_label );
+
+		return $messages;
+	}
 }

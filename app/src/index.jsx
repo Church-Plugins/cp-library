@@ -18,6 +18,8 @@ const videoWidget = document.getElementById( 'cpl_video_widget' );
 const itemActions = document.querySelectorAll( '.cpl_item_actions' );
 const itemPlayers = document.querySelectorAll( '.cpl_item_player' );
 
+const renderEvent = new Event( 'cpl-rendered' );
+
 if (root) {
 	let itemId = root.getAttribute( 'data-item-id' );
 	const urlParams = new URLSearchParams(window.location.search);
@@ -66,7 +68,7 @@ if( item ) {
 if ( itemActions.length ) {
 	for ( let i = 0; i < itemActions.length; i++ ) {
 		let item = JSON.parse(itemActions[i].getAttribute('data-item'));
-		ReactDOM.render(<ItemActions item={item}/>, itemActions[i]);
+		ReactDOM.render(<ItemActions item={item}/>, itemActions[i], () => itemActions[i].dispatchEvent(renderEvent));
 	}
 }
 

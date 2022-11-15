@@ -1,5 +1,17 @@
 .cpl-archive {
 
+	.cpl-meta {
+		white-space: nowrap;
+	}
+	&--item-switcher {
+		@include media-breakpoint-up(md) {
+			float: right;
+			position: relative;
+			top: var(--cp-font-size-h1)
+		}
+
+	}
+
 	&--item {
 		.cpl-archive--list {
 
