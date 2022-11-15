@@ -62,7 +62,7 @@ export default function Item({
       </Box>
 
       <Box className="cpl-list-item--details">
-        <h3 className="cpl-list-item--title">{displayTitle}</h3>
+        <h3 className="cpl-list-item--title" dangerouslySetInnerHTML={{ __html: displayTitle }} />
         <ItemMeta date={item.date.desc} category={item.category || []} setActiveFilters={setActiveFilters} />
       </Box>
 
