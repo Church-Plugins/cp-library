@@ -173,13 +173,18 @@ class Settings {
 		}
 
 		$this->advanced_options();
+		$this->license_fields();
+	}
+
+	protected function license_fields() {
+		$license = new \ChurchPlugins\Setup\Admin\License( 'cpl_license', 436, CP_LIBRARY_STORE_URL, CP_LIBRARY_PLUGIN_FILE, get_admin_url( null, 'admin.php?page=cpl_license' ) );
 
 		/**
-		 * Registers tertiary options page, and set main item as parent.
+		 * Registers settings page, and set main item as parent.
 		 */
 		$args = array(
-			'id'           => 'cpl_license_options_page',
-			'title'        => 'Settings',
+			'id'           => 'cpl_options_page',
+			'title'        => 'CP Library Settings',
 			'object_types' => array( 'options-page' ),
 			'option_key'   => 'cpl_license',
 			'parent_slug'  => 'cpl_main_options',
@@ -188,14 +193,10 @@ class Settings {
 			'display_cb'   => [ $this, 'options_display_with_tabs' ]
 		);
 
-		$tertiary_options = new_cmb2_box( $args );
-
-		$tertiary_options->add_field( array(
-			'name' => 'License Key',
-			'id'   => 'license',
-			'type' => 'text',
-		) );
+		$options = new_cmb2_box( $args );
+		$license->license_field( $options );
 	}
+
 
 	protected function item_options() {
 		/**
