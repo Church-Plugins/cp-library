@@ -124,9 +124,12 @@ export default function Player({
 		cplLog(item.id, 'download');
 
 		const link = document.createElement('a');
-    link.href = item.audio;
 
-    link.href = cplVar( 'url', 'site' ) + '?item_id=' + item.originID + '&key=audio&name=' + item.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3';
+		if ( item.audio.search('soundcloud') ) {
+	    link.href = item.audio;
+		} else {
+	    link.href = cplVar( 'url', 'site' ) + '?item_id=' + item.originID + '&key=audio&name=' + item.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3';
+		}
 
 		link.setAttribute(
 			'target',
