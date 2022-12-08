@@ -23,7 +23,7 @@ if( !defined( 'CP_LIBRARY_PLUGIN_URL' ) ) {
 }
 if( !defined( 'CP_LIBRARY_PLUGIN_VERSION' ) ) {
 	 define ( 'CP_LIBRARY_PLUGIN_VERSION',
-	 	'1.0.0'
+	 	'1.0.2'
 	);
 }
 if( !defined( 'CP_LIBRARY_INCLUDES' ) ) {

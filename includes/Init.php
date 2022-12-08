@@ -354,7 +354,7 @@ class Init {
 	 * @return string
 	 */
 	public function get_version() {
-		return '1.0.1';
+		return CP_LIBRARY_PLUGIN_VERSION;
 	}
 
 	/**

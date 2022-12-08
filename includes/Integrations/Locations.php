@@ -243,7 +243,7 @@ class Locations {
 		do_action( 'cploc_multisite_switch_to_main_site', $items, $item_type );
 
 		foreach ( $items as $item ) {
-			if ( has_term( $location['term'], $tax, $item->origin_id ) ) {
+			if ( has_term( [ $location['term'], 'global' ], $tax, $item->origin_id ) ) {
 				$location_items[] = $item;
 			}
 		}
