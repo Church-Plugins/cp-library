@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Church Plugins - Library
+ * Plugin Name: CP Sermon Library
  * Plugin URL: https://churchplugins.com
  * Description: Church library plugin for sermons, talks, and other media
  * Version: 1.0.1
