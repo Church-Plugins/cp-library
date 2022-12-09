@@ -147,8 +147,16 @@ class Init {
 	}
 
 	public function admin_scripts() {
+		if ( ! $this->is_admin_page() ) {
+			return;
+		}
+
 		$this->enqueue->enqueue( 'styles', 'admin', [] );
 		$this->enqueue->enqueue( 'scripts', 'admin', [] );
+	}
+
+	public function is_admin_page() {
+		return in_array( get_post_type(), $this->setup->post_types->get_post_types() );
 	}
 
 	/**
