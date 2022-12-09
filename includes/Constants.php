@@ -21,11 +21,6 @@ if( !defined( 'CP_LIBRARY_PLUGIN_URL' ) ) {
 	 	plugin_dir_url( CP_LIBRARY_PLUGIN_FILE )
 	);
 }
-if( !defined( 'CP_LIBRARY_PLUGIN_VERSION' ) ) {
-	 define ( 'CP_LIBRARY_PLUGIN_VERSION',
-	 	'1.0.2'
-	);
-}
 if( !defined( 'CP_LIBRARY_INCLUDES' ) ) {
 	 define ( 'CP_LIBRARY_INCLUDES',
 	 	plugin_dir_path( dirname( __FILE__ ) ) . 'includes'

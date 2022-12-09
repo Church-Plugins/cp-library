@@ -24,5 +24,14 @@ npm run build
 
 ### Change Log
 
+#### 1.0.3
+* Update Church Plugins core
+
+#### 1.0.2
+* Show global messages on locations series page
+
+#### 1.0.1
+* Misc updates
+
 #### 1.0.0
 * Initial release
