@@ -1,5 +1,5 @@
 .cpl-list-type {
-	margin-bottom: 1.5em;
+	margin-bottom: var(--cp-gap--md);
 
 	&--thumb {
 		cursor: pointer;
@@ -8,6 +8,7 @@
 		img {
 			width: auto;
 			height: auto;
+			max-width: 100%;
 		}
 	}
 
@@ -17,7 +18,8 @@
 		background: rgba( 0, 0, 0, .05);
 
 		h3 {
-			font-size: 1.25em;
+			font-size: var(--cp-font-size--lg);
+			margin: auto;
 
 			a {
 				color: inherit;

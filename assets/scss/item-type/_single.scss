@@ -6,7 +6,7 @@
 	}
 
 	&--container {
-		margin-bottom: 2rem;
+		margin-bottom: var(--cp-gap--md);
 
 		@include media-breakpoint-up(md) {
 			display: flex;
@@ -15,7 +15,7 @@
 	}
 
 	&--back {
-		margin-bottom: 1rem;
+		margin-bottom: var(--cp-gap--sm);
 		display: inline-block;
 
 		&:before {
@@ -30,10 +30,14 @@
 
 	&--media {
 		flex: 1 0 40%;
+
+		img {
+			max-width: 100%;
+		}
 	}
 
 	&--items-title {
-		margin-top: 2rem;
+		margin-top: var(--cp-gap--md);
 	}
 
 	&--items {

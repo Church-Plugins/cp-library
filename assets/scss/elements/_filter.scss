@@ -94,6 +94,7 @@
 				margin: 0 .5em 0 0;
 				background: transparent;
 				color: inherit;
+				border: none;
 
 				> * {
 					display: block;
@@ -102,6 +103,7 @@
 
 			input[type=text] {
 				width: 8em;
+				height: 1em;
 				padding: 0;
 				background: transparent;
 				border: none !important;

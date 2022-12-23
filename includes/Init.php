@@ -27,6 +27,11 @@ class Init {
 	 */
 	public $api;
 
+	/**
+	 * @var Admin\Init
+	 */
+	public $admin;
+
 	public $enqueue;
 
 	/**
@@ -48,7 +53,7 @@ class Init {
 	 */
 	protected function __construct() {
 		$this->enqueue = new \WPackio\Enqueue( 'cpLibrary', 'dist', $this->get_version(), 'plugin', CP_LIBRARY_PLUGIN_FILE );
-		add_action( 'plugins_loaded', [ $this, 'maybe_setup' ], - 9999 );
+		add_action( 'cp_core_loaded', [ $this, 'maybe_setup' ], - 9999 );
 		add_action( 'init', [ $this, 'maybe_init' ] );
 	}
 
@@ -78,7 +83,7 @@ class Init {
 		$this->setup = Setup\Init::get_instance();
 		$this->api   = API\Init::get_instance();
 
-		Admin\Init::get_instance();
+		$this->admin = Admin\Init::get_instance();
 		Download::get_instance();
 		Templates::init();
 

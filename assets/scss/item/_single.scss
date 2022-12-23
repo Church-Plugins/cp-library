@@ -11,7 +11,7 @@
 	.cpl-meta {
 		white-space: nowrap;
 		margin-top: 0;
-		margin-bottom: var(--cp-gap--md);
+		margin-bottom: var(--cp-gap--sm);
 
 		> * {
 			flex-flow: row wrap;
@@ -40,6 +40,10 @@
 			height: 100%;
 			background-size: cover;
 			background-position: center center;
+		}
+
+		img {
+			max-width: 100%;
 		}
 	}
 

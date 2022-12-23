@@ -2,7 +2,7 @@
 
 try {
 	$item_type = new \CP_Library\Controllers\ItemType( get_the_ID() );
-	$item_type = $item_type->get_api_data();
+	$item_type = $item_type->get_api_data( false );
 } catch ( \CP_Library\Exception $e ) {
 	error_log( $e );
 
