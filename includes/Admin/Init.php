@@ -41,7 +41,7 @@ class Init {
 	 */
 	protected function includes() {
 		Settings::get_instance();
-//		Tools::get_instance();
+		Tools::get_instance();
 	}
 
 	/**
@@ -50,29 +50,9 @@ class Init {
 	 * @return void
 	 */
 	protected function actions() {
-		add_action( 'init', [ $this, 'request_actions' ] );
 	}
 
 	/** Actions ***************************************************/
-
-	/**
-	 * Handle actions submitted through $_GET and $_POST requests
-	 *
-	 * @since  1.0.4
-	 *
-	 * @author Tanner Moushey
-	 */
-	public function request_actions() {
-		$key = ! empty( $_REQUEST['cp_library_action'] ) ? sanitize_key( $_REQUEST['cp_library_action'] ) : false;
-
-		if ( empty( $key ) ) {
-			return;
-		}
-
-		$vars = isset( $_POST['cp_library_action'] ) ? $_POST : $_GET;
-
-		do_action( "cp_library_{$key}", $vars );
-	}
 
 	/** Helpers ***************************************************/
 	public function get_admin_base_url() {
