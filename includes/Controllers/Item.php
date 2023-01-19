@@ -330,6 +330,7 @@ class Item extends Controller{
 				'id'        => $this->model->id,
 				'originID'  => $this->post->ID,
 				'permalink' => $this->get_permalink(),
+				'status'    => get_post_status( $this->post ),
 				'slug'      => $this->post->post_name,
 				'thumb'     => $this->get_thumbnail(),
 				'title'     => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),

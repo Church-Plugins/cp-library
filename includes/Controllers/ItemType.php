@@ -138,7 +138,11 @@ class ItemType extends Controller{
 		foreach( $this->model->get_items() as $i ) {
 			try {
 				$item = new Item( $i->id, false );
-				$data['items'][] = $item->get_api_data();
+				$item_data = $item->get_api_data();
+
+				if ( 'publish' == $item_data['status'] ) {
+					$data['items'][] = $item->get_api_data();
+				}
 			} catch( Exception $e ) {
 				error_log( $e );
 			}
