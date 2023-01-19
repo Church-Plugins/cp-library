@@ -3,7 +3,6 @@ namespace CP_Library;
 
 use CP_Library\Admin\Settings;
 use CP_Library\Controllers\Shortcode as Shortcode_Controller;
-use ChurchPlugins\Setup\Init as CP_Setup;
 
 /**
  * Provides the global $cp_library object
@@ -48,7 +47,7 @@ class Init {
 	 */
 	protected function __construct() {
 		$this->enqueue = new \WPackio\Enqueue( 'cpLibrary', 'dist', $this->get_version(), 'plugin', CP_LIBRARY_PLUGIN_FILE );
-		add_action( 'plugins_loaded', [ $this, 'maybe_setup' ], - 9999 );
+		add_action( 'cp_core_loaded', [ $this, 'maybe_setup' ], - 9999 );
 		add_action( 'init', [ $this, 'maybe_init' ] );
 	}
 
@@ -62,7 +61,7 @@ class Init {
 			return;
 		}
 
-		$cp = CP_Setup::get_instance();
+		$cp = \ChurchPlugins\Setup\Init::get_instance();
 
 		Setup\Tables\Init::get_instance();
 
