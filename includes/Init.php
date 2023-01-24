@@ -165,9 +165,8 @@ class Init {
 	 * @author costmo
 	 */
 	public function app_enqueue() {
-		wp_enqueue_script( 'cpl_persistent_player', CP_LIBRARY_PLUGIN_URL . '/assets/js/main.js', ['jquery'] );
-
 		$this->enqueue->enqueue( 'styles', 'main', [] );
+		$this->enqueue->enqueue( 'scripts', 'main', [ 'js_dep' => ['jquery'] ] );
 		$scripts = $this->enqueue->enqueue( 'app', 'main', [ 'js_dep' => ['jquery'] ] );
 
 		$cpl_vars = apply_filters( 'cpl_app_vars', [
