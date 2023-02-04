@@ -24,6 +24,13 @@ npm run build
 
 ### Change Log
 
+#### 1.0.3.2
+* Fix persistent player bug caused by loading the wrong js file
+
+#### 1.0.3.1
+* Show correct item on series template single item view
+* Only show published items in item list
+
 #### 1.0.3
 * Update Church Plugins core
 

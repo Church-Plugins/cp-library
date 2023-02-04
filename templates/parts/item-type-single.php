@@ -3,12 +3,18 @@ global $post;
 $original_post = $post;
 
 try {
-	$item_type = new \CP_Library\Controllers\ItemType( get_the_ID() );
-	$item_type = $item_type->get_api_data();
-	$selected_item = get_query_var( 'type-item' );
+	$item_type          = new \CP_Library\Controllers\ItemType( get_the_ID() );
+	$item_type          = $item_type->get_api_data();
+	$selected_item_slug = get_query_var( 'type-item' );
+	$selected_item      = false;
 
-	if ( $selected_item ) {
-		$selected_item = get_page_by_path( $selected_item, OBJECT, cp_library()->setup->post_types->item->post_type );
+	if ( is_array( $item_type['items'] ) ) {
+		foreach( $item_type['items'] as $item ) {
+			if ( $selected_item_slug === $item['slug'] ) {
+				$selected_item = get_post( $item['originID'] );
+				break;
+			}
+		}
 	}
 
 } catch ( \CP_Library\Exception $e ) {

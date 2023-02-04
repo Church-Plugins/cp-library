@@ -128,11 +128,11 @@ class Item extends Controller{
 	}
 
 	public function get_publish_date() {
-		if ( ! $date = get_post_datetime( $this->post, 'date', 'gmt' ) ) {
-			return '';
+		if ( $date = get_post_datetime( $this->post, 'date', 'gmt' ) ) {
+			$date = $date->format( 'U' );
 		}
 
-		return $this->filter( $date->format('U' ), __FUNCTION__ );
+		return $this->filter( $date, __FUNCTION__ );
 	}
 
 	/**

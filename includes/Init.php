@@ -3,7 +3,6 @@ namespace CP_Library;
 
 use CP_Library\Admin\Settings;
 use CP_Library\Controllers\Shortcode as Shortcode_Controller;
-use ChurchPlugins\Setup\Init as CP_Setup;
 
 /**
  * Provides the global $cp_library object
@@ -67,7 +66,7 @@ class Init {
 			return;
 		}
 
-		$cp = CP_Setup::get_instance();
+		$cp = \ChurchPlugins\Setup\Init::get_instance();
 
 		Setup\Tables\Init::get_instance();
 
@@ -171,9 +170,8 @@ class Init {
 	 * @author costmo
 	 */
 	public function app_enqueue() {
-		wp_enqueue_script( 'cpl_persistent_player', CP_LIBRARY_PLUGIN_URL . '/assets/js/main.js', ['jquery'] );
-
 		$this->enqueue->enqueue( 'styles', 'main', [] );
+		$this->enqueue->enqueue( 'scripts', 'main', [ 'js_dep' => ['jquery'] ] );
 		$scripts = $this->enqueue->enqueue( 'app', 'main', [ 'js_dep' => ['jquery'] ] );
 
 		$cpl_vars = apply_filters( 'cpl_app_vars', [
