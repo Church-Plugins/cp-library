@@ -35,6 +35,13 @@ class Tools {
 		add_action( 'cp_library_tools_tab_import_export', [ $this, 'import_export_display' ] );
 		add_action( 'cp_batch_import_class_include', [ $this, 'include_class' ] );
 		add_filter( 'cp_importer_is_class_allowed', [ $this, 'importer_class' ] );
+		add_filter( 'upload_mimes', [ $this, 'import_mime_type' ] );
+	}
+
+	public function import_mime_type( $existing_mimes ) {
+		$existing_mimes['csv'] = 'text/csv';
+
+		return $existing_mimes;
 	}
 
 	public function importer_class( $classes ) {
@@ -156,18 +163,18 @@ class Tools {
 							?>
 						</p>
 
-						<tullable class="widefat edd_repeatable_table striped" width="100%" cellpadding="0"
+						<table class="widefat edd_repeatable_table striped" width="100%" cellpadding="0"
 							   cellspacing="0">
 							<thead>
 							<tr>
-								<th><strong><?php _e( 'Payment Field', 'cp-library' ); ?></strong></th>
+								<th><strong><?php _e( 'Message Field Field', 'cp-library' ); ?></strong></th>
 								<th><strong><?php _e( 'CSV Column', 'cp-library' ); ?></strong></th>
 								<th><strong><?php _e( 'Data Preview', 'cp-library' ); ?></strong></th>
 							</tr>
 							</thead>
 							<tbody>
 							<tr>
-								<td><?php _e( 'Title Code', 'cp-library' ); ?></td>
+								<td><?php _e( 'Title', 'cp-library' ); ?></td>
 								<td>
 									<select name="cp-import-field[title]" class="cp-import-csv-column"
 											data-field="Title">
@@ -188,17 +195,7 @@ class Tools {
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
 							</tr>
-							<tr>
-								<td><?php esc_html_e( 'Series', 'cp-library' ); ?></td>
-								<td>
-									<select name="cp-import-field[series]" class="cp-import-csv-column"
-											data-field="Series">
-										<option
-											value=""><?php esc_html_e( '- Ignore this field -', 'cp-library' ); ?></option>
-									</select>
-								</td>
-								<td class="cp-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'cp-library' ); ?></td>
-							</tr>
+
 							<tr>
 								<td><?php _e( 'Date', 'cp-library' ); ?></td>
 								<td>
@@ -210,28 +207,63 @@ class Tools {
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
 							</tr>
-							<tr>
-								<td><?php _e( 'Location', 'cp-library' ); ?></td>
-								<td>
-									<select name="cp-import-field[location]" class="cp-import-csv-column"
-											data-field="Location">
-										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
-									</select>
-								</td>
-								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php _e( 'Speaker', 'cp-library' ); ?></td>
-								<td>
-									<select name="cp-import-field[speaker]" class="cp-import-csv-column"
-											data-field="Speaker">
-										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
-									</select>
-								</td>
-								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
-							</tr>
+
+							<?php if ( cp_library()->setup->post_types->item_type_enabled() ) : ?>
+								<tr>
+									<td><?php esc_html_e( 'Series', 'cp-library' ); ?></td>
+									<td>
+										<select name="cp-import-field[series]" class="cp-import-csv-column"
+												data-field="Series">
+											<option
+												value=""><?php esc_html_e( '- Ignore this field -', 'cp-library' ); ?></option>
+										</select>
+									</td>
+									<td class="cp-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'cp-library' ); ?></td>
+								</tr>
+							<?php endif; ?>
+
+							<?php if ( function_exists( 'cp_locations' ) ) : ?>
+								<tr>
+									<td><?php _e( 'Location', 'cp-library' ); ?></td>
+									<td>
+										<select name="cp-import-field[location]" class="cp-import-csv-column"
+												data-field="Location">
+											<option
+												value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+										</select>
+									</td>
+									<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
+								</tr>
+							<?php endif; ?>
+
+							<?php if ( cp_library()->setup->post_types->speaker_enabled() ) : ?>
+								<tr>
+									<td><?php _e( 'Speaker', 'cp-library' ); ?></td>
+									<td>
+										<select name="cp-import-field[speaker]" class="cp-import-csv-column"
+												data-field="Speaker">
+											<option
+												value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+										</select>
+									</td>
+									<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
+								</tr>
+							<?php endif; ?>
+
+							<?php if ( cp_library()->setup->post_types->service_type_enabled() ) : ?>
+								<tr>
+									<td><?php _e( 'Service Type', 'cp-library' ); ?></td>
+									<td>
+										<select name="cp-import-field[service_type]" class="cp-import-csv-column"
+												data-field="Service Type">
+											<option
+												value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+										</select>
+									</td>
+									<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
+								</tr>
+							<?php endif; ?>
+
 							<tr>
 								<td><?php _e( 'Topics', 'cp-library' ); ?></td>
 								<td>
@@ -321,7 +353,7 @@ class Tools {
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
 							</tr>
 							</tbody>
-						</tull oable>
+						</table>
 						<p class="submit">
 							<button
 								class="button cp-import-proceed button-primary"><?php esc_html_e( 'Process Import', 'cp-library' ); ?></button>

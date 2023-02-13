@@ -2,7 +2,6 @@
 
 namespace CP_Library\Controllers;
 
-use ChurchPlugins\Models\Log;
 use ChurchPlugins\Controllers\Controller;
 use CP_Library\Admin\Settings;
 use CP_Library\Exception;
@@ -374,7 +373,7 @@ class Item extends Controller{
 			$args[ 'action' ] = $action;
 		}
 
-		return Log::query( $args );
+		return \ChurchPlugins\Models\Log::query( $args );
 	}
 
 	public function get_analytics_count( $action = '' ) {
@@ -384,6 +383,6 @@ class Item extends Controller{
 			$args[ 'action' ] = $action;
 		}
 
-		return Log::count_by_action( $args );
+		return \ChurchPlugins\Models\Log::count_by_action( $args );
 	}
 }

@@ -255,6 +255,13 @@ class Item extends PostType  {
 			'time_format' => 'H:i:s',
 		] );
 
+		$cmb->add_field( [
+			'name' => __( 'Passage', 'cp-library' ),
+			'desc' => __( 'Enter the passage(s) for this sermon. Use standard notation for multiple passages.', 'cp-library' ),
+			'id'   => 'passage',
+			'type' => 'text',
+		] );
+
 		if ( apply_filters( "{$this->post_type}_use_facebook", false ) ) {
 			$cmb->add_field( [
 				'name' => __( 'Facebook video permalink', 'cp-library' ),
