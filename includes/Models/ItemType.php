@@ -113,8 +113,16 @@ class ItemType extends Table  {
 		$items = $this->get_items();
 		$dates = [];
 
+		foreach( $items as $item ) {
+			$date = get_the_date( 'U', $item->origin_id );
+
+			if ( $date < current_time( 'timestamp' ) ) {
+				$dates[] = $date;
+			}
+		}
+
 		$status = get_post_status( $this->origin_id );
-		if ( empty( $items ) ) {
+		if ( empty( $dates ) ) {
 			// we need this meta value for sorting
 			update_post_meta( $this->origin_id, 'last_item_date', 0 );
 
@@ -124,10 +132,6 @@ class ItemType extends Table  {
 			}
 
 			return true;
-		}
-
-		foreach( $items as $item ) {
-			$dates[] = get_the_date( 'U', $item->origin_id );
 		}
 
 		asort( $dates );
