@@ -41,7 +41,7 @@ class Item extends PostType  {
 		add_action( 'quick_edit_custom_box',  [ $this, 'quick_edit_field' ], 10, 2 );
 		add_action( 'add_inline_data',  [ $this, 'inline_data' ] );
 		add_action( 'save_post', [ $this, 'quick_edit_save' ] );
-
+		add_action( "cp_save_{$this->post_type}", [ $this, 'process_item' ] );
 
 		add_action( 'save_post', [ $this, 'normalize_input' ], 20 ); // Set high priority so we can act before CMB
 		add_filter( "{$this->post_type}_slug", [ $this, 'custom_slug' ] );
@@ -123,6 +123,24 @@ class Item extends PostType  {
 		$timestamp = Convenience::normalize_timestamp( $timestamp );
 
 		update_post_meta( $post_id, 'message_timestamp', $timestamp );
+	}
+
+	/**
+	 * Handle processes that should happen after every save
+	 *
+	 * @since  1.0.4
+	 *
+	 * @param $post_id
+	 *
+	 * @author Tanner Moushey, 4/13/23
+	 */
+	public function process_item( $post_id ) {
+		try {
+			$item = new ItemController( $post_id );
+			$item->do_enclosure();
+		} catch ( \ChurchPlugins\Exception $e ) {
+			error_log( $e );
+		}
 	}
 
 	public function quick_edit_field( $column_name, $post_type ) {
@@ -261,6 +279,15 @@ class Item extends PostType  {
 			'id'   => 'passage',
 			'type' => 'text',
 		] );
+
+		if ( cp_library()->setup->podcast->is_enabled() ) {
+			$cmb->add_field( [
+				'name' => __( 'Exclude from Podcast', 'cp-library' ),
+				'desc' => __( 'Check to exclude this sermon from the Podcast feed.', 'cp-library' ),
+				'id'   => 'podcast_exclude',
+				'type' => 'checkbox',
+			] );
+		}
 
 		if ( apply_filters( "{$this->post_type}_use_facebook", false ) ) {
 			$cmb->add_field( [
