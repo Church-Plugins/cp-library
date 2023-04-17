@@ -36,7 +36,7 @@
 	&--item-type {
 		.cpl-archive--list {
 			display: grid;
-			column-gap: 2.5rem;
+			column-gap: var(--cp-gap--md);
 			grid-template-columns: repeat(auto-fill, minmax(20em, 1fr));
 		}
 	}

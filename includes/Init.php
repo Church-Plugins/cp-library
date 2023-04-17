@@ -26,6 +26,11 @@ class Init {
 	 */
 	public $api;
 
+	/**
+	 * @var Admin\Init
+	 */
+	public $admin;
+
 	public $enqueue;
 
 	/**
@@ -77,7 +82,7 @@ class Init {
 		$this->setup = Setup\Init::get_instance();
 		$this->api   = API\Init::get_instance();
 
-		Admin\Init::get_instance();
+		$this->admin = Admin\Init::get_instance();
 		Download::get_instance();
 		Templates::init();
 

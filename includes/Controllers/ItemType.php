@@ -121,7 +121,7 @@ class ItemType extends Controller{
 		return $this->filter( $return, __FUNCTION__ );
 	}
 
-	public function get_api_data() {
+	public function get_api_data( $include_items = true ) {
 		$data = [
 			'id'        => $this->model->id,
 			'originID'  => $this->post->ID,
@@ -135,16 +135,18 @@ class ItemType extends Controller{
 			'scripture' => $this->get_scripture(),
 		];
 
-		foreach( $this->model->get_items() as $i ) {
-			try {
-				$item = new Item( $i->id, false );
-				$item_data = $item->get_api_data();
+		if ( $include_items ) {
+			foreach ( $this->model->get_items() as $i ) {
+				try {
+					$item      = new Item( $i->id, false );
+					$item_data = $item->get_api_data();
 
-				if ( 'publish' == $item_data['status'] ) {
-					$data['items'][] = $item->get_api_data();
+					if ( 'publish' == $item_data['status'] ) {
+						$data['items'][] = $item->get_api_data();
+					}
+				} catch ( Exception $e ) {
+					error_log( $e );
 				}
-			} catch( Exception $e ) {
-				error_log( $e );
 			}
 		}
 

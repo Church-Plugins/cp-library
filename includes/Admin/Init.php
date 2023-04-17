@@ -41,6 +41,7 @@ class Init {
 	 */
 	protected function includes() {
 		Settings::get_instance();
+		Tools::get_instance();
 	}
 
 	/**
@@ -48,9 +49,32 @@ class Init {
 	 *
 	 * @return void
 	 */
-	protected function actions() {}
+	protected function actions() {
+	}
 
 	/** Actions ***************************************************/
 
+	/** Helpers ***************************************************/
+	public function get_admin_base_url() {
+		$post_type = cp_library()->setup->post_types->item_type_enabled() ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
+
+		// Default args
+		$args = array(
+			'post_type' => $post_type
+		);
+
+		// Default URL
+		$admin_url = admin_url( 'edit.php' );
+
+		// Get the base admin URL
+		$url = add_query_arg( $args, $admin_url );
+
+		// Filter & return
+		return apply_filters( 'cp_library_get_admin_base_url', $url, $args, $admin_url );
+	}
+
+	public function get_admin_url( $args ) {
+		return add_query_arg( $args, $this->get_admin_base_url() );
+	}
 
 }

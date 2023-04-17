@@ -24,6 +24,11 @@ npm run build
 
 ### Change Log
 
+#### 1.0.4
+* Minor bug fixes
+* Add import process for sermons
+* Add podcast feed for sermons
+
 #### 1.0.3.2
 * Fix persistent player bug caused by loading the wrong js file
 
