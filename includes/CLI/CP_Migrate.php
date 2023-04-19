@@ -822,7 +822,7 @@ class CP_Migrate {
 	 *
 	 * @since  1.0.0
 	 *
-	 * @author Tanner Moushey
+	 * @author costmo
 	 */
 	public function generate_bible_json( $args, $assoc_args ) {
 		$output_file = dirname( __FILE__ ) . "/scripture_detailed_" . date( "Ymd_His" ) . ".json";
@@ -834,6 +834,12 @@ class CP_Migrate {
 
 	}
 
+	/**
+	 * A static array of Bible statistics for conversion to JSON
+	 *
+	 * @return void
+	 * @author costmo
+	 */
 	private static function bible_stat_data() {
 		return [
 			"Genesis" => [
@@ -841,7 +847,7 @@ class CP_Migrate {
 					31, 25, 24, 26, 32, 22, 24, 22, 29, 32,
 					32, 20, 18, 24, 21, 16, 27, 33, 38, 18,
 					34, 24, 20, 67, 34, 35, 46, 22, 35, 43,
-					54, 33, 20, 31, 29, 42, 36, 30, 23, 23,
+					55, 32, 20, 31, 29, 43, 36, 30, 23, 23,
 					57, 38, 34, 34, 28, 34, 31, 22, 33, 26
 				]
 			],
