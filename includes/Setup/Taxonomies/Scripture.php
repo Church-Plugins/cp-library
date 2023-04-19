@@ -20,7 +20,7 @@ class Scripture extends Taxonomy  {
 	 *
 	 * @author costmo
 	 */
-	protected function __construct() {
+	public function __construct() {
 		$this->taxonomy = CP_LIBRARY_UPREFIX . "_scripture";
 
 		$this->single_label = apply_filters( "{$this->taxonomy}_single_label", 'Scripture' );
