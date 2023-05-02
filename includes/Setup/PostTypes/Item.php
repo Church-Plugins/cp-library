@@ -11,7 +11,7 @@ use CP_Library\Exception;
 use CP_Library\Setup\Tables\ItemMeta;
 use CP_Library\Templates;
 use CP_Library\Controllers\Item as ItemController;
-use CP_Library\Util\Convenience;
+use CP_Library\Util\Convenience as _C;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -71,7 +71,7 @@ class Item extends PostType  {
 
 		// Normalize the "Sermon starts here" timestamp
 		if( !empty( $_REQUEST['message_timestamp'] ) ) {
-			$normalized = Convenience::normalize_timestamp( $_REQUEST['message_timestamp'] );
+			$normalized = _C::normalize_timestamp( $_REQUEST['message_timestamp'] );
 			if( !empty( $normalized ) ) {
 				update_post_meta( $post_id, 'message_timestamp', $normalized );
 			}
@@ -123,7 +123,7 @@ class Item extends PostType  {
 
 		// update the timestamp
 		$timestamp = ! empty( $_POST['message_timestamp'] ) ? sanitize_text_field( $_POST['message_timestamp'] ) : '';
-		$timestamp = Convenience::normalize_timestamp( $timestamp );
+		$timestamp = _C::normalize_timestamp( $timestamp );
 
 		update_post_meta( $post_id, 'message_timestamp', $timestamp );
 	}
@@ -248,24 +248,24 @@ class Item extends PostType  {
 
 		$return_value = [];
 
-		do_action( 'qm/debug', 'ES' );
-
 		$tax = new ScriptureTax();
 		$terms = $tax->get_terms();
 
-		do_action( 'qm/debug', $terms );
+		_C::log( "TERMS" );
+		_C::log( $terms );
+
 		if( empty( $terms ) || !is_array( $terms ) ) {
 			return $return_value;
 		}
 
-		foreach( $terms as $testament => $book ) {
-			do_action( 'qm/debug', $book );
+		foreach( $terms as $book => $chapters ) {
+
 			$return_value[] = [
 				'value'	=> strtolower( preg_replace( "/[^a-zA-Z0-9]/", "-", $book ) ),
 				'name' => $book
 			];
 		}
-		do_action( 'qm/debug', $return_value );
+		_C::log( $return_value );
 		return $return_value;
 	}
 
