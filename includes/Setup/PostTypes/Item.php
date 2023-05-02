@@ -305,7 +305,7 @@ class Item extends PostType  {
 			'name' => __( 'Passage', 'cp-library' ),
 			'desc' => __( 'Enter the passage(s) for this sermon.', 'cp-library' ),
 			'id'   => 'passage',
-			'type' => 'autocomplete',
+			'type' => 'pw_select',
 			'repeatable' => true,
 			'options' => $this->extract_scriptures()
 		] );

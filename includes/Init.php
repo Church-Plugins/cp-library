@@ -156,7 +156,7 @@ class Init {
 		}
 
 		$this->enqueue->enqueue( 'styles', 'admin', [] );
-		$this->enqueue->enqueue( 'scripts', 'admin', [] );
+		$this->enqueue->enqueue( 'scripts', 'admin', ['jquery', 'select2'] );
 	}
 
 	public function is_admin_page() {
