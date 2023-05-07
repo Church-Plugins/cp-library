@@ -46,8 +46,9 @@ class ServiceType extends PostType {
 		add_action( 'pre_get_posts', [ $this, 'service_type_query' ] );
 
 		// Variations
+		add_filter( 'cpl_variations_sources', [ $this, 'variation_source' ] );
+
 		if ( $this->post_type == cp_library()->setup->variations->get_source() ) {
-			add_filter( 'cpl_variations_sources', [ $this, 'variation_source' ] );
 			add_filter( 'cpl_get_item_source', [ $this, 'variation_item_source' ], 10, 2 );
 			add_filter( 'cpl_variations_source_items_' . $this->post_type, [ $this, 'variation_source_items' ] );
 			add_action( 'cpl_save_item_source_' . $this->post_type, [ $this, 'variation_item_save' ], 10, 2 );
