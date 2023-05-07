@@ -1,5 +1,6 @@
 <?php
 namespace CP_Library\Setup\PostTypes;
+use ChurchPlugins\Helpers;
 
 use CP_Library\Admin\Settings;
 use ChurchPlugins\Exception;
@@ -219,6 +220,12 @@ class ItemType extends PostType  {
 	}
 
 	protected function sermon_series_metabox() {
+		$id = Helpers::get_param( $_GET, 'post', Helpers::get_request( 'post_ID' ) );
+
+		// don't include series metabox on variants
+		if ( $id && get_post( $id )->post_parent ) {
+			return;
+		}
 
 		$series = Model::get_all_types();
 		$series = array_combine( wp_list_pluck( $series, 'id' ), wp_list_pluck( $series, 'title' ) );
@@ -307,99 +314,7 @@ class ItemType extends PostType  {
 			],
 		] );
 
-		$cmb->add_group_field( $group_field_id, [
-			'id'   => 'id',
-			'type' => 'hidden',
-		] );
-
-		$cmb->add_group_field( $group_field_id, [
-			'name' => 'Title',
-			'id'   => 'title',
-			'type' => 'text',
-			'attributes' => [
-				'placeholder' => Item::get_instance()->single_label . ' Title',
-			]
-		] );
-
-		$cmb->add_group_field( $group_field_id, [
-			'name' => 'Thumbnail',
-			'id'   => 'thumbnail',
-			'type' => 'file',
-			'options' => [
-				'url' => false,
-			],
-			'query_args' => array(
-				 'type' => array(
-				 	'image/gif',
-				 	'image/jpeg',
-				 	'image/png',
-				 ),
-			),
-			'preview_size' => 'medium',
-		] );
-
-		if ( cp_library()->setup->post_types->speaker_enabled() ) {
-
-			$speakers = Speaker_Model::get_all_speakers();
-
-			if ( empty( $speakers ) ) {
-				$cmb->add_group_field( $group_field_id, [
-					'desc' => sprintf( __( 'No %s have been created yet. <a href="%s">Create one here.</a>', 'cp-library' ), Speaker::get_instance()->plural_label, add_query_arg( [ 'post_type' => Speaker::get_instance()->post_type ], admin_url( 'post-new.php' ) ) ),
-					'id'   => 'cpl_no_speakers',
-					'type' => 'title'
-				] );
-			} else {
-				$speakers = array_combine( wp_list_pluck( $speakers, 'id' ), wp_list_pluck( $speakers, 'title' ) );
-
-				$cmb->add_group_field( $group_field_id, [
-					'name'              => Speaker::get_instance()->single_label,
-					'id'                => 'speakers',
-					'type'              => 'pw_multiselect',
-					'select_all_button' => false,
-					'options'           => $speakers,
-//					'desc' => sprintf( __( '<br />Create a new %s <a href="%s">here</a>.', 'cp-library' ), Speaker::get_instance()->plural_label, add_query_arg( [ 'post_type' => Speaker::get_instance()->post_type ], admin_url( 'post-new.php' ) ) ),
-				] );
-			}
-
-		}
-
-		$cmb->add_group_field( $group_field_id, [
-			'name' => 'Date',
-			'id'   => 'date',
-			'type' => 'text_datetime_timestamp'
-		] );
-
-		$cmb->add_group_field( $group_field_id, [
-			'name' => __( 'Content', 'cp-library' ),
-			'desc' => __( 'The content to display alongside with this item, leave blank to hide this field.', 'cp-library' ),
-			'id'   => 'content',
-			'type' => 'wysiwyg',
-		] );
-
-		$cmb->add_group_field( $group_field_id, [
-			'name' => __( 'Video URL', 'cp-library' ),
-			'desc' => __( 'The URL of the video to show, leave blank to hide this field.', 'cp-library' ),
-			'id'   => 'video_url',
-			'type' => 'file',
-		] );
-
-		$cmb->add_group_field( $group_field_id, [
-			'name' => __( 'Audio URL', 'cp-library' ),
-			'desc' => __( 'The URL of the audio to show, leave blank to hide this field.', 'cp-library' ),
-			'id'   => 'audio_url',
-			'type' => 'file',
-		] );
-
-		foreach( cp_library()->setup->taxonomies->get_objects() as $tax ) {
-			/** @var $tax Taxonomy */
-			$cmb->add_group_field( $group_field_id, [
-				'name'              => $tax->plural_label,
-				'id'                => $tax->taxonomy,
-				'type'              => 'pw_multiselect',
-				'select_all_button' => false,
-				'options'           => $tax->get_terms_for_metabox(),
-			] );
-		}
+		cp_library()->setup->post_types->item->repeater_fields( $cmb, $group_field_id );
 
 	}
 
@@ -407,19 +322,20 @@ class ItemType extends PostType  {
 	 * Save item series to the item_meta table
 	 *
 	 * @since  1.0.0
+	 * @updated 1.0.5 Fix error when value was not set
 	 *
 	 * @author Tanner Moushey
 	 */
 	public function save_item_series( $updated, $actions, $field ) {
+		$series = [];
+
+		if ( isset( $field->data_to_save[ $field->id( true ) ] ) && is_array( $field->data_to_save[ $field->id( true ) ] ) ) {
+			$series = array_map( 'absint', $field->data_to_save[ $field->id( true ) ] );
+		}
+
 		try {
 			$item = ItemModel::get_instance_from_origin( $field->object_id );
-
-			if ( ! $series = array_map( 'absint', $field->data_to_save[ $field->id( true ) ] ) ) {
-				$series = [];
-			}
-
 			$item->update_types( $series );
-
 		} catch ( Exception $e ) {
 			error_log( $e );
 		}

@@ -44,6 +44,15 @@ class ServiceType extends PostType {
 		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'service_type_column' ] );
 		add_action( "manage_{$item_type}_posts_custom_column", [ $this, 'service_type_column_cb' ], 10, 2 );
 		add_action( 'pre_get_posts', [ $this, 'service_type_query' ] );
+
+		// Variations
+		if ( $this->post_type == cp_library()->setup->variations->get_source() ) {
+			add_filter( 'cpl_variations_sources', [ $this, 'variation_source' ] );
+			add_filter( 'cpl_get_item_source', [ $this, 'variation_item_source' ], 10, 2 );
+			add_filter( 'cpl_variations_source_items_' . $this->post_type, [ $this, 'variation_source_items' ] );
+			add_action( 'cpl_save_item_source_' . $this->post_type, [ $this, 'variation_item_save' ], 10, 2 );
+		}
+
 	}
 
 	/**
@@ -262,5 +271,87 @@ class ServiceType extends PostType {
 		}
 
 	}
+
+	/**
+	 * Add Service Type to the variation list
+	 *
+	 * @since  1.0.5
+	 *
+	 * @param $sources
+	 *
+	 * @return mixed
+	 * @author Tanner Moushey, 5/5/23
+	 */
+	public function variation_source( $sources ) {
+		$sources[ $this->post_type ] = $this->plural_label;
+		return $sources;
+	}
+
+	/**
+	 * Get variation items
+	 *
+	 * @since  1.0.5
+	 *
+	 * @return array
+	 * @author Tanner Moushey, 5/5/23
+	 */
+	public function variation_source_items() {
+		$items = [];
+
+		foreach( ServiceType_Model::get_all_service_types() as $type ) {
+			$items[ $type->id ] = $type->title;
+		}
+
+		return apply_filters( 'cpl_service_type_variation_source_items', $items );
+	}
+
+	/**
+	 * Assign service_type source to Item if it exists
+	 *
+	 * @since  1.0.5
+	 *
+	 * @param $source
+	 * @param $item \CP_Library\Controllers\Item
+	 *
+	 * @author Tanner Moushey, 5/6/23
+	 */
+	public function variation_item_source( $source, $item ) {
+		try {
+			$types = $item->get_service_types();
+		} catch ( Exception $e ) {
+			return $source;
+		}
+
+		if ( empty( $types ) ) {
+			return $source;
+		}
+
+		// A variant can only have one type, default to the first item
+		$type = $types[0];
+
+		$return = [ 'type' => $this->post_type, 'id' => $type['id'], 'label' => $type['title'] ];
+
+		return apply_filters( 'cpl_service_type_variation_item_source', $return, $source, $item );
+	}
+
+	/**
+	 * Save the variation source to the Item
+	 *
+	 * @since  1.0.5
+	 *
+	 * @param $post_id
+	 * @param $variation_id
+	 *
+	 * @author Tanner Moushey, 5/6/23
+	 */
+	public function variation_item_save( $post_id, $variation_id ) {
+		try {
+			$item = ItemModel::get_instance_from_origin( $post_id );
+			$item->update_service_types( [ absint( $variation_id ) ] );
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
+	}
+
 
 }

@@ -1,3 +1,9 @@
+.cpl-item {
+	&--actions {
+		flex-shrink: 0;
+	}
+}
+
 .cpl-single-item {
 
 	&--details {

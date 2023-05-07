@@ -42,6 +42,13 @@ class Item extends Table  {
 	 */
 	protected $types = false;
 
+	/**
+	 * Item Variations
+	 *
+	 * @var bool
+	 */
+	protected $variations = false;
+
 	public function init() {
 		$this->type = 'item';
 		$this->post_type = 'cpl_item';
@@ -147,7 +154,7 @@ class Item extends Table  {
 	/**
 	 * Update the service_types associated with this item
 	 *
-	 * @param $service_types array Array of speaker IDs (source_type_id) to add
+	 * @param $service_types array Array of service_type IDs (source_type_id) to add
 	 *
 	 * @return bool
 	 * @throws Exception
@@ -282,16 +289,6 @@ class Item extends Table  {
 	}
 
 	/**
-	 *
-	 * @param $type
-	 *
-	 * @return bool
-	 * @since  1.0.0
-	 *
-	 * @author Tanner Moushey
-	 */
-
-	/**
 	 * Add new type to item
 	 *
 	 * @param $type Integer The id of the type to add
@@ -335,6 +332,36 @@ class Item extends Table  {
 		do_action( "cpl_{$this->type}_delete_meta_after" );
 
 		parent::delete();
+	}
+
+	/**
+	 * Get the variation ids for this Item
+	 *
+	 * @since  1.0.5
+	 *
+	 * @return array variation Post IDs
+	 * @author Tanner Moushey, 5/6/23
+	 */
+	public function get_variations() {
+		if ( false === $this->variations ) {
+			$this->variations = [];
+
+			$variations = get_posts( [
+				'posts_per_page' => 999,
+				'post_parent'    => $this->origin_id,
+				'fields'         => 'ids',
+				'no_found_rows'  => false,
+				'post_type'      => $this->post_type,
+			] );
+
+			foreach( $variations as $variation_id ) {
+				$this->variations[] = $variation_id;
+			}
+
+			$this->update_cache();
+		}
+
+		return apply_filters( 'cpl_item_get_variations', $this->variations, $this );
 	}
 
 
