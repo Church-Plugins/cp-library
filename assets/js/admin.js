@@ -46,10 +46,69 @@ jQuery( function( $ ){
 		}
 	);
 
+	let handlePassgeSelection = ( inputValue ) => {
+
+		let currentSelection = $( '#cpl-scripture-current-selection' ).attr( 'data-value' );
+		let selectionLevel = $( '#cpl-scripture-selection-level' ).attr( 'data-value' );
+		// let rootOutputDiv = '#cpl-scripture-list-chapter';
+
+		let headerContent = '';
+		let footerContent = '';
+		let bodyContent = '';
+
+		// 1. Lookup the chapter list
+		if( 'book' === selectionLevel ) {
+
+			// 1.b. Set our progress variables
+			$( '#cpl-scripture-current-selection' ).attr( 'data-value', inputValue );
+			$( '#cpl-scripture-selection-level' ).attr( 'data-value', 'chapter' );
+
+			// 2. Lookup the chapter list for this book
+			let verseCountArray = availableScriptures[ inputValue ]['verse_counts'];
+			let numChapters = (undefined !== verseCountArray && verseCountArray.length > 0) ? verseCountArray.length : 0;
+			headerContent = inputValue;
+
+			console.log( verseCountArray );
+			console.log( numChapters );
+
+			// 2.b. Redraw the UI
+			bodyContent = '<ul id="cpl-chapter-list">';
+
+			for( let i = 0; i < numChapters; i++ ) {
+				let showValue = (i +1).toString();
+				bodyContent += '<li class="cpl-scripture-selection-number"> ' + showValue + ' </li>';
+			}
+			bodyContent += '</ul>';
+			footerContent = 'DONE SELECTING';
+
+			$( '#cpl-scripture-list-chapter .cpl-scripture-progress-display').html( headerContent );
+			$( '#cpl-scripture-list-chapter .cpl-scripture-progress-content').html( bodyContent );
+			$( '#cpl-scripture-list-chapter .cpl-scripture-finish-progress').html( footerContent );
+
+			$( '#cpl-scripture-list' ).addClass( 'cpl-list-closed' );
+			$( '#cpl-scripture-list-chapter' ).removeClass( 'cpl-list-closed' );
+
+		} else if( 'chapter' === selectionLevel ) {
+
+		}
+
+
+
+		// TODO: 3. Set our progress variables
+		// TODO: 4. Set the proper UX elements for the UL/LI
+		// TODO: 5. Save the final selection to the metabox UI
+		// TODO: 6. Parse and save on WP-post save
+	}
+
 	$( '#cpl-book-list >li' ).on(
 		'click',
 		(event) => {
 			event.preventDefault();
+
+			// `availableScriptures` should have been prepared for us by PHP - sanity check that assumption
+			if( undefined === availableScriptures || !availableScriptures || availableScriptures.length < 1 ) {
+				return;
+			}
 
 			// Normalize the click target
 			let target = $( event.target );
@@ -57,14 +116,13 @@ jQuery( function( $ ){
 				target = $( target ).parents( '.cpl-scripture-book' )[0];
 			}
 
-			let addingBookName = $( target ).attr( 'data-name' ).trim();
-			console.log( 'CLICKED: ' + addingBookName );
+			// Get a value for th item that was clicked
+			let selectedBook = $( target ).attr( 'data-name' ).trim();
 
-			// TODO: 1. Lookup the chapter list and redraw the UI
-			// TODO: 2. Lookup the verse list and redraw the UI
-			// TODO: 3. Save the selection thus far into our hidden field
-			// TODO: 4. Save the final selection to the metabox UI
-			// TODO: 5. Parse and save on WP-post save
+			// This is always a book selection, so we can normalize the hidden inputs - let the handler complete the input updates
+			$( '#cpl-scripture-current-selection' ).attr( 'data-value', '' );
+			$( '#cpl-scripture-selection-level' ).attr( 'data-value', 'book' );
+			handlePassgeSelection( selectedBook );
 		}
 	);
 

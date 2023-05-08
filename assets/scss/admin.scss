@@ -137,20 +137,25 @@
 
 	}
 
-	#cpl-scripture-list {
-		margin-top: -0.65rem;
+	#cpl-scripture-list,
+	#cpl-scripture-list-chapter,
+	#cpl-scripture-list-verse {
+		margin-top: 0.2rem;
     	margin-left: 0.5rem;
 		position: absolute;
     	top: 2rem;
     	z-index: 1;
 		width: 90%;
 		height: 350px;
+		border: 1px solid lightgray;
 		overflow: scroll;
 		transition: all 0.2s ease-out;
+	}
+
+	#cpl-scripture-list {
 
 		#cpl-book-list {
-			border: 1px solid lightgray;
-    		max-height: 350px;
+			margin-top: 0;
 
 			>li {
 				background-color: #F8F8F8;
@@ -168,6 +173,33 @@
 					pointer-events: none;
 				}
 			}
+		}
+	}
+
+
+	#cpl-scripture-list-chapter,
+	#cpl-scripture-list-verse {
+		background-color: white;
+		height: auto;
+
+		#cpl-chapter-list {
+			display: flex;
+			flex-wrap: wrap;
+
+			li {
+				margin: 6px;
+				border: 1px solid lightgray;
+				padding: 8px 12px;
+				border-radius: 4px;
+				cursor: pointer;
+				background-color: #F8F8F8;
+
+				&:hover {
+					background-color: #DFDFDF;
+				}
+
+			}
+
 		}
 	}
 

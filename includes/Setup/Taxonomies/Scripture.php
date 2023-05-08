@@ -122,7 +122,18 @@ class Scripture extends Taxonomy  {
 		<div id="cpl-scripture-list" class="cpl-list-closed">
 			' . $book_list_html . '
 		</div>
-		<input type="hidden" name="cpl_scriptures" id="cpl-scriptures" value="" />
+		<div id="cpl-scripture-list-chapter" class="cpl-list-closed">
+			<div class="cpl-scripture-progress-display"></div>
+			<div class="cpl-scripture-progress-content"></div>
+			<div class="cpl-scripture-finish-progress"></div>
+		</div>
+		<div id="cpl-scripture-list-verse" class="cpl-list-closed">
+			<div class="cpl-scripture-progress-display"></div>
+			<div class="cpl-scripture-progress-content"></div>
+			<div class="cpl-scripture-finish-progress"></div>
+		</div>
+		<input type="hidden" name="cpl_scripture_current_selection" id="cpl-scripture-current-selection" data-value="" />
+		<input type="hidden" name="cpl_scripture_selection_level" id="cpl-scripture-selection-level" data-value="" />
 		<script>
 			// Add available scriptures to JavaScript
 			var availableScriptures = ' . json_encode( $scriptures ) . ';
