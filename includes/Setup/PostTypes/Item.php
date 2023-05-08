@@ -301,14 +301,14 @@ class Item extends PostType  {
 			'time_format' => 'H:i:s',
 		] );
 
-		$cmb->add_field( [
-			'name' => __( 'Passage', 'cp-library' ),
-			'desc' => __( 'Enter the passage(s) for this sermon.', 'cp-library' ),
-			'id'   => 'passage',
-			'type' => 'pw_select',
-			'repeatable' => true,
-			'options' => $this->extract_scriptures()
-		] );
+		// $cmb->add_field( [
+		// 	'name' => __( 'Passage', 'cp-library' ),
+		// 	'desc' => __( 'Enter the passage(s) for this sermon.', 'cp-library' ),
+		// 	'id'   => 'passage',
+		// 	'type' => 'pw_select',
+		// 	'repeatable' => true,
+		// 	'options' => $this->extract_scriptures()
+		// ] );
 
 		if ( cp_library()->setup->podcast->is_enabled() ) {
 			$cmb->add_field( [

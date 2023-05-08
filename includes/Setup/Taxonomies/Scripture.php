@@ -28,28 +28,97 @@ class Scripture extends Taxonomy  {
 		$this->single_label = apply_filters( "{$this->taxonomy}_single_label", 'Scripture' );
 		$this->plural_label = apply_filters( "{$this->taxonomy}_plural_label", 'Scripture' );
 
-		add_action( 'cmb2_after_init', [$this, 'bind_metabox_script'] );
-
 		parent::__construct();
 	}
 
-	function bind_metabox_script( $cmb ) {
+	/**
+	 * Override action-adder for CPT-descendants of this class
+	 *
+	 * @return void
+	 * @author costmo
+	 */
+	public function add_actions() {
 
-		_C::log( "CMB" );
-		_C::log($cmb );
+		_C::log( "Add Actions" );
 
-		// Check if we're on the right metabox
-		if ( $cmb->cmb_id !== 'your_metabox_id' ) {
+		add_action( 'add_meta_boxes', [ $this, 'register_metaboxes' ] );
+		// add_filter( 'cmb2_override_meta_save', [ $this, 'meta_save_override' ], 10, 4 );
+		// add_filter( 'cmb2_override_meta_remove', [ $this, 'meta_save_override' ], 10, 4 );
+		// add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
+
+		add_action( 'cp_register_taxonomies', [ $this, 'register_taxonomy' ] );
+		// add_filter( 'cp_app_vars', [ $this, 'app_vars' ] );
+	}
+
+	/**
+	 * Register metaboxes for admin
+	 *
+	 * Children should provide their own metaboxes
+	 *
+	 * @return void
+	 * @author costmo
+	 */
+	public function register_metaboxes() {
+
+		// only register if we have object types
+		if ( empty( $this->get_object_types() ) ) {
 			return;
 		}
 
-		// // Enqueue your JavaScript file
-		// wp_enqueue_script( 'my-script', 'path/to/my/script.js', array( 'jquery', 'select2' ) );
+		$terms = $this->get_terms_for_metabox();
+		\add_meta_box(
+			'cpl_scripture_metabox',
+			$this->single_label,
+			[ $this, 'metabox_callback' ],
+			'cpl_item',
+			'normal',
+			'default'
+		);
+	}
 
-		// // Localize the script with the current terms
-		// wp_localize_script( 'my-script', 'myScriptData', array(
-		// 	'terms' => $cmb->prop( 'options' ),
-		// ) );
+	/**
+	 * Admin Metabox for Scripture management
+	 *
+	 * @param WP_Post $post
+	 * @return void
+	 * @author costmo
+	 */
+	public function metabox_callback( $post ) {
+
+		wp_nonce_field( 'cpl-admin', 'cpl_admin_nonce_field' );
+
+		$scriptures = get_terms( array(
+			'taxonomy'   => 'cpl_scripture',
+			'hide_empty' => false,
+		) );
+		// echo esc_attr( implode( ',', $selected_scriptures ) );
+
+		$selected_scriptures = wp_get_object_terms( $post->ID, 'cpl_scripture', array( 'fields' => 'ids' ) );
+		_C::log( $scriptures );
+		_C::log( $selected_scriptures );
+
+		$selected_options = '';
+		foreach ( $selected_scriptures as $scripture_id ) {
+			$selected_options .= '
+				<span class="cpl-scripture-tag" data-id="' . esc_attr( $scripture_id ) . '">' . esc_html( get_term( $scripture_id )->name ) . '</span>
+			';
+		}
+
+		$return_value = '
+		<div id="cpl-scripture-input" class="widefat">
+			' . $selected_options . '
+		</div>
+		<div id="cpl-selected-scriptures">
+			' . $selected_options . '
+		</div>
+		<input type="hidden" name="cpl_scriptures" id="cpl-scriptures" value="" />
+		<script>
+			// Add available scriptures to JavaScript
+			var availableScriptures = ' . json_encode( $scriptures ) . ';
+		</script>
+		';
+
+		echo $return_value;
 	}
 
 	/**
