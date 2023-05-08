@@ -82,6 +82,10 @@ class Item extends PostType  {
 	 */
 	public function item_query( $query ) {
 
+		if ( $this->post_type != $query->get( 'post_type' ) ) {
+			return;
+		}
+
 		// hide child items in queries (both frontend and admin)
 		if ( ! $query->get( 'post_parent' ) && ! isset( $_GET['show-child-items'] ) ) {
 			$query->set( 'post_parent', 0 );
