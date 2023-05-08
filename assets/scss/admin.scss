@@ -105,7 +105,7 @@
 
 }
 
-.postbox {
+#cpl_scripture_metabox {
 
 	.widefat {
 		width: 95%;
@@ -135,6 +135,45 @@
 			}
 		}
 
+	}
+
+	#cpl-scripture-list {
+		margin-top: -0.65rem;
+    	margin-left: 0.5rem;
+		position: absolute;
+    	top: 2rem;
+    	z-index: 1;
+		width: 90%;
+		height: 350px;
+		overflow: scroll;
+		transition: all 0.2s ease-out;
+
+		#cpl-book-list {
+			border: 1px solid lightgray;
+    		max-height: 350px;
+
+			>li {
+				background-color: #F8F8F8;
+				padding: 8px;
+				cursor: pointer;
+				margin-bottom: 0;
+
+				&:hover {
+					background-color: #DFDFDF;
+				}
+
+				&.cpl-selected {
+					background-color: #B2B2B2;
+					cursor: not-allowed;
+					pointer-events: none;
+				}
+			}
+		}
+	}
+
+	.cpl-list-closed {
+		height: 0px !important;
+		// overflow: hidden;
 	}
 
 }

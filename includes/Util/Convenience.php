@@ -170,7 +170,7 @@ class Convenience
 	 */
 	public static function log( $message )
 	{
-		// return; // disable logginf for production
+		// return; // disable logging for production
 
 		// Enable to also watch from the browser through the Query Monitor plugin
 		$also_qm_debug = true;
@@ -263,6 +263,27 @@ class Convenience
 		}
 
 		return preg_replace( "/[\-\_]/", $replacement_char, $slug );
+	}
+
+	/**
+	 * Guarantee that a decoded JSON string returns an array
+	 *
+	 * If the input is not valid JSON, will return the inpt as-is
+	 *
+	 * @param String $input
+	 * @return array
+	 * @author costmo
+	 */
+	public static function arrayify_json( $input ) {
+
+		try {
+			$input = json_decode( json_encode( $input ), true, 512, JSON_THROW_ON_ERROR );
+		} catch( \Exception $e ) {
+			return $input;
+		}
+
+		return $input;
+
 	}
 
 }

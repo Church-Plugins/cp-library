@@ -28,28 +28,82 @@ jQuery( function( $ ){
 		}
 	}
 
-	$('.select2-selection__rendered').on(
+	let toggleList = ( target ) => {
+		if( $( target ).hasClass( 'cpl-list-closed' ) ) {
+			$( target ).removeClass( 'cpl-list-closed' );
+		} else {
+			$( target ).addClass( 'cpl-list-closed' );
+		}
+	}
+
+	$( '#cpl-scripture-input' ).on(
 		'click',
-		function( event ) {
-			console.log( "Opened" );
-			// $( '.select2-results__option' ).off( 'click' );
-
-			setTimeout(
-				() => {
-					console.log( "Timeout" );
-					console.log( $( '.select2-selection__rendered li' ) );
-					$( 'select2:selection' ).on(
-						'click',
-						function( event ) {
-							event.preventDefault();
-							event.stopPropagation();
-							console.log( "OPTION SELECTED" );
-
-						}
-					);
-				}, 500
-			);
+		(event) => {
+			event.preventDefault();
+			// Toggle the list
+			let listTarget = $( '#cpl-scripture-list' );
+			toggleList( listTarget );
 		}
 	);
+
+	$( '#cpl-book-list >li' ).on(
+		'click',
+		(event) => {
+			event.preventDefault();
+
+			// Normalize the click target
+			let target = $( event.target );
+			if( !$( target ).hasClass( 'cpl-scripture-book' ) ) {
+				target = $( target ).parents( '.cpl-scripture-book' )[0];
+			}
+
+			let addingBookName = $( target ).attr( 'data-name' ).trim();
+			console.log( 'CLICKED: ' + addingBookName );
+
+			// TODO: 1. Lookup the chapter list and redraw the UI
+			// TODO: 2. Lookup the verse list and redraw the UI
+			// TODO: 3. Save the selection thus far into our hidden field
+			// TODO: 4. Save the final selection to the metabox UI
+			// TODO: 5. Parse and save on WP-post save
+		}
+	);
+
+
+	// BELOW HERE WILL PROBABLY GO AWAY
+
+	// $('.select2-selection__rendered').on(
+	// 	'select2:selecting',
+	// 	(event) => {
+	// 		console.log( "SELECTING" );
+	// 	}
+	// );
+
+	// $('.select2-selection__rendered').on(
+	// 	'click',
+	// 	function( event ) {
+
+	// 		event.preventDefault();
+	// 		console.log( "OPENED" );
+
+	// 		setTimeout(
+	// 			() => {
+
+	// 				console.log( "Timeout" );
+	// 				$( '.select2-results__options li' ).off( 'click' );
+
+	// 				console.log( $( '.select2-results__options' ) );
+
+	// 				$( '.select2-results__options li' ).on(
+	// 					'click',
+	// 					function( event ) {
+	// 						event.preventDefault();
+	// 						// event.stopPropagation();
+	// 						console.log( "SELECTED" );
+	// 					}
+	// 				);
+	// 			}, 500
+	// 		);
+	// 	}
+	// );
 
 });

@@ -87,29 +87,40 @@ class Scripture extends Taxonomy  {
 
 		wp_nonce_field( 'cpl-admin', 'cpl_admin_nonce_field' );
 
-		$scriptures = get_terms( array(
-			'taxonomy'   => 'cpl_scripture',
-			'hide_empty' => false,
-		) );
-		// echo esc_attr( implode( ',', $selected_scriptures ) );
+		// Get our static list of possible Book/Chapter/Verse values
+		$scriptures = _C::arrayify_json( $this->get_term_data() );
+		$selected_scriptures = wp_get_object_terms( $post->ID, 'cpl_scripture' );
+		$selected_scripture_names = []; // For easier lookup
 
-		$selected_scriptures = wp_get_object_terms( $post->ID, 'cpl_scripture', array( 'fields' => 'ids' ) );
-		_C::log( $scriptures );
-		_C::log( $selected_scriptures );
-
-		$selected_options = '';
-		foreach ( $selected_scriptures as $scripture_id ) {
-			$selected_options .= '
-				<span class="cpl-scripture-tag" data-id="' . esc_attr( $scripture_id ) . '">' . esc_html( get_term( $scripture_id )->name ) . '</span>
+		$selected_options_html = '';
+		foreach ( $selected_scriptures as $selected_term ) {
+			$selected_options_html .= '
+				<span class="cpl-scripture-tag" data-id="' . esc_attr( $selected_term->term_id ) . '">' . esc_html( $selected_term->name ) . '</span>
 			';
+			$selected_scripture_names[] = $selected_term->name;
 		}
+
+		$book_list_html = '<ul id="cpl-book-list">';
+		foreach( $scriptures as $book => $book_details ) {
+
+			$selected_class = '';
+			if( in_array( $book, $selected_scripture_names ) ) {
+				$selected_class = 'cpl-selected';
+			}
+			$book_list_html .= '<li class="cpl-scripture-book ' . $selected_class . '" data-name="' . $book . '"> ' . $book . ' </li>';
+		}
+		$book_list_html .= '</ul>';
+
+		_C::log( "Selected" );
+		_C::log( $selected_scriptures );
+		_C::log( $selected_scripture_names );
 
 		$return_value = '
 		<div id="cpl-scripture-input" class="widefat">
-			' . $selected_options . '
+			' . $selected_options_html . '
 		</div>
-		<div id="cpl-selected-scriptures">
-			' . $selected_options . '
+		<div id="cpl-scripture-list" class="cpl-list-closed">
+			' . $book_list_html . '
 		</div>
 		<input type="hidden" name="cpl_scriptures" id="cpl-scriptures" value="" />
 		<script>
