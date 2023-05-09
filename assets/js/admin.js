@@ -40,15 +40,48 @@ jQuery( function( $ ){
 		'click',
 		(event) => {
 			event.preventDefault();
+
+			// Another selector is already open
+			if( ! $( '#cpl-scripture-list-chapter' ).hasClass( 'cpl-list-closed' ) ) {
+				return;
+			} else if( ! $( '#cpl-scripture-list-verse' ).hasClass( 'cpl-list-closed' ) ) {
+				return;
+			}
+
 			// Toggle the list
 			let listTarget = $( '#cpl-scripture-list' );
 			toggleList( listTarget );
 		}
 	);
 
-	let handlePassgeSelection = ( inputValue ) => {
+	let handleChapterSelection = ( event ) => {
+		event.preventDefault();
+
+		$( 'cpl-scripture-selection-number' ).removeClass( 'cpl-selected' );
+
+		let target = $( event.target );
+		if( ! $( target ).hasClass( 'cpl-scripture-selection-number' ) ) {
+			target = $( target ).parents( '.cpl-scripture-selection-number' )[0];
+		}
+		$( target ).addClass( 'cpl-selected' );
 
 		let currentSelection = $( '#cpl-scripture-current-selection' ).attr( 'data-value' );
+		currentSelection = currentSelection + ' ' +  $( target ).attr( 'data-value' );
+
+		$( '#cpl-scripture-list-chapter .cpl-scripture-progress-display').html(
+			'<strong>Current Selection</strong>:&nbsp;&nbsp;' + currentSelection
+		);
+		$( '#cpl-scripture-list-chapter .cpl-scripture-finish-progress').html(
+			'[SELECT &apos;' + currentSelection + '&apos;]'
+		);
+
+		$( '#cpl-scripture-current-selection' ).attr( 'data-value', currentSelection );
+		$( '#cpl-scripture-selection-level' ).attr( 'data-value', 'verse' );
+	}
+
+	let handlePassgeSelection = ( inputValue ) => {
+
+		// let currentSelection = $( '#cpl-scripture-current-selection' ).attr( 'data-value' );
 		let selectionLevel = $( '#cpl-scripture-selection-level' ).attr( 'data-value' );
 		// let rootOutputDiv = '#cpl-scripture-list-chapter';
 
@@ -66,20 +99,20 @@ jQuery( function( $ ){
 			// 2. Lookup the chapter list for this book
 			let verseCountArray = availableScriptures[ inputValue ]['verse_counts'];
 			let numChapters = (undefined !== verseCountArray && verseCountArray.length > 0) ? verseCountArray.length : 0;
-			headerContent = inputValue;
+			headerContent = '<strong>Current Selection</strong>:&nbsp;&nbsp;' + inputValue;
 
-			console.log( verseCountArray );
-			console.log( numChapters );
+			// console.log( verseCountArray );
+			// console.log( numChapters );
 
 			// 2.b. Redraw the UI
 			bodyContent = '<ul id="cpl-chapter-list">';
 
 			for( let i = 0; i < numChapters; i++ ) {
 				let showValue = (i +1).toString();
-				bodyContent += '<li class="cpl-scripture-selection-number"> ' + showValue + ' </li>';
+				bodyContent += '<li class="cpl-scripture-selection-number" data-value="' + showValue + '"> ' + showValue + ' </li>';
 			}
 			bodyContent += '</ul>';
-			footerContent = 'DONE SELECTING';
+			footerContent = '[SELECT &apos;' + inputValue + '&apos;]';
 
 			$( '#cpl-scripture-list-chapter .cpl-scripture-progress-display').html( headerContent );
 			$( '#cpl-scripture-list-chapter .cpl-scripture-progress-content').html( bodyContent );
@@ -87,6 +120,18 @@ jQuery( function( $ ){
 
 			$( '#cpl-scripture-list' ).addClass( 'cpl-list-closed' );
 			$( '#cpl-scripture-list-chapter' ).removeClass( 'cpl-list-closed' );
+
+			setTimeout(
+				() => {
+					$( 'li.cpl-scripture-selection-number' ).off( 'click' );
+					$( 'li.cpl-scripture-selection-number' ).on(
+						'click',
+						(event) => {
+							handleChapterSelection( event );
+						}
+					);
+				}, 100
+			);
 
 		} else if( 'chapter' === selectionLevel ) {
 

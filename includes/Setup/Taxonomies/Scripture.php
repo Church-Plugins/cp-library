@@ -111,9 +111,9 @@ class Scripture extends Taxonomy  {
 		}
 		$book_list_html .= '</ul>';
 
-		_C::log( "Selected" );
-		_C::log( $selected_scriptures );
-		_C::log( $selected_scripture_names );
+		// _C::log( "Selected" );
+		// _C::log( $selected_scriptures );
+		// _C::log( $selected_scripture_names );
 
 		$return_value = '
 		<div id="cpl-scripture-input" class="widefat">
