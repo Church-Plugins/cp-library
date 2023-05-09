@@ -95,7 +95,10 @@ class Scripture extends Taxonomy  {
 		$selected_options_html = '';
 		foreach ( $selected_scriptures as $selected_term ) {
 			$selected_options_html .= '
-				<span class="cpl-scripture-tag" data-id="' . esc_attr( $selected_term->term_id ) . '">' . esc_html( $selected_term->name ) . '</span>
+				<span class="cpl-scripture-tag" data-id="' . esc_attr( $selected_term->term_id ) . '">' .
+					esc_html( $selected_term->name ) .
+					'<input type="hidden" name="cpl-scripture-tag-selections[]" data-id="' . esc_attr( $selected_term->term_id ) . '" data-name="' . esc_html( $selected_term->name ) . '">' .
+				'</span>
 			';
 			$selected_scripture_names[] = $selected_term->name;
 		}

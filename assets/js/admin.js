@@ -156,7 +156,11 @@ jQuery( function( $ ){
 		let target = $( '#cpl-scripture-input' );
 		let source =  $( '#cpl-scripture-current-selection' );
 
-		let newElement = '<span class="cpl-scripture-tag" data-id=0>' + $( source ).attr( 'data-value' ) + '</span>';
+		let newElement =
+			'<span class="cpl-scripture-tag" data-id="0">' +
+				$( source ).attr( 'data-value' ) +
+				'<input type="hidden" name="cpl-scripture-tag-selections[]" data-id="0" data-name="' + $( source ).attr( 'data-value' ) + '">' +
+			'</span>';
 		$( target ).append( newElement );
 		cancelModal( event );
 
