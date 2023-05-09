@@ -124,13 +124,14 @@ jQuery( function( $ ){
 		if( ! $( target ).hasClass( 'cpl-scripture-tag' ) ) {
 			target = $( target ).parents( '.cpl-scripture-tag' )[0];
 		}
-		let targetName = $( target ).html().trim();
+		let targetName = $( target ).html().trim().replace( /(<([^>]+)>)/gi, '' );
 
 		$( target ).remove();
 		let listTarget = $( '#cpl-book-list li.cpl-scripture-book[data-name="' + targetName + '"]' );
 		if( undefined !== listTarget ) {
 			$( listTarget ).removeClass( 'cpl-selected' );
 		}
+		tinymce.activeEditor.isNotDirty = false;
 	}
 
 	/**
@@ -169,11 +170,15 @@ jQuery( function( $ ){
 			$( listTarget ).addClass( 'cpl-selected' );
 		}
 
+		tinymce.activeEditor.isNotDirty = false;
+
 		setTimeout(
 			() => {
 				rebindClickHandlers();
 			}, 100
 		);
+
+
 	}
 
 	/**
