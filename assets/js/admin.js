@@ -67,6 +67,7 @@ jQuery( function( $ ){
 
 		let currentSelection = $( '#cpl-scripture-current-selection' ).attr( 'data-value' );
 		currentSelection = currentSelection + ' ' +  $( target ).attr( 'data-value' );
+		let intSelection = parseInt( $( target ).attr( 'data-value' ), 10 );
 
 		$( '#cpl-scripture-list-chapter .cpl-scripture-progress-display').html(
 			'<strong>Current Selection</strong>:&nbsp;&nbsp;' + currentSelection
@@ -77,6 +78,19 @@ jQuery( function( $ ){
 
 		$( '#cpl-scripture-current-selection' ).attr( 'data-value', currentSelection );
 		$( '#cpl-scripture-selection-level' ).attr( 'data-value', 'verse' );
+
+		$( '.cpl-scripture-selection-number' ).each(
+			( index, element ) => {
+				let loopNumber = parseInt( $( element ).attr( 'data-value' ), 10 );
+				if( loopNumber < intSelection ) {
+					$( element ).addClass( 'disabled' );
+				}
+			}
+		);
+
+		// TODO: Load the next view and hide this one
+
+
 	}
 
 	let handlePassgeSelection = ( inputValue ) => {
@@ -100,9 +114,6 @@ jQuery( function( $ ){
 			let verseCountArray = availableScriptures[ inputValue ]['verse_counts'];
 			let numChapters = (undefined !== verseCountArray && verseCountArray.length > 0) ? verseCountArray.length : 0;
 			headerContent = '<strong>Current Selection</strong>:&nbsp;&nbsp;' + inputValue;
-
-			// console.log( verseCountArray );
-			// console.log( numChapters );
 
 			// 2.b. Redraw the UI
 			bodyContent = '<ul id="cpl-chapter-list">';
@@ -132,15 +143,9 @@ jQuery( function( $ ){
 					);
 				}, 100
 			);
-
-		} else if( 'chapter' === selectionLevel ) {
-
 		}
 
 
-
-		// TODO: 3. Set our progress variables
-		// TODO: 4. Set the proper UX elements for the UL/LI
 		// TODO: 5. Save the final selection to the metabox UI
 		// TODO: 6. Parse and save on WP-post save
 	}
