@@ -186,7 +186,8 @@
 		background-color: white;
 		height: auto;
 
-		#cpl-chapter-list {
+		#cpl-chapter-list,
+		#cpl-verse-list {
 			display: flex;
 			flex-wrap: wrap;
 
@@ -197,6 +198,8 @@
 				border-radius: 4px;
 				cursor: pointer;
 				background-color: #F8F8F8;
+				min-width: 24px;
+				text-align: center;
 
 				&:hover {
 					background-color: #DFDFDF;
