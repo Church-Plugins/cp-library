@@ -28,6 +28,10 @@ jQuery( function( $ ){
 		}
 	}
 
+	/**
+	 * Toggle the top-level Bible book list
+	 * @param {DOMElement} target
+	 */
 	let toggleList = ( target ) => {
 		if( $( target ).hasClass( 'cpl-list-closed' ) ) {
 			$( target ).removeClass( 'cpl-list-closed' );
@@ -36,6 +40,9 @@ jQuery( function( $ ){
 		}
 	}
 
+	/**
+	 * Click handler for the Scritpure input list
+	 */
 	$( '#cpl-scripture-input' ).on(
 		'click',
 		(event) => {
@@ -54,6 +61,11 @@ jQuery( function( $ ){
 		}
 	);
 
+	/**
+	 * Click handler for selecting a Bible chapter
+	 *
+	 * @param {DOMEvent} event
+	 */
 	let handleChapterSelection = ( event ) => {
 		event.preventDefault();
 
@@ -73,7 +85,8 @@ jQuery( function( $ ){
 			'<strong>Current Selection</strong>:&nbsp;&nbsp;' + currentSelection
 		);
 		$( '#cpl-scripture-list-chapter .cpl-scripture-finish-progress').html(
-			'[SELECT &apos;' + currentSelection + '&apos;]'
+			'<a class="cpl-scripture-cancel-modal" href="#">Cancel</a>' +
+			'<div class="preview button">SELECT &apos;' + currentSelection + '&apos;</div>'
 		);
 
 		$( '#cpl-scripture-current-selection' ).attr( 'data-value', currentSelection );
@@ -88,11 +101,119 @@ jQuery( function( $ ){
 			}
 		);
 
+		setTimeout(
+			() => {
+				rebindClickHandlers();
+			}, 100
+		);
+
 		// TODO: Load the next view and hide this one
-
-
 	}
 
+	/**
+	 * Click handler for removing a previously selecteditem from the Taxonomy input
+	 *
+	 * @param {DOMEvent} event
+	 */
+	let removeItem = (event) => {
+		event.preventDefault();
+		event.stopPropagation();
+
+		let target = $( event.target );
+
+		if( ! $( target ).hasClass( 'cpl-scripture-tag' ) ) {
+			target = $( target ).parents( '.cpl-scripture-tag' )[0];
+		}
+		let targetName = $( target ).html().trim();
+
+		$( target ).remove();
+		let listTarget = $( '#cpl-book-list li.cpl-scripture-book[data-name="' + targetName + '"]' );
+		if( undefined !== listTarget ) {
+			$( listTarget ).removeClass( 'cpl-selected' );
+		}
+	}
+
+	/**
+	 * Click handler for to close all Scripture selection modals
+	 *
+	 * @param {DOMEvent} event
+	 */
+	let cancelModal = (event) => {
+		event.preventDefault();
+		$( '#cpl-scripture-list' ).addClass( 'cpl-list-closed' );
+		$( '#cpl-scripture-list-chapter' ).addClass( 'cpl-list-closed' );
+		$( '#cpl-scripture-list-verse' ).addClass( 'cpl-list-closed' );
+	}
+
+	/**
+	 * After uesr has finished selecting a scripture, add it to the list to save
+	 *
+	 * @param {DOMEvent} event
+	 */
+	let finalizeScriptureSelection = (event) => {
+		event.preventDefault();
+		// 3. Save the final selection to the metabox UI
+		let target = $( '#cpl-scripture-input' );
+		let source =  $( '#cpl-scripture-current-selection' );
+
+		let newElement = '<span class="cpl-scripture-tag" data-id=0>' + $( source ).attr( 'data-value' ) + '</span>';
+		$( target ).append( newElement );
+		cancelModal( event );
+
+		let listTarget = $( '#cpl-book-list li.cpl-scripture-book[data-name="' + $( source ).attr( 'data-value' ) + '"]' );
+		if( undefined !== listTarget ) {
+			$( listTarget ).addClass( 'cpl-selected' );
+		}
+
+		setTimeout(
+			() => {
+				rebindClickHandlers();
+			}, 100
+		);
+	}
+
+	/**
+	 * Since items come and go from the DOM,weneed to re-bindhandlers regularly
+	 */
+	let rebindClickHandlers = () => {
+		$( '.cpl-scripture-cancel-modal' ).off( 'click' );
+		$( '.cpl-scripture-cancel-modal' ).on(
+			'click',
+			(event) => {
+				cancelModal( event );
+			}
+		);
+
+		$( 'li.cpl-scripture-selection-number' ).off( 'click' );
+		$( 'li.cpl-scripture-selection-number' ).on(
+			'click',
+			(event) => {
+				handleChapterSelection( event );
+			}
+		);
+
+		$( '.cpl-scripture-finish-progress .preview.button' ).off( 'click' );
+		$( '.cpl-scripture-finish-progress .preview.button' ).on(
+			'click',
+			(event) => {
+				finalizeScriptureSelection( event );
+			}
+		);
+
+		$( '.cpl-scripture-tag' ).off( 'click' );
+		$( '.cpl-scripture-tag' ).on(
+			'click',
+			(event) => {
+				removeItem( event );
+			}
+		);
+	}
+
+	/**
+	 * Click handler for selecting a Bible book
+	 *
+	 * @param {String} inputValue
+	 */
 	let handlePassgeSelection = ( inputValue ) => {
 
 		// let currentSelection = $( '#cpl-scripture-current-selection' ).attr( 'data-value' );
@@ -123,7 +244,7 @@ jQuery( function( $ ){
 				bodyContent += '<li class="cpl-scripture-selection-number" data-value="' + showValue + '"> ' + showValue + ' </li>';
 			}
 			bodyContent += '</ul>';
-			footerContent = '[SELECT &apos;' + inputValue + '&apos;]';
+			footerContent = '<a class="cpl-scripture-cancel-modal" href="#">Cancel</a><div class="preview button">SELECT &apos;' + inputValue + '&apos;</div>';
 
 			$( '#cpl-scripture-list-chapter .cpl-scripture-progress-display').html( headerContent );
 			$( '#cpl-scripture-list-chapter .cpl-scripture-progress-content').html( bodyContent );
@@ -134,22 +255,19 @@ jQuery( function( $ ){
 
 			setTimeout(
 				() => {
-					$( 'li.cpl-scripture-selection-number' ).off( 'click' );
-					$( 'li.cpl-scripture-selection-number' ).on(
-						'click',
-						(event) => {
-							handleChapterSelection( event );
-						}
-					);
+					rebindClickHandlers();
 				}, 100
 			);
 		}
 
 
-		// TODO: 5. Save the final selection to the metabox UI
-		// TODO: 6. Parse and save on WP-post save
+
+		// TODO: 4. Parse and save on WP-post save
 	}
 
+	/**
+	 * Bible book selected. Sanity check and invoke a handler
+	 */
 	$( '#cpl-book-list >li' ).on(
 		'click',
 		(event) => {
@@ -173,6 +291,16 @@ jQuery( function( $ ){
 			$( '#cpl-scripture-current-selection' ).attr( 'data-value', '' );
 			$( '#cpl-scripture-selection-level' ).attr( 'data-value', 'book' );
 			handlePassgeSelection( selectedBook );
+		}
+	);
+
+	/**
+	 * Bind Scripture tag removal mechanism on initial page load
+	 */
+	$( '.cpl-scripture-tag' ).on(
+		'click',
+		(event) => {
+			removeItem( event );
 		}
 	);
 

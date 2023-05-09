@@ -124,6 +124,8 @@
 			margin-top: 5px;
 			padding: 0 5px;
 			cursor: not-allowed;
+			pointer-events: none;
+			display: inline-block;
 
 			&::before {
 				content: 'x';
@@ -132,6 +134,7 @@
 				display: inline-block;
 				font-weight: bold;
 				margin-right: 4px;
+				pointer-events: initial;
 			}
 		}
 
@@ -140,7 +143,7 @@
 	#cpl-scripture-list,
 	#cpl-scripture-list-chapter,
 	#cpl-scripture-list-verse {
-		margin-top: 0.2rem;
+		margin-top: 0.5rem;
     	margin-left: 0.5rem;
 		position: absolute;
     	top: 2rem;
@@ -150,6 +153,7 @@
 		border: 1px solid lightgray;
 		overflow: scroll;
 		transition: all 0.2s ease-out;
+		opacity: 1;
 	}
 
 	#cpl-scripture-list {
@@ -225,11 +229,20 @@
 
 		.cpl-scripture-finish-progress {
 			padding: 1rem;
+
+			.button {
+				margin-bottom: 1rem;
+			}
+		}
+
+		a.cpl-scripture-cancel-modal {
+			color: #b32d2e;
 		}
 	}
 
 	.cpl-list-closed {
 		height: 0px !important;
+		opacity: 0 !important;
 		// overflow: hidden;
 	}
 
