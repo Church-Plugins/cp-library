@@ -106,7 +106,7 @@ jQuery( function( $ ){
 
 
 	/**
-	 * Click handler for removing a previously selecteditem from the Taxonomy input
+	 * Click handler for removing a previously selected item from the Taxonomy input
 	 *
 	 * @param {DOMEvent} event
 	 */
@@ -130,7 +130,7 @@ jQuery( function( $ ){
 	}
 
 	/**
-	 * Click handler for to close all Scripture selection modals
+	 * Click handler to close all Scripture selection modals
 	 *
 	 * @param {DOMEvent} event
 	 */
@@ -142,13 +142,13 @@ jQuery( function( $ ){
 	}
 
 	/**
-	 * After uesr has finished selecting a scripture, add it to the list to save
+	 * After user has finished selecting a scripture, add it to the list to save
 	 *
 	 * @param {DOMEvent} event
 	 */
 	let finalizeScriptureSelection = (event) => {
 		event.preventDefault();
-		// 3. Save the final selection to the metabox UI
+		// Save the final selection to the metabox UI
 		let target = $( '#cpl-scripture-input' );
 		let source =  $( '#cpl-scripture-current-selection' );
 
@@ -193,20 +193,20 @@ jQuery( function( $ ){
 		let footerContent = '';
 		let bodyContent = '';
 
-		// 1. Lookup the chapter list
+		// Lookup the chapter list
 		if( 'book' === selectionLevel ) {
 
-			// 1.b. Set our progress variables
+			// Set our progress variables
 			$( '#cpl-scripture-current-selection' ).attr( 'data-value', inputValue );
 			$( '#cpl-scripture-selection-level' ).attr( 'data-value', 'chapter' );
 			$( '#cpl-scripture-current-selection-book' ).attr( 'data-value', inputValue );
 
-			// 2. Lookup the chapter list for this book
+			// Lookup the chapter list for this book
 			let verseCountArray = availableScriptures[ inputValue ]['verse_counts'];
 			let numChapters = (undefined !== verseCountArray && verseCountArray.length > 0) ? verseCountArray.length : 0;
 			headerContent = '<strong>Current Selection</strong>:&nbsp;&nbsp;' + inputValue;
 
-			// 2.b. Redraw the UI
+			// Redraw the UI
 			bodyContent = '<ul id="cpl-chapter-list">';
 
 			for( let i = 0; i < numChapters; i++ ) {
