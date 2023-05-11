@@ -214,7 +214,7 @@ jQuery( function( $ ){
 				bodyContent += '<li class="cpl-scripture-selection-number" data-value="' + showValue + '"> ' + showValue + ' </li>';
 			}
 			bodyContent += '</ul>';
-			footerContent = '<a class="cpl-scripture-cancel-modal" href="#">Cancel</a><span class="cpl-finish-selection-icon dashicons dashicons-yes-alt"></span>';
+			footerContent = '<a class="cpl-scripture-cancel-modal" href="#">Cancel</a><div class="preview button">SELECT &apos;' + inputValue + '&apos;</div>';
 
 			$( '#cpl-scripture-list-chapter .cpl-scripture-progress-display').html( headerContent );
 			$( '#cpl-scripture-list-chapter .cpl-scripture-progress-content').html( bodyContent );
@@ -229,10 +229,6 @@ jQuery( function( $ ){
 				}, 100
 			);
 		}
-
-
-
-		// TODO: 4. Parse and save on WP-post save
 	}
 
 	/**
@@ -260,7 +256,7 @@ jQuery( function( $ ){
 		);
 		$( '#cpl-scripture-list-chapter .cpl-scripture-finish-progress').html(
 			'<a class="cpl-scripture-cancel-modal" href="#">Cancel</a>' +
-			'<span class="cpl-finish-selection-icon dashicons dashicons-yes-alt"></span>'
+			'<div class="preview button">SELECT &apos;' + currentSelection + '&apos;</div>'
 		);
 
 		$( '#cpl-scripture-current-selection' ).attr( 'data-value', currentSelection );
@@ -283,8 +279,6 @@ jQuery( function( $ ){
 				rebindClickHandlers();
 			}, 100
 		);
-
-		// TODO: Load the next view and hide this one
 	}
 
 	/**
@@ -320,7 +314,7 @@ jQuery( function( $ ){
 		);
 		$( '#cpl-scripture-list-chapter .cpl-scripture-finish-progress').html(
 			'<a class="cpl-scripture-cancel-modal" href="#">Cancel</a>' +
-			'<span class="cpl-finish-selection-icon dashicons dashicons-yes-alt"></span>'
+			'<div class="preview button">SELECT &apos;' + currentSelection + '&apos;</div>'
 		);
 
 		$( '#cpl-scripture-current-selection' ).attr( 'data-value', currentSelection );
@@ -386,6 +380,14 @@ jQuery( function( $ ){
 
 		$( '.cpl-scripture-finish-progress .cpl-finish-selection-icon' ).off( 'click' );
 		$( '.cpl-scripture-finish-progress .cpl-finish-selection-icon' ).on(
+			'click',
+			(event) => {
+				finalizeScriptureSelection( event );
+			}
+		);
+
+		$( '.cpl-scripture-finish-progress .preview.button' ).off( 'click' );
+		$( '.cpl-scripture-finish-progress .preview.button' ).on(
 			'click',
 			(event) => {
 				finalizeScriptureSelection( event );
