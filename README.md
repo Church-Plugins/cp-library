@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.0.5
+* New Scripture and Verse selector
+
 #### 1.0.4
 * Minor bug fixes
 * Add import process for sermons
