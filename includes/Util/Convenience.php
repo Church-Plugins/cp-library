@@ -170,7 +170,7 @@ class Convenience
 	 */
 	public static function log( $message )
 	{
-		// return; // disable logging for production
+		return; // disable logging for production
 
 		// Enable to also watch from the browser through the Query Monitor plugin
 		$also_qm_debug = true;
