@@ -20,6 +20,7 @@ class Scripture extends Taxonomy  {
 	/**
 	 * Child class constructor. Punts to the parent.
 	 *
+	 * @since 1.0.0
 	 * @author costmo
 	 */
 	public function __construct() {
@@ -32,22 +33,17 @@ class Scripture extends Taxonomy  {
 	}
 
 	/**
-	 * Override action-adder for CPT-descendants of this class
+	 * Override action-adder for CPT-descendants
 	 *
+	 * @since 1.0.5
 	 * @return void
 	 * @author costmo
 	 */
 	public function add_actions() {
 
-		_C::log( "Add Actions" );
-
 		add_action( 'add_meta_boxes', [ $this, 'register_metaboxes' ] );
-		// add_filter( 'cmb2_override_meta_save', [ $this, 'meta_save_override' ], 10, 4 );
-		// add_filter( 'cmb2_override_meta_remove', [ $this, 'meta_save_override' ], 10, 4 );
-		// add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
-
+		add_action( 'save_post_cpl_item', [ $this, 'save_metabox_input' ] );
 		add_action( 'cp_register_taxonomies', [ $this, 'register_taxonomy' ] );
-		// add_filter( 'cp_app_vars', [ $this, 'app_vars' ] );
 	}
 
 	/**
@@ -55,6 +51,7 @@ class Scripture extends Taxonomy  {
 	 *
 	 * Children should provide their own metaboxes
 	 *
+	 * @since 1.0.0
 	 * @return void
 	 * @author costmo
 	 */
@@ -65,11 +62,11 @@ class Scripture extends Taxonomy  {
 			return;
 		}
 
-		$terms = $this->get_terms_for_metabox();
+		// Custom input UX instead of cmb2
 		\add_meta_box(
 			'cpl_scripture_metabox',
 			$this->single_label,
-			[ $this, 'metabox_callback' ],
+			[ $this, 'render_metabox' ],
 			'cpl_item',
 			'normal',
 			'default'
@@ -79,11 +76,12 @@ class Scripture extends Taxonomy  {
 	/**
 	 * Admin Metabox for Scripture management
 	 *
+	 * @since 1.0.5
 	 * @param WP_Post $post
 	 * @return void
 	 * @author costmo
 	 */
-	public function metabox_callback( $post ) {
+	public function render_metabox( $post ) {
 
 		wp_nonce_field( 'cpl-admin', 'cpl_admin_nonce_field' );
 
@@ -97,7 +95,7 @@ class Scripture extends Taxonomy  {
 			$selected_options_html .= '
 				<span class="cpl-scripture-tag" data-id="' . esc_attr( $selected_term->term_id ) . '">' .
 					esc_html( $selected_term->name ) .
-					'<input type="hidden" name="cpl-scripture-tag-selections[]" data-id="' . esc_attr( $selected_term->term_id ) . '" data-name="' . esc_html( $selected_term->name ) . '">' .
+					'<input type="hidden" name="cpl-scripture-tag-selections[]" data-id="' . esc_attr( $selected_term->term_id ) . '" data-name="' . esc_html( $selected_term->name ) . '" value="' . esc_html( $selected_term->name ) . '">' .
 				'</span>
 			';
 			$selected_scripture_names[] = $selected_term->name;
@@ -113,10 +111,6 @@ class Scripture extends Taxonomy  {
 			$book_list_html .= '<li class="cpl-scripture-book ' . $selected_class . '" data-name="' . $book . '"> ' . $book . ' </li>';
 		}
 		$book_list_html .= '</ul>';
-
-		// _C::log( "Selected" );
-		// _C::log( $selected_scriptures );
-		// _C::log( $selected_scripture_names );
 
 		$return_value = '
 		<div id="cpl-scripture-input" class="widefat">
@@ -137,6 +131,7 @@ class Scripture extends Taxonomy  {
 		</div>
 		<input type="hidden" name="cpl_scripture_current_selection" id="cpl-scripture-current-selection" data-value="" />
 		<input type="hidden" name="cpl_scripture_selection_level" id="cpl-scripture-selection-level" data-value="" />
+		<input type="hidden" name="cpl_scripture_current_selection_book" id="cpl-scripture-current-selection-book" data-value="" />
 		<script>
 			// Add available scriptures to JavaScript
 			var availableScriptures = ' . json_encode( $scriptures ) . ';
@@ -144,6 +139,57 @@ class Scripture extends Taxonomy  {
 		';
 
 		echo $return_value;
+	}
+
+	/**
+	 * Saves input from the wp-admin input for Scripture taxonomy
+	 *
+	 * @return void
+	 * @since  1.0.5
+	 *
+	 * @param int $post_id
+	 * @author costmo
+	 */
+	public function save_metabox_input( $post_id ) {
+
+		// Basic input and security checks
+		if( ! isset( $_POST['cpl_admin_nonce_field'] ) || ! wp_verify_nonce( $_POST['cpl_admin_nonce_field'], 'cpl-admin' ) ) {
+			return;
+		}
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		// Sanity check the input
+		if( empty( $_POST ) || ! is_array( $_POST ) ) {
+			return;
+		}
+
+		// Term input was empty, so make sure the terms are cleared for this post and return
+		if( empty( $_POST['cpl-scripture-tag-selections'] ) || ! is_array( $_POST['cpl-scripture-tag-selections'] ) ) {
+			wp_delete_object_term_relationships( $post_id, [ 'cpl_scripture' ] );
+			return;
+		}
+
+		// There are terms to save...
+		$save_term_ids = [];
+		$incoming_terms = $_POST['cpl-scripture-tag-selections'];
+		foreach( $incoming_terms as $term ) {
+			// Check if the term exists in the 'cpl_scripture' taxonomy.
+			$existing_term = get_term_by( 'name', $term, 'cpl_scripture' );
+
+			// If the term exists, use its ID.
+			if ( $existing_term ) {
+				$save_term_ids[] = $existing_term->term_id;
+			} else {
+				// If the term does not exist, insert it and use the new ID.
+				$new_term = wp_insert_term( $term, 'cpl_scripture' );
+				if ( ! is_wp_error( $new_term ) ) {
+					$save_term_ids[] = $new_term['term_id'];
+				}
+			}
+		}
+		wp_set_object_terms( $post_id, $save_term_ids, 'cpl_scripture', false );
 	}
 
 	/**
