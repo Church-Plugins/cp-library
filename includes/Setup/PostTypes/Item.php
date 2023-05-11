@@ -251,9 +251,6 @@ class Item extends PostType  {
 		$tax = new ScriptureTax();
 		$terms = $tax->get_terms();
 
-		_C::log( "TERMS" );
-		_C::log( $terms );
-
 		if( empty( $terms ) || !is_array( $terms ) ) {
 			return $return_value;
 		}
@@ -265,7 +262,7 @@ class Item extends PostType  {
 				'name' => $book
 			];
 		}
-		_C::log( $return_value );
+
 		return $return_value;
 	}
 
