@@ -3,7 +3,6 @@ namespace CP_Library;
 
 use CP_Library\Admin\Settings;
 use CP_Library\Controllers\Shortcode as Shortcode_Controller;
-use ChurchPlugins\Setup\Init as CP_Setup;
 
 /**
  * Provides the global $cp_library object
@@ -27,6 +26,11 @@ class Init {
 	 */
 	public $api;
 
+	/**
+	 * @var Admin\Init
+	 */
+	public $admin;
+
 	public $enqueue;
 
 	/**
@@ -48,7 +52,7 @@ class Init {
 	 */
 	protected function __construct() {
 		$this->enqueue = new \WPackio\Enqueue( 'cpLibrary', 'dist', $this->get_version(), 'plugin', CP_LIBRARY_PLUGIN_FILE );
-		add_action( 'plugins_loaded', [ $this, 'maybe_setup' ], - 9999 );
+		add_action( 'cp_core_loaded', [ $this, 'maybe_setup' ], - 9999 );
 		add_action( 'init', [ $this, 'maybe_init' ] );
 	}
 
@@ -62,7 +66,7 @@ class Init {
 			return;
 		}
 
-		$cp = CP_Setup::get_instance();
+		$cp = \ChurchPlugins\Setup\Init::get_instance();
 
 		Setup\Tables\Init::get_instance();
 
@@ -78,7 +82,7 @@ class Init {
 		$this->setup = Setup\Init::get_instance();
 		$this->api   = API\Init::get_instance();
 
-		Admin\Init::get_instance();
+		$this->admin = Admin\Init::get_instance();
 		Download::get_instance();
 		Templates::init();
 
@@ -147,8 +151,16 @@ class Init {
 	}
 
 	public function admin_scripts() {
+		if ( ! $this->is_admin_page() ) {
+			return;
+		}
+
 		$this->enqueue->enqueue( 'styles', 'admin', [] );
 		$this->enqueue->enqueue( 'scripts', 'admin', [] );
+	}
+
+	public function is_admin_page() {
+		return in_array( get_post_type(), $this->setup->post_types->get_post_types() );
 	}
 
 	/**
@@ -158,9 +170,8 @@ class Init {
 	 * @author costmo
 	 */
 	public function app_enqueue() {
-		wp_enqueue_script( 'cpl_persistent_player', CP_LIBRARY_PLUGIN_URL . '/assets/js/main.js', ['jquery'] );
-
 		$this->enqueue->enqueue( 'styles', 'main', [] );
+		$this->enqueue->enqueue( 'scripts', 'main', [ 'js_dep' => ['jquery'] ] );
 		$scripts = $this->enqueue->enqueue( 'app', 'main', [ 'js_dep' => ['jquery'] ] );
 
 		$cpl_vars = apply_filters( 'cpl_app_vars', [
@@ -354,7 +365,7 @@ class Init {
 	 * @return string
 	 */
 	public function get_version() {
-		return '1.0.1';
+		return CP_LIBRARY_PLUGIN_VERSION;
 	}
 
 	/**

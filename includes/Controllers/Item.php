@@ -2,8 +2,8 @@
 
 namespace CP_Library\Controllers;
 
-use ChurchPlugins\Models\Log;
 use ChurchPlugins\Controllers\Controller;
+use ChurchPlugins\Helpers;
 use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Models\Item as ItemModel;
@@ -128,8 +128,11 @@ class Item extends Controller{
 	}
 
 	public function get_publish_date() {
-		$date = get_post_datetime( $this->post, 'date', 'gmt' );
-		return $this->filter( $date->format('U' ), __FUNCTION__ );
+		if ( $date = get_post_datetime( $this->post, 'date', 'gmt' ) ) {
+			$date = $date->format( 'U' );
+		}
+
+		return $this->filter( $date, __FUNCTION__ );
 	}
 
 	/**
@@ -236,6 +239,32 @@ class Item extends Controller{
 	}
 
 	/**
+	 * Get the duration for this item. Derived from the audio file if it exists.
+	 *
+	 * @since  1.0.4
+	 *
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 4/13/23
+	 */
+	public function get_duration() {
+		$duration = false;
+
+		if ( $id = $this->audio_url_id ) {
+
+			$meta = wp_get_attachment_metadata( $id );
+
+			// Have duration.
+			if ( ! empty( $meta['length_formatted'] ) ) {
+				$duration = $meta['length_formatted'];
+			}
+
+		}
+
+		return $this->filter( $duration, __FUNCTION__ );;
+	}
+
+	/**
 	 * Get the item_types associated with this item
 	 *
 	 * @return array|mixed|void
@@ -264,7 +293,7 @@ class Item extends Controller{
 					];
 				}
 			}
-		} catch( Exception $e ) {
+		} catch( \ChurchPlugins\Exception $e ) {
 			error_log( $e );
 		}
 
@@ -322,6 +351,140 @@ class Item extends Controller{
 		return $this->filter( $service_types, __FUNCTION__ );
 	}
 
+	/*************** Podcast Functions ****************/
+
+	/**
+	 * Get the content formatted for podcast
+	 *
+	 * @since  1.0.4
+	 *
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 4/10/23
+	 */
+	public function get_podcast_content() {
+		$content = $this->get_content();
+
+		// Allow some HTML per iTunes spec:
+		// "You can use rich text formatting and some HTML (<p>, <ol>, <ul>, <a>) in the <content:encoded> tag."
+		$content = strip_tags( $content, '<b><strong><i><em><p><ol><ul><a>' );
+
+		$content = strip_shortcodes( $content );
+
+		$content = trim( $content );
+
+		return $this->filter( $content, __FUNCTION__ );
+	}
+
+	/**
+	 * Get the summary formatted for podcast
+	 *
+	 * @since  1.0.4
+	 *
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 4/10/23
+	 */
+	public function get_podcast_summary() {
+		$content = $this->get_podcast_content();
+
+		// iTunes limits to 4000 characers
+		return $this->filter( Helpers::str_truncate( $content, 4000 ), __FUNCTION__ );
+	}
+
+	/**
+	 * Generate the excerpt for the podcast
+	 *
+	 * @since  1.0.4
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 4/10/23
+	 */
+	public function get_podcast_excerpt( $max_chars = false ) {
+		// Get excerpt output.
+		$excerpt = apply_filters( 'the_excerpt_rss', get_the_excerpt() );
+
+		// Strip tags and shortcodes.
+		$excerpt = strip_tags( $excerpt );
+		$excerpt = strip_shortcodes( $excerpt );
+
+		// Remove other undesirable contents to clean up subtitle from automatic excerpt.
+		// This is based on code from Seriously Simple Podcasting (GPL license).
+		$excerpt = str_replace(
+			array( '>', '<', '\'', '"', '`', '[andhellip;]', '[&hellip;]', '[&#8230;]' ),
+			array( '', '', '', '', '', '', '', '' ),
+			$excerpt
+		);
+
+		if ( $max_chars ) {
+			$excerpt = Helpers::str_truncate( $this->get_podcast_excerpt(), $max_chars );
+		}
+
+		return $this->filter( trim( $excerpt ), __FUNCTION__ );
+	}
+
+	/**
+	 * Generate the podcast description for this item
+	 *
+	 * @since  1.0.4
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 4/10/23
+	 */
+	public function get_podcast_description() {
+		// max characters for iTunes
+		return $this->filter( $this->get_podcast_excerpt( 4000 ), __FUNCTION__ );
+	}
+
+	/**
+	 * Generate the Podcast subtitle for this item
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 4/10/23
+	 */
+	public function get_podcast_subtitle() {
+		// max characters for iTunes
+		return $this->filter( $this->get_podcast_excerpt( 225 ), __FUNCTION__ );
+	}
+
+	/**
+	 * Get the speakers list for podcast
+	 *
+	 * @since  1.0.4
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 4/10/23
+	 */
+	public function get_podcast_speakers() {
+
+		try {
+			$speakers = wp_list_pluck( $this->get_speakers(), 'title' );
+		} catch( \ChurchPlugins\Exception $e ) {
+			error_log( $e );
+			$speakers = [];
+		}
+
+		$speakers = implode( ', ', $speakers );
+		$speakers = htmlspecialchars( trim( $speakers ) );
+
+		// iTunes limits to 4000 characers
+		return $this->filter( $speakers, __FUNCTION__ );
+	}
+
+
+	/*************** API Functions ****************/
+
+	/**
+	 * Build and return API data
+	 *
+	 * @since  1.0.0
+	 *
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey
+	 */
 	public function get_api_data() {
 		$date = [];
 
@@ -330,6 +493,7 @@ class Item extends Controller{
 				'id'        => $this->model->id,
 				'originID'  => $this->post->ID,
 				'permalink' => $this->get_permalink(),
+				'status'    => get_post_status( $this->post ),
 				'slug'      => $this->post->post_name,
 				'thumb'     => $this->get_thumbnail(),
 				'title'     => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
@@ -371,7 +535,7 @@ class Item extends Controller{
 			$args[ 'action' ] = $action;
 		}
 
-		return Log::query( $args );
+		return \ChurchPlugins\Models\Log::query( $args );
 	}
 
 	public function get_analytics_count( $action = '' ) {
@@ -381,6 +545,30 @@ class Item extends Controller{
 			$args[ 'action' ] = $action;
 		}
 
-		return Log::count_by_action( $args );
+		return \ChurchPlugins\Models\Log::count_by_action( $args );
 	}
+
+	/*************** Controller Processing Functions ****************/
+
+	/**
+	 * Handle enclosure functionality for this item
+	 *
+	 * @since  1.0.4
+	 *
+	 *
+	 * @author Tanner Moushey, 4/13/23
+	 */
+	public function do_enclosure() {
+		$audio = $this->get_audio();
+
+		// Make Dropbox URLs use ?raw=1.
+		// Note that this will not work on iTunes.
+		if ( preg_match( '/dropbox/', $audio ) ) {
+			$audio = remove_query_arg( 'dl', $audio );
+			$audio = add_query_arg( 'raw', '1', $audio );
+		}
+
+		do_enclose( $audio, $this->post->ID );
+	}
+
 }

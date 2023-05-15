@@ -21,6 +21,12 @@ class Init {
 	public $tables;
 
 	/**
+	 * @var Podcast
+	 * @since 1.0.4
+	 */
+	public $podcast;
+
+	/**
 	 * @var PostTypes\Init;
 	 */
 	public $post_types;
@@ -59,6 +65,7 @@ class Init {
 	 */
 	protected function includes() {
 		Shortcode::get_instance();
+		$this->podcast = Podcast::get_instance();
 		$this->tables = Tables\Init::get_instance();
 		$this->post_types = PostTypes\Init::get_instance();
 		$this->taxonomies = Taxonomies\Init::get_instance();

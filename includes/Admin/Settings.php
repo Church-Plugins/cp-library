@@ -2,6 +2,7 @@
 
 namespace CP_Library\Admin;
 
+use CP_Library\Admin\Settings\Podcast;
 use CP_Library\Models\ServiceType;
 
 /**
@@ -172,8 +173,13 @@ class Settings {
 			$this->service_type_options();
 		}
 
+		if ( cp_library()->setup->podcast->is_enabled() ) {
+			Podcast::fields();
+		}
+
 		$this->advanced_options();
 		$this->license_fields();
+
 	}
 
 	protected function license_fields() {
@@ -439,6 +445,17 @@ class Settings {
 		$advanced_options->add_field( array(
 			'name'    => __( 'Enable' ) . ' ' . cp_library()->setup->post_types->service_type->plural_label,
 			'id'      => 'service_type_enabled',
+			'type'    => 'radio_inline',
+			'default' => 0,
+			'options' => [
+				1 => __( 'Enable', 'cp-library' ),
+				0 => __( 'Disable', 'cp-library' ),
+			]
+		) );
+
+		$advanced_options->add_field( array(
+			'name'    => __( 'Enable Podcast Feed' ),
+			'id'      => 'podcast_feed_enable',
 			'type'    => 'radio_inline',
 			'default' => 0,
 			'options' => [

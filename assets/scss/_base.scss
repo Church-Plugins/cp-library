@@ -1,8 +1,9 @@
 .cpl-pg-template {
-	width: 100%;
-	padding-top: 2rem;
-	padding-bottom: 2rem;
+	max-width: 100%;
+	width: var( --cp-content-width );
+	padding: var(--cp-content-padding);
 	color: var(--cpl--text-color);
+	margin: auto;
 
 	.cpl-pagination {
 		ul {
