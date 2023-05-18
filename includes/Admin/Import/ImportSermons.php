@@ -61,12 +61,20 @@ class ImportSermons extends BatchImport {
 
 	/**
 	 * Process a step
+   * 
+   * @param $options
 	 *
 	 * @since 1.0.4
 	 * @return bool
 	 */
-	public function process_step() {
+	public function process_step( $step = 0, $options = array() ) {
 		global $wpdb;
+
+    $default_options = array(
+      'sideload_audio' => true
+    );
+
+    $options = array_merge( $default_options, $options );
 
 		$more = false;
 
@@ -191,8 +199,12 @@ class ImportSermons extends BatchImport {
 				}
 
 				if ( $audio ) {
-					update_post_meta( $message_id, 'audio_url', $audio );
-					$item->update_meta_value( 'audio_url', $audio );
+          $audio_url = $audio;
+          if( $options['sideload_audio'] ) {
+            $audio_url = $this->sideload_media_and_get_url( $message_id, $audio );
+          }
+					update_post_meta( $message_id, 'audio_url', $audio_url );
+					$item->update_meta_value( 'audio_url', $audio_url );
 				}
 
 				if ( ! empty( $topics ) ) {

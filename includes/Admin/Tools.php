@@ -354,6 +354,11 @@ class Tools {
 							</tr>
 							</tbody>
 						</table>
+
+            <h4><span><?php esc_html_e( 'Additional Options', 'cp-library' ); ?></span></h4>
+            <input type='checkbox' checked id='sideload-audio-urls' name='sideload-audio-urls'>
+            <label for='sideload-audio-urls'>Sideload Audio URLs</label>
+
 						<p class="submit">
 							<button
 								class="button cp-import-proceed button-primary"><?php esc_html_e( 'Process Import', 'cp-library' ); ?></button>
