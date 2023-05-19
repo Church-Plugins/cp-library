@@ -201,7 +201,10 @@ class ImportSermons extends BatchImport {
 				if ( $audio ) {
           $audio_url = $audio;
           if( $options['sideload_audio'] ) {
-            $audio_url = $this->sideload_media_and_get_url( $message_id, $audio );
+            $sideloaded_media_url = $this->sideload_media_and_get_url( $message_id, $audio );
+						if( $sideloaded_media_url ) {
+							$audio_url = $sideloaded_media_url;
+						}
           }
 					update_post_meta( $message_id, 'audio_url', $audio_url );
 					$item->update_meta_value( 'audio_url', $audio_url );

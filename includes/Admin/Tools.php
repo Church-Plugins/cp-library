@@ -357,7 +357,7 @@ class Tools {
 
             <h4><span><?php esc_html_e( 'Additional Options', 'cp-library' ); ?></span></h4>
             <input type='checkbox' checked id='sideload-audio-urls' name='sideload-audio-urls'>
-            <label for='sideload-audio-urls'>Sideload Audio URLs</label>
+            <label for='sideload-audio-urls'><?php esc_html_e( 'Attempt to import mp3 files to the Media Library', 'cp-library' ); ?></label>
 
 						<p class="submit">
 							<button
