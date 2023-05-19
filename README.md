@@ -24,7 +24,7 @@ npm run build
 
 ### Change Log
 
-#### 1.0.5
+#### 1.1.0
 * New Scripture and Verse selector
 
 #### 1.0.4
