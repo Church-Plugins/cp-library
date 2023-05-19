@@ -3,6 +3,7 @@ namespace CP_Library\Setup\PostTypes;
 
 use ChurchPlugins\Models\Log;
 use ChurchPlugins\Setup\PostTypes\PostType;
+use CP_Library\Setup\Taxonomies\Scripture as ScriptureTax;
 
 // Exit if accessed directly
 use CP_Library\Admin\Settings;
@@ -10,7 +11,7 @@ use CP_Library\Exception;
 use CP_Library\Setup\Tables\ItemMeta;
 use CP_Library\Templates;
 use CP_Library\Controllers\Item as ItemController;
-use CP_Library\Util\Convenience;
+use CP_Library\Util\Convenience as _C;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -68,7 +69,7 @@ class Item extends PostType  {
 
 		// Normalize the "Sermon starts here" timestamp
 		if( !empty( $_REQUEST['message_timestamp'] ) ) {
-			$normalized = Convenience::normalize_timestamp( $_REQUEST['message_timestamp'] );
+			$normalized = _C::normalize_timestamp( $_REQUEST['message_timestamp'] );
 			if( !empty( $normalized ) ) {
 				update_post_meta( $post_id, 'message_timestamp', $normalized );
 			}
@@ -120,7 +121,7 @@ class Item extends PostType  {
 
 		// update the timestamp
 		$timestamp = ! empty( $_POST['message_timestamp'] ) ? sanitize_text_field( $_POST['message_timestamp'] ) : '';
-		$timestamp = Convenience::normalize_timestamp( $timestamp );
+		$timestamp = _C::normalize_timestamp( $timestamp );
 
 		update_post_meta( $post_id, 'message_timestamp', $timestamp );
 	}
@@ -273,13 +274,6 @@ class Item extends PostType  {
 			'time_format' => 'H:i:s',
 		] );
 
-		$cmb->add_field( [
-			'name' => __( 'Passage', 'cp-library' ),
-			'desc' => __( 'Enter the passage(s) for this sermon. Use standard notation for multiple passages.', 'cp-library' ),
-			'id'   => 'passage',
-			'type' => 'text',
-		] );
-
 		if ( cp_library()->setup->podcast->is_enabled() ) {
 			$cmb->add_field( [
 				'name' => __( 'Exclude from Podcast', 'cp-library' ),
@@ -363,4 +357,6 @@ class Item extends PostType  {
 
 		<?php
 	}
+
+
 }

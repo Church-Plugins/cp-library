@@ -156,7 +156,17 @@ class Init {
 		}
 
 		$this->enqueue->enqueue( 'styles', 'admin', [] );
-		$this->enqueue->enqueue( 'scripts', 'admin', [] );
+		$scripts = $this->enqueue->enqueue( 'scripts', 'admin', ['jquery', 'select2'] );
+
+		// Expose variables to JS
+		$entry_point = array_pop( $scripts['js'] );
+		wp_localize_script(
+			$entry_point['handle'],
+			'cplAdmin', [
+				'ajaxUrl'		=> admin_url( 'admin-ajax.php' ),
+				'_n' 			=> wp_create_nonce( 'cpl-admin' )
+			]
+		);
 	}
 
 	public function is_admin_page() {
