@@ -1,6 +1,7 @@
 .DS_STORE
 composer.lock
 package-lock.json
+yarn.lock
 /dist/
 /build/
 /node_modules/
@@ -8,4 +9,3 @@ package-lock.json
 .phpdoc
 .vscode
 app/templates/*.rt.js
-package

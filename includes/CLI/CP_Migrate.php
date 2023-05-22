@@ -246,6 +246,9 @@ class CP_Migrate {
 	 * Import provided series
 	 *
 	 * ## OPTIONS
+   * 
+   * <file>
+   * : specify the path to the import file
 	 *
 	 * [--skip-thumbs]
 	 * : use this parameter to skip sideloading the thumbnail
@@ -448,6 +451,9 @@ class CP_Migrate {
 	 * Import messages from csv
 	 *
 	 * ## OPTIONS
+   * 
+   * <file>
+   * : specify the path to the import file
 	 *
 	 * [--skip-thumbs]
 	 * : use this parameter to skip sideloading the thumbnail
