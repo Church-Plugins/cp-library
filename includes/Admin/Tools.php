@@ -356,12 +356,11 @@ class Tools {
 						</table>
 
             <h4><span><?php esc_html_e( 'Additional Options', 'cp-library' ); ?></span></h4>
-            <input type='checkbox' checked id='sideload-audio-urls' name='sideload-audio-urls'>
+            <input type='checkbox' id='sideload-audio-urls' name='sideload-audio-urls'>
             <label for='sideload-audio-urls'><?php esc_html_e( 'Attempt to import mp3 files to the Media Library', 'cp-library' ); ?></label>
 
 						<p class="submit">
-							<button
-								class="button cp-import-proceed button-primary"><?php esc_html_e( 'Process Import', 'cp-library' ); ?></button>
+							<button class="button cp-import-proceed button-primary"><?php esc_html_e( 'Process Import', 'cp-library' ); ?></button>
 						</p>
 					</div>
 				</form>
@@ -380,8 +379,8 @@ class Tools {
 
 			// Define all tabs
 			$tabs = array(
-//				'system_info'   => __( 'System Info', 'cp-library' ),
-'import_export' => __( 'Import/Export', 'cp-library' )
+				//'system_info'   => __( 'System Info', 'cp-library' ),
+				'import_export' => __( 'Import/Export', 'cp-library' )
 			);
 
 		}
