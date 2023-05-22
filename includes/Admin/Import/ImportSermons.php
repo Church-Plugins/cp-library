@@ -4,10 +4,10 @@
  *
  * This class handles importing sermons with the batch processing API
  *
- * @package     CP_Library
+ * @since       1.0.4
  * @subpackage  Admin/Import
  * @license     http://opensource.org/licenses/gpl-2.0.php GNU Public License
- * @since       1.0.4
+ * @package     CP_Library
  */
 
 namespace CP_Library\Admin\Import;
@@ -63,10 +63,19 @@ class ImportSermons extends BatchImport {
 	 * Process a step
 	 *
 	 * @since 1.0.4
+	 *
+	 * @param $options
+	 *
 	 * @return bool
 	 */
-	public function process_step() {
+	public function process_step( $step = 0, $options = array() ) {
 		global $wpdb;
+
+		$default_options = array(
+			'sideload_audio' => false
+		);
+
+		$options = array_merge( $default_options, $options );
 
 		$more = false;
 
@@ -77,7 +86,7 @@ class ImportSermons extends BatchImport {
 		$i      = 1;
 		$offset = $this->step > 1 ? ( $this->per_step * ( $this->step - 1 ) ) : 0;
 
-		if( $offset > $this->total ) {
+		if ( $offset > $this->total ) {
 			$this->done = true;
 
 			// Delete the uploaded CSV file.
@@ -98,15 +107,15 @@ class ImportSermons extends BatchImport {
 
 		$more = true;
 
-		foreach( $this->csv as $index => $row ) {
+		foreach ( $this->csv as $index => $row ) {
 
 			// Skip all rows until we pass our offset
-			if( $index + 1 <= $offset ) {
+			if ( $index + 1 <= $offset ) {
 				continue;
 			}
 
 			// Done with this batch
-			if( $i > $this->per_step ) {
+			if ( $i > $this->per_step ) {
 				break;
 			}
 
@@ -191,8 +200,15 @@ class ImportSermons extends BatchImport {
 				}
 
 				if ( $audio ) {
-					update_post_meta( $message_id, 'audio_url', $audio );
-					$item->update_meta_value( 'audio_url', $audio );
+					$audio_url = $audio;
+					if ( $options['sideload_audio'] ) {
+						$sideloaded_media_url = $this->sideload_media_and_get_url( $message_id, $audio );
+						if ( $sideloaded_media_url ) {
+							$audio_url = $sideloaded_media_url;
+						}
+					}
+					update_post_meta( $message_id, 'audio_url', $audio_url );
+					$item->update_meta_value( 'audio_url', $audio_url );
 				}
 
 				if ( ! empty( $topics ) ) {
@@ -312,7 +328,7 @@ class ImportSermons extends BatchImport {
 				wp_die( $e->getMessage() );
 			}
 
-			$i++;
+			$i ++;
 		}
 
 		return $more;
@@ -341,9 +357,9 @@ class ImportSermons extends BatchImport {
 	/**
 	 * Get all speakers or false if disabled
 	 *
-	 * @return array|false
 	 * @since  1.0.4
 	 *
+	 * @return array|false
 	 * @author Tanner Moushey
 	 */
 	public function maybe_get_speakers() {
@@ -353,7 +369,7 @@ class ImportSermons extends BatchImport {
 
 		$all_speakers = [];
 
-		foreach( Speaker::get_all_speakers() as $speaker ) {
+		foreach ( Speaker::get_all_speakers() as $speaker ) {
 			$all_speakers[ $speaker->id ] = strtolower( $speaker->title );
 		}
 
@@ -363,9 +379,9 @@ class ImportSermons extends BatchImport {
 	/**
 	 * Get all service types or false if disabled
 	 *
-	 * @return array|false
 	 * @since  1.0.4
 	 *
+	 * @return array|false
 	 * @author Tanner Moushey
 	 */
 	public function maybe_get_service_types() {
@@ -375,7 +391,7 @@ class ImportSermons extends BatchImport {
 
 		$service_types = [];
 
-		foreach( ServiceType::get_all_service_types() as $type ) {
+		foreach ( ServiceType::get_all_service_types() as $type ) {
 			$service_types[ $type->id ] = strtolower( $type->title );
 		}
 
@@ -385,10 +401,10 @@ class ImportSermons extends BatchImport {
 	/**
 	 * Get the default series, or create one if it doesn't exist.
 	 *
-	 * @return false|void|null
-	 * @throws \ChurchPlugins\Exception
 	 * @since  1.0.4
 	 *
+	 * @return false|void|null
+	 * @throws \ChurchPlugins\Exception
 	 * @author Tanner Moushey
 	 */
 	public function maybe_get_default_series() {
@@ -417,7 +433,8 @@ class ImportSermons extends BatchImport {
 		}
 
 		try {
-			$series         = ItemType::get_instance_from_origin( $series_id );
+			$series = ItemType::get_instance_from_origin( $series_id );
+
 			return $series->id;
 		} catch ( Exception $e ) {
 			wp_die( $e->getMessage() );
@@ -428,11 +445,11 @@ class ImportSermons extends BatchImport {
 	/**
 	 * Get SoundCloud canonical url from embed code
 	 *
+	 * @since  1.0.0
+	 *
 	 * @param $embed
 	 *
 	 * @return mixed
-	 * @since  1.0.0
-	 *
 	 * @author Tanner Moushey
 	 */
 	public function get_soundcloud_url( $embed ) {
@@ -457,11 +474,11 @@ class ImportSermons extends BatchImport {
 	 */
 	public function get_percentage_complete() {
 
-		if( $this->total > 0 ) {
+		if ( $this->total > 0 ) {
 			$percentage = ( $this->step * $this->per_step / $this->total ) * 100;
 		}
 
-		if( $percentage > 100 ) {
+		if ( $percentage > 100 ) {
 			$percentage = 100;
 		}
 
@@ -478,7 +495,7 @@ class ImportSermons extends BatchImport {
 
 		$terms = $this->maybe_create_terms( $terms, $taxonomy );
 
-		if( ! empty( $terms ) ) {
+		if ( ! empty( $terms ) ) {
 			wp_set_object_terms( $post_id, $terms, $taxonomy );
 		}
 
@@ -495,9 +512,9 @@ class ImportSermons extends BatchImport {
 		// Return of term IDs
 		$term_ids = array();
 
-		foreach( $terms as $term ) {
+		foreach ( $terms as $term ) {
 
-			if( is_numeric( $term ) && 0 === (int) $term ) {
+			if ( is_numeric( $term ) && 0 === (int) $term ) {
 
 				$t = get_term( $term, $taxonomy );
 
@@ -505,7 +522,7 @@ class ImportSermons extends BatchImport {
 
 				$t = get_term_by( 'name', $term, $taxonomy );
 
-				if( ! $t ) {
+				if ( ! $t ) {
 
 					$t = get_term_by( 'slug', $term, $taxonomy );
 
@@ -513,7 +530,7 @@ class ImportSermons extends BatchImport {
 
 			}
 
-			if( ! empty( $t ) ) {
+			if ( ! empty( $t ) ) {
 
 				$term_ids[] = $t->term_id;
 
@@ -521,7 +538,7 @@ class ImportSermons extends BatchImport {
 
 				$term_data = wp_insert_term( $term, $taxonomy, array( 'slug' => sanitize_title( $term ) ) );
 
-				if( ! is_wp_error( $term_data ) ) {
+				if ( ! is_wp_error( $term_data ) ) {
 
 					$term_ids[] = $term_data['term_id'];
 

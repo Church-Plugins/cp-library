@@ -3,16 +3,16 @@ namespace CP_Library\Setup\PostTypes;
 
 use ChurchPlugins\Helpers;
 use ChurchPlugins\Setup\PostTypes\PostType;
+use CP_Library\Setup\Taxonomies\Scripture as ScriptureTax;
 
 // Exit if accessed directly
 use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Setup\Tables\ItemMeta;
 use CP_Library\Controllers\Item as ItemController;
-use CP_Library\Util\Convenience;
 use CP_Library\Models\Speaker as Speaker_Model;
 use CP_Library\Models\Item as Model;
-
+use CP_Library\Util\Convenience as _C;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -74,7 +74,7 @@ class Item extends PostType  {
 	/**
 	 * Customizations to the Item query
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @param $query
 	 *
@@ -109,7 +109,7 @@ class Item extends PostType  {
 
 		// Normalize the "Sermon starts here" timestamp
 		if( !empty( $_REQUEST['message_timestamp'] ) ) {
-			$normalized = Convenience::normalize_timestamp( $_REQUEST['message_timestamp'] );
+			$normalized = _C::normalize_timestamp( $_REQUEST['message_timestamp'] );
 			if( !empty( $normalized ) ) {
 				update_post_meta( $post_id, 'message_timestamp', $normalized );
 			}
@@ -161,7 +161,7 @@ class Item extends PostType  {
 
 		// update the timestamp
 		$timestamp = ! empty( $_POST['message_timestamp'] ) ? sanitize_text_field( $_POST['message_timestamp'] ) : '';
-		$timestamp = Convenience::normalize_timestamp( $timestamp );
+		$timestamp = _C::normalize_timestamp( $timestamp );
 
 		update_post_meta( $post_id, 'message_timestamp', $timestamp );
 	}
@@ -415,13 +415,6 @@ class Item extends PostType  {
 			'time_format' => 'H:i:s',
 		] );
 
-		$cmb->add_field( [
-			'name' => __( 'Passage', 'cp-library' ),
-			'desc' => __( 'Enter the passage(s) for this sermon. Use standard notation for multiple passages.', 'cp-library' ),
-			'id'   => 'passage',
-			'type' => 'text',
-		] );
-
 		if ( cp_library()->setup->podcast->is_enabled() ) {
 			$cmb->add_field( [
 				'name' => __( 'Exclude from Podcast', 'cp-library' ),
@@ -506,7 +499,6 @@ class Item extends PostType  {
 		<?php
 	}
 
-
 	/**
 	 * Meta override
 	 *
@@ -516,7 +508,7 @@ class Item extends PostType  {
 	 * @param $field
 	 *
 	 * @return array|null
-	 * @since  1.0.0
+	 * @since  1.1.0
 	 *
 	 * @author Tanner Moushey
 	 */
@@ -546,7 +538,7 @@ class Item extends PostType  {
 	 *
 	 * @return array
 	 * @throws \ChurchPlugins\Exception
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @author Tanner Moushey
 	 */
@@ -595,7 +587,7 @@ class Item extends PostType  {
 	/**
 	 * Save the variation item
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @param $object_id
 	 *
@@ -730,7 +722,7 @@ class Item extends PostType  {
 	/**
 	 * These are the fields to use when in a repeater context (Series / Variations)
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @param $cmb
 	 * @param $group_field_id
