@@ -516,6 +516,38 @@ class Item extends Controller{
 		return $this->filter( $source['type'], __FUNCTION__ );
 	}
 
+	public function get_variation_data() {
+
+		if( ! $this->has_variations() ) {
+			return false;
+		}
+
+		$variations = $this->get_variations();
+
+		$variations = array_map( function( $id ) {
+			$item = new Item( $id );
+
+			if( ! $item->get_variation_source_id() ) {
+				return false;
+			}
+
+			if( ! $item->is_variant() ) {
+				return false;
+			}
+
+			return array(
+				'label' => $item->get_variation_source_label(),
+				'id'    => $item->get_variation_source_id(),
+				'audio' => $item->get_audio(),
+				'video' => $item->get_video()
+			);
+		}, $variations );
+
+		$variations = array_filter( $variations, 'is_array' );
+
+		return $variations;
+	}
+
 	/*************** Podcast Functions ****************/
 
 	/**
@@ -675,6 +707,7 @@ class Item extends Controller{
 				'types'     => $this->get_types(),
 				'topics'    => $this->get_topics(),
 				'scripture' => $this->get_scripture(),
+				'variations' => $this->get_variation_data()
 			];
 		} catch ( \ChurchPlugins\Exception $e ) {
 			error_log( $e );
