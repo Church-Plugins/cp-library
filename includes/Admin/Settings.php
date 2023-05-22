@@ -249,6 +249,43 @@ class Settings {
 			'default' => strtolower( sanitize_title( cp_library()->setup->post_types->item_type->plural_label ) ),
 		) );
 
+		$variation_sources = cp_library()->setup->variations->get_sources();
+		$desc              = __( 'Use this section to control the sermon variation functionality. Variations allows you to create multiple versions of a sermon with different speakers, media, etc. This is ideal for churches that deliver the same message from multiple locations each Sunday.', 'cp-library' );
+
+		if ( empty( $variation_sources ) ) {
+			$desc .= '<br /><br />' . __( 'To enable Variations, activate Service Types or a supported add-on.', 'cp-library' );
+		}
+
+		$options->add_field( array(
+			'name' => __( 'Variations', 'cp-library' ),
+			'id'   => 'variations_title',
+			'desc' => $desc,
+			'type' => 'title',
+		) );
+
+		if ( empty( $variation_sources ) ) {
+			return;
+		}
+
+		$options->add_field( array(
+			'name'    => __( 'Enable Variations', 'cp-library' ),
+			'id'      => 'variations_enabled',
+			'type'    => 'radio_inline',
+			'default' => 0,
+			'options' => [
+				1 => __( 'Enable', 'cp-library' ),
+				0 => __( 'Disable', 'cp-library' ),
+			]
+		) );
+
+		$options->add_field( array(
+			'name' => __( 'Variation Source', 'cp-library' ),
+			'id'   => 'variation_source',
+			'type' => 'select',
+			'desc' => __( 'The Variation Source is used to define the different sermons variations.', 'cp-library' ),
+			'options' => $variation_sources,
+		) );
+
 	}
 
 	protected function item_type_options() {

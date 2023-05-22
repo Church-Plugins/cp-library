@@ -1,0 +1,88 @@
+<?php
+namespace CP_Library\Setup;
+
+/**
+ * Variation controller class
+ */
+class Variations {
+
+	/**
+	 * Singleton instance
+	 *
+	 * @var Variations
+	 */
+	protected static $_instance;
+
+	/**
+	 * Enforce singleton instantiation
+	 *
+	 * @return Variations
+	 */
+	public static function get_instance() {
+		if( !self::$_instance instanceof Variations ) {
+			self::$_instance = new self();
+		}
+
+		return self::$_instance;
+	}
+
+	/**
+	 * Class constructor
+	 */
+	protected function __construct() {
+	}
+
+	/**
+	 * Whether Variations are enabled
+	 *
+	 * @since  1.0.5
+	 *
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 5/5/23
+	 */
+	public function is_enabled() {
+		$enabled = (bool) \CP_Library\Admin\Settings::get_item( 'variations_enabled', false );
+		return apply_filters( 'cpl_enable_variations', $enabled );
+	}
+
+	/**
+	 * Get items for the active source
+	 *
+	 * @since  1.0.5
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 5/5/23
+	 */
+	public function get_source_items() {
+		$source = $this->get_source();
+		return apply_filters( 'cpl_variations_source_items_' . $source, [] );
+	}
+
+	/**
+	 * Get variation source
+	 *
+	 * @since  1.0.5
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 5/5/23
+	 */
+	public function get_source() {
+		$source = \CP_Library\Admin\Settings::get_item( 'variation_source' );
+		return apply_filters( 'cpl_variations_source', $source );
+	}
+
+	/**
+	 * Return a list of possible variation sources
+	 *
+	 * @since  1.0.5
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 5/5/23
+	 */
+	public function get_sources() {
+		return apply_filters( 'cpl_variations_sources', [] );
+	}
+
+
+}

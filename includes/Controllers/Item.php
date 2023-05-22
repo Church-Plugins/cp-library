@@ -13,6 +13,10 @@ use CP_Library\Util\Convenience;
 
 class Item extends Controller{
 
+	/**
+	 * @param $model ItemModel
+	 */
+
 	public function get_content( $raw = false ) {
 		$content = get_the_content( null, false, $this->post );
 		if ( ! $raw ) {
@@ -349,6 +353,167 @@ class Item extends Controller{
 		}
 
 		return $this->filter( $service_types, __FUNCTION__ );
+	}
+
+	/*************** Variation Functions ****************/
+
+	/**
+	 * Whether this item has variations
+	 *
+	 * @since  1.0.5
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 5/6/23
+	 */
+	public function has_variations() {
+		$return = true;
+
+		if ( ! cp_library()->setup->variations->is_enabled() ) {
+			$return = false;
+		}
+
+		if ( $this->post->post_parent ) {
+			$return = false;
+		}
+
+		if ( ! $this->_cpl_has_variations ) {
+			$return = false;
+		}
+
+		return $this->filter( $return, __FUNCTION__ );
+	}
+
+	/**
+	 * Get variants for this item
+	 *
+	 * @since  1.0.5
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 5/6/23
+	 */
+	public function get_variations() {
+		$variations = [];
+
+		if ( $this->has_variations() ) {
+			$variations = $this->model->get_variations();
+		}
+
+		return $this->filter( $variations, __FUNCTION__ );
+	}
+
+	/**
+	 * Get variant for the provided source
+	 *
+	 * @since  1.0.5
+	 *
+	 * @param $source
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 5/6/23
+	 */
+	public function get_variation( $source ) {
+		$variations = [];
+
+		if ( $this->has_variations() ) {
+			$variations = $this->model->get_variations();
+		}
+
+		return $this->filter( $variations, __FUNCTION__ );
+	}
+
+	/**
+	 * Whether this item is a variant
+	 *
+	 * @since  1.0.5
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 5/6/23
+	 */
+	public function is_variant() {
+		return $this->filter( $this->post->post_parent, __FUNCTION__ );
+	}
+
+	/**
+	 * Get the variation source for this variant
+	 *
+	 * @since  1.0.5
+	 *
+	 * @return false|array $source should provide an array with 'type', 'id' and 'label' defined
+	 * @author Tanner Moushey, 5/6/23
+	 */
+	public function get_variation_source() {
+		if ( ! $this->is_variant() ) {
+			return false;
+		}
+
+		$source = apply_filters( 'cpl_get_item_source', false, $this );
+
+		// make sure that we have the expected data
+		if ( ! isset( $source['id'], $source['label'], $source['type'] ) ) {
+			$source = false;
+		}
+
+		return $this->filter( $source, __FUNCTION__ );
+	}
+
+	/**
+	 * Return the ID for this item's variation source
+	 *
+	 * @since  1.0.5
+	 *
+	 * @return false|mixed|void
+	 * @author Tanner Moushey, 5/6/23
+	 */
+	public function get_variation_source_id() {
+		if ( ! $source = $this->get_variation_source() ) {
+			return false;
+		}
+
+		if ( ! isset( $source['id'] ) ) {
+			return false;
+		}
+
+		return $this->filter( $source['id'], __FUNCTION__ );
+	}
+
+	/**
+	 * Return the Label for this item's variation source
+	 *
+	 * @since  1.0.5
+	 *
+	 * @return false|mixed|void
+	 * @author Tanner Moushey, 5/6/23
+	 */
+	public function get_variation_source_label() {
+		if ( ! $source = $this->get_variation_source() ) {
+			return '';
+		}
+
+		if ( ! isset( $source['label'] ) ) {
+			return '';
+		}
+
+		return $this->filter( $source['label'], __FUNCTION__ );
+	}
+
+	/**
+	 * Return the type for this item's variation source
+	 *
+	 * @since  1.0.5
+	 *
+	 * @return false|mixed|void
+	 * @author Tanner Moushey, 5/6/23
+	 */
+	public function get_variation_source_type() {
+		if ( ! $source = $this->get_variation_source() ) {
+			return '';
+		}
+
+		if ( ! isset( $source['type'] ) ) {
+			return '';
+		}
+
+		return $this->filter( $source['type'], __FUNCTION__ );
 	}
 
 	/*************** Podcast Functions ****************/
