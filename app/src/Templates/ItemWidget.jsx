@@ -86,6 +86,8 @@ export function ItemWidgetContent ({
 					<ItemMeta date={item.date.desc} category={[]}/>
 				</Box>
 
+				<h2>Hello, there</h2>
+
 				<h1 className="itemWidget__title" dangerouslySetInnerHTML={{ __html: item.title }} />
 				<Box className="itemWidget__description" dangerouslySetInnerHTML={{ __html: item.desc }}/>
 
@@ -97,7 +99,7 @@ export function ItemWidgetContent ({
 							 leftIcon={<Play/>}
 							 onClick={playVideo}
 						 >
-							 Play Video
+							 Play Video dude
 						 </Rectangular>
 					 </Box>
 					}
