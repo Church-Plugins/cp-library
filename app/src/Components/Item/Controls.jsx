@@ -4,23 +4,23 @@ import PlayAudio from "../../Elements/Buttons/PlayAudio";
 import { usePersistentPlayer } from "../../Contexts/PersistentPlayerContext";
 import ShareButton from "./ShareButton";
 
-export default function Controls({ 
+export default function Controls({
   isVariation,
   item,
   handleSelect
 }) {
   const { isActive: persistentPlayerIsActive, passToPersistentPlayer } = usePersistentPlayer()
-
+	const containerClass   = isVariation ? ' cpl-is-variation' : '';
   const speakers = item.speakers?.map(speaker => speaker.title).join(', ');
 
   return (
-    <Box className="itemDetail__actions">
+    <Box className={"itemDetail__actions" + containerClass}>
 
       {
         isVariation &&
-        <Box>
-          <div className="cpl-variation-name">{ item.title }</div>
-          <div className="cpl-variation-speaker">Speaker: { speakers }</div>
+        <Box className="cpl-list-item--details">
+          <h6 className="cpl-list-item--variations--title">{ item.title }</h6>
+          <div className="cpl-item--speakers"><span className="material-icons-outlined">person</span> { speakers }</div>
         </Box>
       }
 
