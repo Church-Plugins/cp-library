@@ -516,6 +516,48 @@ class Item extends Controller{
 		return $this->filter( $source['type'], __FUNCTION__ );
 	}
 
+	/**
+	 * Return the variations for this item, if they exist
+	 *
+	 * @since 1.1.0
+	 *
+	 * @return array|false
+	 * @author Jonathan Roley
+	 */
+	public function get_variation_data() {
+
+		if( ! $this->has_variations() ) {
+			return false;
+		}
+
+		$variations = $this->get_variations();
+
+		$variations = array_map( function( $id ) {
+			$item = new Item( $id );
+
+			if( ! $item->get_variation_source_id() ) {
+				return false;
+			}
+
+			if( ! $item->is_variant() ) {
+				return false;
+			}
+
+			return array(
+				'title'    => $item->get_variation_source_label(),
+				'id'       => $item->get_variation_source_id(),
+				'audio'    => $item->get_audio(),
+				'video'    => $item->get_video(),
+				'speakers' => $item->get_speakers(),
+				'permalink'=> $item->get_permalink()
+			);
+		}, $variations );
+
+		$variations = array_filter( $variations, 'is_array' );
+
+		return $variations;
+	}
+
 	/*************** Podcast Functions ****************/
 
 	/**
@@ -650,32 +692,37 @@ class Item extends Controller{
 	 * @return mixed|void
 	 * @author Tanner Moushey
 	 */
-	public function get_api_data() {
+	public function get_api_data( $include_variations = false ) {
 		$date = [];
 
 		try {
 			$data = [
-				'id'        => $this->model->id,
-				'originID'  => $this->post->ID,
-				'permalink' => $this->get_permalink(),
-				'status'    => get_post_status( $this->post ),
-				'slug'      => $this->post->post_name,
-				'thumb'     => $this->get_thumbnail(),
-				'title'     => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
-				'desc'      => $this->get_content(),
-				'date'      => [
+				'id'         => $this->model->id,
+				'originID'   => $this->post->ID,
+				'permalink'  => $this->get_permalink(),
+				'status'     => get_post_status( $this->post ),
+				'slug'       => $this->post->post_name,
+				'thumb'      => $this->get_thumbnail(),
+				'title'      => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
+				'desc'       => $this->get_content(),
+				'date'       => [
 					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
 					'timestamp' => $this->get_publish_date()
 				],
-				'category'  => $this->get_categories(),
-				'speakers'  => $this->get_speakers(),
-				'locations' => $this->get_locations(),
-				'video'     => $this->get_video(),
-				'audio'     => $this->get_audio(),
-				'types'     => $this->get_types(),
-				'topics'    => $this->get_topics(),
-				'scripture' => $this->get_scripture(),
+				'category'   => $this->get_categories(),
+				'speakers'   => $this->get_speakers(),
+				'locations'  => $this->get_locations(),
+				'video'      => $this->get_video(),
+				'audio'      => $this->get_audio(),
+				'types'      => $this->get_types(),
+				'topics'     => $this->get_topics(),
+				'scripture'  => $this->get_scripture(),
+				'variations' => null,
 			];
+
+			if ( $include_variations ) {
+				$data['variations'] = $this->get_variation_data();
+			}
 		} catch ( \ChurchPlugins\Exception $e ) {
 			error_log( $e );
 		}
