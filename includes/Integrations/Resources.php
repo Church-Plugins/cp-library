@@ -100,7 +100,9 @@ class Resources {
 				continue;
 			}
 
-			$resource = $this->save_resource( $data, $item->origin_id, $count ++ );
+			if ( ! $resource = $this->save_resource( $data, $item->origin_id, $count ++ ) ) {
+				continue;
+			}
 
 			if ( ! empty( $options[ 'sideload_resources' ] ) ) {
 				$url = $importer->sideload_media_and_get_url( $resource->origin_id, $resource->get_meta_value( 'resource_url' ) );
@@ -151,6 +153,8 @@ class Resources {
 		} catch ( Exception $e ) {
 			error_log( $e );
 		}
+
+		return false;
 	}
 
 	/**
