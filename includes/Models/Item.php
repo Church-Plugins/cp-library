@@ -466,6 +466,12 @@ class Item extends Table  {
 	 */
 	public function delete() {
 		do_action( "cpl_{$this->type}_delete_meta_before" );
+
+		// delete variations
+		foreach( $this->get_variations() as $variation_id ) {
+			wp_delete_post( $variation_id, true );
+		}
+
 		$source = new Speaker();
 		$source->delete_all_meta( $this->id, 'item_id' );
 		$this->delete_all_meta( $this->id, 'item_id' );
