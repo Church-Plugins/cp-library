@@ -1,6 +1,8 @@
 <?php
 namespace CP_Library\Setup\Taxonomies;
 
+use ChurchPlugins\Exception;
+use CP_Library\Models\Item;
 use CP_Library\Templates;
 use ChurchPlugins\Setup\Taxonomies\Taxonomy;
 
@@ -87,28 +89,21 @@ class Scripture extends Taxonomy  {
 
 		// Get our static list of possible Book/Chapter/Verse values
 		$scriptures = _C::arrayify_json( $this->get_term_data() );
-		$selected_scriptures = wp_get_object_terms( $post->ID, 'cpl_scripture' );
-		$selected_scripture_names = []; // For easier lookup
+		$selected_scriptures = $this->get_object_passages( $post->ID );
 
 		$selected_options_html = '';
 		foreach ( $selected_scriptures as $selected_term ) {
 			$selected_options_html .= '
-				<span class="cpl-scripture-tag" data-id="' . esc_attr( $selected_term->term_id ) . '">' .
-					esc_html( $selected_term->name ) .
-					'<input type="hidden" name="cpl-scripture-tag-selections[]" data-id="' . esc_attr( $selected_term->term_id ) . '" data-name="' . esc_html( $selected_term->name ) . '" value="' . esc_html( $selected_term->name ) . '">' .
+				<span class="cpl-scripture-tag" data-id="0">' .
+					esc_html( $selected_term ) .
+					'<input type="hidden" name="cpl-scripture-tag-selections[]" data-id="0" data-name="' . esc_html( $selected_term ) . '" value="' . esc_html( $selected_term ) . '">' .
 				'</span>
 			';
-			$selected_scripture_names[] = $selected_term->name;
 		}
 
 		$book_list_html = '<ul id="cpl-book-list">';
 		foreach( $scriptures as $book => $book_details ) {
-
-			$selected_class = '';
-			if( in_array( $book, $selected_scripture_names ) ) {
-				$selected_class = 'cpl-selected';
-			}
-			$book_list_html .= '<li class="cpl-scripture-book ' . $selected_class . '" data-name="' . $book . '"> ' . $book . ' </li>';
+			$book_list_html .= '<li class="cpl-scripture-book" data-name="' . $book . '"> ' . $book . ' </li>';
 		}
 		$book_list_html .= '</ul>';
 
@@ -151,7 +146,6 @@ class Scripture extends Taxonomy  {
 	 * @author costmo
 	 */
 	public function save_metabox_input( $post_id ) {
-
 		// Basic input and security checks
 		if( ! isset( $_POST['cpl_admin_nonce_field'] ) || ! wp_verify_nonce( $_POST['cpl_admin_nonce_field'], 'cpl-admin' ) ) {
 			return;
@@ -161,35 +155,90 @@ class Scripture extends Taxonomy  {
 		}
 
 		// Sanity check the input
-		if( empty( $_POST ) || ! is_array( $_POST ) ) {
+		if( empty( $_POST ) || ! is_array( $_POST ) || ! isset( $_POST['cpl-scripture-tag-selections'] ) ) {
 			return;
 		}
 
-		// Term input was empty, so make sure the terms are cleared for this post and return
-		if( empty( $_POST['cpl-scripture-tag-selections'] ) || ! is_array( $_POST['cpl-scripture-tag-selections'] ) ) {
-			wp_delete_object_term_relationships( $post_id, [ 'cpl_scripture' ] );
-			return;
+		$this->update_object_scripture( $post_id, $_POST['cpl-scripture-tag-selections'] );
+	}
+
+	/**
+	 * Get the passage meta for the provided object
+	 *
+	 * @since  1.1.0
+	 *
+	 * @param $object_id
+	 *
+	 * @return mixed
+	 * @author Tanner Moushey, 5/25/23
+	 */
+	public function get_object_passages( $object_id ) {
+		return get_post_meta( $object_id, '_cp_scripture', true );
+	}
+
+	/**
+	 * Get the scripture terms for the provided object
+	 *
+	 * @since  1.1.0
+	 *
+	 * @param $object_id
+	 *
+	 * @return array|\WP_Error
+	 * @author Tanner Moushey, 5/25/23
+	 */
+	public function get_object_scripture( $object_id ) {
+		return wp_get_post_terms( $object_id, $this->taxonomy );
+	}
+
+	/**
+	 * Update the scripture passages associated with the provided object
+	 *
+	 * @since  1.1.0
+	 *
+	 * @param $object_id
+	 * @param $passages
+	 *
+	 * @return array|bool|int|int[]|string|string[]|void|\WP_Error|null
+	 * @author Tanner Moushey, 5/25/23
+	 */
+	public function update_object_scripture( $object_id, $passages ) {
+
+		if ( empty( $passages ) ) {
+			delete_post_meta( $object_id, '_cp_scripture' );
+			wp_delete_object_term_relationships( $object_id, [ $this->taxonomy ] );
+			return true;
 		}
 
-		// There are terms to save...
+		if ( ! is_array( $passages ) ) {
+			$passages = [ $passages ];
+		}
+
 		$save_term_ids = [];
-		$incoming_terms = $_POST['cpl-scripture-tag-selections'];
-		foreach( $incoming_terms as $term ) {
-			// Check if the term exists in the 'cpl_scripture' taxonomy.
-			$existing_term = get_term_by( 'name', $term, 'cpl_scripture' );
+
+		$passages = array_map( 'sanitize_text_field', $passages );
+
+		foreach( $passages as $key => $passage ) {
+			if ( ! $book = $this->get_book( $passage ) ) {
+				unset( $passages[ $key ] );
+				continue;
+			}
+
+			$existing_term = get_term_by( 'name', $book, $this->taxonomy );
 
 			// If the term exists, use its ID.
 			if ( $existing_term ) {
 				$save_term_ids[] = $existing_term->term_id;
 			} else {
 				// If the term does not exist, insert it and use the new ID.
-				$new_term = wp_insert_term( $term, 'cpl_scripture' );
+				$new_term = wp_insert_term( $book, $this->taxonomy );
 				if ( ! is_wp_error( $new_term ) ) {
 					$save_term_ids[] = $new_term['term_id'];
 				}
 			}
 		}
-		wp_set_object_terms( $post_id, $save_term_ids, 'cpl_scripture', false );
+
+		update_post_meta( $object_id, '_cp_scripture', $passages );
+		return wp_set_object_terms( $object_id, $save_term_ids, $this->taxonomy, false );
 	}
 
 	/**
@@ -249,6 +298,29 @@ class Scripture extends Taxonomy  {
 		}
 
 		return apply_filters( "{$this->taxonomy}_get_term_data", json_decode( file_get_contents( $file ) ) );
+	}
+
+	/**
+	 * Retrieve the book associated with the passage
+	 *
+	 * @since  1.1.0
+	 *
+	 * @param $passage
+	 *
+	 * @return false|int|string
+	 * @author Tanner Moushey, 5/25/23
+	 */
+	public function get_book( $passage ) {
+		$passage = trim( $passage );
+		$books = array_keys( get_object_vars( $this->get_term_data() ) );
+
+		foreach( $books as $book ) {
+			if ( 0 === strpos( strtolower( $passage ), strtolower( $book ) ) ) {
+				return $book;
+			}
+		}
+
+		return false;
 	}
 
 }

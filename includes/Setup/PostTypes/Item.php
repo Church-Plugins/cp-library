@@ -609,6 +609,7 @@ class Item extends PostType  {
 		add_filter( 'cmb2_can_save', '__return_false' );
 
 		$meta = get_post_meta( $object_id );
+		$item = new ItemController( $object_id );
 
 		foreach( $meta as $key => $value ) {
 			if ( false === strpos( $key, '_cpl_item_variation' ) ) {
@@ -638,73 +639,7 @@ class Item extends PostType  {
 					continue;
 				}
 
-				if ( empty( $item_data['id'] ) ) {
-					$item_data['id'] = wp_insert_post( [
-						'post_type'    => Item::get_instance()->post_type,
-						'post_status'  => 'publish',
-						'post_title'   => $post->post_title,
-						'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ),
-						'post_content' => $post->post_content,
-						'post_parent'  => $post->ID,
-					] );
-				} else {
-					wp_update_post( [
-						'ID'           => $item_data['id'],
-						'post_title'   => $post->post_title,
-						'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ),
-						'post_content' => $post->post_content,
-						'post_parent'  => $post->ID,
-					] );
-				}
-
-				if ( ! $item_data['id'] ) {
-					throw new Exception( 'The item was not saved correctly.' );
-				}
-
-				if ( $thumbnail = get_post_thumbnail_id( $object_id ) ) {
-					set_post_thumbnail( $item_data['id'], $thumbnail );
-				} else {
-					delete_post_thumbnail( $item_data['id'] );
-				}
-
-				// save custom taxonomies
-				$taxes = apply_filters( 'cpl_item_save_variation_taxonomies', get_object_taxonomies( $this->post_type ), $item_data, $object_id );
-				foreach ( $taxes as $tax ) {
-					$terms = wp_get_post_terms( $object_id, $tax, [ 'fields' => 'ids' ] );
-					if ( empty( $terms ) ) {
-						wp_set_post_terms( $item_data['id'], [], $tax );
-					} else {
-						wp_set_post_terms( $item_data['id'], $terms, $tax );
-					}
-				}
-
-				// trigger variation save
-				do_action( 'cpl_save_item_source_' . $item_data['variation_type'], $item_data['id'], $item_data['variation_id'] );
-
-				$variant = new ItemController( $item_data['id'] );
-
-				// update the slug to match the variation label
-				wp_update_post( [ 'ID' => $variant->post->ID, 'post_name' => sanitize_title( $variant->get_variation_source_label() ) ] );
-
-				if ( cp_library()->setup->post_types->speaker_enabled() ) {
-					$variant->model->update_speakers( $item_data['speakers'] );
-				}
-
-				$media_meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo', 'video_id_youtube' ];
-				foreach ( $media_meta as $k ) {
-					if ( empty( $item_data[ $k ] ) ) {
-						delete_post_meta( $variant->post->ID, $k );
-						$variant->model->delete_meta( $k );
-					} else {
-						update_post_meta( $variant->post->ID, $k, $item_data[ $k ] );
-						$variant->model->update_meta_value( $k, $item_data[ $k ] );
-					}
-				}
-
-				// remove Series from variant... don't want it to show in the series view.
-				$variant->model->update_types( [] );
-
-				do_action( 'cpl_save_item_variations_variant', $variant, $object_id, $item_data );
+				$item->model->update_variant( $item_data );
 
 			} catch ( Exception $e ) {
 				error_log( $e );
@@ -712,7 +647,6 @@ class Item extends PostType  {
 		}
 
 		// flush the cache
-		$item = new ItemController( $object_id );
 		$item->model->update_cache();
 
 		remove_filter( 'cmb2_can_save', '__return_false' );
