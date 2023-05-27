@@ -176,12 +176,26 @@ class Item extends Controller{
 
 	public function get_scripture() {
 		$return = [];
-		$terms  = get_the_terms( $this->post->ID, cp_library()->setup->taxonomies->scripture->taxonomy );
+
+		$passages = cp_library()->setup->taxonomies->scripture->get_object_passages( $this->post->ID );
+		$terms    = cp_library()->setup->taxonomies->scripture->get_object_scripture( $this->post->ID );
+
+		if ( empty( $passages[0] ) ) {
+			return false;
+		}
+
+		$book = cp_library()->setup->taxonomies->scripture->get_book( $passages[0] );
+		if ( ! $term = get_term_by( 'name', $book, cp_library()->setup->taxonomies->scripture->taxonomy ) ) {
+			return false;
+		}
+
+
+		$terms  = [ $term ];
 
 		if ( $terms ) {
 			foreach ( $terms as $term ) {
 				$return[ $term->slug ] = [
-					'name' => $term->name,
+					'name' => $passages[0],
 					'slug' => $term->slug,
 					'url'  => get_term_link( $term )
 				];
