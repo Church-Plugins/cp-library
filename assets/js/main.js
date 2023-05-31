@@ -32,7 +32,7 @@
 			SELF.url = e.currentTarget.href;
 
 			// make sure this is a local link
-			if (!SELF.url.includes(window.location.hostname)) {
+			if (!SELF.url.includes(window.location.hostname) || '_blank' === e.currentTarget.target) {
 				return;
 			}
 
