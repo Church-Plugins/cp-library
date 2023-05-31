@@ -558,12 +558,13 @@ class Item extends Controller{
 			}
 
 			return array(
-				'title'    => $item->get_variation_source_label(),
-				'id'       => $item->get_variation_source_id(),
-				'audio'    => $item->get_audio(),
-				'video'    => $item->get_video(),
-				'speakers' => $item->get_speakers(),
-				'permalink'=> $item->get_permalink()
+				'title'     => sprintf( '%s: %s', $this->get_title(), $item->get_variation_source_label() ),
+				'variation' => $item->get_variation_source_label(),
+				'id'        => $item->get_variation_source_id(),
+				'audio'     => $item->get_audio(),
+				'video'     => $item->get_video(),
+				'speakers'  => $item->get_speakers(),
+				'permalink' => $this->get_permalink()
 			);
 		}, $variations );
 
