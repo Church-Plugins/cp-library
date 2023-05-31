@@ -267,9 +267,12 @@ class ItemType extends PostType  {
 	public function register_metaboxes() {
 		$this->sermon_series_metabox();
 
-		// allow for multiple sources for series (ie. locations)
-		foreach( $this->get_sources() as $key => $source ) {
-			$this->series_items( $key, $source );
+		// disable series items if we support sermon variations
+		if ( ! cp_library()->setup->variations->is_enabled() ) {
+			// allow for multiple sources for series (ie. locations)
+			foreach ( $this->get_sources() as $key => $source ) {
+				$this->series_items( $key, $source );
+			}
 		}
 	}
 
