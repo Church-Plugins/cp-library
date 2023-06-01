@@ -160,7 +160,7 @@ class Speaker extends PostType {
 		try {
 			$item = ItemModel::get_instance_from_origin( $field->object_id );
 
-			if ( ! $speakers = array_map( 'absint', $field->data_to_save[ $field->id( true ) ] ) ) {
+			if ( ! is_array( $field->data_to_save[ $field->id( true ) ] ) || ! $speakers = array_map( 'absint', $field->data_to_save[ $field->id( true ) ] ) ) {
 				$speakers = [];
 			}
 
