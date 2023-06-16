@@ -19,7 +19,7 @@ export default function Controls({
       {
         isVariation &&
         <Box className="cpl-list-item--details">
-          <h6 className="cpl-list-item--variations--title">{ item.title }</h6>
+          <h6 className="cpl-list-item--variations--title">{ item.variation }</h6>
           <div className="cpl-item--speakers"><span className="material-icons-outlined">person</span> { speakers }</div>
         </Box>
       }
