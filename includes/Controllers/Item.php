@@ -336,6 +336,11 @@ class Item extends Controller{
 	 * @author Tanner Moushey
 	 */
 	public function get_speakers() {
+		// no speakers for variations
+		if ( $this->has_variations() ) {
+			return [];
+		}
+
 		$speaker_ids = $this->model->get_speakers();
 		$speakers = [];
 
