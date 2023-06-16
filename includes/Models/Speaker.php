@@ -53,7 +53,7 @@ class Speaker extends Source {
 INNER JOIN %2$s
 ON %1$s.id = %2$s.source_id
 WHERE %2$s.key = "source_type" AND %2$s.source_type_id = %3$d
-ORDER BY %2$s.order ASC', $instance->table_name, $meta->table_name, $type_id );
+ORDER BY %2$s.order ASC, %1$s.title ASC', $instance->table_name, $meta->table_name, $type_id );
 
 		$speakers = $wpdb->get_results( $sql );
 
