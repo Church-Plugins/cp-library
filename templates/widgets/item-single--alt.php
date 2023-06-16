@@ -59,7 +59,7 @@ if ( empty( $item['variations'] ) ) {
 
 					<?php if ( ! empty( $resources ) ) : ?>
 						<div class="cpl-single-item--resources resources-hide" onclick="jQuery(this).toggleClass('resources-hide');">
-							<?php cp_resources()->templates->get_template_part( 'widgets/item-resources', [ 'id' => $item['originID'], 'title' => count( $resources ) . ' ' . __( 'attachments', 'cp-library' ) ] ); ?>
+							<?php cp_resources()->templates->get_template_part( 'widgets/item-resources', [ 'id' => $item['originID'], 'title' => count( $resources ) . ' ' . __( 'resources', 'cp-library' ) ] ); ?>
 						</div>
 					<?php endif; ?>
 
