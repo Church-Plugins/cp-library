@@ -175,6 +175,13 @@ class Item extends Controller{
 	}
 
 	public function get_scripture() {
+
+		// scripture is top level, get parent scripture if applicable
+		if ( $this->post->post_parent ) {
+			$parent = new self( $this->post->post_parent );
+			return $parent->get_scripture();
+		}
+
 		$return = [];
 
 		$passages = cp_library()->setup->taxonomies->scripture->get_object_passages( $this->post->ID );

@@ -113,6 +113,10 @@ class Item extends PostType  {
 			return;
 		}
 
+		if ( ! empty( $_GET['speaker'] ) ) {
+			return;
+		}
+
 		// if we are filtering the variation, don't filter out the parents
 		if ( cp_library()->setup->post_types->service_type->post_type === cp_library()->setup->variations->get_source()
 			 && ! empty( $_GET['service-type'] ) ) {

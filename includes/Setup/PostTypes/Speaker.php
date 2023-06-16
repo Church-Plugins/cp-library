@@ -248,12 +248,6 @@ class Speaker extends PostType {
 			try {
 				$speaker = Speaker_Model::get_instance( $speaker );
 				$post_in = array_merge( $post_in, $speaker->get_all_items() );
-
-				foreach( $post_in as $post_id ) {
-					if ( $post_parent_id = get_post( $post_id )->post_parent ) {
-						$post_in[] = $post_parent_id;
-					}
-				}
 			} catch ( Exception $e ) {
 				error_log( $e );
 			}
