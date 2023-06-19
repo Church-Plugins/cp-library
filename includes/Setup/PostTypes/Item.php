@@ -87,7 +87,7 @@ class Item extends PostType  {
 	 * @author Tanner Moushey, 6/16/23
 	 */
 	public function variation_link( $link, $post ) {
-		if ( ! $this->post_type = get_post_type( $post ) ) {
+		if ( get_post_type( $post ) != $this->post_type ) {
 			return $link;
 		}
 
