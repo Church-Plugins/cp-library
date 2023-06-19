@@ -46,6 +46,7 @@ class Resources {
 		add_action( 'cp_library_tools_import_additional_options', [ $this, 'import_options' ] );
 		add_filter( 'cp_do_ajax_import_options', [ $this, 'set_variation_options' ], 10, 2 );
 		add_filter( 'cp_library_import_process_step_item', [ $this, 'process_item' ], 10, 4 );
+		add_filter( 'cp_resources_output_resources_check_object', [ $this, 'output_resources_hotwire' ] );
 	}
 
 	/** Actions ***************************************************/
@@ -178,5 +179,23 @@ class Resources {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Handle resource output for sermon page when in Series mode
+	 *
+	 * @since  1.1.0
+	 *
+	 * @param $content
+	 *
+	 * @return mixed|string
+	 * @author Tanner Moushey, 6/19/23
+	 */
+	public function output_resources_hotwire( $check_object ) {
+		if ( get_query_var( 'type-item' ) ) {
+			return false;
+		}
+
+		return $check_object;
 	}
 }
