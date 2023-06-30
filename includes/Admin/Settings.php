@@ -271,6 +271,50 @@ class Settings {
 			'default' => strtolower( sanitize_title( cp_library()->setup->post_types->item->plural_label ) ),
 		) );
 
+		$options->add_field( array(
+			'name' => __( 'Template Options', 'cp-library' ),
+			'id'   => 'template_title',
+			'type' => 'title',
+		) );
+
+		$template_items = [
+			'date'      => __( 'Publish Date', 'cp-library' ),
+			'topics'    => __( 'Topics', 'cp-library' ),
+			'scripture' => __( 'Scripture', 'cp-library' ),
+		];
+
+		if ( cp_library()->setup->post_types->speaker_enabled() ) {
+			$template_items['speakers'] = cp_library()->setup->post_types->speaker->plural_label;
+		}
+
+		if ( cp_library()->setup->post_types->item_type_enabled() ) {
+			$template_items['types'] = cp_library()->setup->post_types->item_type->plural_label;
+		}
+
+		if ( cp_library()->setup->post_types->service_type_enabled() ) {
+			$template_items['service_type'] = cp_library()->setup->post_types->service_type->plural_label;
+		}
+
+		$template_items = apply_filters( 'cp_library_template_items', $template_items );
+
+		$options->add_field( [
+			'name' => __( 'Info Items', 'cp-library' ),
+			'desc' => __( 'The items to show under the title on the single view and list view.', 'cp-library' ),
+			'id'   => 'info_items',
+			'type' => 'pw_multiselect',
+			'options' => $template_items,
+			'default' => [ 'speakers', 'locations', 'types' ]
+		] );
+
+		$options->add_field( [
+			'name' => __( 'Meta Items', 'cp-library' ),
+			'desc' => __( 'The items to show above the title on the single view and at the bottom of the card in the list view.', 'cp-library' ),
+			'id'   => 'meta_items',
+			'type' => 'pw_multiselect',
+			'options' => $template_items,
+			'default' => [ 'date', 'topics', 'scripture' ]
+		] );
+
 		$variation_sources = cp_library()->setup->variations->get_sources();
 		$desc              = __( 'Use this section to control the sermon variation functionality. Variations allows you to create multiple versions of a sermon with different speakers, media, etc. This is ideal for churches that deliver the same message from multiple locations each Sunday.', 'cp-library' );
 

@@ -366,6 +366,10 @@ class Item extends Controller{
 	 * @author Tanner Moushey
 	 */
 	public function get_service_types() {
+		if ( ! cp_library()->setup->post_types->service_type_enabled() ) {
+			return [];
+		}
+
 		$service_type_ids = $this->model->get_service_types();
 		$service_types = [];
 
@@ -742,6 +746,7 @@ class Item extends Controller{
 				'video'      => $this->get_video(),
 				'audio'      => $this->get_audio(),
 				'types'      => $this->get_types(),
+				'service_types' => $this->get_service_types(),
 				'topics'     => $this->get_topics(),
 				'scripture'  => $this->get_scripture(),
 				'variations' => null,
