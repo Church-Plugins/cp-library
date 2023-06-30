@@ -4,6 +4,7 @@ namespace CP_Library\Models;
 
 use ChurchPlugins\Exception;
 use ChurchPlugins\Models\Table;
+use CP_Library\Controllers\Item as ItemController;
 
 /**
  * Item DB Class
@@ -312,6 +313,149 @@ class Item extends Table  {
 	}
 
 	/**
+	 * Update the scripture passages associated with an item
+	 *
+	 * @since  1.1.0
+	 *
+	 * @param $passages
+	 *
+	 * @author Tanner Moushey, 5/25/23
+	 */
+	public function update_scripture( $passages ) {
+		return cp_library()->setup->taxonomies->scripture->update_object_scripture( $this->origin_id, $passages );
+	}
+
+
+	/**
+	 * Create or update a variant for the existing item
+	 *
+	 * @since  1.1.0
+	 *
+	 * @param array $item_data {
+	 *                         An array of data to create the new variant
+	 *
+	 * @type int    $id        The id of the variant to update.
+	 * @type int    $date      The datetime string for the new variant's publish date
+	 * @type array  $speakers  An array of speakers to add to the new variant
+	 * @type string $audio_url The url to use for the audio file
+	 * @type string $video_url The url to use for the video file
+	 * }
+	 *
+	 *
+	 * @return \CP_Library\Controllers\Item
+	 * @throws Exception
+	 * @author Tanner Moushey, 5/25/23
+	 */
+	public function update_variant( $item_data ) {
+		$post       = get_post( $this->origin_id );
+		$variation_items = cp_library()->setup->variations->get_source_items( true );
+
+		// mark this post has having variations
+		update_post_meta( $post->ID, '_cpl_has_variations', 'on' );
+
+		$item_data = wp_parse_args( $item_data, [
+			'date' => get_post_timestamp( $post ),
+			'variation_type' => cp_library()->setup->variations->get_source(),
+		] );
+
+		$item_data = apply_filters( 'cp_library_item_update_variant_data', $item_data, $this );
+
+		if ( empty( $item_data[ 'variation_id' ] ) ) {
+			throw new Exception( 'variation_id was not provided' );
+		}
+
+		if ( ! in_array( $item_data['variation_id'], $variation_items ) ) {
+			throw new Exception( 'The provided variation id is not valid.' );
+		}
+
+		// detect if a variant already exists for this variation id... update it if found
+		foreach( $this->get_variations() as $variant_id ) {
+			$variant = new ItemController( $variant_id );
+
+			if ( $variant->get_variation_source_id() == $item_data['variation_id'] ) {
+				$item_data['id'] = $variant_id;
+				break;
+			}
+		}
+
+		// create or update the item variation
+		if ( empty( $item_data['id'] ) ) {
+			$item_data['id'] = wp_insert_post( [
+				'post_type'    => $this->post_type,
+				'post_status'  => 'publish',
+				'post_title'   => $post->post_title,
+				'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ),
+				'post_content' => $post->post_content,
+				'post_parent'  => $post->ID,
+			] );
+		} else {
+			wp_update_post( [
+				'ID'           => $item_data['id'],
+				'post_title'   => $post->post_title,
+				'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ),
+				'post_content' => $post->post_content,
+				'post_parent'  => $post->ID,
+			] );
+		}
+
+		if ( ! $item_data['id'] ) {
+			throw new Exception( 'The item was not saved correctly.' );
+		}
+
+		if ( $thumbnail = get_post_thumbnail_id( $post->ID ) ) {
+			set_post_thumbnail( $item_data['id'], $thumbnail );
+		} else {
+			delete_post_thumbnail( $item_data['id'] );
+		}
+
+		// save custom taxonomies
+		$taxes = apply_filters( 'cpl_item_save_variation_taxonomies', get_object_taxonomies( $this->post_type ), $item_data, $post->ID );
+		foreach ( $taxes as $tax ) {
+			$terms = wp_get_post_terms( $post->ID, $tax, [ 'fields' => 'ids' ] );
+			if ( empty( $terms ) ) {
+				wp_set_post_terms( $item_data['id'], [], $tax );
+			} else {
+				wp_set_post_terms( $item_data['id'], $terms, $tax );
+			}
+		}
+
+		// trigger variation save
+		do_action( 'cpl_save_item_source_' . $item_data['variation_type'], $item_data['id'], $item_data['variation_id'] );
+
+		$variant = new \CP_Library\Controllers\Item( $item_data['id'] );
+
+		// update the slug to match the variation label
+		wp_update_post( [
+			'ID' => $variant->post->ID,
+			'post_name' => sanitize_title( $variant->get_variation_source_label() )
+		] );
+
+		if ( cp_library()->setup->post_types->speaker_enabled() ) {
+			$variant->model->update_speakers( $item_data['speakers'] );
+		}
+
+		$media_meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo', 'video_id_youtube' ];
+		foreach ( $media_meta as $k ) {
+			if ( empty( $item_data[ $k ] ) ) {
+				delete_post_meta( $variant->post->ID, $k );
+				$variant->model->delete_meta( $k );
+			} else {
+				update_post_meta( $variant->post->ID, $k, $item_data[ $k ] );
+				$variant->model->update_meta_value( $k, $item_data[ $k ] );
+			}
+		}
+
+		// remove Series from variant... don't want it to show in the series view.
+		if ( cp_library()->setup->post_types->item_type_enabled() ) {
+			$variant->model->update_types( [] );
+		}
+
+		do_action( 'cpl_save_item_variations_variant', $variant, $post->ID, $item_data );
+
+		return $variant;
+	}
+
+	/**
 	 * Also delete all item associated meta
 	 *
 	 * @return bool|void
@@ -322,6 +466,12 @@ class Item extends Table  {
 	 */
 	public function delete() {
 		do_action( "cpl_{$this->type}_delete_meta_before" );
+
+		// delete variations
+		foreach( $this->get_variations() as $variation_id ) {
+			wp_delete_post( $variation_id, true );
+		}
+
 		$source = new Speaker();
 		$source->delete_all_meta( $this->id, 'item_id' );
 		$this->delete_all_meta( $this->id, 'item_id' );
@@ -492,7 +642,5 @@ class Item extends Table  {
 
 		return $return_value;
 	}
-
-
 
 }

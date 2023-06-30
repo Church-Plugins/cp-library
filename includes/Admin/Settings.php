@@ -159,6 +159,28 @@ class Settings {
 			'preview_size' => 'medium', // Image size to use when previewing in the admin
 		) );
 
+		$main_options->add_field( array(
+			'name'         => __( 'Labels', 'cp-library' ),
+			'id'           => 'label_title',
+			'type'         => 'title',
+		) );
+
+		$main_options->add_field( array(
+			'name'         => __( 'Play Video Button', 'cp-library' ),
+			'desc'         => sprintf( __( 'The text to use on the play button.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'id'           => 'label_play_video',
+			'type'         => 'text',
+			'default'      => __( 'Watch', 'cp-library' ),
+		) );
+
+		$main_options->add_field( array(
+			'name'         => __( 'Play Audio Button', 'cp-library' ),
+			'desc'         => sprintf( __( 'The text to use on the play button.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'id'           => 'label_play_audio',
+			'type'         => 'text',
+			'default'      => __( 'Listen', 'cp-library' ),
+		) );
+
 		$this->item_options();
 
 		if ( cp_library()->setup->post_types->item_type_enabled() ) {

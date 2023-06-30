@@ -64,6 +64,7 @@ if ( $item->has_variations() ) {
 					} ?>
 					<div class="cpl-list-item--columns">
 						<div class="cpl-list-item--details">
+							<h6 class="cpl-list-item--variations--title"><?php echo $variant->get_variation_source_label(); ?></h6>
 							<?php \CP_Library\Templates::get_template_part( 'parts/item-single/info', [ 'item' => $variant_data ] ); ?>
 						</div>
 

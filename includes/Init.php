@@ -173,6 +173,7 @@ class Init {
 		return in_array( get_post_type(), $this->setup->post_types->get_post_types() );
 	}
 
+
 	/**
 	 * `wp_enqueue_scripts` actions for the app's compiled sources
 	 *
@@ -196,8 +197,8 @@ class Init {
 				'mobileTop' => ''
 			],
 			'i18n' => [
-				'playAudio' => __( 'Play Audio', 'cp-library' ),
-				'playVideo' => __( 'Play Video', 'cp-library' ),
+				'playAudio' => Settings::get( 'label_play_audio', __( 'Listen', 'cp-library' ) ),
+				'playVideo' => Settings::get( 'label_play_video', __( 'Watch', 'cp-library' ) ),
 			],
 		] );
 
@@ -266,6 +267,10 @@ class Init {
 	protected function includes() {
 		if ( function_exists( 'cp_locations' ) ) {
 			Integrations\Locations::get_instance();
+		}
+
+		if ( function_exists( 'cp_resources' ) ) {
+			Integrations\Resources::get_instance();
 		}
 
 		if ( defined( 'TRIBE_EVENTS_FILE' ) ) {

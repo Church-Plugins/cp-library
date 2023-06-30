@@ -175,13 +175,34 @@ class Item extends Controller{
 	}
 
 	public function get_scripture() {
+
+		// scripture is top level, get parent scripture if applicable
+		if ( $this->post->post_parent ) {
+			$parent = new self( $this->post->post_parent );
+			return $parent->get_scripture();
+		}
+
 		$return = [];
-		$terms  = get_the_terms( $this->post->ID, cp_library()->setup->taxonomies->scripture->taxonomy );
+
+		$passages = cp_library()->setup->taxonomies->scripture->get_object_passages( $this->post->ID );
+		$terms    = cp_library()->setup->taxonomies->scripture->get_object_scripture( $this->post->ID );
+
+		if ( empty( $passages[0] ) ) {
+			return false;
+		}
+
+		$book = cp_library()->setup->taxonomies->scripture->get_book( $passages[0] );
+		if ( ! $term = get_term_by( 'name', $book, cp_library()->setup->taxonomies->scripture->taxonomy ) ) {
+			return false;
+		}
+
+
+		$terms  = [ $term ];
 
 		if ( $terms ) {
 			foreach ( $terms as $term ) {
 				$return[ $term->slug ] = [
-					'name' => $term->name,
+					'name' => $passages[0],
 					'slug' => $term->slug,
 					'url'  => get_term_link( $term )
 				];
@@ -315,6 +336,11 @@ class Item extends Controller{
 	 * @author Tanner Moushey
 	 */
 	public function get_speakers() {
+		// no speakers for variations
+		if ( $this->has_variations() ) {
+			return [];
+		}
+
 		$speaker_ids = $this->model->get_speakers();
 		$speakers = [];
 
@@ -516,6 +542,49 @@ class Item extends Controller{
 		return $this->filter( $source['type'], __FUNCTION__ );
 	}
 
+	/**
+	 * Return the variations for this item, if they exist
+	 *
+	 * @since 1.1.0
+	 *
+	 * @return array|false
+	 * @author Jonathan Roley
+	 */
+	public function get_variation_data() {
+
+		if( ! $this->has_variations() ) {
+			return false;
+		}
+
+		$variations = $this->get_variations();
+
+		$variations = array_map( function( $id ) {
+			$item = new Item( $id );
+
+			if( ! $item->get_variation_source_id() ) {
+				return false;
+			}
+
+			if( ! $item->is_variant() ) {
+				return false;
+			}
+
+			return array(
+				'title'     => sprintf( '%s: %s', $this->get_title(), $item->get_variation_source_label() ),
+				'variation' => $item->get_variation_source_label(),
+				'id'        => $item->get_variation_source_id(),
+				'audio'     => $item->get_audio(),
+				'video'     => $item->get_video(),
+				'speakers'  => $item->get_speakers(),
+				'permalink' => $this->get_permalink()
+			);
+		}, $variations );
+
+		$variations = array_filter( $variations, 'is_array' );
+
+		return $variations;
+	}
+
 	/*************** Podcast Functions ****************/
 
 	/**
@@ -650,32 +719,37 @@ class Item extends Controller{
 	 * @return mixed|void
 	 * @author Tanner Moushey
 	 */
-	public function get_api_data() {
+	public function get_api_data( $include_variations = false ) {
 		$date = [];
 
 		try {
 			$data = [
-				'id'        => $this->model->id,
-				'originID'  => $this->post->ID,
-				'permalink' => $this->get_permalink(),
-				'status'    => get_post_status( $this->post ),
-				'slug'      => $this->post->post_name,
-				'thumb'     => $this->get_thumbnail(),
-				'title'     => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
-				'desc'      => $this->get_content(),
-				'date'      => [
+				'id'         => $this->model->id,
+				'originID'   => $this->post->ID,
+				'permalink'  => $this->get_permalink(),
+				'status'     => get_post_status( $this->post ),
+				'slug'       => $this->post->post_name,
+				'thumb'      => $this->get_thumbnail(),
+				'title'      => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
+				'desc'       => $this->get_content(),
+				'date'       => [
 					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
 					'timestamp' => $this->get_publish_date()
 				],
-				'category'  => $this->get_categories(),
-				'speakers'  => $this->get_speakers(),
-				'locations' => $this->get_locations(),
-				'video'     => $this->get_video(),
-				'audio'     => $this->get_audio(),
-				'types'     => $this->get_types(),
-				'topics'    => $this->get_topics(),
-				'scripture' => $this->get_scripture(),
+				'category'   => $this->get_categories(),
+				'speakers'   => $this->get_speakers(),
+				'locations'  => $this->get_locations(),
+				'video'      => $this->get_video(),
+				'audio'      => $this->get_audio(),
+				'types'      => $this->get_types(),
+				'topics'     => $this->get_topics(),
+				'scripture'  => $this->get_scripture(),
+				'variations' => null,
 			];
+
+			if ( $include_variations ) {
+				$data['variations'] = $this->get_variation_data();
+			}
 		} catch ( \ChurchPlugins\Exception $e ) {
 			error_log( $e );
 		}

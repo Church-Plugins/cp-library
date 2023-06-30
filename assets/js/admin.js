@@ -302,7 +302,7 @@ jQuery( function( $ ){
 		let currentSelection = '';
 
 		if( 'verse' === currentLevel ) {
-			currentSelection = $( '#cpl-scripture-current-selection' ).attr( 'data-value' ) + ': ' +  $( target ).attr( 'data-value' );
+			currentSelection = $( '#cpl-scripture-current-selection' ).attr( 'data-value' ) + ':' +  $( target ).attr( 'data-value' );
 		} else {
 			currentSelection = $( '#cpl-scripture-current-selection' ).attr( 'data-value' ) + '-' +  $( target ).attr( 'data-value' );
 		}
