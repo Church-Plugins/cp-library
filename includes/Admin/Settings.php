@@ -246,7 +246,7 @@ class Settings {
 			'id'      => 'slug',
 			'desc'    => __( 'Caution: changing this value will also adjust the url structure and may affect your SEO.', 'cp-library' ),
 			'type'    => 'text',
-			'default' => strtolower( sanitize_title( cp_library()->setup->post_types->item_type->plural_label ) ),
+			'default' => strtolower( sanitize_title( cp_library()->setup->post_types->item->plural_label ) ),
 		) );
 
 		$variation_sources = cp_library()->setup->variations->get_sources();
