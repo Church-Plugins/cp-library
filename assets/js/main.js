@@ -103,7 +103,7 @@
 
 			if (SELF.isActive()) {
 				SELF.$iframe.attr('src', e.data.url);
-				window.history.pushState({}, '', url);
+				window.history.pushState({}, '', e.data.url);
 			} else {
 				window.location.href = e.data.url;
 			}
