@@ -217,8 +217,18 @@ class Shortcode
 		return $output;
 	}
 
+	/**
+	 * Render persistent player HTML
+	 *
+	 * Use JS to make sure we are in the body container
+	 *
+	 * @since  1.0.0
+	 * @updated 1.1.0
+	 *
+	 * @author Tanner Moushey
+	 */
 	public function render_persistent_player() {
-		echo '<div id="' . CP_LIBRARY_UPREFIX . '_persistent_player"></div>';
+		echo '<script>jQuery(document).ready(function() {jQuery("body").append(\'<div id="cpl_persistent_player"></div>\');});</script>';
 	}
 
 	public function render_item_widget( $args ) {

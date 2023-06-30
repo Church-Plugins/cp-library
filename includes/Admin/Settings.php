@@ -290,7 +290,7 @@ class Settings {
 		}
 
 		$options->add_field( array(
-			'name'    => __( 'Enable Variations', 'cp-library' ),
+			'name'    => __( 'Enable Variations (beta)', 'cp-library' ),
 			'id'      => 'variations_enabled',
 			'type'    => 'radio_inline',
 			'default' => 0,

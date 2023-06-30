@@ -173,7 +173,11 @@ class Scripture extends Taxonomy  {
 	 * @author Tanner Moushey, 5/25/23
 	 */
 	public function get_object_passages( $object_id ) {
-		return get_post_meta( $object_id, '_cp_scripture', true );
+		if ( ! $passages = get_post_meta( $object_id, '_cp_scripture', true ) ) {
+			$passages = [];
+		}
+
+		return apply_filters( 'cp_library_get_object_passages', $passages, $object_id );
 	}
 
 	/**
