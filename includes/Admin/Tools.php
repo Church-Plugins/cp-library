@@ -2,6 +2,8 @@
 
 namespace CP_Library\Admin;
 
+use CP_Library\Controllers\Item;
+
 /**
  * Plugin Tools
  *
@@ -36,6 +38,7 @@ class Tools {
 		add_action( 'cp_batch_import_class_include', [ $this, 'include_class' ] );
 		add_filter( 'cp_importer_is_class_allowed', [ $this, 'importer_class' ] );
 		add_filter( 'upload_mimes', [ $this, 'import_mime_type' ] );
+		add_action( 'cp_export_messages', [ $this, 'export_data' ] );
 	}
 
 	public function import_mime_type( $existing_mimes ) {
@@ -70,12 +73,12 @@ class Tools {
 		$active_tab = isset( $_GET['tab'] )
 			? sanitize_key( $_GET['tab'] )
 			: 'import_export';
-
-//		wp_enqueue_script( 'cp-admin-tools' );
+		
+		// wp_enqueue_script( 'cp-admin-tools' );
 
 		if ( 'import_export' === $active_tab ) {
 			wp_enqueue_script( 'cp-admin-tools-import' );
-//			wp_enqueue_script( 'cp-admin-tools-export' );
+			// wp_enqueue_script( 'cp-admin-tools-export' );
 		}
 		?>
 
@@ -363,6 +366,18 @@ class Tools {
 			</div><!-- .inside -->
 		</div><!-- .postbox -->
 
+		<div class="postbox cp-import-payment-history">
+			<h3><span><?php esc_html_e( 'Export data', 'cp-library' ) ?></span></h3>
+			<div class="inside">
+
+				<?php $action_url = esc_url( add_query_arg( 'cp_action', 'cp_export_messages', admin_url() ) ); ?>
+				<form id="cpl_export_data" action="<?php echo $action_url ?>" method="POST" enctype="multipart/form-data">
+					<button class="button button-primary"><?php esc_html_e( 'Export all messages as CSV', 'cp-library' ); ?></button>
+				</form>
+				
+			</div>
+		</div>
+
 		<?php
 		do_action( 'cp_library_tools_import_export_after' );
 	}
@@ -375,8 +390,8 @@ class Tools {
 
 			// Define all tabs
 			$tabs = array(
-//				'system_info'   => __( 'System Info', 'cp-library' ),
-'import_export' => __( 'Import/Export', 'cp-library' )
+				// 'system_info'   => __( 'System Info', 'cp-library' ),
+				'import_export' => __( 'Import/Export', 'cp-library' )
 			);
 
 		}
@@ -420,4 +435,112 @@ class Tools {
 		<?php
 	}
 
+	/**
+	 * Exports all messages when form is submitted
+	 * @return void
+	 * @since 1.0.4
+	 * @author Jonathan Roley
+	 */
+	public function export_data() {
+		$return_value = [];
+
+		$args = [
+			'post_type'      =>  CP_LIBRARY_UPREFIX . "_item",
+			'post_status'    => array('publish','private','draft','future'),
+			'posts_per_page' => -1,
+		];
+
+		$posts = new \WP_Query( $args );
+
+		$file_handle = fopen('php://memory', 'w');
+
+		$header_added = false;
+
+		foreach( $posts->posts as $post ) {
+
+			try {
+				$item = new Item( $post->ID );
+
+				$data = $item->get_api_data();
+
+				$formatted_data = $this->get_formatted_item( $data );
+
+				if( ! $header_added ) {
+					fputcsv($file_handle, array_keys($formatted_data));
+					$header_added = true;
+				}
+
+				fputcsv($file_handle, $formatted_data);
+			} catch ( \Exception $e ) {
+				$return_value['error'] = $e->getMessage();
+				error_log( $e->getMessage() );
+			}
+		}
+
+		header("Content-Type: text/csv");
+		header('Content-Disposition: attachment; filename=sermons.csv');
+
+		rewind($file_handle);
+    fpassthru($file_handle);
+
+		// Close the file handle
+    fclose($file_handle);
+
+    // Exit to prevent WordPress from rendering anything else
+    exit();
+	}
+
+	/**
+	 * Formats data for exporting as CSV
+	 * @param array $data
+	 * @return array
+	 * @since 1.0.4
+	 */
+	public function get_formatted_item( $data ) {
+
+		$series = implode(',', array_map( function( $series) {
+			return $series['title'];
+		}, $data['types'] ) );
+
+		$scripture = implode( ',', array_map( function( $scripture ) {
+			return $scripture['name'];
+		}, $data['scripture'] ) );
+
+		$topics = implode( ',', array_map( function( $topic ) {
+			return $topic['name'];
+		}, $data['topics'] ) );
+
+		$speakers = implode( ',', array_map( function( $speaker ) {
+			return $speaker['title'];
+		}, $data['speakers'] ) );
+
+		$locations = implode( ',', array_map( function( $location ) {
+			return $location['name'];
+		}, $data['locations'] ) );
+
+		$service_types = implode( ',', array_map( function( $type ) {
+			return $type['title'];
+		}, $data['service_types'] ) );
+
+		$seasons = implode( ',', array_map( function( $season ) {
+			return $season['name'];
+		}, $data['seasons'] ) );
+
+		return array(
+			'Title'        => $data['title'],
+			'Description'  => $data['desc'],
+			'Series'       => $series,
+			'Date'         => $data['date']['timestamp'],
+			'Passage'      => $data['passage'],
+			'Location'     => $locations,
+			'Service_type' => $service_types,
+			'Speaker'      => $speakers,
+			'Topics'       => $topics,
+			'Season'       => $seasons,
+			'Scripture'    => $scripture,
+			'Thumbnail'    => $data['thumb'],
+			'Video'        => $data['video']['value'],
+			'Audio'        => $data['audio'],
+		);
+	}
 }

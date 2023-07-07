@@ -302,6 +302,28 @@ class Item extends Controller{
 	}
 
 	/**
+	 * Get the seasons for this Item
+	 * @return array|mixed|void
+	 * @since 1.0.4
+	 */
+	public function get_seasons() {
+		$return = [];
+		$terms  = get_the_terms( $this->post->ID, cp_library()->setup->taxonomies->season->taxonomy );
+
+		if ( $terms ) {
+			foreach ( $terms as $term ) {
+				$return[ $term->slug ] = [
+					'name' => $term->name,
+					'slug' => $term->slug,
+					'url'  => get_term_link( $term )
+				];
+			}
+		}
+
+		return $this->filter( $return, __FUNCTION__ );
+	}
+
+	/**
 	 * Get speakers for this Item
 	 *
 	 * @return mixed|void
@@ -349,6 +371,24 @@ class Item extends Controller{
 		}
 
 		return $this->filter( $service_types, __FUNCTION__ );
+	}
+
+	/**
+	 * Get passage for this Item
+	 * @return mixed (get_post_meta)
+	 * @since 1.0.4
+	 */
+	public function get_passage() {
+		return get_post_meta( $this->post->ID, 'passage', true );
+	}
+
+	/**
+	 * Get sermon timestamp for this Item
+	 * @return mixed (get_post_meta)
+	 * @since 1.0.4
+	 */
+	public function get_timestamp() {
+		return get_post_meta( $this->post->ID, 'message_timestamp', true );
 	}
 
 	/*************** Podcast Functions ****************/
@@ -510,6 +550,10 @@ class Item extends Controller{
 				'types'     => $this->get_types(),
 				'topics'    => $this->get_topics(),
 				'scripture' => $this->get_scripture(),
+				'seasons'   => $this->get_seasons(),
+				'service_types' => $this->get_service_types(),
+				'passage'   => $this->get_passage(),
+				'timestamp' => $this->get_timestamp()
 			];
 		} catch ( \ChurchPlugins\Exception $e ) {
 			error_log( $e );
