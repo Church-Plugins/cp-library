@@ -116,6 +116,13 @@ class Init {
 		add_action( 'init', [ $this, 'rewrite_rules' ], 100 );
 	}
 
+	/**
+	 * Entry point for initializing the Analytics dashboard React component
+	 */
+	public function analytics_init( $page_hook ) {
+		add_action( "load-$page_hook", [ $this, 'enqueue_analytics_scripts' ] );
+	}
+
 	public function rewrite_rules() {
 
 		if ( $this->setup->post_types->item_type_enabled() ) {
@@ -150,13 +157,19 @@ class Init {
 		return str_replace( ' src', ' async defer src', $tag );
 	}
 
+	public function enqueue_analytics_scripts() {
+		$this->enqueue->enqueue( 'app', 'analytics', [ 'js_dep' => [ 'jquery' ] ] );
+	}
+
 	public function admin_scripts() {
 		if ( ! $this->is_admin_page() ) {
-			return;
+			// return;
 		}
 
 		$this->enqueue->enqueue( 'styles', 'admin', [] );
 		$this->enqueue->enqueue( 'scripts', 'admin', [] );
+		wp_enqueue_style( 'material-icons' );
+		wp_enqueue_script( 'inline-edit-post' );
 	}
 
 	public function is_admin_page() {
@@ -270,6 +283,7 @@ class Init {
 	 */
 	protected function actions() {
 		add_action( 'wp_head', [ $this, 'global_css_vars' ] );
+		add_action( 'cpl-load-analytics-page', [ $this, 'analytics_init' ] );
 	}
 
 	/** Actions **************************************/

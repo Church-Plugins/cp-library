@@ -130,6 +130,7 @@ class Items extends WP_REST_Controller {
 				'object_type' => 'item',
 				'object_id' => $item_id,
 				'action' =>  $action,
+				'data' => $request->get_param( 'payload' )
 			] );
 
 		} catch ( \ChurchPlugins\Exception $e ) {
