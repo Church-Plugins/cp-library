@@ -1,0 +1,54 @@
+
+
+
+.cpl-analytics-posts {
+  background: white;
+  border-collapse: collapse;
+  width: 100%;
+
+  td, th {
+    text-align: left;
+    padding: 1rem;
+  }
+
+  tr:nth-child(even) {
+    background-color: #dddddd;
+  }
+}
+
+.cpl-analytics-sermon {
+  // border-bottom: 1px solid black;
+
+  &--plays {
+    margin-left: auto;
+  }
+
+  &--thumbnail {
+    width: 50px;
+    aspect-ratio: 16 / 9;
+    border: 1px solid black;
+  }
+}
+
+.cpl-analytics--actions {
+  display: flex;
+  gap: 10px;
+}
+
+.cpl-analytics-timeframe {
+  align-self: flex-start;
+  margin-right: auto;
+}
+
+.cpl-analytics--overview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid black;
+  border-radius: 10px;
+  padding: 10px;
+
+  &--title {
+    font-weight: bold;
+  }
+}
