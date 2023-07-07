@@ -11,8 +11,6 @@ const countTruthy = (arr) => {
 }
 
 export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) {
-
-  console.log(item, mode)
   const [viewed, setViewed] = useState(false)
   const watchData = useRef()
   const intervalRef = useRef()
@@ -21,27 +19,21 @@ export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) 
   const handlePlay = () => {
     props.onPlay?.()
 
-    console.log("Playing")
-
     if(viewed || !mode) return
 
     intervalRef.current = setTimeout(() => {
       setViewed(true)
       cplLog(item.id, mode + "_view")
-    }, 5000)
+    }, 30 * 1000) // should not be hardcoded
   }
 
   const handlePause = () => {
     props.onPause?.()
 
     clearTimeout(intervalRef.current)
-
-    console.log("Paused")
   }
 
   const handleDuration = (duration) => {
-    console.log("Duration", duration)
-
     props.onDuration?.(duration)
 
     watchData.current = new Uint32Array(Math.floor(duration))
@@ -55,11 +47,9 @@ export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) 
     const currentSecond = Math.floor(played.playedSeconds)
 
     if(lastProgressPosition.current !== currentSecond) {
-      // increments views at current second
+      // increments number of views at current second
       watchData.current[currentSecond]++
       lastProgressPosition.current = currentSecond
-
-      console.log("Watched seconds: " + countTruthy(watchData.current))
     }
   }
 
@@ -68,53 +58,24 @@ export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) 
   }
 
   const handleUnload = () => {
-    if(!watchData.current) return
+    if(!watchData.current || !mode) return
 
     const watchedSeconds = countTruthy(watchData.current)
     const watchedPercentage = watchedSeconds / watchData.current.length
 
-    console.log("UNLOADING")
-
-    alert("MODE: " + mode)
-
-    if(watchedPercentage > 0.1) {
-      cplLog(item.id, `engaged_${mode || ''}_view`)
-      console.log("Engaged view occured")
+    // Should not be hardcoded, get based on user preference
+    if(watchedPercentage > 0.7) {
+      cplLog(item.id, `engaged_${mode}_view`)
     }
 
     cplLog(item.id, 'view_duration', watchedSeconds)
-  }
-
-  const handleUnmount = () => {
-    if(!watchData.current) return
-
-    sessionStorage.setItem('cpl_item_id', item.id)
-    sessionStorage.setItem('cpl_watch_data', watchData.current.buffer)
-
-    const watchedSeconds = countTruthy(watchData.current)
-    const watchedPercentage = watchedSeconds / watchData.current.length
-
-    console.log("UNLOADING")
-
-    alert("MODE: " + mode)
-
-    if(watchedPercentage > 0.1) {
-      cplLog(item.id, `engaged_${mode || ''}_view`)
-      console.log("Engaged view occured")
-    }
-
-    cplLog(item.id, 'view_duration', watchedSeconds)
-
-    console.log("Unmounting")
-
-    return false 
   }
 
   useLayoutEffect(() => {
     window.addEventListener('beforeunload', handleUnload)
 
     return () => {
-      handleUnmount()
+      handleUnload()
       window.removeEventListener('beforeunload', handleUnload)
     }
   }, [])
