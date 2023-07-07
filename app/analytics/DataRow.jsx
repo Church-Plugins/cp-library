@@ -15,7 +15,7 @@ export default function DataRow({ item }) {
 
   return (
     <tr className='cpl-analytics-sermon' key={item.id}>
-      <td className='cpl-analytics-sermon--thumbnail'></td>
+      <td><div className='cpl-analytics-sermon--thumbnail'></div></td>
       <td className='cpl-analytics-sermon--title'>{item.title}</td>
       <td className='cpl-analytics-sermon--plays'>{item.views || 0}</td>
       <td className='cpl-analytics-sermon--avd'>{timeString}</td>

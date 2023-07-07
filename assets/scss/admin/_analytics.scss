@@ -1,10 +1,15 @@
 
 
+.cpl-analytics {
+  padding: 1rem;
+}
 
 .cpl-analytics-posts {
   background: white;
   border-collapse: collapse;
   width: 100%;
+  margin-top: 1rem;
+
 
   td, th {
     text-align: left;
@@ -32,7 +37,7 @@
 
 .cpl-analytics--actions {
   display: flex;
-  gap: 10px;
+  gap: 1rem;
 }
 
 .cpl-analytics-timeframe {
@@ -50,5 +55,11 @@
 
   &--title {
     font-weight: bold;
+  }
+
+  &--data {
+    font-size: 1.5rem;
+    display: flex;
+    gap: 0.3rem;  
   }
 }

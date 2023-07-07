@@ -50,7 +50,8 @@ export default function Analytics() {
   */
 
   return (
-    <div className='cpl-analytics'>
+    <div className='cpl-analytics postbox'>
+      <h3>Analytics</h3>
       <div className='cpl-analytics--actions'>
         <select className='cpl-analytics-timeframe' value={timeframe} onChange={e => setTimeframe(e.target.value)}>
           <option value='7'>Past 7 days</option>
