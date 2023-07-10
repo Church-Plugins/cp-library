@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import DataTable from './DataTable'
 import { parseTime } from './helpers'
 
+import Pagination from './Pagination'
+
 export default function Analytics() {
   const [timeframe, setTimeframe] = useState('7')
   const [page, setPage] = useState(0)
@@ -9,8 +11,6 @@ export default function Analytics() {
   const [overview, setOverview] = useState({})
 
   useEffect(() => {
-    setItems([])
-    setOverview({})
     jQuery.ajax({
       url: window.ajaxurl,
       method: 'POST',
@@ -25,7 +25,9 @@ export default function Analytics() {
       },
       error: console.error
     })
+  }, [timeframe, page])
 
+  useEffect(() => {
     jQuery.ajax({
       url: window.ajaxurl,
       method: 'POST',
@@ -38,7 +40,7 @@ export default function Analytics() {
       },
       error: console.error
     })
-  }, [timeframe, page])
+  }, [timeframe])
 
   return (
     <div className='cpl-analytics postbox'>
@@ -90,7 +92,14 @@ export default function Analytics() {
       <DataTable items={items} />
 
       <div className='cpl-analytics-pagination'>
-        
+        {
+          overview &&
+          <Pagination 
+            pages={overview.pages}
+            onPageChange={page => setPage(page.selected)}
+            currentPage={page}
+          />
+        }
       </div>
     </div>
   )

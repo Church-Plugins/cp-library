@@ -63,3 +63,46 @@
     gap: 0.3rem;  
   }
 }
+
+.cpl-analytics-pagination {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+
+  ul {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  li {
+    display: flex;
+  }
+
+  li a {
+    padding: 0.4rem 1rem;
+    background: #ddd;
+    color: black;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+
+  li.selected a {
+    background: #2271b1;
+  }
+
+  li.selected > a {
+    color: white;
+  }
+
+  li > a {
+    color: black;
+  }
+
+  .cpl-pagination--button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
