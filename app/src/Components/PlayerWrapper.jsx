@@ -1,6 +1,7 @@
-import { forwardRef, useLayoutEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cplLog } from "../utils/helpers";
 import VideoPlayer from 'react-player'
+import Cookies from 'js-cookie'
 
 const countTruthy = (arr) => {
   let count = 0
@@ -10,27 +11,35 @@ const countTruthy = (arr) => {
   return count
 }
 
+
 export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) {
-  const [viewed, setViewed] = useState(false)
+  const compoundId = `${mode}-${item.id}`
+  const viewedRef = useRef(false)
+  const isEngagedRef = useRef(false)
   const watchData = useRef()
-  const intervalRef = useRef()
+  const intervalRef = useRef(null)
   const lastProgressPosition = useRef()
 
   const handlePlay = () => {
     props.onPlay?.()
 
-    if(viewed || !mode) return
+    if(viewedRef.current || !mode || intervalRef.current) return
+
+    console.log("Starting timeout")
 
     intervalRef.current = setTimeout(() => {
-      setViewed(true)
+      viewedRef.current = true
+      console.log("View occured")
       cplLog(item.id, mode + "_view")
-    }, 30 * 1000) // should not be hardcoded
+    }, 30 * 1000) // TODO: should not be hardcoded
   }
 
   const handlePause = () => {
     props.onPause?.()
 
+    console.log("Clearing timeout", intervalRef.current)
     clearTimeout(intervalRef.current)
+    intervalRef.current = null
   }
 
   const handleDuration = (duration) => {
@@ -57,26 +66,91 @@ export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) 
     props.onSeek?.(seconds)
   }
 
-  const handleUnload = () => {
-    if(!watchData.current || !mode) return
+  const handleUnmount = () => {
+    console.log("Unmounting")
+
+    clearInterval(intervalRef.current)
+
+    if(!watchData.current || !mode || !viewedRef.current) return
+
+    console.log("Unload in progress")
 
     const watchedSeconds = countTruthy(watchData.current)
     const watchedPercentage = watchedSeconds / watchData.current.length
 
-    // Should not be hardcoded, get based on user preference
-    if(watchedPercentage > 0.7) {
-      cplLog(item.id, `engaged_${mode}_view`)
+    const record = {
+      id: compoundId,
+      engaged: isEngagedRef.current
     }
 
+    // TODO: Should not be hardcoded, get based on user preference
+    if(watchedPercentage > 0.7) {
+      cplLog(item.id, `engaged_${mode}_view`)
+      record.engaged = true
+    }
+
+    console.log("Saving record", record)
+
     cplLog(item.id, 'view_duration', watchedSeconds)
+
+    updateWatchedVideos(record)
   }
 
+  const getWatchedVideos = () => {
+    let watchedVideos = Cookies.get( 'cpl_watched_videos' )
+
+    try {
+      return JSON.parse(watchedVideos)
+    }
+    catch(err) {
+      return []
+    }
+  }
+
+  const updateWatchedVideos = (record) => {
+    const watchedVideos = getWatchedVideos()
+
+    const videoIndex = watchedVideos.findIndex(v => v.id === record.id)
+
+    if(videoIndex !== -1) {
+      watchedVideos[videoIndex] = record
+    }
+    else {
+      watchedVideos.push(record)
+    }
+
+    Cookies.set( 'cpl_watched_videos', JSON.stringify(watchedVideos), {
+      expires: 28
+    } )
+  }
+
+  useEffect(() => {
+    const watchedVideos = getWatchedVideos()
+
+    console.log("Getting user watched videos", watchedVideos)
+    
+    const video = watchedVideos.find(v => {
+      return v.id === compoundId
+    })
+
+    console.log("Is this video already watched?", video)
+
+    if(!video) return
+
+    viewedRef.current = true
+
+    if(video.engaged) {
+      console.log("It was an engaged view")
+      isEngagedRef.current = true
+    }
+  }, [])
+
   useLayoutEffect(() => {
-    window.addEventListener('beforeunload', handleUnload)
+    window.addEventListener('beforeunload', handleUnmount)
 
     return () => {
-      handleUnload()
-      window.removeEventListener('beforeunload', handleUnload)
+      handleUnmount()
+      window.removeEventListener('beforeunload', handleUnmount)
     }
   }, [])
 
