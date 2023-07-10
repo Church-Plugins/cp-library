@@ -15,10 +15,19 @@ class Init {
 	 */
   public static $page_name = 'cpl-analytics';
   
+  /**
+   * The class instance
+   */
 	protected static $_instance;
 
+  /**
+   * The date format as it is stored in wp_cp_log table
+   */
   public static $date_format = 'Y-m-d H:i:s';  
 
+  /**
+   * The number of items to show per page
+   */
   public static $per_page = 10;
 
 	/**
@@ -64,7 +73,9 @@ class Init {
     add_action( 'wp_ajax_cpl-analytics-get-overview',   [ $this, 'get_overview' ] ); 
 	}
 
-
+  /**
+   * Adds an Analytics sub-menu item to the admin menu
+   */
   public function analytics_menu() {
     $post_type = cp_library()->setup->post_types->item_type_enabled() ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
 
@@ -82,12 +93,16 @@ class Init {
 
   }
 
+  /**
+   * Gets displayed on the Analytics page
+   */
   public function page_callback() {
     echo '<div id="cpl-analytics"></div>';
-
-    include __DIR__ . '/page.php';
   }
 
+  /**
+   * Sends sermon analytics data as JSON
+   */
   public function load_items() {
 
     $timeframe = 28;
@@ -107,40 +122,11 @@ class Init {
 
 
     wp_send_json( $items );
-
-    ?>
-    <table class='cpl-analytics-posts'>
-      <tr>
-        <th></th>
-        <th>Title</th>
-        <th>Views</th>
-        <th>Avg duration</th>
-        <th>Engaged Plays</th>
-      </tr>
-      <?php foreach( $items as $item ): ?>
-        <?php 
-          $views = (int) $item->views;
-          $engaged = (int) $item->engaged_views;
-          $view_duration = (int) $item->view_duration;
-          
-          $engaged_plays = $views < 1 ? 0 : floor( $engaged / $views * 100 );
-          // $avg_duration =  $views < 1 ? 0 : floor( $view_duration / $views );
-        ?>
-        <?php  ?>
-        <tr class='cpl-analytics-sermon'>
-          <td class='cpl-analytics-sermon--thumbnail'></td>
-          <td class='cpl-analytics-sermon--title'><?php echo esc_html( $item->title ) ?></td>
-          <td class='cpl-analytics-sermon--plays'><?php echo esc_html( $item->views ) ?></td>
-          <td class='cpl-analytics-sermon--avd'><?php echo gmdate('H:i:s', $view_duration ) ?></td>
-          <td class='cpl-analytics-sermon--engagement'><?php echo $engaged_plays ?>%</td>
-        </tr>
-      <?php endforeach; ?>
-    </table>
-    <?php
-
-    exit;
   }
 
+  /**
+   * Sends a top level overview as JSON
+   */
   public function get_overview() {
     $timeframe = 28;
 
@@ -159,6 +145,11 @@ class Init {
     ), 200);
   }
 
+  /**
+   * Gets the total number of views since a given date
+   * @param date string
+   * @return string|null
+   */
   public function get_total_views( $date ) {
     global $wpdb;
 
@@ -171,6 +162,12 @@ class Init {
     return $views;
   }
 
+  /**
+   * Gets the total number of a given log action since a given date
+   * @param date string
+   * @param action string
+   * @return string|null
+   */
   public function get_action_count_since($date, $action) {
     global $wpdb;
 
@@ -179,6 +176,11 @@ class Init {
     return $wpdb->get_var( $wpdb->prepare( $sql, $action, $date ) );
   }
 
+  /**
+   * Gets the total number of engaged views since a given date
+   * @param date string
+   * @return string|null
+   */
   public function get_total_engaged_views_since($date) {
     global $wpdb;
 
@@ -191,6 +193,11 @@ class Init {
     return $views;
   }
 
+  /**
+   * Gets the average watch time in seconds for all sermons since a given date
+   * @param date string
+   * @return string|null
+   */
   public function get_average_watch_time_since( $date ) {
     global $wpdb;
 
@@ -203,6 +210,11 @@ class Init {
     return $views;
   }
 
+  /**
+   * Gets the number of pages for a list of sermons created since a given date
+   * @param date string
+   * @return string|null
+   */
   public function get_num_pages( $date ) {
     global $wpdb;
 
@@ -217,6 +229,12 @@ class Init {
     return $total_pages;
   }
 
+  /**
+   * Gets all sermon information since a given date
+   * @param date string
+   * @param page int
+   * @return array|object|null
+   */
   public function get_items_since( $date, $page ) {
     global $wpdb;
 
@@ -253,6 +271,11 @@ class Init {
     return $wpdb->prepare( $sql, ...$args );
   }
 
+  /**
+   * Gets any date formatted for use in the wp_cp_item table
+   * @param time mixed
+   * @return string|false
+   */
   public static function get_time( $time ) {
     return date( self::$date_format, strtotime( $time ) );
   }

@@ -39,15 +39,6 @@ export default function Analytics() {
       error: console.error
     })
   }, [timeframe, page])
-  /*
-      wp_send_json(array(
-      'audio_views'      => $this->get_action_count_since( $date, 'audio_view' ),
-      'video_views'      => $this->get_action_count_since( $date, 'video_view' ),
-      'engaged_views'    => $this->get_total_engaged_views_since( $date ),
-      'average_duration' => $this->get_average_watch_time_since( $date ),
-      'pages'            => $this->get_num_pages( $date )
-    ), 200);
-  */
 
   return (
     <div className='cpl-analytics postbox'>

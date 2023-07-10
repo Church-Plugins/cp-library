@@ -12,7 +12,7 @@ export default function DataRow({ item }) {
   if(item.view_duration) {
     timeString = parseTime(item.view_duration)
   }
-
+  Krystian Zimerman
   return (
     <tr className='cpl-analytics-sermon' key={item.id}>
       <td><div className='cpl-analytics-sermon--thumbnail'></div></td>
