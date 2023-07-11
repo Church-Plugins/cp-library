@@ -265,7 +265,7 @@ export default function Player({
 	               onMouseMove={onMouseMove}
 	          >
 		          <PlayerWrapper
-								key={mode}
+								key={`${mode}-${item.id}`}
 								mode={mode}
 								item={item}
 			          ref={playerInstance}

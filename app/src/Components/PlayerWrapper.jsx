@@ -78,6 +78,9 @@ export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) 
     const watchedSeconds = countTruthy(watchData.current)
     const watchedPercentage = watchedSeconds / watchData.current.length
 
+    console.log("Watched seconds", watchedSeconds)
+    console.log("Watched %", watchedPercentage)
+
     const record = {
       id: compoundId,
       engaged: isEngagedRef.current
@@ -91,7 +94,10 @@ export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) 
 
     console.log("Saving record", record)
 
-    cplLog(item.id, 'view_duration', watchedSeconds)
+    cplLog(item.id, 'view_duration', {
+      watchedSeconds,
+      maxDuration: watchData.current.length
+    })
 
     updateWatchedVideos(record)
   }

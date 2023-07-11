@@ -174,7 +174,7 @@ export default function PersistentPlayer(props) {
 	           onMouseMove={onMouseMove}
 		     >
 			     <PlayerWrapper
-					 	 key={mode}
+					 	 key={`${mode}-${item.id}`}
 					 	 mode={mode}
 					 	 item={item}
 				     ref={playerInstance}
@@ -371,7 +371,7 @@ export default function PersistentPlayer(props) {
         {mode === "audio" &&
          <Box>
 	         <PlayerWrapper
-					   key={mode}
+					   key={`${mode}-${item.id}`}
 					 	 mode={mode}
 					 	 item={item}
 		         ref={playerInstance}

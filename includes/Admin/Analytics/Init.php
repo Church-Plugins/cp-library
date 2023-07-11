@@ -279,4 +279,5 @@ class Init {
   public static function get_time( $time ) {
     return date( self::$date_format, strtotime( $time ) );
   }
+
 }
