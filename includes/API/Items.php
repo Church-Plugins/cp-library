@@ -471,6 +471,16 @@ class Items extends WP_REST_Controller {
 		$item_id = $request->get_param( 'item_id' );
 		$user_ip = $request->get_header('x-forwarded-for');
 
+		if( ! (
+			is_array( $payload ) && 
+			isset( $payload['watchedSeconds'] ) && 
+			isset( $payload['maxDuration'] ) &&
+			is_int( $payload['watchedSeconds'] ) &&
+			is_int( $payload['maxDuration'] )
+			) ) {
+			throw new Exception( "Invalid payload", 400 );
+		}
+
 		global $wpdb;
 
 		$query = $wpdb->prepare( "SELECT * FROM wp_cp_log WHERE object_id = '$item_id' AND JSON_EXTRACT(data, '$.user_ip') = '$user_ip'" ); 
