@@ -20,7 +20,6 @@ export default function Analytics() {
         action: 'cpl-analytics-load-items'
       },
       success: (data) => {
-        console.log(data)
         setItems(data)
       },
       error: console.error

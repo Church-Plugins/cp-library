@@ -25,11 +25,8 @@ export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) 
 
     if(viewedRef.current || !mode || intervalRef.current) return
 
-    console.log("Starting timeout")
-
     intervalRef.current = setTimeout(() => {
       viewedRef.current = true
-      console.log("View occured")
       cplLog(item.id, mode + "_view")
     }, 30 * 1000) // TODO: should not be hardcoded
   }
@@ -37,7 +34,6 @@ export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) 
   const handlePause = () => {
     props.onPause?.()
 
-    console.log("Clearing timeout", intervalRef.current)
     clearTimeout(intervalRef.current)
     intervalRef.current = null
   }
@@ -67,19 +63,12 @@ export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) 
   }
 
   const handleUnmount = () => {
-    console.log("Unmounting")
-
     clearInterval(intervalRef.current)
 
     if(!watchData.current || !mode || !viewedRef.current) return
 
-    console.log("Unload in progress")
-
     const watchedSeconds = countTruthy(watchData.current)
     const watchedPercentage = watchedSeconds / watchData.current.length
-
-    console.log("Watched seconds", watchedSeconds)
-    console.log("Watched %", watchedPercentage)
 
     const record = {
       id: compoundId,
@@ -91,8 +80,6 @@ export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) 
       cplLog(item.id, `engaged_${mode}_view`)
       record.engaged = true
     }
-
-    console.log("Saving record", record)
 
     cplLog(item.id, 'view_duration', {
       watchedSeconds,
@@ -132,21 +119,16 @@ export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) 
 
   useEffect(() => {
     const watchedVideos = getWatchedVideos()
-
-    console.log("Getting user watched videos", watchedVideos)
     
     const video = watchedVideos.find(v => {
       return v.id === compoundId
     })
-
-    console.log("Is this video already watched?", video)
 
     if(!video) return
 
     viewedRef.current = true
 
     if(video.engaged) {
-      console.log("It was an engaged view")
       isEngagedRef.current = true
     }
   }, [])
