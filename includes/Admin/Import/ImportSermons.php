@@ -143,6 +143,11 @@ class ImportSermons extends BatchImport {
 				// update existing post if it exists
 				$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT post_id from $wpdb->postmeta WHERE `meta_key` = '_cp_import_id' AND `meta_value` = %s", $cp_hash ) );
 
+				if( empty( $post_id ) ) {
+					$post_type = cp_library()->setup->post_types->item->post_type;
+					$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s AND post_type='%s'", $title, $post_type ));
+				}
+
 				$args = [
 					'post_type'    => Item::get_prop( 'post_type' ),
 					'post_title'   => $title,

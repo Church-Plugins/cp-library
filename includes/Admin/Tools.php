@@ -452,7 +452,17 @@ class Tools {
 
 		$posts = new \WP_Query( $args );
 
-		$file_handle = fopen('php://memory', 'w');
+		$upload_dir = wp_upload_dir();
+		// WP-CLI may need to find a fallback directory
+		if( empty( $upload_dir ) || empty( $upload_dir['path'] ) ) {
+			$upload_dir['path'] = dirname( __FILE__ );
+		} else {
+			wp_mkdir_p( $upload_dir['path'] );
+		}
+
+		$filename = "sermons_" . date( 'Y-m-d' ) . ".csv";
+		$file_path = trailingslashit( $upload_dir['path'] ) . $filename;
+		$file_handle = fopen( $file_path, 'w');
 
 		$header_added = false;
 
@@ -477,16 +487,18 @@ class Tools {
 			}
 		}
 
+		fclose($file_handle);
+
 		header("Content-Type: text/csv");
-		header('Content-Disposition: attachment; filename=sermons.csv');
+		header( "Content-disposition: attachment; filename=\"" . $filename . "\"" );
 
-		rewind($file_handle);
-    fpassthru($file_handle);
+		if ( isset( $headers['content-length'] ) ) {
+			header( "Content-Length: " . $headers['content-length'] );
+		}
 
-		// Close the file handle
-    fclose($file_handle);
+		session_write_close();
+		readfile( rawurldecode( $file_path ) );		
 
-    // Exit to prevent WordPress from rendering anything else
     exit();
 	}
 
@@ -528,7 +540,7 @@ class Tools {
 
 		return array(
 			'Title'        => $data['title'],
-			'Description'  => $data['desc'],
+			'Description'  => preg_replace("/\n/", "\\n", $data['desc']),
 			'Series'       => $series,
 			'Date'         => $data['date']['timestamp'],
 			'Passage'      => $data['passage'],
