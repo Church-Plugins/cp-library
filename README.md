@@ -24,5 +24,29 @@ npm run build
 
 ### Change Log
 
+#### 1.1.0
+* New Scripture and Verse selector
+
+#### 1.0.4
+* Minor bug fixes
+* Add import process for sermons
+* Add podcast feed for sermons
+
+#### 1.0.3.2
+* Fix persistent player bug caused by loading the wrong js file
+
+#### 1.0.3.1
+* Show correct item on series template single item view
+* Only show published items in item list
+
+#### 1.0.3
+* Update Church Plugins core
+
+#### 1.0.2
+* Show global messages on locations series page
+
+#### 1.0.1
+* Misc updates
+
 #### 1.0.0
 * Initial release

@@ -36,21 +36,18 @@
 //	}
 //}
 
-
-:root {
+.cpl-button {
 	--cp-button--color: var(--cp-color-ui-inverted-light);
 	--cp-button--color--hover: var(--cp-button--color);
-	--cp-button--bg: var(--cp-color-ui-secondary);
-	--cp-button--bg--hover: #19221E;
+	--cp-button--bg: var(--cp-color-ui-primary);
+	--cp-button--bg--hover: var(--cp-color-ui-secondary);
 	--cp-button--border-color: var(--cp-button--bg);
 	--cp-button--border-color--hover: var(--cp-button--bg--hover);
 	--cp-button--border-radius: var(--cp-border-radius-sm);
 	--cp-button--padding: var(--cp-ui--gap-y-x);
 	--cp-button--text-align: center;
 	--cp-button--line-height: 1.5;
-}
 
-.cpl-button {
 	border: 1px solid;
 	border-color: var(--cp-button--border-color);
 	border-radius: var(--cp-button--border-radius);

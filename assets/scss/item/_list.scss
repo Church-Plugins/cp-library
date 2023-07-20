@@ -67,6 +67,7 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 			display: none;
 			width: auto;
 			height: auto;
+			max-width: 100%;
 		}
 	}
 
@@ -75,7 +76,7 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 	}
 
 	&--details {
-		flex: 1 1 0;
+		flex: 1 1 auto;
 		display: flex;
 		flex-direction: column;
 		//padding: var(--cp-ui--gap-y--sm);
@@ -192,5 +193,29 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 		}
 	}
 
+	&--has-variations {
+
+		.cpl-list-item {
+			&--thumb {
+				align-items: flex-start;
+			}
+
+			&--variations {
+				.cpl-item--info {
+					display: flex;
+					margin-bottom: 0;
+				}
+
+				.cpl-list-item--columns {
+					margin-top: var(--cp-gap--sm);
+				}
+
+				.cpl-list-item--details {
+					justify-content: center;
+				}
+			}
+		}
+
+	}
 
 }

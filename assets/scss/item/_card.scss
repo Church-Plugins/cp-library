@@ -12,10 +12,10 @@
 	}
 
 	&--title {
-		font-size: 1.25em;
+		font-size: var(--cp-font-size--lg);
 	}
 
 	&--meta {
-		font-size: .875em;
+		font-size: var(--cp-font-size--sm);
 	}
 }

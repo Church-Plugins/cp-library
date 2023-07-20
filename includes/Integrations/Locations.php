@@ -46,6 +46,7 @@ class Locations {
 			add_action( 'cpl_save_series_items_item', [ $this, 'item_save_location' ], 10, 3 );
 			add_filter( 'cploc_add_location_to_query', [ $this, 'taxonomies_for_location_query' ], 10, 2 );
 			add_filter( 'post_type_archive_title', [ $this, 'location_archive_title' ], 10, 2 );
+			add_filter( 'cp_library_template_items', [ $this, 'location_template_item' ] );
 		}
 
 		add_filter( 'cpl_item_type_get_items', [ $this, 'messages_by_location' ], 10, 2 );
@@ -71,6 +72,22 @@ class Locations {
 	 */
 	public function tax_types( $types ) {
 		return array_merge( $types, [ cp_library()->setup->post_types->item->post_type, cp_library()->setup->post_types->speaker->post_type ]  );
+	}
+
+	/**
+	 * Add template item for Locations
+	 *
+	 * @since  1.1.0
+	 *
+	 * @param $items
+	 *
+	 * @return mixed
+	 * @author Tanner Moushey, 6/30/23
+	 */
+	public function location_template_item( $items ) {
+		$items['locations'] = __( 'Locations', 'cp-library' );
+
+		return $items;
 	}
 
 	/**
@@ -243,7 +260,7 @@ class Locations {
 		do_action( 'cploc_multisite_switch_to_main_site', $items, $item_type );
 
 		foreach ( $items as $item ) {
-			if ( has_term( $location['term'], $tax, $item->origin_id ) ) {
+			if ( has_term( [ $location['term'], 'global' ], $tax, $item->origin_id ) ) {
 				$location_items[] = $item;
 			}
 		}
