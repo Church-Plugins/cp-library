@@ -487,7 +487,7 @@ class Item extends Table  {
 	/**
 	 * Get the variation ids for this Item
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return array variation Post IDs
 	 * @author Tanner Moushey, 5/6/23

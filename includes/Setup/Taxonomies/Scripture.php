@@ -37,7 +37,7 @@ class Scripture extends Taxonomy  {
 	/**
 	 * Override action-adder for CPT-descendants
 	 *
-	 * @since 1.0.5
+	 * @since 1.1.0
 	 * @return void
 	 * @author costmo
 	 */
@@ -78,7 +78,7 @@ class Scripture extends Taxonomy  {
 	/**
 	 * Admin Metabox for Scripture management
 	 *
-	 * @since 1.0.5
+	 * @since 1.1.0
 	 * @param WP_Post $post
 	 * @return void
 	 * @author costmo
@@ -140,7 +140,7 @@ class Scripture extends Taxonomy  {
 	 * Saves input from the wp-admin input for Scripture taxonomy
 	 *
 	 * @return void
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @param int $post_id
 	 * @author costmo

@@ -28,7 +28,7 @@ class Init {
 
 	/**
 	 * @var Variations
-	 * @since 1.0.5
+	 * @since 1.1.0
 	 */
 	public $variations;
 

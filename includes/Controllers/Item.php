@@ -390,7 +390,7 @@ class Item extends Controller{
 	/**
 	 * Whether this item has variations
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return mixed|void
 	 * @author Tanner Moushey, 5/6/23
@@ -416,7 +416,7 @@ class Item extends Controller{
 	/**
 	 * Get variants for this item
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return mixed|void
 	 * @author Tanner Moushey, 5/6/23
@@ -434,7 +434,7 @@ class Item extends Controller{
 	/**
 	 * Get variant for the provided source
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @param $source
 	 *
@@ -454,7 +454,7 @@ class Item extends Controller{
 	/**
 	 * Whether this item is a variant
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return mixed|void
 	 * @author Tanner Moushey, 5/6/23
@@ -466,7 +466,7 @@ class Item extends Controller{
 	/**
 	 * Get the variation source for this variant
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return false|array $source should provide an array with 'type', 'id' and 'label' defined
 	 * @author Tanner Moushey, 5/6/23
@@ -489,7 +489,7 @@ class Item extends Controller{
 	/**
 	 * Return the ID for this item's variation source
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return false|mixed|void
 	 * @author Tanner Moushey, 5/6/23
@@ -509,7 +509,7 @@ class Item extends Controller{
 	/**
 	 * Return the Label for this item's variation source
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return false|mixed|void
 	 * @author Tanner Moushey, 5/6/23
@@ -529,7 +529,7 @@ class Item extends Controller{
 	/**
 	 * Return the type for this item's variation source
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return false|mixed|void
 	 * @author Tanner Moushey, 5/6/23

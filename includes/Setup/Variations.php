@@ -35,7 +35,7 @@ class Variations {
 	/**
 	 * Whether Variations are enabled
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 *
 	 * @return mixed|void
@@ -69,7 +69,7 @@ class Variations {
 	/**
 	 * Get variation source
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return mixed|void
 	 * @author Tanner Moushey, 5/5/23
@@ -82,7 +82,7 @@ class Variations {
 	/**
 	 * Get variation source
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return mixed|void
 	 * @author Tanner Moushey, 5/5/23
@@ -101,7 +101,7 @@ class Variations {
 	/**
 	 * Return a list of possible variation sources
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return mixed|void
 	 * @author Tanner Moushey, 5/5/23

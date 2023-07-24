@@ -276,7 +276,7 @@ class ServiceType extends PostType {
 	/**
 	 * Add Service Type to the variation list
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @param $sources
 	 *
@@ -291,7 +291,7 @@ class ServiceType extends PostType {
 	/**
 	 * Get variation items
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return array
 	 * @author Tanner Moushey, 5/5/23
@@ -309,7 +309,7 @@ class ServiceType extends PostType {
 	/**
 	 * Assign service_type source to Item if it exists
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @param $source
 	 * @param $item \CP_Library\Controllers\Item
@@ -338,7 +338,7 @@ class ServiceType extends PostType {
 	/**
 	 * Save the variation source to the Item
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @param $post_id
 	 * @param $variation_id

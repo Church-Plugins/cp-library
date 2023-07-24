@@ -325,7 +325,7 @@ class ItemType extends PostType  {
 	 * Save item series to the item_meta table
 	 *
 	 * @since  1.0.0
-	 * @updated 1.0.5 Fix error when value was not set
+	 * @updated 1.1.0 Fix error when value was not set
 	 *
 	 * @author Tanner Moushey
 	 */
