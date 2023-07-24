@@ -26,6 +26,8 @@ npm run build
 
 #### 1.1.0
 * New Scripture and Verse selector
+* New beta feature: Sermon Groupings
+* Add label control for buttons
 
 #### 1.0.4
 * Minor bug fixes
