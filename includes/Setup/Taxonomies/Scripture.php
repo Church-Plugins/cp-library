@@ -69,7 +69,7 @@ class Scripture extends Taxonomy  {
 			'cpl_scripture_metabox',
 			$this->single_label,
 			[ $this, 'render_metabox' ],
-			'cpl_item',
+			$this->get_object_types(),
 			'normal',
 			'default'
 		);
