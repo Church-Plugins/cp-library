@@ -156,12 +156,23 @@ class Init {
 		}
 
 		$this->enqueue->enqueue( 'styles', 'admin', [] );
-		$this->enqueue->enqueue( 'scripts', 'admin', [] );
+		$scripts = $this->enqueue->enqueue( 'scripts', 'admin', ['jquery', 'select2'] );
+
+		// Expose variables to JS
+		$entry_point = array_pop( $scripts['js'] );
+		wp_localize_script(
+			$entry_point['handle'],
+			'cplAdmin', [
+				'ajaxUrl'		=> admin_url( 'admin-ajax.php' ),
+				'_n' 			=> wp_create_nonce( 'cpl-admin' )
+			]
+		);
 	}
 
 	public function is_admin_page() {
 		return in_array( get_post_type(), $this->setup->post_types->get_post_types() );
 	}
+
 
 	/**
 	 * `wp_enqueue_scripts` actions for the app's compiled sources
@@ -186,8 +197,8 @@ class Init {
 				'mobileTop' => ''
 			],
 			'i18n' => [
-				'playAudio' => __( 'Play Audio', 'cp-library' ),
-				'playVideo' => __( 'Play Video', 'cp-library' ),
+				'playAudio' => Settings::get( 'label_play_audio', __( 'Listen', 'cp-library' ) ),
+				'playVideo' => Settings::get( 'label_play_video', __( 'Watch', 'cp-library' ) ),
 			],
 		] );
 
@@ -256,6 +267,10 @@ class Init {
 	protected function includes() {
 		if ( function_exists( 'cp_locations' ) ) {
 			Integrations\Locations::get_instance();
+		}
+
+		if ( function_exists( 'cp_resources' ) ) {
+			Integrations\Resources::get_instance();
 		}
 
 		if ( defined( 'TRIBE_EVENTS_FILE' ) ) {

@@ -4,6 +4,7 @@ namespace CP_Library\Setup\PostTypes;
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+use ChurchPlugins\Helpers;
 use ChurchPlugins\Setup\Tables\SourceMeta;
 use CP_Library\Admin\Settings;
 use ChurchPlugins\Exception;
@@ -77,6 +78,12 @@ class Speaker extends PostType {
 	}
 
 	protected function item_speaker() {
+		$id = Helpers::get_param( $_GET, 'post' );
+
+		// if this item has variations, break early.
+		if ( $id && get_post_meta( $id, '_cpl_has_variations', true ) && cp_library()->setup->variations->is_enabled() ) {
+			return;
+		}
 
 		$speakers = Speaker_Model::get_all_speakers();
 
@@ -153,7 +160,7 @@ class Speaker extends PostType {
 		try {
 			$item = ItemModel::get_instance_from_origin( $field->object_id );
 
-			if ( ! $speakers = array_map( 'absint', $field->data_to_save[ $field->id( true ) ] ) ) {
+			if ( ! is_array( $field->data_to_save[ $field->id( true ) ] ) || ! $speakers = array_map( 'absint', $field->data_to_save[ $field->id( true ) ] ) ) {
 				$speakers = [];
 			}
 

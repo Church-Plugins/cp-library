@@ -60,6 +60,7 @@ class Shortcode
 			'cpl_root'         => 'render_root',
 			'cpl_item_list'    => 'render_item_list',
 			'cpl_item'         => 'render_item',
+			'cp-sermon'        => 'render_item',
 			'cpl_item_widget'  => 'render_item_widget',
 			'cpl_video_widget' => 'render_video_widget',
 			'cpl_source_list'  => 'render_source_list',
@@ -136,6 +137,7 @@ class Shortcode
 			'details' => 'true',
 			'location' => 0,
 			'service-type' => '',
+			'template' => '',
 		], $atts, 'cpl_item' );
 
 		if ( 'false' === $atts['id'] || empty( $atts['id'] ) ) {
@@ -176,10 +178,14 @@ class Shortcode
 			return 'No ' . cp_library()->setup->post_types->item->plural_label . ' found.';
 		}
 
-		$atts['item'] = $item->get_api_data();
+		$atts['item'] = $item->get_api_data( true );
 		ob_start();
 
-		Templates::get_template_part( 'widgets/item-single', $atts );
+		if ( 'alt' == $atts['template'] ) {
+			Templates::get_template_part( 'widgets/item-single--alt', $atts );
+		} else {
+			Templates::get_template_part( 'widgets/item-single', $atts );
+		}
 
 		return ob_get_clean();
 
@@ -211,8 +217,18 @@ class Shortcode
 		return $output;
 	}
 
+	/**
+	 * Render persistent player HTML
+	 *
+	 * Use JS to make sure we are in the body container
+	 *
+	 * @since  1.0.0
+	 * @updated 1.1.0
+	 *
+	 * @author Tanner Moushey
+	 */
 	public function render_persistent_player() {
-		echo '<div id="' . CP_LIBRARY_UPREFIX . '_persistent_player"></div>';
+		echo '<script>jQuery(document).ready(function() {jQuery("body").append(\'<div id="cpl_persistent_player"></div>\');});</script>';
 	}
 
 	public function render_item_widget( $args ) {

@@ -156,10 +156,12 @@ class Tools {
 
 						<p>
 							<?php
-							printf(
-								__( 'Each column loaded from the CSV needs to be mapped to an order field. Select the column that should be mapped to each field below. Any columns not needed can be ignored. See <a href="%s" target="_blank">this guide</a> for assistance with importing payment records.', 'cp-library' ),
-								'https://docs.easydigitaldownloads.com/category/1337-importexport'
-							);
+//							printf(
+//								__( 'Each column loaded from the CSV needs to be mapped to an order field. Select the column that should be mapped to each field below. Any columns not needed can be ignored. See <a href="%s" target="_blank">this guide</a> for assistance with importing payment records.', 'cp-library' ),
+//								'https://docs.easydigitaldownloads.com/category/1337-importexport'
+//							);
+							_e( 'Each column loaded from the CSV needs to be mapped to an order field. Select the column that should be mapped to each field below. Any columns not needed can be ignored.', 'cp-library' );
+
 							?>
 						</p>
 
@@ -179,7 +181,7 @@ class Tools {
 									<select name="cp-import-field[title]" class="cp-import-csv-column"
 											data-field="Title">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -190,7 +192,7 @@ class Tools {
 									<select name="cp-import-field[description]" class="cp-import-csv-column"
 											data-field="Description">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -202,7 +204,7 @@ class Tools {
 									<select name="cp-import-field[date]" class="cp-import-csv-column"
 											data-field="Date">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -215,7 +217,7 @@ class Tools {
 										<select name="cp-import-field[series]" class="cp-import-csv-column"
 												data-field="Series">
 											<option
-												value=""><?php esc_html_e( '- Ignore this field -', 'cp-library' ); ?></option>
+												value="" selected><?php esc_html_e( '- Ignore this field -', 'cp-library' ); ?></option>
 										</select>
 									</td>
 									<td class="cp-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -229,7 +231,7 @@ class Tools {
 										<select name="cp-import-field[location]" class="cp-import-csv-column"
 												data-field="Location">
 											<option
-												value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+												value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 										</select>
 									</td>
 									<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -243,21 +245,21 @@ class Tools {
 										<select name="cp-import-field[speaker]" class="cp-import-csv-column"
 												data-field="Speaker">
 											<option
-												value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+												value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 										</select>
 									</td>
 									<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
 								</tr>
 							<?php endif; ?>
 
-							<?php if ( cp_library()->setup->post_types->service_type_enabled() ) : ?>
+							<?php if ( cp_library()->setup->post_types->service_type_enabled() && cp_library()->setup->variations->get_source() != cp_library()->setup->post_types->service_type->post_type ) : ?>
 								<tr>
 									<td><?php _e( 'Service Type', 'cp-library' ); ?></td>
 									<td>
 										<select name="cp-import-field[service_type]" class="cp-import-csv-column"
 												data-field="Service Type">
 											<option
-												value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+												value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 										</select>
 									</td>
 									<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -270,7 +272,7 @@ class Tools {
 									<select name="cp-import-field[topics]" class="cp-import-csv-column"
 											data-field="Topics">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -281,7 +283,7 @@ class Tools {
 									<select name="cp-import-field[season]" class="cp-import-csv-column"
 											data-field="Season">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -292,7 +294,7 @@ class Tools {
 									<select name="cp-import-field[scripture]" class="cp-import-csv-column"
 											data-field="Scripture">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -303,7 +305,7 @@ class Tools {
 									<select name="cp-import-field[thumbnail]" class="cp-import-csv-column"
 											data-field="Thumbnail">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -314,7 +316,7 @@ class Tools {
 									<select name="cp-import-field[video]" class="cp-import-csv-column"
 											data-field="Video">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -325,38 +327,40 @@ class Tools {
 									<select name="cp-import-field[audio]" class="cp-import-csv-column"
 											data-field="Audio">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
 							</tr>
 							<tr>
-								<td><?php _e( 'Study Guide', 'cp-library' ); ?></td>
+								<td><?php _e( 'Variation', 'cp-library' ); ?></td>
 								<td>
-									<select name="cp-import-field[study_guide]" class="cp-import-csv-column"
-											data-field="Study Guide">
+									<select name="cp-import-field[variation]" class="cp-import-csv-column"
+											data-field="Variation">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
-									</select>
-								</td>
-								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php _e( 'Passage', 'cp-library' ); ?></td>
-								<td>
-									<select name="cp-import-field[passage]" class="cp-import-csv-column"
-											data-field="Passage">
-										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Do not detect Variations -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
 							</tr>
 							</tbody>
 						</table>
+
+						<h4><span><?php esc_html_e( 'Additional Options', 'cp-library' ); ?></span></h4>
+						<p>
+							<input type='checkbox' id='sideload-audio-urls' name='sideload-audio-urls'>
+							<label for='sideload-audio-urls'><?php esc_html_e( 'Attempt to import mp3 files to the Media Library', 'cp-library' ); ?></label>
+						</p>
+
+						<p>
+							<input type='checkbox' id='stop-on-error' name='stop-on-error' checked>
+							<label for='stop-on-error'><?php esc_html_e( 'Stop if the importer encounters an error', 'cp-library' ); ?></label>
+						</p>
+
+						<?php do_action( 'cp_library_tools_import_additional_options' ); ?>
+
 						<p class="submit">
-							<button
-								class="button cp-import-proceed button-primary"><?php esc_html_e( 'Process Import', 'cp-library' ); ?></button>
+							<button class="button cp-import-proceed button-primary"><?php esc_html_e( 'Process Import', 'cp-library' ); ?></button>
 						</p>
 					</div>
 				</form>
@@ -375,8 +379,8 @@ class Tools {
 
 			// Define all tabs
 			$tabs = array(
-//				'system_info'   => __( 'System Info', 'cp-library' ),
-'import_export' => __( 'Import/Export', 'cp-library' )
+				//'system_info'   => __( 'System Info', 'cp-library' ),
+				'import_export' => __( 'Import/Export', 'cp-library' )
 			);
 
 		}
