@@ -113,6 +113,7 @@ class Init {
 		add_filter( 'script_loader_tag', [ $this, 'app_load_scripts' ], 10, 3 );
 		add_action( 'wp_enqueue_scripts', [ $this, 'app_enqueue' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'admin_scripts' ] );
+		add_action( 'enqueue_block_editor_assets', [ $this, 'block_editor_assets' ] );
 		add_action( 'init', [ $this, 'rewrite_rules' ], 100 );
 	}
 
@@ -169,6 +170,10 @@ class Init {
 		);
 	}
 
+	public function block_editor_assets() {
+		$this->enqueue->enqueue( 'styles', 'main', [] );
+	}
+
 	public function is_admin_page() {
 		return in_array( get_post_type(), $this->setup->post_types->get_post_types() );
 	}
@@ -205,6 +210,9 @@ class Init {
 		if ( isset( $scripts['js'], $scripts['js'][0], $scripts['js'][0]['handle'] ) ) {
 			wp_localize_script( $scripts['js'][0]['handle'], 'cplVars', $cpl_vars );
 		}
+
+		wp_enqueue_style( 'material-icons' );
+		wp_enqueue_script( 'feather-icons' );
 
 		return;
 
