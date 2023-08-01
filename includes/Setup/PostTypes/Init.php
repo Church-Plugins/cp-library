@@ -46,6 +46,12 @@ class Init {
 	public $service_type;
 
 	/**
+	 * Setup Shortcode CPT
+	 * @var Shortcode
+	 */
+	public $shortcode;
+
+	/**
 	 * Only make one instance of Init
 	 *
 	 * @return Init
@@ -124,6 +130,7 @@ class Init {
 		$this->speaker      = Speaker::get_instance();
 		$this->item_type    = ItemType::get_instance();
 		$this->service_type = ServiceType::get_instance();
+		$this->shortcode    = Shortcode::get_instance();
 
 		$this->item->add_actions();
 
@@ -138,6 +145,8 @@ class Init {
 		if ( $this->service_type_enabled() ) {
 			$this->service_type->add_actions();
 		}
+
+		$this->shortcode->add_actions();
 
 		do_action( 'cp_register_post_types' );
 	}
