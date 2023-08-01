@@ -1,0 +1,17 @@
+
+.wp-block-cp-library-sermon-scripture {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--cp-gap-base);
+
+	// some extra specificity to override other styles
+	&.wp-block-cp-library-sermon-scripture > .cpl-scripture-link {
+		text-decoration: none;
+		color: inherit;
+	}
+	
+	.material-icons, .material-icons-outlined {
+		font-size: 1.5em;
+	}
+}

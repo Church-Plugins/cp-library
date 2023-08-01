@@ -1,0 +1,35 @@
+@import "node_modules/@wordpress/base-styles/mixins";
+@import "node_modules/@wordpress/base-styles/breakpoints";
+
+.wp-block-cp-library-sermon-template {
+	margin-top: 0;
+	margin-bottom: 0;
+	max-width: 100%;
+	list-style: none;
+	padding: 0;
+
+	// Unset background colors that can be inherited from Global Styles with extra specificity.
+	&.wp-block-cp-library-sermon-template {
+		background: none;
+	}
+
+	&.is-flex-container {
+		flex-direction: row;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1.25em;
+
+		> li {
+			margin: 0;
+			width: 100%;
+		}
+
+		@include break-small {
+			@for $i from 2 through 6 {
+				&.is-flex-container.columns-#{ $i } > li {
+					width: calc((100% / #{ $i }) - 1.25em + (1.25em / #{ $i }));
+				}
+			}
+		}
+	}
+}

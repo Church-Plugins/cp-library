@@ -1,0 +1,16 @@
+
+
+.wp-block-cp-library-sermon-actions.aligncenter {
+	display: flex;
+	justify-content: center;
+}
+
+.wp-block-cp-library-sermon-actions div {
+	display: flex;
+	align-items: center;
+	gap: var(--cp-gap--sm);
+
+	.cpl-button {
+		--cp-button--font-size: var(--cp-font-size--sm);
+	}
+}

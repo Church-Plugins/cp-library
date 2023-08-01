@@ -1,0 +1,12 @@
+
+.wp-block-cp-library-sermon-title, .editor-styles-wrapper .wp-block-cp-library-sermon-title {
+	word-break: break-word;
+	// This block has customizable padding, border-box makes that more predictable.
+	box-sizing: border-box;
+
+	&.wp-block-cp-library-sermon-title > a {
+		display: inline-block;
+		text-decoration: none;
+		color: currentColor;
+	}
+}

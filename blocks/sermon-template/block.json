@@ -1,0 +1,60 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 2,
+	"name": "cp-library/sermon-template",
+	"title": "Sermon Template",
+	"category": "theme",
+	"parent": [ "cp-library/query" ],
+	"description": "Contains the block elements used to render a sermon, for example the title, speaker, and date.",
+	"textdomain": "default",
+	"usesContext": [
+		"queryId",
+		"query",
+		"queryContext",
+		"displayLayout",
+		"templateSlug",
+		"previewPostType"
+	],
+	"supports": {
+		"reusable": false,
+		"html": false,
+		"align": [ "wide", "full" ],
+		"anchor": true,
+		"__experimentalLayout": {
+			"allowEditing": false
+		},
+		"color": {
+			"gradients": true,
+			"link": true,
+			"__experimentalDefaultControls": {
+				"background": true,
+				"text": true
+			}
+		},
+		"typography": {
+			"fontSize": true,
+			"lineHeight": true,
+			"__experimentalFontFamily": true,
+			"__experimentalFontWeight": true,
+			"__experimentalFontStyle": true,
+			"__experimentalTextTransform": true,
+			"__experimentalTextDecoration": true,
+			"__experimentalLetterSpacing": true,
+			"__experimentalDefaultControls": {
+				"fontSize": true
+			}
+		}
+	},
+	"attributes": {
+		"thumbnailAction": {
+			"type": "boolean",
+			"default": true
+		}
+	},
+	"providesContext": {
+		"thumbnailAction": "thumbnailAction"
+	},
+	"style": "file:style-index.css",
+	"editorStyle": "file:index.css",
+	"editorScript": "file:index.js"
+}

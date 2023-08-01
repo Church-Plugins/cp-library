@@ -1,0 +1,20 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 2,
+	"name": "cp-library/sermon-audio",
+	"title": "Sermon Audio",
+	"category": "theme",
+	"description": "Displays a button for playing the sermon audio",
+  "parent": [ "cp-library/sermon-template" ],
+	"textdomain": "cp-library",
+	"attributes": {},
+	"supports": {
+		"align": [ "wide", "full" ],
+		"anchor": true,
+		"html": false,
+		"__experimentalLayout": true
+	},
+	"editorStyle": "file:index.css",
+	"editorScript": "file:index.js",
+  "style": "file:style-index.css"
+}

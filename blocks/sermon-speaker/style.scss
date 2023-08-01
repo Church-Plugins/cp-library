@@ -1,0 +1,17 @@
+
+.wp-block-cp-library-sermon-speaker {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--cp-gap-base);
+
+	// some extra specificity to override other styles
+	&.wp-block-cp-library-sermon-speaker > .cpl-speaker-link {
+		text-decoration: none;
+		color: inherit;
+	}
+	
+	.material-icons, .material-icons-outlined {
+		font-size: 1.5em;
+	}
+}

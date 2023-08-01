@@ -346,6 +346,7 @@ class Item extends PostType  {
 			'context'      => 'normal',
 			'priority'     => 'high',
 			'show_names'   => true,
+			'show_in_rest' => \WP_REST_Server::READABLE
 		] );
 
 		if ( ! $has_parent && cp_library()->setup->variations->is_enabled() ) {

@@ -1,0 +1,58 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 2,
+	"name": "cp-library/query",
+	"title": "CP Library Sermons",
+	"category": "theme",
+	"description": "Displays a list of sermons or series",
+	"textdomain": "cp-library",
+	"attributes": {
+		"queryId": {
+			"type": "number"
+		},
+		"query": {
+			"type": "object",
+			"default": {
+				"perPage": null,
+				"pages": 0,
+				"offset": 0,
+				"postType": "cpl_item",
+				"order": "desc",
+				"orderBy": "date",
+				"author": "",
+				"search": "",
+				"exclude": [],
+				"sticky": "",
+				"inherit": false,
+				"taxQuery": null,
+				"parents": []
+			}
+		},
+		"tagName": {
+			"type": "string",
+			"default": "div"
+		},
+		"displayLayout": {
+			"type": "object",
+			"default": {
+				"type": "list"
+			}
+		},
+		"namespace": {
+			"type": "string"
+		}
+	},
+	"providesContext": {
+		"queryId": "queryId",
+		"query": "query",
+		"displayLayout": "displayLayout"
+	},
+	"supports": {
+		"align": [ "wide", "full" ],
+		"anchor": true,
+		"html": false,
+		"__experimentalLayout": true
+	},
+	"editorStyle": "file:index.css",
+	"editorScript": "file:index.js"
+}

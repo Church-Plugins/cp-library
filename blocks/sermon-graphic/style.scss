@@ -1,0 +1,66 @@
+@import "node_modules/@wordpress/base-styles/variables";
+@import "node_modules/@wordpress/base-styles/colors";
+
+.wp-block-cp-library-sermon-graphic {
+	margin-left: 0;
+	margin-right: 0;
+	a {
+		display: block;
+		height: 100%;
+	}
+	img {
+		max-width: 100%;
+		width: 100%;
+		height: auto;
+		vertical-align: bottom;
+		box-sizing: border-box;
+	}
+
+	&.alignwide img,
+	&.alignfull img {
+		width: 100%;
+	}
+
+	.wp-block-cp-library-sermon-graphic__overlay {
+		&.has-background-dim {
+			position: absolute;
+			inset: 0;
+			background-color: $black;
+
+			@at-root .wp-block-cp-library-sermon-graphic  {
+				position: relative;
+			}
+		}
+
+		&.has-background-gradient {
+			background-color: transparent;
+		}
+
+		@for $i from 0 through 10 {
+			&.has-background-dim-#{ $i * 10 } {
+				opacity: $i * 0.1;
+			}
+		}
+	}
+}
+
+.cpl-sermon-graphic-inner-blocks-wrapper {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+} 
+
+
+.cpl-play-btn-overlay {
+	position: absolute; 
+	inset: 0;
+	display: grid;
+	place-items: center;
+	color: white;
+	background-color: #0007;
+
+	svg {
+		width: 30%;
+	}
+}
