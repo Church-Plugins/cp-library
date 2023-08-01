@@ -268,8 +268,22 @@ class SermonGraphic extends Block {
      * @param string $content
     */
     public function get_inner_blocks( $block, $content ) {
-      $show_play_btn = $block->context['thumbnailAction'];
-      $svg = 
+      $show_play_btn = $block->context['thumbnailAction'] !== false && $block->context['postType'] === 'cpl_item';
+
+      if( $block->context['postType'] === 'cpl_item' ) {
+        try {
+          $item = new \CP_Library\Controllers\Item( $block->context['postId'], true );
+          $item = $item->get_video();
+
+          if( ! $item['value'] ) {
+            $show_play_btn = false;
+          }
+        }
+        catch( \CP_Library\Exception $err ) {
+          $show_play_btn = false;
+        }
+      }
+
       $inner_block_html = $show_play_btn ? '<div class="cpl-play-btn-overlay"><i data-feather="play" width="30%" height="30%" fill="currentColor"></i></div>' : do_blocks( $content );
       return sprintf(
         '<div class="cpl-sermon-graphic-inner-blocks-wrapper">%1$s</div>',
