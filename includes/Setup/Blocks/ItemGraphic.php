@@ -5,8 +5,8 @@ namespace CP_Library\Setup\Blocks;
 use CP_Library\Models\Item;
 use CP_Library\Setup\Blocks\Block;
 
-class SermonGraphic extends Block {
-    public $name = 'sermon-graphic';
+class ItemGraphic extends Block {
+    public $name = 'item-graphic';
     public $is_dynamic = true;
 
     public function __construct() {
@@ -18,12 +18,12 @@ class SermonGraphic extends Block {
     }
 
     /**
-     * Renders the `cp-library/sermon-graphic` block on the server.
+     * Renders the `cp-library/item-graphic` block on the server.
      *
      * @param array    $attributes Block attributes.
      * @param string   $content    Block default content.
      * @param \WP_Block $block      Block instance.
-     * @return string Returns the HTML for the sermon graphic.
+     * @return string Returns the HTML for the item graphic.
      */
     public function render( $attributes, $content, $block ) {
       if ( ! isset( $block->context['postId'] ) ) {
@@ -128,7 +128,7 @@ class SermonGraphic extends Block {
 
     /**
      * Generates class names and styles to apply the border support styles for
-     * the Sermon Graphic block
+     * the Item Graphic block
      *
      * @param array $attributes The block attributes.
      * @return array The border-related classnames and styles for the block.
@@ -286,7 +286,7 @@ class SermonGraphic extends Block {
 
       $inner_block_html = $show_play_btn ? '<div class="cpl-play-btn-overlay"><i data-feather="play" width="30%" height="30%" fill="currentColor"></i></div>' : do_blocks( $content );
       return sprintf(
-        '<div class="cpl-sermon-graphic-inner-blocks-wrapper">%1$s</div>',
+        '<div class="cpl-item-graphic-inner-blocks-wrapper">%1$s</div>',
         $inner_block_html
       );
     }

@@ -2,14 +2,14 @@
 
 // Provide special styling for the placeholder.
 // @todo: this particular minimal style of placeholder could be componentized further.
-.wp-block-cp-library-sermon-graphic {
+.wp-block-cp-library-item-graphic {
 	.block-editor-media-placeholder {
 		z-index: 1; // Need to put it above the overlay so the upload button works.
 		backdrop-filter: none; // Removes background blur so the overlay's actual color is visible.
 	}
 
 	// Style the placeholder.
-	.wp-block-cp-library-sermon-graphic__placeholder,
+	.wp-block-cp-library-item-graphic__placeholder,
 	.components-placeholder {
 		justify-content: center;
 		align-items: center;
@@ -49,7 +49,7 @@
 	// its border so that a user selection for border color or width displays
 	// a visual border. They also override the `img { border: none; }` applied
 	// by core.
-	.wp-block-cp-library-sermon-graphic__placeholder,
+	.wp-block-cp-library-item-graphic__placeholder,
 	.components-placeholder,
 	img {
 		// The following is required to overcome WP Core applying styles that clear

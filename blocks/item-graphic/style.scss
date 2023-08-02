@@ -1,7 +1,7 @@
 @import "node_modules/@wordpress/base-styles/variables";
 @import "node_modules/@wordpress/base-styles/colors";
 
-.wp-block-cp-library-sermon-graphic {
+.wp-block-cp-library-item-graphic {
 	margin-left: 0;
 	margin-right: 0;
 	a {
@@ -21,13 +21,13 @@
 		width: 100%;
 	}
 
-	.wp-block-cp-library-sermon-graphic__overlay {
+	.wp-block-cp-library-item-graphic__overlay {
 		&.has-background-dim {
 			position: absolute;
 			inset: 0;
 			background-color: $black;
 
-			@at-root .wp-block-cp-library-sermon-graphic  {
+			@at-root .wp-block-cp-library-item-graphic  {
 				position: relative;
 			}
 		}
@@ -44,7 +44,7 @@
 	}
 }
 
-.cpl-sermon-graphic-inner-blocks-wrapper {
+.cpl-item-graphic-inner-blocks-wrapper {
 	position: absolute;
 	inset: 0;
 	display: grid;

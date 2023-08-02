@@ -39,7 +39,7 @@ function getMediaSourceUrlBySizeSlug( media, slug ) {
 	);
 }
 
-export default function SermonGraphicEdit( {
+export default function ItemGraphicEdit( {
 	clientId,
 	attributes,
 	setAttributes,
@@ -248,7 +248,7 @@ export default function SermonGraphicEdit( {
 						<Play fill='currentColor' size='30%' />
 					</div> :
 					!thumbnailAction ?
-					<div className='cpl-sermon-graphic-inner-blocks-wrapper'>
+					<div className='cpl-item-graphic-inner-blocks-wrapper'>
 						{
 							imageRef.current && imageRef.current.offsetWidth > 300 &&
 							<InnerBlocks />

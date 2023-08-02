@@ -1,10 +1,10 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 2,
-	"name": "cp-library/sermon-graphic",
-	"title": "Sermon Graphic",
+	"name": "cp-library/item-graphic",
+	"title": "Item Graphic",
 	"category": "theme",
-	"description": "Display a sermon graphic.",
+	"description": "Display a sermon or series graphic.",
 	"textdomain": "cp-library",
 	"attributes": {
 		"isLink": {
@@ -58,7 +58,7 @@
 		"align": [ "left", "right", "center", "wide", "full" ],
 		"anchor": true,
 		"color": {
-			"__experimentalDuotone": "img, .wp-block-cp-library-sermon-graphic__placeholder, .components-placeholder__illustration, .components-placeholder::before",
+			"__experimentalDuotone": "img, .wp-block-cp-library-item-graphic__placeholder, .components-placeholder__illustration, .components-placeholder::before",
 			"text": false,
 			"background": false
 		},
@@ -66,7 +66,7 @@
 			"color": true,
 			"radius": true,
 			"width": true,
-			"__experimentalSelector": "img, .block-editor-media-placeholder, .wp-block-cp-library-sermon-graphic__overlay",
+			"__experimentalSelector": "img, .block-editor-media-placeholder, .wp-block-cp-library-item-graphic__overlay",
 			"__experimentalSkipSerialization": true,
 			"__experimentalDefaultControls": {
 				"color": true,

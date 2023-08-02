@@ -46,7 +46,7 @@ class Init {
 		new Query();
 		new SermonTitle();
 		new SermonTemplate();
-		new SermonGraphic();
+		new ItemGraphic();
 		new SermonSpeaker();
 		new Pagination();
 		new SermonAudio();
