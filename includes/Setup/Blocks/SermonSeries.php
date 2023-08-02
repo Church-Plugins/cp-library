@@ -19,6 +19,10 @@ class SermonSeries extends Block {
      * @return string Returns the HTML for the sermon series.
      */
     public function render( $attributes, $content, $block ) {
+      if( ! isset( $block->context['postId'] ) || $block->context['postType'] !== 'cpl_item' ) {
+        return '';
+      }
+      
       $item = new \CP_Library\Controllers\Item( $block->context['postId'] );
 
       $item_types = $item->get_types();

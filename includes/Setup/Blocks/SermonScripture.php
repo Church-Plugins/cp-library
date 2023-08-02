@@ -19,7 +19,24 @@ class SermonScripture extends Block {
      * @return string Returns the HTML for the sermon topics.
      */
     public function render( $attributes, $content, $block ) {
-      $item = new \CP_Library\Controllers\Item( $block->context['postId'] );
+      if( ! isset( $block->context['postId'] ) ) {
+        return '';
+      }
+
+      try {
+        if( $block->context['postType'] === 'cpl_item' ) {
+          $item = new \CP_Library\Controllers\Item( $block->context['postId'], true );
+        }
+        else if( $block->context['postType'] === 'cpl_item_type' ) {
+          $item = new \CP_Library\Controllers\ItemType( $block->context['postId'], true );
+        }
+        else {
+          return '';
+        }
+     } 
+     catch( \CP_Library\Exception $err ) {
+        return '';
+     }
 
       $scriptures = $item->get_scripture();
 
