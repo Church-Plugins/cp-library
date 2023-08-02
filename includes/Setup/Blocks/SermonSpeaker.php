@@ -22,7 +22,11 @@ class SermonSpeaker extends Block {
      * @return string Returns the HTML for the sermon speaker.
      */
     function render( $attributes, $content, $block ) {
-      $item = Item_Model::get_instance_from_origin( $block->context['postId'] );
+      if( ! isset( $block->context['postId'] ) || $block->context['postType'] !== 'cpl_item' ) {
+        return '';
+      }
+
+      $item = new \CP_Library\Controllers\Item( $block->context['postId'], true );
 
       $speakers = $item->get_speakers();
 
@@ -34,14 +38,16 @@ class SermonSpeaker extends Block {
 
       $output = sprintf( '<div %1$s>', $wrapper_attributes );
       $output .= '<span class="material-icons-outlined">person</span>';
-      
-      foreach( $speakers as $index => $speaker_id ) {
-        $speaker_model = Speaker_Model::get_instance( $speaker_id );
-        $speaker = get_post( $speaker_model->origin_id );
-        $permalink = get_permalink( $speaker );
-        $comma = $index === count( $speakers ) - 1 ? '' : ','; 
-        $output .= sprintf( '<a class="cpl-speaker-link" href="%1$s">%2$s%3$s</a>', esc_url( $permalink ), esc_html( $speaker->post_title ), $comma );
+
+      $speakers_arr = array();
+
+      foreach( $speakers as $speaker ) {
+        $speakers_arr[] = sprintf( '<span class="cpl-speaker-link">%1$s', esc_html( $speaker['title'] ) );
       }
+
+      $output .= implode( ',</a>', $speakers_arr );
+
+      $output .= '</a>';
 
       $output .= '</div>';
 
