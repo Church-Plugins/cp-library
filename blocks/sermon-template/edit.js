@@ -214,22 +214,34 @@ export default function SermonTemplateEdit( {
 
 	const [items, setItems] = React.useState(null)
 
+	// fetch needed item data when posts are updated
 	React.useEffect(() => {
 		if(!posts) return
+
+		const abortController = new AbortController()
+
 		Promise.all(posts.map(async post => ({
 			...post,
 			item: await apiFetch({
 				path: `/cp-library/v1/${postType === 'cpl_item' ? 'items' : 'types'}/${post.id}`,
+				signal: abortController.signal
 			})
 		})))
 		.then(data => {
-			console.log("POSTS DATA", data)
 			setItems(data)
 		})
-		console.log("UPDATING ITEMS")
+
+		// abort api requests when component unmounts
+		return () => {
+			abortController.abort()
+		}
 	}, [posts])
 
-
+	// clear out items when post type changes
+	React.useEffect(() => {
+		setItems(null)
+	}, [postType])
+	
 	const blockContexts = useMemo(
 		() =>
 			items?.map( ( post ) => ( {

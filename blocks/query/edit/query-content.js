@@ -28,7 +28,7 @@ export default function QueryContent( {
 	setAttributes,
 	openPatternSelectionModal,
 	name,
-	clientId,
+	clientId
 } ) {
 	const {
 		queryId,
@@ -100,6 +100,7 @@ export default function QueryContent( {
 				attributes={ attributes }
 				setQuery={ updateQuery }
 				setDisplayLayout={ updateDisplayLayout }
+				clientId={clientId}
 			/>
 			<BlockControls>
 				<QueryToolbar

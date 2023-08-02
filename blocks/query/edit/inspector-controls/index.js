@@ -28,15 +28,17 @@ import {
 	useAllowedControls,
 	isControlAllowed,
 	useTaxonomies,
+	getValidBlocks,
 } from '../../utils';
+import { useDispatch, useSelect } from '@wordpress/data';
 
 export default function QueryInspectorControls( {
 	attributes,
 	setQuery,
 	setDisplayLayout,
+	clientId
 } ) {
 	const { query, displayLayout } = attributes;
-
 	const {
 		order,
 		orderBy,
@@ -54,6 +56,12 @@ export default function QueryInspectorControls( {
 	const taxonomies = useTaxonomies( postType );
 
 	const isPostTypeHierarchical = useIsPostTypeHierarchical( postType );
+
+	const { replaceInnerBlocks } = useDispatch('core/block-editor')
+
+	const innerBlocks = useSelect(select => (
+		select('core/block-editor').getBlocks(clientId)
+	), [clientId])
 
 	useEffect( () => {
 		setShowSticky( postType === 'post' );
@@ -105,6 +113,13 @@ export default function QueryInspectorControls( {
 		showSearchControl ||
 		showParentControl;
 
+	const handlePostTypeChange = useCallback((postType) => {
+		setQuery({ postType })
+
+		// remove blocks not compatible with the new post type
+		replaceInnerBlocks(clientId,  getValidBlocks(innerBlocks, postType))
+	}, [innerBlocks, clientId, replaceInnerBlocks, setQuery])
+
 	return (
 		<>
 			{ showSettingsPanel && (
@@ -113,9 +128,7 @@ export default function QueryInspectorControls( {
 						<SelectControl
 							label={ __( 'Type', 'cp-library' ) }
 							value={ postType }
-							onChange={(postType) => {
-								setQuery({ postType })
-							}}
+							onChange={handlePostTypeChange}
 							options={[
 								{ label: __( 'Series', 'cp-library' ), value: 'cpl_item_type' },
 								{ label: __( 'Sermons', 'cp-library' ), value: 'cpl_item' }

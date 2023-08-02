@@ -1,3 +1,15 @@
+// blocks only allowed on a sermon
+const SERMON_ONLY_BLOCKS = [
+	'cp-library/sermon-speaker',
+	'cp-library/sermon-actions',
+	'cp-library/sermon-series',
+	'cp-library/sermon-scripture',
+]
+
+// blocks only allowed on a series
+const SERIES_ONLY_BLOCKS = []
+
+
 /**
  * WordPress dependencies
  */
@@ -345,3 +357,31 @@ export const usePatterns = ( clientId, name ) => {
 		[ name, clientId ]
 	);
 };
+
+
+
+
+
+
+/**
+ * Returns an array of valid blocks for a given post type.
+ *
+ * @param {WPBlock[]} blocks The list of blocks to filter.
+ * @param {string} postType The post type to filter by.
+ * @return {WPBlock[]} An array of valid blocks.
+ */
+export const getValidBlocks = ( blocks, postType ) => {
+	const validBlocks = []
+	
+	for(const block of blocks) {
+		if( postType === 'cpl_item_type' && SERMON_ONLY_BLOCKS.includes( block.name ) ) continue;
+		if( postType === 'cpl_item'      && SERIES_ONLY_BLOCKS.includes( block.name ) ) continue;
+
+		validBlocks.push({
+			...block,
+			innerBlocks: getValidBlocks(block.innerBlocks, postType)
+		})
+	}
+
+	return validBlocks
+}
