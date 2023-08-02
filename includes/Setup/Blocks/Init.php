@@ -49,7 +49,6 @@ class Init {
 		new ItemGraphic();
 		new SermonSpeaker();
 		new Pagination();
-		new SermonAudio();
 		new SermonActions();
 		new SermonSeries();
 		new SermonTopics();
