@@ -23,7 +23,7 @@ import { useEntityProp } from '@wordpress/core-data';
 import HeadingLevelDropdown from './heading-level-dropdown'
 import { useCanEditEntity } from '../utils/hooks';
 
-export default function SermonTitleEdit( {
+export default function ItemTitleEdit( {
 	attributes: { level, textAlign, isLink, rel, linkTarget },
 	setAttributes,
 	context: { postType, postId, queryId },
@@ -45,7 +45,7 @@ export default function SermonTitleEdit( {
 	} );
 
 	let titleElement = (
-		<TagName { ...blockProps }>{ __( 'Sermon Title', 'cp-library' ) }</TagName>
+		<TagName { ...blockProps }>{ __( 'Item Title', 'cp-library' ) }</TagName>
 	);
 
 	if ( postType && postId ) {

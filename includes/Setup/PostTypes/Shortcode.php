@@ -110,7 +110,7 @@ class Shortcode extends PostType {
         'core/columns',
         'core/seperator',
         'cp-library/query',
-        'cp-library/sermon-title'
+        'cp-library/item-title'
       ) );
     }
 

@@ -22,7 +22,7 @@ import { store as coreStore } from '@wordpress/core-data';
 import apiFetch from '@wordpress/api-fetch';
 
 const TEMPLATE = [
-	[ 'cp-library/sermon-title' ],
+	[ 'cp-library/item-title' ],
 	[ 'core/post-date' ],
 	[ 'core/post-excerpt' ],
 ];

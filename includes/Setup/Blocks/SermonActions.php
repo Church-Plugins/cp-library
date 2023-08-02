@@ -18,7 +18,7 @@ class SermonActions extends Block {
      * @return string Returns the HTML for the sermon audio button.
      */
     public function render( $attributes, $content, $block ) {
-      if( ! isset( $block->context['postId'] )  ) {
+      if( ! isset( $block->context['postId'] ) || $block->context['postType'] !== 'cpl_item' ) {
         return '';
       }
 

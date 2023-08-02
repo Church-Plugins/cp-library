@@ -44,7 +44,7 @@ class Init {
 	 */
 	protected function includes() {
 		new Query();
-		new SermonTitle();
+		new ItemTitle();
 		new SermonTemplate();
 		new ItemGraphic();
 		new SermonSpeaker();

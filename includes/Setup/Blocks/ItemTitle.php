@@ -3,8 +3,8 @@
 namespace CP_Library\Setup\Blocks;
 use CP_Library\Setup\Blocks\Block;
 
-class SermonTitle extends Block {
-    public $name = 'sermon-title';
+class ItemTitle extends Block {
+    public $name = 'item-title';
     public $is_dynamic = true;
 
     public function __construct() {
@@ -12,12 +12,12 @@ class SermonTitle extends Block {
     }
 
     /**
-     * Renders the cp-library/sermon-title block on the server
+     * Renders the cp-library/item-title block on the server
      * 
      * @param array    $attributes Block attributes.
      * @param string   $content    Block default content.
      * @param WP_Block $block      Block instance.
-     * @return string Returns the sermon title HTML
+     * @return string Returns the item title HTML
      */
     public function render( $attributes, $content, $block ) {
       if ( ! isset( $block->context['postId'] ) ) {

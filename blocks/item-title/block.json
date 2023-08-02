@@ -1,10 +1,10 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 2,
-	"name": "cp-library/sermon-title",
-	"title": "Sermon Title",
+	"name": "cp-library/item-title",
+	"title": "Item Title",
 	"category": "theme",
-	"description": "Displays the title of a sermon.",
+	"description": "Displays the title of a series or sermon.",
 	"textdomain": "default",
 	"usesContext": [ "postId", "postType", "queryId" ],
 	"attributes": {
