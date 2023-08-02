@@ -6,11 +6,17 @@ import { useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 
 export default function SermonScriptureEdit({
-	context: { postId, postType, queryId, item }
+	context: { postType, item }
 }) {
-	const scriptures = Object.values(item?.scripture || {})
-
 	const blockProps = useBlockProps({})
+
+	if( postType !== 'cpl_item' ) {
+		return (
+			<div {...blockProps}>{ __( 'This block is not compatible with this post type', 'cp-library' ) }</div>
+		)
+	}
+
+	const scriptures = Object.values(item?.scripture || {})
 
 	return (
 		<>

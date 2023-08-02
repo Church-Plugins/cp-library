@@ -1,9 +1,4 @@
 /**
- * External dependencies
- */
-import classnames from 'classnames';
-
-/**
  * WordPress dependencies
  */
 import { useBlockProps } from '@wordpress/block-editor';
@@ -11,10 +6,16 @@ import { useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 import { Play, Volume1 } from 'react-feather';
 
-export default function SermonAudioEdit({
-	context: { item }
+export default function SermonActionsEdit({
+	context: { item, postType }
 }) {
-	const blockProps = useBlockProps({ })
+	const blockProps = useBlockProps({})
+
+	if( postType !== 'cpl_item' ) {
+		return (
+			<div {...blockProps}>{ __( 'This block is not compatible with this post type', 'cp-library' ) }</div>
+		)
+	}
 
 	const disabledStyle = { pointerEvents: 'none', opacity: '0.3' }
 	const videoButtonStyle = item?.video?.value ? {} : disabledStyle

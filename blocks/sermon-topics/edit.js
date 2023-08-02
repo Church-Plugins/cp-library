@@ -5,11 +5,17 @@ import { useBlockProps } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 
 export default function SermonTopicsEdit({
-	context: { item }
+	context: { item, postType }
 }) {
-	const topics = Object.values(item?.topics || {})
-
 	const blockProps = useBlockProps({})
+
+	if( postType !== 'cpl_item' ) {
+		return (
+			<div {...blockProps}>{ __( 'This block is not compatible with this post type', 'cp-library' ) }</div>
+		)
+	}
+
+	const topics = Object.values(item?.topics || {})
 
 	return (
 		<>

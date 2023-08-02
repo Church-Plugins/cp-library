@@ -7,9 +7,15 @@ import { __ } from '@wordpress/i18n';
 export default function SermonSeriesEdit({
 	context: { item, postType }
 }) {
-	const series = item?.types || []
-
 	const blockProps = useBlockProps({})
+
+	if( postType !== 'cpl_item' ) {
+		return (
+			<div {...blockProps}>{ __( 'This block is not compatible with this post type', 'cp-library' ) }</div>
+		)
+	}
+
+	const series = item?.types || []
 
 	return (
 		<>
