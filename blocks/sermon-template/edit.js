@@ -99,6 +99,7 @@ export default function SermonTemplateEdit( {
 		templateSlug,
 		displayLayout: { type: layoutType = 'flex', columns = 1 } = {},
 		previewPostType,
+		singleItem,
 	},
 	__unstableLayoutClassNames,
 	attributes: { thumbnailAction },
@@ -108,7 +109,10 @@ export default function SermonTemplateEdit( {
 	const [ activeBlockContextId, setActiveBlockContextId ] = useState();
 	const { posts, blocks } = useSelect(
 		( select ) => {
+	
+
 			const { getEntityRecords, getTaxonomies } = select( coreStore );
+
 			const { getBlocks } = select( blockEditorStore );
 			const taxonomies = getTaxonomies( {
 				type: postType,
@@ -184,10 +188,12 @@ export default function SermonTemplateEdit( {
 			// block's postType, which is passed through block context.
 			const usedPostType = previewPostType || postType;
 			return {
-				posts: getEntityRecords( 'postType', usedPostType, {
-					...query,
-					...restQueryArgs,
-				} ),
+				posts: (
+					getEntityRecords( 'postType', usedPostType, {
+						...query,
+						...restQueryArgs,
+					} )
+				),
 				blocks: getBlocks( clientId ),
 			};
 		},

@@ -13,7 +13,8 @@
 		"queryContext",
 		"displayLayout",
 		"templateSlug",
-		"previewPostType"
+		"previewPostType",
+		"singleItem"
 	],
 	"supports": {
 		"reusable": false,

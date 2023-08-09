@@ -40,12 +40,22 @@
 		},
 		"namespace": {
 			"type": "string"
+		},
+		"showUpcoming": {
+			"type": "boolean",
+			"default": false
+		},
+		"singleItem": {
+			"type": "boolean",
+			"default": false
 		}
 	},
 	"providesContext": {
 		"queryId": "queryId",
 		"query": "query",
-		"displayLayout": "displayLayout"
+		"displayLayout": "displayLayout",
+		"showUpcoming": "showUpcoming",
+		"singleItem": "singleItem"
 	},
 	"supports": {
 		"align": [ "wide", "full" ],

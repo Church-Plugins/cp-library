@@ -9,7 +9,9 @@ import {
 	__experimentalToolsPanel as ToolsPanel,
 	__experimentalToolsPanelItem as ToolsPanelItem,
 	__experimentalNumberControl as NumberControl,
-	SelectControl
+	SelectControl,
+	ToggleControl,
+	CheckboxControl
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { InspectorControls } from '@wordpress/block-editor';
@@ -31,14 +33,18 @@ import {
 	getValidBlocks,
 } from '../../utils';
 import { useDispatch, useSelect } from '@wordpress/data';
+import PostSearchControl from './post-search-control';
+import metadata from '../../block.json';
+
 
 export default function QueryInspectorControls( {
 	attributes,
+	setAttributes,
 	setQuery,
 	setDisplayLayout,
 	clientId
 } ) {
-	const { query, displayLayout } = attributes;
+	const { query, displayLayout, showUpcoming, singleItem } = attributes;
 	const {
 		order,
 		orderBy,
@@ -81,14 +87,16 @@ export default function QueryInspectorControls( {
 		return onChangeDebounced.cancel;
 	}, [ querySearch, onChangeDebounced ] );
 
-	const showInheritControl = isControlAllowed( allowedControls, 'inherit' );
+	const showInheritControl = !singleItem && isControlAllowed( allowedControls, 'inherit' );
 
 	const showPostTypeControl =
 		! inherit && isControlAllowed( allowedControls, 'postType' );
 	const showColumnsControl = displayLayout?.type === 'flex';
 	const showOrderControl =
+		! singleItem &&
 		! inherit && isControlAllowed( allowedControls, 'order' );
 	const showStickyControl =
+		! singleItem &&
 		! inherit &&
 		showSticky &&
 		isControlAllowed( allowedControls, 'sticky' );
@@ -99,11 +107,13 @@ export default function QueryInspectorControls( {
 		showOrderControl ||
 		showStickyControl;
 	const showTaxControl =
+		!singleItem &&
 		!! taxonomies?.length &&
 		isControlAllowed( allowedControls, 'taxQuery' );
-	const showAuthorControl = isControlAllowed( allowedControls, 'author' );
-	const showSearchControl = isControlAllowed( allowedControls, 'search' );
+	const showAuthorControl = !singleItem && isControlAllowed( allowedControls, 'author' );
+	const showSearchControl = !singleItem && isControlAllowed( allowedControls, 'search' );
 	const showParentControl =
+		!singleItem &&
 		isControlAllowed( allowedControls, 'parents' ) &&
 		isPostTypeHierarchical;
 
@@ -120,6 +130,12 @@ export default function QueryInspectorControls( {
 		replaceInnerBlocks(clientId,  getValidBlocks(innerBlocks, postType))
 	}, [innerBlocks, clientId, replaceInnerBlocks, setQuery])
 
+	const upcomingHelpText = (
+		postType === 'cpl_item' ? 
+		__( 'Display Sermons without published audio or video.', 'cp-library' ) : 
+		__( 'Display Series without any assigned sermons.', 'cp-library' )
+	)
+
 	return (
 		<>
 			{ showSettingsPanel && (
@@ -135,34 +151,85 @@ export default function QueryInspectorControls( {
 							]}
 						/>
 
-						<NumberControl
-							__unstableInputWidth="60px"
-							label={ __( 'Items to show', 'cp-library' ) }
-							labelPosition="edge"
-							min={ 1 }
-							max={ 100 }
-							onChange={ ( value ) => {
-								if (
-									isNaN( value ) ||
-									value < 1 ||
-									value > 100
-								) {
-									return;
-								}
-								setQuery( {
-									perPage: value,
-								} );
-							} }
-							step="1"
-							value={ query.perPage }
-							isDragEnabled={ false }
-						/>
-						<TextControl
-							__nextHasNoMarginBottom
-							label={ __( 'Filter by keyword', 'cp-library' ) }
-							value={ querySearch }
-							onChange={ setQuerySearch }
-						/>
+						{
+							!singleItem &&
+							<ToggleControl
+								label={ __( 'Show Upcoming', 'cp-library' ) }
+								checked={ showUpcoming }
+								onChange={(val) => {
+									setAttributes({ showUpcoming: val })
+								}}
+								help={upcomingHelpText}
+							/>
+						}
+
+						{
+							<CheckboxControl 
+								label={ __( 'Single Item', 'cp-library' ) }
+								checked={ Boolean(singleItem) }
+								onChange={ (checked) => {
+									if(checked) {
+										setAttributes({ singleItem: {
+											id: 0
+										} })
+									}
+									else {
+										setAttributes({ singleItem: false })
+										setQuery({ ...metadata.attributes.query.default, postType, include: [] })
+									}
+								}}
+								help={ __( 'Display a single item', 'cp-library' ) }
+							/>
+						}
+
+						{
+							!singleItem && 
+							<NumberControl
+								__unstableInputWidth="60px"
+								label={ __( 'Items to show', 'cp-library' ) }
+								labelPosition="edge"
+								min={ 1 }
+								max={ 100 }
+								onChange={ ( value ) => {
+									if (
+										isNaN( value ) ||
+										value < 1 ||
+										value > 100
+									) {
+										return;
+									}
+									setQuery( {
+										perPage: value,
+									} );
+								} }
+								step="1"
+								value={ query.perPage }
+								isDragEnabled={ false }
+							/>
+						}
+
+						{
+							singleItem &&
+							<PostSearchControl
+								value={ query.include || [] }
+								postType={ postType }
+								onChange={ (value) => {
+									setAttributes({ singleItem: true } )
+
+									// clear query except for the ids for this post
+									setQuery({
+										include: value,
+										author: '',
+										parents: [],
+										search: '',
+										taxQuery: null,
+										perPage: 1,
+										offset: 0
+									})
+								} }
+							/>
+						}
+
 						{ showColumnsControl && (
 							<>
 								<RangeControl
@@ -187,6 +254,7 @@ export default function QueryInspectorControls( {
 								) }
 							</>
 						) }
+
 						{ showOrderControl && (
 							<OrderControl
 								{ ...{ order, orderBy } }

@@ -77,7 +77,7 @@ export default function QueryContent( {
 			setAttributes( { queryId: instanceId } );
 		}
 	}, [ queryId, instanceId ] );
-	const updateQuery = ( newQuery ) =>
+	const updateQuery = ( newQuery ) => 
 		setAttributes( { query: { ...query, ...newQuery } } );
 	const updateDisplayLayout = ( newDisplayLayout ) =>
 		setAttributes( {
@@ -98,6 +98,7 @@ export default function QueryContent( {
 		<>
 			<QueryInspectorControls
 				attributes={ attributes }
+				setAttributes={ setAttributes }
 				setQuery={ updateQuery }
 				setDisplayLayout={ updateDisplayLayout }
 				clientId={clientId}
