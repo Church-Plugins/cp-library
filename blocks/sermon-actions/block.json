@@ -11,7 +11,11 @@
 	"supports": {
 		"align": [ "wide", "full", "center", "left", "right" ],
 		"anchor": true,
-		"html": false
+		"html": false,
+		"spacing": {
+			"padding": true,
+			"margin": true
+		}
 	},
 	"editorStyle": "file:index.css",
 	"editorScript": "file:index.js",
