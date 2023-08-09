@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.1.1
+* Updates to importer
+
 #### 1.1.0
 * New Scripture and Verse selector
 * New beta feature: Sermon Groupings
