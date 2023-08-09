@@ -22,6 +22,7 @@
 				"author": "",
 				"search": "",
 				"exclude": [],
+				"include": [],
 				"sticky": "",
 				"inherit": false,
 				"taxQuery": null,

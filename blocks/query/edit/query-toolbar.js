@@ -50,7 +50,7 @@ export default function QueryToolbar( {
 	];
 	return (
 		<>
-			{ ! query.inherit && (
+			{ !( query.inherit || query.include.length ) && (
 				<ToolbarGroup>
 					<Dropdown
 						contentClassName="block-library-query-toolbar__popover"
