@@ -138,13 +138,14 @@ class ImportSermons extends BatchImport {
 
 			try {
 				$this->row = $row;
+				$date = $this->get_field_value( 'date' );
 
 				$post_id      = false;
 				$location_id  = false;
 				$title        = trim( $this->get_field_value( 'title' ) );
 				$desc         = trim( $this->get_field_value( 'description' ) );
 				$series       = explode( ';', $this->get_field_value( 'series' ) )[0];
-				$date         = strtotime( $this->get_field_value( 'date' ) );
+				$date         = is_numeric( $date ) ? $date : strtotime( $this->get_field_value( 'date' ) );
 				$location     = trim( strtolower( $this->get_field_value( 'location' ) ) );
 				$service_type = array_filter( array_map( 'trim', explode( ',', $this->get_field_value( 'service_type' ) ) ) );
 				$speakers     = array_filter( array_map( 'trim', explode( ',', $this->get_field_value( 'speaker' ) ) ) );
