@@ -168,14 +168,13 @@ export default function QueryInspectorControls( {
 								label={ __( 'Single Item', 'cp-library' ) }
 								checked={ Boolean(singleItem) }
 								onChange={ (checked) => {
+									setAttributes({ singleItem: checked })
 									if(checked) {
-										setAttributes({ singleItem: {
-											id: 0
-										} })
+										setQuery({ include: [ 0 ] })
 									}
 									else {
-										setAttributes({ singleItem: false })
-										setQuery({ ...metadata.attributes.query.default, postType, include: [] })
+										const newQuery = { ...metadata.attributes.query.default, postType }
+										setQuery(newQuery)
 									}
 								}}
 								help={ __( 'Display a single item', 'cp-library' ) }
@@ -217,15 +216,7 @@ export default function QueryInspectorControls( {
 									setAttributes({ singleItem: true } )
 
 									// clear query except for the ids for this post
-									setQuery({
-										include: value,
-										author: '',
-										parents: [],
-										search: '',
-										taxQuery: null,
-										perPage: 1,
-										offset: 0
-									})
+									setQuery({ include: value, perPage: 1 })
 								} }
 							/>
 						}

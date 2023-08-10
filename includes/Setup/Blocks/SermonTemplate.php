@@ -154,8 +154,10 @@ class SermonTemplate extends Block {
 			return $query;
 		}
 
-		if( isset( $block->context['query']['include'] ) ) {
-			$query['post__in'] = $block->context['query']['include'];
+		$include = isset( $block->context['query']['include'] ) ? $block->context['query']['include'] : null;
+
+		if( $include && is_array( $include ) && count( $include ) > 0 ) {
+			$query['post__in'] = $include;
 		}
 
 		return $query;

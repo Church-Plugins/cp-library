@@ -88,6 +88,7 @@ export default function SermonTemplateEdit( {
 			taxQuery,
 			parents,
 			pages,
+			include,
 			// We gather extra query args to pass to the REST API call.
 			// This way extenders of Query Loop can add their own query args,
 			// and have accurate previews in the editor.
@@ -167,6 +168,9 @@ export default function SermonTemplateEdit( {
 			}
 			if ( parents?.length ) {
 				query.parent = parents;
+			}
+			if( include?.length ) {
+				query.include = include;
 			}
 			// If sticky is not set, it will return all posts in the results.
 			// If sticky is set to `only`, it will limit the results to sticky posts only.
