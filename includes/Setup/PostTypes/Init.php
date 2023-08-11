@@ -46,10 +46,10 @@ class Init {
 	public $service_type;
 
 	/**
-	 * Setup Shortcode CPT
-	 * @var Shortcode
+	 * Setup Template CPT
+	 * @var Template
 	 */
-	public $shortcode;
+	public $template;
 
 	/**
 	 * Only make one instance of Init
@@ -130,7 +130,7 @@ class Init {
 		$this->speaker      = Speaker::get_instance();
 		$this->item_type    = ItemType::get_instance();
 		$this->service_type = ServiceType::get_instance();
-		$this->shortcode    = Shortcode::get_instance();
+		$this->template     = Template::get_instance();
 
 		$this->item->add_actions();
 
@@ -146,7 +146,7 @@ class Init {
 			$this->service_type->add_actions();
 		}
 
-		$this->shortcode->add_actions();
+		$this->template->add_actions();
 
 		do_action( 'cp_register_post_types' );
 	}

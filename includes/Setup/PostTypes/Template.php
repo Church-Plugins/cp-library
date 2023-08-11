@@ -4,26 +4,34 @@ namespace CP_Library\Setup\PostTypes;
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-use CP_Library\Admin\Settings;
 use ChurchPlugins\Setup\PostTypes\PostType;
 use WP_Block_Editor_Context;
 use WP_Post;
 
 /**
- * Setup for custom post type: Shortcode
+ * Setup for custom post type: Template
  *
- * @since 1.0
+ * @since 1.3
  */
-class Shortcode extends PostType {
+class Template extends PostType {
+
+	/**
+	 * The shortcode name
+	 * 
+	 * @var string
+	 */
+	public $shortcode_slug;
 
 	/**
 	 * Child class constructor
 	 */
 	protected function __construct() {
-		$this->post_type = CP_LIBRARY_UPREFIX . "_shortcode";
+		$this->post_type = CP_LIBRARY_UPREFIX . "_template";
 
-		$this->single_label = apply_filters( "cploc_single_{$this->post_type}_label", 'Shortcode'  );
-		$this->plural_label = apply_filters( "cploc_plural_{$this->post_type}_label", 'Shortcodes' );
+		$this->single_label = apply_filters( "cploc_single_{$this->post_type}_label", 'Template'  );
+		$this->plural_label = apply_filters( "cploc_plural_{$this->post_type}_label", 'Templates' );
+
+		$this->shortcode_slug = CP_LIBRARY_UPREFIX . '_template';
 
 		parent::__construct();
 
@@ -36,7 +44,7 @@ class Shortcode extends PostType {
 	 */
 	public function add_actions() {
 		add_action( 'add_meta_boxes', [ $this, 'meta_boxes' ] );
-		add_shortcode( 'cpl_sermon_list', [ $this, 'display' ] );
+		add_shortcode( $this->shortcode_slug, [ $this, 'display' ] );
 		add_filter( 'allowed_block_types_all', [ $this, 'allowed_block_types' ], 10, 2 );
 		add_filter( 'default_content', [ $this, 'populate_content' ], 10, 2 );
 		add_filter( "{$this->post_type}_show_in_menu", [ $this, 'show_in_submenu' ] );
@@ -62,15 +70,15 @@ class Shortcode extends PostType {
 	 * @param \WP_Post $post
 	 */
 	public function shortcode_meta_box( $post ) {
-		$shortcode = "[cpl_sermon_list id={$post->ID}]";
+		$shortcode = "[{$this->shortcode_slug} id={$post->ID}]";
 		?>
 		<input type='text' disabled value="<?php echo esc_attr( $shortcode ) ?>">
-		<button class="button" onclick="navigator.clipboard.writeText('<?php echo esc_attr( $shortcode ) ?>')"><?php echo esc_html_e( 'Copy Shortcode', 'cp-library' ) ?></button>
+		<button class="button" onclick="navigator.clipboard.writeText('<?php echo esc_attr( $shortcode ) ?>')"><?php echo esc_html_e( 'Copy shortcode', 'cp-library' ) ?></button>
 		<?php
 	}
 	
 	/**
-	 * Displays Shortcode content when used inside a shortcode
+	 * Displays Template content when used via a shortcode
 	 * 
 	 * @param array $atts
 	 * @param string|null $content
@@ -79,7 +87,7 @@ class Shortcode extends PostType {
 	public function display( $atts, $content, $shortcode_tag ) {
 		$atts = shortcode_atts( array(
 			'id' => 0
-		), $atts, 'cp_sermon_list' );
+		), $atts, $this->shortcode_slug );
 
 		$atts['id'] = absint( $atts['id'] );
 
@@ -97,7 +105,7 @@ class Shortcode extends PostType {
 	}
 
 	/**
-	 * Specifies Gutenberg blocks allowed when editing a Shortcode with the block editor
+	 * Specifies Gutenberg blocks allowed when editing a Template with the block editor
 	 * 
 	 * @param bool|string[] $allowed
 	 * @param \WP_Block_Editor_Context $context
@@ -129,7 +137,7 @@ class Shortcode extends PostType {
 	}
 
 	/**
-	 * Populates content when creating a new Shortcode
+	 * Populates content when creating a new Template
 	 * 
 	 * @param string $content
 	 * @param \WP_Post $post
@@ -155,6 +163,6 @@ class Shortcode extends PostType {
 	 * Custom rewrite to prevent clashing with other plugins
 	 */
 	public function custom_slug( $slug ) {
-		return 'cp_library_shortcodes';
+		return 'cp_library_template';
 	}
 }
