@@ -30,6 +30,7 @@ import { Play } from 'react-feather';
  */
 import DimensionControls from './dimension-controls';
 import Overlay from './overlay';
+import { getAllowedBlocks } from '../utils/allowed-blocks';
 
 const ALLOWED_MEDIA_TYPES = [ 'image' ];
 
@@ -251,7 +252,7 @@ export default function ItemGraphicEdit( {
 					<div className='cpl-item-graphic-inner-blocks-wrapper'>
 						{
 							imageRef.current && imageRef.current.offsetWidth > 300 &&
-							<InnerBlocks />
+							<InnerBlocks allowedBlocks={ getAllowedBlocks( postTypeSlug ) } />
 						}
 					</div> :
 					null

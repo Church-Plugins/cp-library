@@ -29,9 +29,9 @@ import {
 	useIsPostTypeHierarchical,
 	useAllowedControls,
 	isControlAllowed,
-	useTaxonomies,
-	getValidBlocks,
+	useTaxonomies
 } from '../../utils';
+import { getValidBlocks } from '../../../utils/allowed-blocks';
 import { useDispatch, useSelect } from '@wordpress/data';
 import PostSearchControl from './post-search-control';
 import metadata from '../../block.json';

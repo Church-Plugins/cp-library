@@ -20,6 +20,8 @@ import {
 import { Spinner, PanelBody, ToggleControl } from '@wordpress/components';
 import { store as coreStore } from '@wordpress/core-data';
 import apiFetch from '@wordpress/api-fetch';
+import { getAllowedBlocks } from '../utils/allowed-blocks';
+
 
 const TEMPLATE = [
 	[ 'cp-library/item-title' ],
@@ -27,10 +29,14 @@ const TEMPLATE = [
 	[ 'core/post-excerpt' ],
 ];
 
-function SermonTemplateInnerBlocks() {
+function SermonTemplateInnerBlocks({ postType }) {
 	const innerBlocksProps = useInnerBlocksProps(
 		{ className: 'wp-block-post' },
-		{ template: TEMPLATE, __unstableDisableLayoutClassNames: true }
+		{ 
+			template: TEMPLATE,
+			__unstableDisableLayoutClassNames: true,
+			allowedBlocks: getAllowedBlocks( postType )
+		}
 	);
 	return <li { ...innerBlocksProps } />;
 }
@@ -104,7 +110,8 @@ export default function SermonTemplateEdit( {
 	},
 	__unstableLayoutClassNames,
 	attributes: { thumbnailAction },
-	setAttributes
+	setAttributes,
+	...props
 } ) {
 	const [ { page } ] = queryContext;
 	const [ activeBlockContextId, setActiveBlockContextId ] = useState();
@@ -298,7 +305,7 @@ export default function SermonTemplateEdit( {
 						{ blockContext.postId ===
 						( activeBlockContextId ||
 							blockContexts[ 0 ]?.postId ) ? (
-							<SermonTemplateInnerBlocks />
+							<SermonTemplateInnerBlocks postType={postType} />
 						) : null }
 						<MemoizedSermonTemplateBlockPreview
 							blocks={ blocks }

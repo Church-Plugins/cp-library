@@ -19,10 +19,12 @@ import { __ } from '@wordpress/i18n';
  */
 import QueryToolbar from './query-toolbar';
 import QueryInspectorControls from './inspector-controls';
+import { getAllowedBlocks } from '../../utils/allowed-blocks';
 
 const DEFAULTS_POSTS_PER_PAGE = 3;
 
-const TEMPLATE = [ [ 'cp-library/sermon-template' ] ];
+const TEMPLATE = [];
+
 export default function QueryContent( {
 	attributes,
 	setAttributes,
@@ -40,9 +42,12 @@ export default function QueryContent( {
 		useDispatch( blockEditorStore );
 	const instanceId = useInstanceId( QueryContent );
 	const blockProps = useBlockProps();
+
 	const innerBlocksProps = useInnerBlocksProps( blockProps, {
 		template: TEMPLATE,
+		allowedBlocks: getAllowedBlocks( query.postType )
 	} );
+
 	const { postsPerPage } = useSelect( ( select ) => {
 		const { getSettings } = select( blockEditorStore );
 		return {
