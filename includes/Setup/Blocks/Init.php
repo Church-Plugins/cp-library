@@ -53,7 +53,8 @@ class Init {
 		new SermonSeries();
 		new SermonTopics();
 		new SermonScripture();
-  }
+		new ItemDate();
+	}
 
 	/**
 	 * Plugin init actions

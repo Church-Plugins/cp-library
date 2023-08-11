@@ -109,7 +109,7 @@ class Shortcode extends PostType {
 				'core/group',
 				'core/columns',
 				'core/column',
-				'core/post-date',
+				'cp-library/item-date',
 				'cp-library/item-title',
 				'cp-library/item-graphic',
 				'cp-library/pagination',
