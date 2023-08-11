@@ -7,7 +7,8 @@ const ALLOWED_BLOCKS = [
 	'cp-library/item-title',
 	'cp-library/item-graphic',
 	'cp-library/pagination',
-	'cp-library/sermon-template'
+	'cp-library/sermon-template',
+	'cp-library/item-description'
 ]
 
 /**

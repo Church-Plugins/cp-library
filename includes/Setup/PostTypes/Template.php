@@ -118,6 +118,7 @@ class Template extends PostType {
 				'core/columns',
 				'core/column',
 				'cp-library/item-date',
+				'cp-library/item-description',
 				'cp-library/item-title',
 				'cp-library/item-graphic',
 				'cp-library/pagination',

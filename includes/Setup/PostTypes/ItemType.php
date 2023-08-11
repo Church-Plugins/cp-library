@@ -215,6 +215,7 @@ class ItemType extends PostType  {
 	public function get_args() {
 		$args                    = parent::get_args();
 		$args['menu_icon']       = apply_filters( "{$this->post_type}_icon", 'dashicons-list-view' );
+		$args['supports'][] = 'excerpt';
 
 		return $args;
 	}

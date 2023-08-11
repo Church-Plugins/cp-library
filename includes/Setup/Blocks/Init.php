@@ -54,6 +54,7 @@ class Init {
 		new SermonTopics();
 		new SermonScripture();
 		new ItemDate();
+		new ItemDescription();
 	}
 
 	/**
