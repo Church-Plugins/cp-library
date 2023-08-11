@@ -2,10 +2,10 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 2,
 	"name": "cp-library/pagination",
-	"title": "Sermon Pagination",
+	"title": "Item Pagination",
 	"category": "theme",
 	"parent": [ "cp-library/query" ],
-	"description": "Displays a paginated navigation to next/previous set of series or sermons, when applicable.",
+	"description": "Displays a paginated navigation to next/previous set of series or sermons or series, when applicable.",
 	"textdomain": "default",
 	"attributes": {
 		"paginationArrow": {
