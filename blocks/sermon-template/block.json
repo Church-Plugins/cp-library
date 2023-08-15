@@ -49,7 +49,7 @@
 	"attributes": {
 		"thumbnailAction": {
 			"type": "boolean",
-			"default": true
+			"default": false
 		}
 	},
 	"providesContext": {

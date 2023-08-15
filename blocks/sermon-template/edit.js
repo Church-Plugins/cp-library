@@ -25,8 +25,8 @@ import { getAllowedBlocks } from '../utils/allowed-blocks';
 
 const TEMPLATE = [
 	[ 'cp-library/item-title' ],
-	[ 'core/post-date' ],
-	[ 'core/post-excerpt' ],
+	[ 'cp-library/item-date' ],
+	[ 'cp-library/item-description' ],
 ];
 
 function SermonTemplateInnerBlocks({ postType }) {

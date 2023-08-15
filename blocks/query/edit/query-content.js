@@ -23,7 +23,10 @@ import { getAllowedBlocks } from '../../utils/allowed-blocks';
 
 const DEFAULTS_POSTS_PER_PAGE = 3;
 
-const TEMPLATE = [];
+const TEMPLATE = [
+	['cp-library/sermon-template'],
+	['cp-library/pagination']
+];
 
 export default function QueryContent( {
 	attributes,
