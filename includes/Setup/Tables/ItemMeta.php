@@ -51,7 +51,7 @@ class ItemMeta extends Table  {
 	 *
 	 */
 	public static function get_keys() {
-		return apply_filters( 'cpl_item_meta_keys_enum', [ '', 'avatar', 'name', 'video_url', 'audio_url', 'video_id_vimeo', 'video_id_facebook', 'video_id_youtube', 'item_type' ] );
+		return apply_filters( 'cpl_item_meta_keys_enum', [ '', 'avatar', 'name', 'video_url', 'audio_url', 'item_embed', 'video_id_vimeo', 'video_id_facebook', 'video_id_youtube', 'item_type' ] );
 	}
 
 	/**

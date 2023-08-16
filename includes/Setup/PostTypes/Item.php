@@ -445,6 +445,13 @@ class Item extends PostType  {
 		] );
 
 		$cmb->add_field( [
+			'name' => sprintf( __( '%s Embed', 'cp-library' ), $this->single_label ),
+			'desc' => __( 'Used to embed custom HTML, for example, a Sermon Audio embed' ),
+			'id'   => 'item_embed',
+			'type' => 'textarea_code',
+		] );
+
+		$cmb->add_field( [
 			'name' => __( 'Sermon Timestamp', 'cp-library' ),
 			'desc' => __( 'Enter the timestamp (mm:ss or hh:mm:ss) where the sermon begins to show a quick navigation link on the video player', 'cp-library' ),
 			'id'   => 'message_timestamp',
@@ -605,7 +612,7 @@ class Item extends PostType  {
 				'variation_type' => $variant->get_variation_source_type(),
 			];
 
-			$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo' ];
+			$meta = [ 'video_url', 'audio_url', 'item_embed', 'video_id_facebook', 'video_id_vimeo' ];
 			foreach ( $meta as $key ) {
 				$variant_data[ $key ] = $variant->model->get_meta_value( $key );
 			}
@@ -788,6 +795,13 @@ class Item extends PostType  {
 			'desc' => __( 'The URL of the audio to show, leave blank to hide this field.', 'cp-library' ),
 			'id'   => 'audio_url',
 			'type' => 'file',
+		] );
+
+		$cmb->add_group_field( $group_field_id, [
+			'name' => sprintf( __( '%s Embed', 'cp-library' ), $this->single_label ),
+			'desc' => __( 'Used to embed custom HTML, for example, a Sermon Audio embed' ),
+			'id'   => 'item_embed',
+			'type' => 'textarea_code',
 		] );
 
 		if ( ! $is_variant ) {

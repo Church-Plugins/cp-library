@@ -263,6 +263,16 @@ class Item extends Controller{
 		return $this->filter( esc_url ( $this->model->get_meta_value( 'audio_url' ) ), __FUNCTION__ );
 	}
 
+	public function get_embed() {
+		$embed = $this->model->get_meta_value( 'item_embed' );
+
+		if ( ! $embed ) {
+			return false;
+		}
+
+		return $this->filter( $embed, __FUNCTION__ );
+	}
+
 	/**
 	 * Get the duration for this item. Derived from the audio file if it exists.
 	 *
@@ -579,6 +589,7 @@ class Item extends Controller{
 				'id'        => $item->get_variation_source_id(),
 				'audio'     => $item->get_audio(),
 				'video'     => $item->get_video(),
+				'embed'     => $item->get_embed(),
 				'speakers'  => $item->get_speakers(),
 				'permalink' => $this->get_permalink()
 			);
@@ -745,6 +756,7 @@ class Item extends Controller{
 				'locations'  => $this->get_locations(),
 				'video'      => $this->get_video(),
 				'audio'      => $this->get_audio(),
+				'embed'      => $this->get_embed(),
 				'types'      => $this->get_types(),
 				'service_types' => $this->get_service_types(),
 				'topics'     => $this->get_topics(),
