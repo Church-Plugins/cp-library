@@ -34,6 +34,8 @@ class Podcast
 	 */
 	protected function __construct() {
 		add_action( 'init', [ $this, 'add_feed' ] );
+		add_action( 'rss2_head', [ $this, 'rss_feed_head' ] );
+		add_action( 'rss2_item', [ $this, 'rss_feed_item' ] );
 	}
 
 	/**
@@ -125,5 +127,25 @@ class Podcast
 		return apply_filters( 'cpl_podcast_feed_url', get_feed_link( $this->get_feed_name() ) );
 	}
 
+	/**
+	 * Adds custom podcast meta to head
+	 */
+	public function rss_feed_head() {
+		if( get_post_type() !== cp_library()->setup->post_types->item->post_type ) {
+			return;
+		}
 
+		Templates::get_template_part( 'podcast-meta' );
+	}
+
+	/**
+	 * Adds custom podcast meta to each item in the feed
+	 */
+	public function rss_feed_item() {
+		if( get_post_type() !== cp_library()->setup->post_types->item->post_type ) {
+			return;
+		}
+
+		Templates::get_template_part( 'parts/podcast-item-meta' );
+	}
 }
