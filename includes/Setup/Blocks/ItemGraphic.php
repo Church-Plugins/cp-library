@@ -191,7 +191,7 @@ class ItemGraphic extends Block {
 		$has_custom_gradient = isset( $attributes['customGradient'] ) && $attributes['customGradient'];
 		$has_solid_overlay   = isset( $attributes['overlayColor'] ) && $attributes['overlayColor'];
 		$has_custom_overlay  = isset( $attributes['customOverlayColor'] ) && $attributes['customOverlayColor'];
-		$class_names         = array( 'wp-block-post-featured-image__overlay' );
+		$class_names         = array( 'wp-block-cp-library-item-graphic__overlay' );
 		$styles              = array();
 
 		if ( ! $has_dim_background ) {
