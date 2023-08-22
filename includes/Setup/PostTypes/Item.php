@@ -74,10 +74,6 @@ class Item extends PostType  {
 		if ( empty( $_GET['cpl-recovery'] ) ) {
 			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
 		}
-
-		// RSS feed
-		add_action( 'rss2_head', [ $this, 'rss_feed_head' ] );
-		add_action( 'rss2_item', [ $this, 'rss_feed_item' ] );
 	}
 
 	/**
@@ -809,26 +805,5 @@ class Item extends PostType  {
 		}
 
 	}
-
-	/**
-	 * Adds custom podcast meta to head
-	 */
-	public function rss_feed_head() {
-		if( get_post_type() !== cp_library()->setup->post_types->item->post_type ) {
-			return;
-		}
-
-		Templates::get_template_part( 'podcast-meta' );
-	}
-
-	/**
-	 * Adds custom podcast meta to each item in the feed
-	 */
-	public function rss_feed_item() {
-		if( get_post_type() !== cp_library()->setup->post_types->item->post_type ) {
-			return;
-		}
-
-		Templates::get_template_part( 'parts/podcast-item-meta' );
-	}
+	
 }

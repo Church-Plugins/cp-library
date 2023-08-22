@@ -73,6 +73,10 @@ class Podcast
 			return;
 		}
 
+		if( $query->post_type !== cp_library()->setup->post_types->item->post_type ) {
+			return;
+		}
+
 		$query->set( 'post_type', cp_library()->setup->post_types->item->post_type );
 
 		// Only sermons having an enclosure.
@@ -110,7 +114,7 @@ class Podcast
 	 * @author Tanner Moushey, 4/10/23
 	 */
 	public function get_feed_name() {
-		return apply_filters( 'cpl_podcast_feed_name', 'sermon-podcast' );
+		return apply_filters( 'cpl_podcast_feed_name', 'cpl_feed' );
 	}
 
 	/**
