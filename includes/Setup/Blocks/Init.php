@@ -67,14 +67,17 @@ class Init {
 	}
 
 	public function default_thumbnail( $value, $object_id, $meta_key, $single, $meta_type ) {
+		if( $value ) {
+			return $value;
+		}
 		if( $meta_key === '_thumbnail_id' && $meta_type === 'post' ) {
 			$post_type = get_post_type( $object_id );
-			if( $post_type === cp_groups()->setup->post_types->groups->post_type ) {
-				$image = Settings::get( 'default_thumbnail' );
+			if( $post_type === cp_library()->setup->post_types->item->post_type || $post_type === cp_library()->setup->post_types->item_type->post_type ) {
+				$image = Settings::get( 'default_thumbnail', false );
 				if( $image ) {
 					$image = attachment_url_to_postid( $image );
-				} 
-				return $image || $value;
+				}
+				return $image ? $image : $value;
 			}
 		}
 		return $value;
