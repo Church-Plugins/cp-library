@@ -62,7 +62,14 @@
 		width: calc( 100% + var(--cp-gap--md) * 2 );
 		margin-left: calc(var(--cp-gap--md) * -1);
 		max-height: 50vh;
-		overflow: scroll;
+		overflow: auto;
+
+		@media(min-width: 768px) {
+			width: calc( 100% + var(--cp-gap--lg) * 2);
+			margin-left: calc( var(--cp-gap--lg) * -1);
+			padding-left: var(--cp-gap--lg);
+			padding-right: var(--cp-gap--lg);
+		}
 
 		label {
 			display: block;
