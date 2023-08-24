@@ -3,7 +3,7 @@
 	"apiVersion": 2,
 	"name": "cp-library/item-graphic",
 	"title": "Item Graphic",
-	"category": "theme",
+	"category": "cp-library",
 	"description": "Display a sermon or series graphic.",
 	"textdomain": "cp-library",
 	"attributes": {

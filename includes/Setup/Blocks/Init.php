@@ -64,8 +64,14 @@ class Init {
 	 */
 	protected function actions() {
 		add_filter( 'default_post_metadata', [ $this, 'default_thumbnail' ], 10, 5 );
+		add_filter( 'block_categories_all', [ $this, 'block_categories' ] );
 	}
 
+	/**
+	 * Sets default thumbnail for sermon and series post types
+	 * 
+	 * @author Jonathan Roley
+	 */
 	public function default_thumbnail( $value, $object_id, $meta_key, $single, $meta_type ) {
 		if( $value ) {
 			return $value;
@@ -81,5 +87,18 @@ class Init {
 			}
 		}
 		return $value;
+	}
+
+	/**
+	 * Adds a custom block category to be used by custom Gutenberg blocks
+	 * @param array $categories the default block categories
+	 */
+	public function block_categories( $categories ) {
+		$categories[] = array(
+			'slug'  => 'cp-library',
+			'title' => 'CP Library'
+		);
+
+		return $categories;
 	}
 }

@@ -3,7 +3,7 @@
 	"apiVersion": 2,
 	"name": "cp-library/item-title",
 	"title": "Item Title",
-	"category": "theme",
+	"category": "cp-library",
 	"description": "Displays the title of a series or sermon.",
 	"textdomain": "default",
 	"usesContext": [ "postId", "postType", "queryId" ],

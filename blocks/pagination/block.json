@@ -3,7 +3,7 @@
 	"apiVersion": 2,
 	"name": "cp-library/pagination",
 	"title": "Item Pagination",
-	"category": "theme",
+	"category": "cp-library",
 	"parent": [ "cp-library/query" ],
 	"description": "Displays a paginated navigation to next/previous set of series or sermons or series, when applicable.",
 	"textdomain": "default",

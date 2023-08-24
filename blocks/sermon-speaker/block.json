@@ -3,7 +3,7 @@
 	"apiVersion": 2,
 	"name": "cp-library/sermon-speaker",
 	"title": "Sermon Speaker",
-	"category": "theme",
+	"category": "cp-library",
 	"description": "Displays the speaker of the sermon.",
 	"textdomain": "default",
 	"usesContext": [ "postId", "postType", "queryId", "item" ],

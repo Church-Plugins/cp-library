@@ -3,7 +3,7 @@
 	"apiVersion": 2,
 	"name": "cp-library/sermon-template",
 	"title": "Sermon Template",
-	"category": "theme",
+	"category": "cp-library",
 	"parent": [ "cp-library/query" ],
 	"description": "Contains the block elements used to render a sermon, for example the title, speaker, and date.",
 	"textdomain": "default",

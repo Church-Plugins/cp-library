@@ -3,7 +3,7 @@
 	"apiVersion": 2,
 	"name": "cp-library/sermon-scripture",
 	"title": "Sermon Scripture",
-	"category": "theme",
+	"category": "cp-library",
 	"description": "Displays the scripture the sermon uses.",
 	"textdomain": "cp-library",
 	"usesContext": [ "postId", "postType", "queryId", "item" ],

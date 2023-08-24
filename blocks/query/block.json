@@ -3,7 +3,7 @@
 	"apiVersion": 2,
 	"name": "cp-library/query",
 	"title": "CP Library Sermons",
-	"category": "theme",
+	"category": "cp-library",
 	"description": "Displays a list of sermons or series",
 	"textdomain": "cp-library",
 	"attributes": {

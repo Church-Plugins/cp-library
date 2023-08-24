@@ -3,7 +3,7 @@
 	"apiVersion": 2,
 	"name": "cp-library/sermon-series",
 	"title": "Sermon Series",
-	"category": "theme",
+	"category": "cp-library",
 	"description": "Displays the series this sermon is a part of (if any)",
 	"textdomain": "default",
 	"usesContext": [ "postId", "postType", "queryId", "item" ],

@@ -3,7 +3,7 @@
 	"apiVersion": 2,
 	"name": "cp-library/item-date",
 	"title": "Item Date",
-	"category": "theme",
+	"category": "cp-library",
 	"description": "Add the date for a sermon or series.",
 	"textdomain": "default",
 	"attributes": {

@@ -3,7 +3,7 @@
 	"apiVersion": 2,
 	"name": "cp-library/sermon-actions",
 	"title": "Sermon Actions",
-	"category": "theme",
+	"category": "cp-library",
 	"description": "Displays buttons for playing the sermon audio and video if the files exist.",
 	"usesContext": [ "postId", "postType", "queryId", "item" ],
 	"textdomain": "cp-library",

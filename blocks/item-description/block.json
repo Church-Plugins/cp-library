@@ -3,7 +3,7 @@
 	"apiVersion": 2,
 	"name": "cp-library/item-description",
 	"title": "Item Description",
-	"category": "theme",
+	"category": "cp-library",
 	"description": "Display a the description of a Sermon or Series",
 	"textdomain": "default",
 	"attributes": {
