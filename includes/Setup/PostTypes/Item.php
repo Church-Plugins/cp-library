@@ -13,7 +13,6 @@ use CP_Library\Controllers\Item as ItemController;
 use CP_Library\Models\Speaker as Speaker_Model;
 use CP_Library\Models\Item as Model;
 use CP_Library\Util\Convenience as _C;
-use CP_Library\Templates;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -805,5 +804,4 @@ class Item extends PostType  {
 		}
 
 	}
-	
 }

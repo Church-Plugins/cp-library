@@ -77,8 +77,6 @@ class Podcast
 			return;
 		}
 
-		$query->set( 'post_type', cp_library()->setup->post_types->item->post_type );
-
 		// Only sermons having an enclosure.
 		$query->set( 'meta_query', array(
 			'relation' => 'AND',
