@@ -291,6 +291,9 @@ class ImportSermons extends BatchImport {
 				if ( false !== $all_service_types ) {
 					$types = [];
 					foreach ( $service_type as $type ) {
+						if( empty( $type ) ) {
+							continue;
+						}
 						if ( false === $type_id = array_search( strtolower( $type ), $all_service_types ) ) {
 							$post_id = wp_insert_post( [
 								'post_type'   => ServiceType::get_prop( 'post_type' ),
