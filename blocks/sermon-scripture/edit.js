@@ -25,7 +25,7 @@ export default function SermonScriptureEdit({
 			{
 				scriptures.length ?
 				scriptures.map((scripture, index) => (
-					<span className='cpl-scripture-link' key={scripture.slug}>{scripture.name}{index < scriptures.length - 1 && ','}</span>
+					<a className='cpl-scripture-link' key={scripture.slug}>{scripture.name}{index < scriptures.length - 1 && ','}</a>
 				)) :
 				__( 'No Scriptures', 'cp-library' )
 			}

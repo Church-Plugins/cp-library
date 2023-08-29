@@ -24,7 +24,7 @@ export default function SermonTopicsEdit({
 			{
 				topics.length ?
 				topics.map((topic, index) => (
-					<span className='cpl-topic-link' key={topic.slug}>{topic.name}{index < topics.length - 1 && ','}</span>
+					<a className='cpl-topic-link' key={topic.slug}>{topic.name}{index < topics.length - 1 && ','}</a>
 				)) :
 				__( 'No Topics', 'cp-library' )
 			}

@@ -39,7 +39,7 @@ export default function SermonSpeakerEdit({
 			{
 				speakers.length ?
 				speakers.map((speaker, index) => (
-					<span className='cpl-speaker-link' key={speaker.id}>{speaker.title}{index < speakers.length - 1 && ','}</span>
+					<a className='cpl-speaker-link' key={speaker.id}>{speaker.title}{index < speakers.length - 1 && ','}</a>
 				)) :
 				__( 'No speakers found', 'cp-library' )
 			}
