@@ -172,6 +172,7 @@ class Init {
 
 	public function block_editor_assets() {
 		$this->enqueue->enqueue( 'styles', 'main', [] );
+		wp_enqueue_style( 'material-icons' );
 	}
 
 	public function is_admin_page() {
