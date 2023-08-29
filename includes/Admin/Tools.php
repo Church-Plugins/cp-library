@@ -258,7 +258,7 @@ class Tools {
 									<td><?php _e( 'Service Type', 'cp-library' ); ?></td>
 									<td>
 										<select name="cp-import-field[service_type]" class="cp-import-csv-column"
-												data-field="Service Type">
+												data-field="Service_Type">
 											<option
 												value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 										</select>
@@ -337,7 +337,7 @@ class Tools {
 								<td><?php _e( 'Study Guide', 'cp-library' ); ?></td>
 								<td>
 									<select name="cp-import-field[study_guide]" class="cp-import-csv-column"
-											data-field="Study Guide">
+											data-field="Study_Guide">
 										<option
 											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
@@ -545,7 +545,7 @@ class Tools {
 			'Date'         => $data['date']['timestamp'],
 			'Passage'      => $data['passage'],
 			'Location'     => $locations,
-			'Service_type' => $service_types,
+			'Service_Type' => $service_types,
 			'Speaker'      => $speakers,
 			'Topics'       => $topics,
 			'Season'       => $seasons,
