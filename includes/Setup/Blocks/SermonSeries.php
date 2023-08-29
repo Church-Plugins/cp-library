@@ -37,8 +37,8 @@ class SermonSeries extends Block {
       $output .= '<span class="material-icons-outlined">view_list</span>';
       
       foreach( $item_types as $index => $item_type ) {
-        $comma = $index === count( $item_types ) - 1 ? '' : ',';
-        $output .= sprintf( '<a class="cpl-series-link" href="%1$s">%2$s%3$s</a>', esc_url( $item_type['permalink'] ), esc_html( $item_type['title'] ), $comma );
+        $comma = $index === count( $item_types ) - 1 ? '' : ', ';
+        $output .= sprintf( '<a class="cpl-series-link" href="%1$s">%2$s</a>%3$s', esc_url( $item_type['permalink'] ), esc_html( $item_type['title'] ), $comma );
       }
 
       $output .= '</div>';

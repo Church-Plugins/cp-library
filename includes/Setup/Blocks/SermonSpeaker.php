@@ -54,7 +54,7 @@ class SermonSpeaker extends Block {
 			$speakers_arr[] = sprintf( '<span class="cpl-speaker-link">%1$s', $title );
 		}
 
-		$output .= implode( ',</span>', $speakers_arr );
+		$output .= implode( ', </span>', $speakers_arr );
 
 		$output .= '</span>';
 

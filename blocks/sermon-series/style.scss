@@ -1,11 +1,9 @@
 
 .wp-block-cp-library-sermon-series {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--cp-gap-base);
 	
 	.material-icons, .material-icons-outlined {
 		font-size: 1.5em;
+		float: left;
+		margin-right: var(--cp-gap-base);
 	}
 }

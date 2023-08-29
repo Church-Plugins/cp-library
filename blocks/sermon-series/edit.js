@@ -26,8 +26,8 @@ export default function SermonSeriesEdit({
 				postType !== 'cpl_item' ?
 				__( 'This block only works in a Sermon query.', 'cp-library' ) :
 				series.length ?
-				series.map((series, index) => (
-					<span className='cpl-series-link' key={series.id}>{series.title}{index < series.length - 1 && ','}</span>
+				series.map((singleSeries, index) => (
+					<span className='cpl-series-link' key={singleSeries.id}>{singleSeries.title + (index < series.length - 1 ? ', ' : '')}</span>
 				)) :
 				__( 'No Series', 'cp-library' )
 			}

@@ -42,7 +42,7 @@ class SermonTopics extends Block {
         array_push( $topics_arr, sprintf( '<a class="cpl-topic-link" href="%1$s">%2$s', esc_url( $topic['url'] ), esc_html( $topic['name'] ) ) );
       }
 
-      $output .= implode( ',</a>', $topics_arr );
+      $output .= implode( ', </a>', $topics_arr );
 
       $output .= '</a>';
 

@@ -55,7 +55,7 @@ class SermonScripture extends Block {
         array_push( $scripture_arr, sprintf( '<a class="cpl-scripture-link" href="%1$s">%2$s', esc_url( $scripture['url'] ), esc_html( $scripture['name'] ) ) );
       }
 
-      $output .= implode( ',</a>', $scripture_arr );
+      $output .= implode( ', </a>', $scripture_arr );
 
       $output .= '</a>';
 
