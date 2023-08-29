@@ -38,7 +38,7 @@ class Tools {
 		add_action( 'cp_batch_import_class_include', [ $this, 'include_class' ] );
 		add_filter( 'cp_importer_is_class_allowed', [ $this, 'importer_class' ] );
 		add_filter( 'upload_mimes', [ $this, 'import_mime_type' ] );
-		add_action( 'cp_export_messages', [ $this, 'export_data' ] );
+		add_action( 'cp_export_items', [ $this, 'export_data' ] );
 	}
 
 	public function import_mime_type( $existing_mimes ) {
@@ -135,9 +135,9 @@ class Tools {
 		?>
 
 		<div class="postbox cp-import-payment-history">
-			<h3><span><?php esc_html_e( 'Import Sermons', 'cp-library' ); ?></span></h3>
+			<h3><span><?php echo sprintf( esc_html__( 'Import %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label); ?></span></h3>
 			<div class="inside">
-				<p><?php esc_html_e( 'Import a CSV file of sermons.', 'cp-library' ); ?></p>
+				<p><?php echo sprintf( esc_html__( 'Import a CSV file of %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label); ?></p>
 				<form id="cp-import-sermons" class="cp-import-form cp-import-export-form"
 					  action="<?php echo esc_url( add_query_arg( 'cp_action', 'cp_upload_import_file', admin_url() ) ); ?>"
 					  method="post" enctype="multipart/form-data">
@@ -370,9 +370,9 @@ class Tools {
 			<h3><span><?php esc_html_e( 'Export data', 'cp-library' ) ?></span></h3>
 			<div class="inside">
 
-				<?php $action_url = esc_url( add_query_arg( 'cp_action', 'cp_export_messages', admin_url() ) ); ?>
+				<?php $action_url = esc_url( add_query_arg( 'cp_action', 'cp_export_items', admin_url() ) ); ?>
 				<form id="cpl_export_data" action="<?php echo $action_url ?>" method="POST" enctype="multipart/form-data">
-					<button class="button button-primary"><?php esc_html_e( 'Export all messages as CSV', 'cp-library' ); ?></button>
+					<button class="button button-primary"><?php echo sprintf( esc_html__( 'Export all %s as CSV', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ); ?></button>
 				</form>
 				
 			</div>
@@ -436,7 +436,7 @@ class Tools {
 	}
 
 	/**
-	 * Exports all messages when form is submitted
+	 * Exports all Sermons when form is submitted
 	 * @return void
 	 * @since 1.0.4
 	 * @author Jonathan Roley
@@ -460,7 +460,7 @@ class Tools {
 			wp_mkdir_p( $upload_dir['path'] );
 		}
 
-		$filename = "sermons_" . date( 'Y-m-d' ) . ".csv";
+		$filename = sanitize_file_name( sprintf( "%s_" . date( 'Y-m-d' ) . ".csv", cp_library()->setup->post_types->item->plural_label ) );
 		$file_path = trailingslashit( $upload_dir['path'] ) . $filename;
 		$file_handle = fopen( $file_path, 'w');
 
