@@ -26,7 +26,7 @@ export default function SermonActionsEdit({
 			<div>
 				{
 					<button style={videoButtonStyle} className='cpl-button cpl-button--primary is-primary cpl-button--rectangle'>
-						<Play style={{ fill: 'none', stroke: 'currentcolor' }} strokeWidth={2} stroke="currentColor" />
+						<Play style={{ fill: 'currentcolor', stroke: 'none' }} strokeWidth={2} stroke="currentColor" />
 						<span>{ __( 'Watch', 'cp-library' ) }</span>
 					</button>
 				}			
