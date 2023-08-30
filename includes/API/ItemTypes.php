@@ -252,6 +252,8 @@ class ItemTypes extends WP_REST_Controller {
 			$args['paged'] = absint( $page );
 		}
 
+		$args['cpl_hide_upcoming'] = true;
+
 		$args = apply_filters( 'cpl_api_get_types_args', $args, $request );
 		$posts = new \WP_Query( $args );
 		$return_value = [
