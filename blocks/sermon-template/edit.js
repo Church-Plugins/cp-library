@@ -21,6 +21,7 @@ import { Spinner, PanelBody, ToggleControl } from '@wordpress/components';
 import { store as coreStore } from '@wordpress/core-data';
 import apiFetch from '@wordpress/api-fetch';
 import { getAllowedBlocks } from '../utils/allowed-blocks';
+import memoizeRequestRoute from '../utils/memoizeRequest';
 
 
 const TEMPLATE = [
@@ -107,6 +108,7 @@ export default function SermonTemplateEdit( {
 		displayLayout: { type: layoutType = 'flex', columns = 1 } = {},
 		previewPostType,
 		singleItem,
+		showUpcoming
 	},
 	__unstableLayoutClassNames,
 	attributes: { thumbnailAction },
@@ -179,6 +181,9 @@ export default function SermonTemplateEdit( {
 			if( include?.length ) {
 				query.include = include;
 			}
+			if(!showUpcoming) {
+				query.cpl_hide_upcoming = true
+			}
 			// If sticky is not set, it will return all posts in the results.
 			// If sticky is set to `only`, it will limit the results to sticky posts only.
 			// If it is anything else, it will exclude sticky posts from results. For the record the value stored is `exclude`.
@@ -230,6 +235,12 @@ export default function SermonTemplateEdit( {
 	);
 
 	const [items, setItems] = React.useState(null)
+	const asyncItemsCacheFetch = React.useMemo(() => {
+		return memoizeRequestRoute( function( ...args ) {
+			return apiFetch( ...args )
+		} )
+	}, [])
+
 
 	// fetch needed item data when posts are updated
 	React.useEffect(() => {
@@ -237,13 +248,19 @@ export default function SermonTemplateEdit( {
 
 		const abortController = new AbortController()
 
-		Promise.all(posts.map(async post => ({
-			...post,
-			item: await apiFetch({
-				path: `/cp-library/v1/${postType === 'cpl_item' ? 'items' : 'types'}/${post.id}`,
-				signal: abortController.signal
-			})
-		})))
+		const apiNamespace = '/cp-library/v1';
+		const subpath = postType === 'cpl_item' ? 'items' : 'types'
+
+		Promise.all(posts.map(async (post) => {
+			const url = `${apiNamespace}/${subpath}/${post.id}`
+
+			const item = await asyncItemsCacheFetch(url, { path: url, signal: abortController.signal })
+
+			return {
+				...post,
+				item
+			}
+		}))
 		.then(data => {
 			setItems(data)
 		})

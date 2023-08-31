@@ -14,7 +14,8 @@
 		"displayLayout",
 		"templateSlug",
 		"previewPostType",
-		"singleItem"
+		"singleItem",
+		"showUpcoming"
 	],
 	"supports": {
 		"reusable": false,

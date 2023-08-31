@@ -152,7 +152,7 @@ export default function QueryInspectorControls( {
 						/>
 
 						{
-							!singleItem &&
+							!singleItem && postType === 'cpl_item' &&
 							<ToggleControl
 								label={ __( 'Show Upcoming', 'cp-library' ) }
 								checked={ showUpcoming }

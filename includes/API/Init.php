@@ -37,7 +37,7 @@ class Init {
 	protected function __construct() {
 		add_action( 'rest_api_init', [ $this, 'load_api_routes' ] );
 		add_filter( 'posts_clauses', [ $this, 'upcoming_series_filter' ], 15, 2 );
-		add_filter( 'posts_clauses', [ $this, 'upcoming_sermons_filter' ], 15, 2 );;
+		add_filter( 'posts_clauses', [ $this, 'upcoming_sermons_filter' ], 15, 2 );
 	}
 
 	/** Actions **************************************/
@@ -100,7 +100,7 @@ class Init {
 	public function upcoming_sermons_filter( $clauses, \WP_Query $query ) {
 		global $wpdb;
 
-		if( isset( $query->query['cpl_hide_upcoming'] ) && $query->query['post_type'] === cp_library()->setup->post_types->item->post_type ) {
+		if( isset( $query->query['cpl_hide_upcoming'] ) && $query->query['cpl_hide_upcoming'] === true && $query->query['post_type'] === cp_library()->setup->post_types->item->post_type ) {
 			$clauses['join'] .= "
 				INNER JOIN wp_cpl_item ON wp_cpl_item.origin_id = {$wpdb->posts}.ID";
 

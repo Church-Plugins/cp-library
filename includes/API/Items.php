@@ -34,6 +34,7 @@ class Items extends WP_REST_Controller {
 		$this->namespace = cp_library()->get_api_namespace();
 		$this->rest_base = 'items';
 		$this->post_type	=  CP_LIBRARY_UPREFIX . "_item";
+		$this->register_custom_query_parameters();
 	}
 
 	/**
@@ -456,5 +457,26 @@ class Items extends WP_REST_Controller {
 	 */
 	public function get_rest_base() {
 		return $this->rest_base;
+	}
+
+	public function register_custom_query_parameters() {
+		$post_type = cp_library()->setup->post_types->item->post_type;
+		add_filter( "rest_{$post_type}_collection_params", [ $this, 'custom_collection_params' ], 10, 2 );
+		add_filter( "rest_{$post_type}_query", [ $this, 'rest_query_args' ], 10, 2 );
+	}
+
+	public function custom_collection_params( $params, $post_type ) {
+		$params['cpl_hide_upcoming'] = array(
+			'type' => 'boolean',
+			'description' => __( 'Whether to hide upcoming items', 'cp-library' ),
+			'default' => false
+		);
+	}
+
+	public function rest_query_args( $args, $request ) {
+		if( isset( $_GET['cpl_hide_upcoming'] ) && $_GET['cpl_hide_upcoming'] === 'true' ) {
+			$args['cpl_hide_upcoming'] = true;
+		}
+		return $args;
 	}
 }
