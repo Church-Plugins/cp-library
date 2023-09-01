@@ -29,8 +29,10 @@
   }
 
   &--thumbnail {
-    width: 50px;
+    width: 75px;
     aspect-ratio: 16 / 9;
+    object-fit: cover;
+    object-position: center;
     border: 1px solid black;
   }
 }
@@ -104,5 +106,27 @@
     display: flex;
     align-items: center;
     gap: 4px;
+  }
+}
+
+.cpl-loading-skeleton {
+  background-color: #ddd;
+  animation: pulse 1.5s infinite;
+
+  &.dark {
+    background-color: #aaa;
+    animation-delay: 0.5s;
+  }
+
+  @keyframes pulse {
+    0% {
+      opacity: 0.7;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0.7;
+    }
   }
 }

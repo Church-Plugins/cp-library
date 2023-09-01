@@ -9,8 +9,10 @@ export default function Analytics() {
   const [page, setPage] = useState(0)
   const [items, setItems] = useState([])
   const [overview, setOverview] = useState({})
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    setLoading(true)
     jQuery.ajax({
       url: window.ajaxurl,
       method: 'POST',
@@ -21,6 +23,7 @@ export default function Analytics() {
       },
       success: (data) => {
         setItems(data)
+        setLoading(false)
       },
       error: console.error
     })
@@ -88,7 +91,7 @@ export default function Analytics() {
 
       </div>
       
-      <DataTable items={items} />
+      <DataTable items={items} loading={loading} />
 
       <div className='cpl-analytics-pagination'>
         {

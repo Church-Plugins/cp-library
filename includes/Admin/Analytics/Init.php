@@ -117,7 +117,7 @@ class Init {
     }
 
     // we want to get all items, so just set the date to 0 to get everything after that
-    $date = self::get_time( "0" );
+    $date = self::get_time( "$timeframe days ago" );
 
     $items = $this->get_items_since( $date, $page );
 
@@ -251,9 +251,7 @@ class Init {
             FROM
               wp_cpl_item as item
             LEFT JOIN
-              wp_cp_log as log ON item.id = log.object_id
-            WHERE
-              item.updated > '%s'
+              wp_cp_log as log ON item.id = log.object_id AND log.created > '%s'
             GROUP BY
               item.id
             ORDER BY
@@ -262,6 +260,10 @@ class Init {
             OFFSET $start;";
 
     $items = $wpdb->get_results( $wpdb->prepare( $sql, $date ) );
+
+    foreach( $items as $item ) {
+      $item->thumbnail = get_the_post_thumbnail_url( $item->origin_id, 'thumbnail' );
+    }
 
     return $items;
   }

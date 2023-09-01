@@ -12,10 +12,16 @@ export default function DataRow({ item }) {
   if(item.view_duration) {
     timeString = parseTime(item.view_duration)
   }
+
+  const img = (
+    item.thumbnail ? 
+    <img class='cpl-analytics-sermon--thumbnail' src={item.thumbnail} /> : 
+    <div className='cpl-analytics-sermon--thumbnail'></div>
+  )
   
   return (
     <tr className='cpl-analytics-sermon' key={item.id}>
-      <td><div className='cpl-analytics-sermon--thumbnail'></div></td>
+      <td>{img}</td>
       <td className='cpl-analytics-sermon--title'>{item.title}</td>
       <td className='cpl-analytics-sermon--plays'>{item.views || 0}</td>
       <td className='cpl-analytics-sermon--avd'>{timeString}</td>
