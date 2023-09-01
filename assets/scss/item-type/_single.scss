@@ -58,4 +58,11 @@
 		//	}
 		//}
 	}
+
+	&--items--pagination {
+		display: flex;
+    justify-content: center;
+    gap: var(--cp-gap-base);
+    margin-top: var(--cp-gap--md);
+	}
 }

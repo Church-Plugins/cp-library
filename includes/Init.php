@@ -284,6 +284,7 @@ class Init {
 	 * @return void
 	 */
 	protected function actions() {
+		add_filter( 'query_vars', [ $this, 'query_vars' ] );
 		add_action( 'wp_head', [ $this, 'global_css_vars' ] );
 	}
 
@@ -297,6 +298,17 @@ class Init {
 			}
 		</style>
 		<?php
+	}
+
+	/**
+	 * Add query vars
+	 *
+	 * @param array $vars
+	 * @return array
+	 */
+	public function query_vars( $vars ) {
+		$vars[] = 'cpl_page';
+		return $vars;
 	}
 
 	/**
