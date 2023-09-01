@@ -124,12 +124,14 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 	<p class="cpl-single-type--items-title"><?php printf( '%s: %s', cp_library()->setup->post_types->item->plural_label, count( $item_type['items'] ) ); ?></p>
 
 	<section class="cpl-single-type--items">
-		<?php 
-		$ids = wp_list_pluck( $item_type['items'], 'originID' );
+		<?php
+		// Items come in ASC order, show in DESC
+		$ids = array_reverse( wp_list_pluck( $item_type['items'], 'originID' ) );
 		$page = get_query_var( 'cpl_page' ) ? get_query_var( 'cpl_page' ) : 1;
 		$item_query = new WP_Query( array(
 			'post_type' => cp_library()->setup->post_types->item->post_type,
 			'post__in' => $ids,
+			'orderby' => 'post__in',
 			'posts_per_page' => 10,
 			'paged' => $page
 		) );
