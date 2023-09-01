@@ -161,11 +161,11 @@ class Init {
 	}
 
 	public function admin_scripts() {
-		// if ( ! $this->is_admin_page() ) {
-			// return;
-		// }
-
 		wp_enqueue_style( 'material-icons' );
+
+		if ( ! $this->is_admin_page() ) {
+			return;
+		}
 
 		$this->enqueue->enqueue( 'styles', 'admin', [] );
 		$scripts = $this->enqueue->enqueue( 'scripts', 'admin', ['jquery', 'select2'] );
