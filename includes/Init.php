@@ -166,7 +166,7 @@ class Init {
 		wp_enqueue_style( 'material-icons' );
 
 		if ( ! $this->is_admin_page() ) {
-			return;
+			// return;
 		}
 
 		$this->enqueue->enqueue( 'styles', 'admin', [] );
