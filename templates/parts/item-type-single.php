@@ -141,6 +141,8 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 			<?php \CP_Library\Templates::get_template_part( "parts/item-list" ); ?>
 		<?php endwhile; ?>
 
+		<?php wp_reset_postdata(); ?>
+
 		<div class="cpl-single-type--items--pagination">
 			<?php
 			echo paginate_links( array(
@@ -151,8 +153,6 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 			) );
 			?>
 		</div>
-
-		<?php wp_reset_postdata(); ?>
 	</section>
 </div>
 
