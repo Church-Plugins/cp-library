@@ -49,26 +49,19 @@ class SermonAudio extends Adapter {
 
 			$item['attachments'] = array();
 
-			// adds references to attachments. These must be named the same values used in add_attachments()
-			if( $sermon->speaker ) {
-				$item['attachments']['cpl_speaker'] = [ $sermon->speaker->speakerID ];
-			}
-
-			if( $sermon->series ) {
-				$item['attachments']['cpl_item_type'] = [ $sermon->series->seriesID ];
-			}
-
-			$items[$sermon->sermonID] = $item;
-
 			if( (boolean) $sermon->speaker && cp_library()->setup->post_types->speaker_enabled() ) {
 				$speaker = $this->format_speaker( $sermon->speaker );
 				$speakers[$sermon->speaker->speakerID] = $speaker;
+				$item['attachments']['cpl_speaker'] = [ $sermon->speaker->speakerID ];
 			}
 
 			if( (boolean) $sermon->series && cp_library()->setup->post_types->item_type_enabled() ) {
 				$item_type = $this->format_item_type( $sermon->series );
 				$item_types[$sermon->series->seriesID] = $item_type;
+				$item['attachments']['cpl_item_type'] = [ $sermon->series->seriesID ];
 			}
+
+			$items[$sermon->sermonID] = $item;
 		}
 
 		// enqueues items to be processed
