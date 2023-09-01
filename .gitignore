@@ -9,4 +9,3 @@ yarn.lock
 .phpdoc
 .vscode
 app/templates/*.rt.js
-package

@@ -192,6 +192,10 @@
 		justify-content: flex-end;
 		margin: 0 -.5rem;
 
+		&.cpl-is-variation {
+			align-items: center;
+		}
+
 		> * {
 			margin: 1rem .5rem;
 		}

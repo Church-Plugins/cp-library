@@ -2,6 +2,8 @@
 
 namespace CP_Library\Admin;
 
+use CP_Library\Controllers\Item;
+
 /**
  * Plugin Tools
  *
@@ -36,6 +38,7 @@ class Tools {
 		add_action( 'cp_batch_import_class_include', [ $this, 'include_class' ] );
 		add_filter( 'cp_importer_is_class_allowed', [ $this, 'importer_class' ] );
 		add_filter( 'upload_mimes', [ $this, 'import_mime_type' ] );
+		add_action( 'cp_export_items', [ $this, 'export_data' ] );
 	}
 
 	public function import_mime_type( $existing_mimes ) {
@@ -71,11 +74,11 @@ class Tools {
 			? sanitize_key( $_GET['tab'] )
 			: 'import_export';
 
-//		wp_enqueue_script( 'cp-admin-tools' );
+		// wp_enqueue_script( 'cp-admin-tools' );
 
 		if ( 'import_export' === $active_tab ) {
 			wp_enqueue_script( 'cp-admin-tools-import' );
-//			wp_enqueue_script( 'cp-admin-tools-export' );
+			// wp_enqueue_script( 'cp-admin-tools-export' );
 		}
 		?>
 
@@ -132,9 +135,9 @@ class Tools {
 		?>
 
 		<div class="postbox cp-import-payment-history">
-			<h3><span><?php esc_html_e( 'Import Sermons', 'cp-library' ); ?></span></h3>
+			<h3><span><?php echo sprintf( esc_html__( 'Import %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label); ?></span></h3>
 			<div class="inside">
-				<p><?php esc_html_e( 'Import a CSV file of sermons.', 'cp-library' ); ?></p>
+				<p><?php echo sprintf( esc_html__( 'Import a CSV file of %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label); ?></p>
 				<form id="cp-import-sermons" class="cp-import-form cp-import-export-form"
 					  action="<?php echo esc_url( add_query_arg( 'cp_action', 'cp_upload_import_file', admin_url() ) ); ?>"
 					  method="post" enctype="multipart/form-data">
@@ -156,10 +159,12 @@ class Tools {
 
 						<p>
 							<?php
-							printf(
-								__( 'Each column loaded from the CSV needs to be mapped to an order field. Select the column that should be mapped to each field below. Any columns not needed can be ignored. See <a href="%s" target="_blank">this guide</a> for assistance with importing payment records.', 'cp-library' ),
-								'https://docs.easydigitaldownloads.com/category/1337-importexport'
-							);
+//							printf(
+//								__( 'Each column loaded from the CSV needs to be mapped to an order field. Select the column that should be mapped to each field below. Any columns not needed can be ignored. See <a href="%s" target="_blank">this guide</a> for assistance with importing payment records.', 'cp-library' ),
+//								'https://docs.easydigitaldownloads.com/category/1337-importexport'
+//							);
+							_e( 'Each column loaded from the CSV needs to be mapped to an order field. Select the column that should be mapped to each field below. Any columns not needed can be ignored.', 'cp-library' );
+
 							?>
 						</p>
 
@@ -179,7 +184,7 @@ class Tools {
 									<select name="cp-import-field[title]" class="cp-import-csv-column"
 											data-field="Title">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -190,7 +195,7 @@ class Tools {
 									<select name="cp-import-field[description]" class="cp-import-csv-column"
 											data-field="Description">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -202,7 +207,7 @@ class Tools {
 									<select name="cp-import-field[date]" class="cp-import-csv-column"
 											data-field="Date">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -215,7 +220,7 @@ class Tools {
 										<select name="cp-import-field[series]" class="cp-import-csv-column"
 												data-field="Series">
 											<option
-												value=""><?php esc_html_e( '- Ignore this field -', 'cp-library' ); ?></option>
+												value="" selected><?php esc_html_e( '- Ignore this field -', 'cp-library' ); ?></option>
 										</select>
 									</td>
 									<td class="cp-import-preview-field"><?php esc_html_e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -229,7 +234,7 @@ class Tools {
 										<select name="cp-import-field[location]" class="cp-import-csv-column"
 												data-field="Location">
 											<option
-												value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+												value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 										</select>
 									</td>
 									<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -243,21 +248,21 @@ class Tools {
 										<select name="cp-import-field[speaker]" class="cp-import-csv-column"
 												data-field="Speaker">
 											<option
-												value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+												value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 										</select>
 									</td>
 									<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
 								</tr>
 							<?php endif; ?>
 
-							<?php if ( cp_library()->setup->post_types->service_type_enabled() ) : ?>
+							<?php if ( cp_library()->setup->post_types->service_type_enabled() && cp_library()->setup->variations->get_source() != cp_library()->setup->post_types->service_type->post_type ) : ?>
 								<tr>
 									<td><?php _e( 'Service Type', 'cp-library' ); ?></td>
 									<td>
 										<select name="cp-import-field[service_type]" class="cp-import-csv-column"
 												data-field="Service Type">
 											<option
-												value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+												value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 										</select>
 									</td>
 									<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -270,7 +275,7 @@ class Tools {
 									<select name="cp-import-field[topics]" class="cp-import-csv-column"
 											data-field="Topics">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -281,7 +286,7 @@ class Tools {
 									<select name="cp-import-field[season]" class="cp-import-csv-column"
 											data-field="Season">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -292,7 +297,7 @@ class Tools {
 									<select name="cp-import-field[scripture]" class="cp-import-csv-column"
 											data-field="Scripture">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -303,7 +308,7 @@ class Tools {
 									<select name="cp-import-field[thumbnail]" class="cp-import-csv-column"
 											data-field="Thumbnail">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -314,7 +319,7 @@ class Tools {
 									<select name="cp-import-field[video]" class="cp-import-csv-column"
 											data-field="Video">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -325,29 +330,18 @@ class Tools {
 									<select name="cp-import-field[audio]" class="cp-import-csv-column"
 											data-field="Audio">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
 							</tr>
 							<tr>
-								<td><?php _e( 'Study Guide', 'cp-library' ); ?></td>
+								<td><?php _e( 'Variation', 'cp-library' ); ?></td>
 								<td>
-									<select name="cp-import-field[study_guide]" class="cp-import-csv-column"
-											data-field="Study Guide">
+									<select name="cp-import-field[variation]" class="cp-import-csv-column"
+											data-field="Variation">
 										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
-									</select>
-								</td>
-								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php _e( 'Passage', 'cp-library' ); ?></td>
-								<td>
-									<select name="cp-import-field[passage]" class="cp-import-csv-column"
-											data-field="Passage">
-										<option
-											value=""><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+											value="" selected><?php _e( '- Do not detect Variations -', 'cp-library' ); ?></option>
 									</select>
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
@@ -355,18 +349,38 @@ class Tools {
 							</tbody>
 						</table>
 
-            <h4><span><?php esc_html_e( 'Additional Options', 'cp-library' ); ?></span></h4>
-            <input type='checkbox' checked id='sideload-audio-urls' name='sideload-audio-urls'>
-            <label for='sideload-audio-urls'>Sideload Audio URLs</label>
+						<h4><span><?php esc_html_e( 'Additional Options', 'cp-library' ); ?></span></h4>
+						<p>
+							<input type='checkbox' id='sideload-audio-urls' name='sideload-audio-urls'>
+							<label for='sideload-audio-urls'><?php esc_html_e( 'Attempt to import mp3 files to the Media Library', 'cp-library' ); ?></label>
+						</p>
+
+						<p>
+							<input type='checkbox' id='stop-on-error' name='stop-on-error' checked>
+							<label for='stop-on-error'><?php esc_html_e( 'Stop if the importer encounters an error', 'cp-library' ); ?></label>
+						</p>
+
+						<?php do_action( 'cp_library_tools_import_additional_options' ); ?>
 
 						<p class="submit">
-							<button
-								class="button cp-import-proceed button-primary"><?php esc_html_e( 'Process Import', 'cp-library' ); ?></button>
+							<button class="button cp-import-proceed button-primary"><?php esc_html_e( 'Process Import', 'cp-library' ); ?></button>
 						</p>
 					</div>
 				</form>
 			</div><!-- .inside -->
 		</div><!-- .postbox -->
+
+		<div class="postbox cp-import-payment-history">
+			<h3><span><?php esc_html_e( 'Export data', 'cp-library' ) ?></span></h3>
+			<div class="inside">
+
+				<?php $action_url = esc_url( add_query_arg( 'cp_action', 'cp_export_items', admin_url() ) ); ?>
+				<form id="cpl_export_data" action="<?php echo $action_url ?>" method="POST" enctype="multipart/form-data">
+					<button class="button button-primary"><?php echo sprintf( esc_html__( 'Export all %s as CSV', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ); ?></button>
+				</form>
+
+			</div>
+		</div>
 
 		<?php
 		do_action( 'cp_library_tools_import_export_after' );
@@ -380,8 +394,8 @@ class Tools {
 
 			// Define all tabs
 			$tabs = array(
-//				'system_info'   => __( 'System Info', 'cp-library' ),
-'import_export' => __( 'Import/Export', 'cp-library' )
+				// 'system_info'   => __( 'System Info', 'cp-library' ),
+				'import_export' => __( 'Import/Export', 'cp-library' )
 			);
 
 		}
@@ -425,4 +439,124 @@ class Tools {
 		<?php
 	}
 
+	/**
+	 * Exports all Sermons when form is submitted
+	 * @return void
+	 * @since 1.0.4
+	 * @author Jonathan Roley
+	 */
+	public function export_data() {
+		$return_value = [];
+
+		$args = [
+			'post_type'      =>  CP_LIBRARY_UPREFIX . "_item",
+			'post_status'    => array('publish','private','draft','future'),
+			'posts_per_page' => -1,
+		];
+
+		$posts = new \WP_Query( $args );
+
+		$upload_dir = wp_upload_dir();
+		// WP-CLI may need to find a fallback directory
+		if( empty( $upload_dir ) || empty( $upload_dir['path'] ) ) {
+			$upload_dir['path'] = dirname( __FILE__ );
+		} else {
+			wp_mkdir_p( $upload_dir['path'] );
+		}
+
+		$filename = sanitize_file_name( sprintf( "%s_" . date( 'Y-m-d' ) . ".csv", cp_library()->setup->post_types->item->plural_label ) );
+		$file_path = trailingslashit( $upload_dir['path'] ) . $filename;
+		$file_handle = fopen( $file_path, 'w');
+
+		$header_added = false;
+
+		foreach( $posts->posts as $post ) {
+
+			try {
+				$item = new Item( $post->ID );
+
+				$data = $item->get_api_data();
+
+				$formatted_data = $this->get_formatted_item( $data );
+
+				if( ! $header_added ) {
+					fputcsv($file_handle, array_keys($formatted_data));
+					$header_added = true;
+				}
+
+				fputcsv($file_handle, $formatted_data);
+			} catch ( \Exception $e ) {
+				$return_value['error'] = $e->getMessage();
+				error_log( $e->getMessage() );
+			}
+		}
+
+		fclose($file_handle);
+
+		header("Content-Type: text/csv");
+		header( "Content-disposition: attachment; filename=\"" . $filename . "\"" );
+
+		if ( isset( $headers['content-length'] ) ) {
+			header( "Content-Length: " . $headers['content-length'] );
+		}
+
+		session_write_close();
+		readfile( rawurldecode( $file_path ) );
+
+    exit();
+	}
+
+	/**
+	 * Formats data for exporting as CSV
+	 * @param array $data
+	 * @return array
+	 * @since 1.0.4
+	 */
+	public function get_formatted_item( $data ) {
+
+		$series = implode(',', array_map( function( $series) {
+			return $series['title'];
+		}, $data['types'] ) );
+
+		$scripture = implode( ',', array_map( function( $scripture ) {
+			return $scripture['name'];
+		}, $data['scripture'] ) );
+
+		$topics = implode( ',', array_map( function( $topic ) {
+			return $topic['name'];
+		}, $data['topics'] ) );
+
+		$speakers = implode( ',', array_map( function( $speaker ) {
+			return $speaker['title'];
+		}, $data['speakers'] ) );
+
+		$locations = implode( ',', array_map( function( $location ) {
+			return $location['name'];
+		}, $data['locations'] ) );
+
+		$service_types = implode( ',', array_map( function( $type ) {
+			return $type['title'];
+		}, $data['service_types'] ) );
+
+		$seasons = implode( ',', array_map( function( $season ) {
+			return $season['name'];
+		}, $data['seasons'] ) );
+
+		return array(
+			'Title'        => $data['title'],
+			'Description'  => preg_replace("/\n/", "\\n", $data['desc']),
+			'Series'       => $series,
+			'Date'         => $data['date']['timestamp'],
+			'Passage'      => $data['passage'],
+			'Location'     => $locations,
+			'Service Type' => $service_types,
+			'Speaker'      => $speakers,
+			'Topics'       => $topics,
+			'Season'       => $seasons,
+			'Scripture'    => $scripture,
+			'Thumbnail'    => $data['thumb'],
+			'Video'        => $data['video']['value'],
+			'Audio'        => $data['audio'],
+		);
+	}
 }

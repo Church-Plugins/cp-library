@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
@@ -27,6 +27,7 @@ import PlayVideo from '../../Elements/Buttons/PlayVideo';
 
 import throttle from 'lodash.throttle';
 import jQuery from 'jquery';
+import Controls from './Controls';
 
 
 export default function Player({
@@ -52,9 +53,8 @@ export default function Player({
   const { isActive: persistentPlayerIsActive, passToPersistentPlayer } = usePersistentPlayer();
   const playerInstance = useRef();
 	const playingClass   = isPlaying ? ' is_playing' : '';
-  const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
-	const copyLinkRef = useRef(null);
+	const hasVariations = Boolean(item.variations?.length)
+	const [currentItem, setCurrentItem] = useState(hasVariations ? item.variations[0] : item)
 
 	const onMouseMove = (e) => {
 		if (showFSControls || ! mode) return;
@@ -75,15 +75,7 @@ export default function Player({
 
 	useEffect(() => { showControls() }, [mode]);
 
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
   let progressIntervalHandle = null;
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
 
 	const handleClickFullscreen = () => {
 		cplLog(item.id, 'fullscreen');
@@ -93,12 +85,13 @@ export default function Player({
 	};
 
 	const handleClickPersistent = () => {
-		mediaState.current = { ...mediaState.current, item: item };
+		mediaState.current = { ...mediaState.current, item: currentItem };
 		mediaState.current = { ...mediaState.current, mode: mode };
 		mediaState.current = { ...mediaState.current, playedSeconds: playedSeconds };
 
 		setIsPlaying( false );
 		setMode( null );
+		setCurrentItem( null )
 		passToPersistentPlayer({
 			item         : mediaState.current.item,
 			mode         : mediaState.current.mode,
@@ -107,57 +100,12 @@ export default function Player({
 		});
 	};
 
-	const handleFBShare = () => {
-		cplLog(item.id, 'share_facebook');
-		window.open('http://www.facebook.com/sharer.php?u='+encodeURIComponent( item.permalink )+'&t='+encodeURIComponent( item.title ),'sharer','toolbar=0,status=0,width=626,height=436');
-    setAnchorEl(null);
-	};
 
-	const handleTwitterShare = () => {
-		cplLog(item.id, 'share_twitter');
 
-		window.open( "http://twitter.com/intent/tweet?text=" + encodeURIComponent( item.title + ' ' + item.permalink ),'sharer','toolbar=0,status=0,width=626,height=436');
-    setAnchorEl(null);
-	};
-
-	const handleFileDownload = () => {
-		cplLog(item.id, 'download');
-
-		const link = document.createElement('a');
-
-		if ( item.audio.search('soundcloud') ) {
-	    link.href = item.audio;
-		} else {
-	    link.href = cplVar( 'url', 'site' ) + '?item_id=' + item.originID + '&key=audio&name=' + item.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3';
-		}
-
-		link.setAttribute(
-			'target',
-			'_blank',
-		);
-
-    // Append to html link element page
-    document.body.appendChild(link);
-
-    // Start download
-    link.click();
-
-    // Clean up and remove the link
-    link.parentNode.removeChild(link);
-    setAnchorEl(null);
-	};
-
-	const handleCopyLink = (e) => {
-		copyLinkRef.current.select();
-		document.execCommand('copy');
-		e.target.focus();
-    setAnchorEl(null);
-	};
-
-	const updateMode = (mode) => {
+	const updateMode = (mode, url = null) => {
 		setMode(mode);
 		setPlayedSeconds(0);
-		setPlayingURL( 'video' === mode ? item.video.value : item.audio );
+		setPlayingURL( url || ('video' === mode ? currentItem.video.value : currentItem.audio) );
 		setIsPlaying(false);
 
 		// give the player a chance to initialize before we set it to play
@@ -194,11 +142,11 @@ export default function Player({
   // Sync some states to be possibly passed to the persistent player. These states could be gone by
   // the time the clean up function is done during unmounting.
   useEffect(() => {
-    mediaState.current = { ...mediaState.current, item, mode };
-  }, [item, mode])
+    mediaState.current = { ...mediaState.current, item: currentItem, mode };
+  }, [item, currentItem, mode])
 
   // When unmounted, if media is still playing, hand it off to the persistent player.
-  useEffect(() => {
+  useLayoutEffect(() => {
     return () => {
       if (mediaState.current.isPlaying) {
         passToPersistentPlayer({
@@ -213,13 +161,13 @@ export default function Player({
 
   // If item has both video and audio, prefer video.
   useEffect(() => {
-    if (!item) return;
+    if (!currentItem) return;
 
-    if ( item.thumb ) {
-    	setDisplayBG( { background: "url(" + item.thumb + ")", backgroundSize: "cover", backgroundPosition: "center center" } );
+    if ( currentItem.thumb ) {
+    	setDisplayBG( { background: "url(" + currentItem.thumb + ")", backgroundSize: "cover", backgroundPosition: "center center" } );
     }
 
-  }, [item]);
+  }, [currentItem]);
 
 	let marker = cplMarker( item, mode, duration );
 	let markPosition	= marker.position;
@@ -397,7 +345,7 @@ export default function Player({
 							          <></>
 						          ) : (
 							          <PlayCircleOutline onClick={() => {
-													let defaultMode = ( item.video.value ) ? 'video' : 'audio';
+													let defaultMode = ( currentItem.video.value ) ? 'video' : 'audio';
 
 								          if (persistentPlayerIsActive) {
 									          passToPersistentPlayer({
@@ -422,84 +370,37 @@ export default function Player({
 
           </Box>
 
-          <Box className="itemDetail__actions">
-
-	          {item.video.value && (
-		          <Box className="itemDetail__playVideo">
-			          <PlayVideo
-				          onClick={() => {
-					          if (persistentPlayerIsActive) {
-						          passToPersistentPlayer({
-							          item         : mediaState.current.item,
-							          mode         : 'video',
-							          isPlaying    : true,
-							          playedSeconds: 0.0,
-						          });
-					          } else {
-						          updateMode('video');
-					          }
-				          }}
-				          fullWidth
-			          />
-		          </Box>
-	          )}
-
-	          {item.audio && (
-		          <Box className="itemDetail__playAudio" >
-			          <PlayAudio
-				          onClick={() => {
-					          if (persistentPlayerIsActive) {
-						          passToPersistentPlayer({
-							          item         : mediaState.current.item,
-							          mode         : 'audio',
-							          isPlaying    : true,
-							          playedSeconds: 0.0,
-						          });
-					          } else {
-								updateMode('audio');
-					          }
-				          }}
-			          />
-
-		          </Box>
-	          )}
-
-            <Box
-              className="itemDetail__share"
-            >
-              <Rectangular
-	              aria-controls="itemDetail__share"
-	              aria-haspopup="true"
-	              aria-expanded={open ? 'true' : undefined}
-	              onClick={handleClick}
-	              variant="outlined">
-                <Share2 />
-              </Rectangular>
-	            <Menu
-		            id="itemDetail__share__menu"
-		            className="itemDetail__share__menu"
-		            aria-labelledby="demo-positioned-button"
-		            anchorEl={anchorEl}
-		            open={open}
-		            onClose={handleClose}
-		            anchorOrigin={{
-			            vertical  : 'bottom',
-			            horizontal: 'right',
-		            }}
-		            transformOrigin={{
-			            vertical  : 'top',
-			            horizontal: 'right',
-		            }}
-	            >
-		            <MenuItem onClick={handleFBShare}><Facebook /> Share on Facebook</MenuItem>
-		            <MenuItem onClick={handleTwitterShare}><Twitter /> Share on Twitter</MenuItem>
-		            {item.audio && (
-			            <MenuItem onClick={handleFileDownload}><Download /> Download Audio</MenuItem>
-		            )}
-		            <MenuItem onClick={handleCopyLink}><LinkIcon /> Copy Link <textarea ref={copyLinkRef} value={item.permalink} className="cpl-sr-only" /></MenuItem>
-	            </Menu>
-            </Box>
-          </Box>
+					{
+						hasVariations ?
+						item.variations.map((variation) => {
+							return (
+								<Controls 
+									item={ variation } 
+									key={ variation.id } 
+									isVariation={true}
+									handleSelect={ (data) => {
+										setCurrentItem( variation )
+										if(persistentPlayerIsActive) {
+											passToPersistentPlayer( data )
+										}
+										else {
+											const url = data.mode === 'video' ? data.item.video.value : data.item.audio 
+											updateMode( data.mode, url )
+										}
+									} }
+								/>
+							)
+						})
+						:
+						<Controls item={item} handleSelect={(data) => {
+							if(persistentPlayerIsActive) {
+								passToPersistentPlayer( data )
+							}
+							else {
+								updateMode( data.mode )
+							}
+						}} />
+					}
 
 	        {mode && (
 	         <Box className="itemPlayer__controlsWrapper cpl-touch-only">
