@@ -230,8 +230,6 @@ abstract class Adapter extends \WP_Background_Process {
 	 * @since 1.3.0
 	 */
 	public function process( $hard_pull = false ) {
-		$this->delete_all();
-
 		$items = apply_filters( "cpl_adapter_process_items", $this->items, $this );
 
 		if( empty( $items ) ) {
@@ -239,58 +237,43 @@ abstract class Adapter extends \WP_Background_Process {
 		}
 
 		// delete items not in the response
-		foreach( $this->attachments as $attachment_key => $data ) {
-			$attachment_store = $this->get_store( $attachment_key );
-
-			foreach( $data as $attachment ) {
-				$store = $attachment_store[ $attachment['external_id'] ] ?? false;
-
-				if( $this->create_store_key( $attachment ) !== $store ) {
-					$attachment = apply_filters( "cpl_{$this->type}_adapter_item", $attachment, $this );
-					if( ! empty( $attachment ) ) {
-						$this->push_to_queue( $attachment );
-					}
-				} 
-
-				unset( $attachment_store[ $attachment['external_id'] ] );
-			}
-
-			if( $hard_pull ) {
-				foreach( $attachment_store as $external_id => $hash ) {
-					$this->remove_item( $external_id );
-				}
-			}
-		
-			$this->update_store( $data, $attachment_key );
+		foreach( $this->attachments as $attachment_key => $attachments ) {
+			$attachments = apply_filters( "cpl_adapter_process_items", $attachments, $this );
+			$this->add_items_to_queue( $attachments, $attachment_key, $hard_pull );
 		}
 
-		$item_store = $this->get_store( 'items' );
+		$this->add_items_to_queue( $items, 'items', $hard_pull );
+
+		$this->items = null;
+		$this->attachments = null;
+
+		$this->save()->dispatch();
+	}
+
+
+	public function add_items_to_queue( $items, $store_key, $hard_pull = false ) {
+		$store_data = $this->get_store( $store_key );
 
 		foreach( $items as $item ) {
-			$store = $item_store[ $item['external_id'] ] ?? false;
+			$store = $store_data[ $item['external_id'] ] ?? false;
 
 			if( $this->create_store_key( $item ) !== $store ) {
 				$item = apply_filters( "cpl_{$this->type}_adapter_item", $item, $this );
 				if( ! empty( $item ) ) {
 					$this->push_to_queue( $item );
 				}
-			}
+			} 
 
-			unset( $item_store[ $item['external_id'] ] );
+			unset( $store_data[ $item['external_id'] ] );
 		}
 
 		if( $hard_pull ) {
-			foreach( $item_store as $external_id => $hash ) {
+			foreach( $store_data as $external_id => $_ ) {
 				$this->remove_item( $external_id );
 			}
 		}
-
-		$this->update_store( $items, 'items' );
-
-		$this->items = null;
-		$this->attachments = null;
-
-		$this->save()->dispatch();
+	
+		$this->update_store( $items, $store_key );
 	}
 
 	/**
@@ -415,7 +398,7 @@ abstract class Adapter extends \WP_Background_Process {
 	 * Get hashed values from last pull
 	 * 
 	 * @param string $type the store type
-	 * @return array;
+	 * @return array
 	 * @since 1.3.0
 	 */
 	public function get_store( $type ) {
@@ -429,7 +412,7 @@ abstract class Adapter extends \WP_Background_Process {
 	 * @since 1.3.0
 	 */
 	public function update_store( $items, $type ) {
-		$store = [];
+		$store = $this->get_store( $type );
 
 		foreach( $items as $item ) {
 			$store[ $item['external_id'] ] = $this->create_store_key( $item );
