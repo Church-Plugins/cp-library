@@ -514,33 +514,26 @@ class Tools {
 	 */
 	public function get_formatted_item( $data ) {
 
-		$series = implode(',', array_map( function( $series) {
-			return $series['title'];
-		}, $data['types'] ) );
+		$series = $this->sanitize_array( $data['types'] );
+		$series = implode( ',', wp_list_pluck( $series, 'title' ) );
 
-		$scripture = implode( ',', array_map( function( $scripture ) {
-			return $scripture['name'];
-		}, $data['scripture'] ) );
+		$scripture = $this->sanitize_array( $data['scripture'] );
+		$scripture = implode( ',', wp_list_pluck( $scripture, 'name' ) );
 
-		$topics = implode( ',', array_map( function( $topic ) {
-			return $topic['name'];
-		}, $data['topics'] ) );
+		$topics = $this->sanitize_array( $data['topics'] );
+		$topics = implode( ',', wp_list_pluck( $topics, 'name' ) );
 
-		$speakers = implode( ',', array_map( function( $speaker ) {
-			return $speaker['title'];
-		}, $data['speakers'] ) );
+		$speakers = $this->sanitize_array( $data['speakers'] );
+		$speakers = implode( ',', wp_list_pluck( $speakers, 'title' ) );
 
-		$locations = implode( ',', array_map( function( $location ) {
-			return $location['name'];
-		}, $data['locations'] ) );
+		$locations = $this->sanitize_array( $data['locations'] );
+		$locations = implode( ',', wp_list_pluck( $locations, 'name' ) );
 
-		$service_types = implode( ',', array_map( function( $type ) {
-			return $type['title'];
-		}, $data['service_types'] ) );
+		$service_types = $this->sanitize_array( $data['service_types'] );
+		$service_types = implode( ',', wp_list_pluck( $service_types, 'title' ) );
 
-		$seasons = implode( ',', array_map( function( $season ) {
-			return $season['name'];
-		}, $data['seasons'] ) );
+		$seasons = $this->sanitize_array( $data['seasons'] );
+		$seasons = implode( ',', wp_list_pluck( $seasons, 'name' ) );
 
 		return array(
 			'Title'        => $data['title'],
@@ -558,5 +551,21 @@ class Tools {
 			'Video'        => $data['video']['value'],
 			'Audio'        => $data['audio'],
 		);
+	}
+
+	/**
+	 * Sanitizes data to be an array
+	 * 
+	 * @param mixed $data
+	 * @return array
+	 */
+	public function sanitize_array( $data ) {
+		if( is_array( $data ) ) {
+			return $data;
+		}
+		if( empty( $data ) ) {
+			return array();
+		}
+		return array( $data );
 	}
 }
