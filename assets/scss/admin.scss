@@ -262,3 +262,41 @@
 
 }
 
+.cpl_admin_submit_button {
+	position: relative;
+
+	&.success {
+		border-color: #007427;
+		color: #007427;
+	}
+	&.success::before {
+		content: "\e876";
+		color: currentColor;
+		font-family: "Material Icons";
+		margin-right: 0.5em;
+	}
+
+	&.loading {
+		padding-left: 3em;
+	}
+
+	&.loading::before {
+		content: '';
+		position: absolute;
+		top: 50%;
+		transform: translateY(-50%) rotateZ(0deg);
+		left: 1em;
+		width: 1em;
+		height: 1em;
+		border-radius: 50%;
+		border: 2px solid currentColor;
+		border-top-color: transparent;
+		animation: spin 1s linear infinite;
+	}
+}
+
+@keyframes spin {
+	to {
+		transform: translateY(-50%) rotateZ(360deg);
+	}
+}

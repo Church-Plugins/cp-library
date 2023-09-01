@@ -404,3 +404,45 @@ jQuery( function( $ ){
 	}
 
 });
+
+
+/**
+ * Check for basic submit buttons
+ */
+jQuery($ => {
+	$('.cpl_admin_submit_button').on('click', function(e) {
+		e.preventDefault()
+		const url = $(this).data('url')
+
+		$(this).addClass('loading');
+		$(this).attr('disabled', true);
+		$(this).parent().find('.error').remove();
+
+		fetch(url, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			}
+		})
+		.then(res => res.json())
+		.then(res => {
+			$(this).removeClass('loading');
+			$(this).attr('disabled', false);
+			if(res.success) {
+				$(this).addClass('success');
+				setTimeout(() => {
+					$(this).removeClass('success');
+				}, 2000);
+			}
+			else {
+				$(this).parent().append('<div class="error">' + res.data.error + '</div>');
+			}
+		})
+		.catch(err => {
+			console.warn(err)
+			$(this).removeClass('loading');
+			$(this).attr('disabled', false);
+			$(this).parent().append('<div class="error">' + err.message + '</div>');
+		})
+	})
+})

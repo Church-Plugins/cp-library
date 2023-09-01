@@ -31,6 +31,14 @@ class Init {
 	 */
 	public $admin;
 
+	/**
+	 * @var Adapters\Init
+	 */
+	public $adapters;
+
+	/**
+	 * @var \WPackio\Enqueue
+	 */
 	public $enqueue;
 
 	/**
@@ -83,6 +91,8 @@ class Init {
 		$this->api   = API\Init::get_instance();
 
 		$this->admin = Admin\Init::get_instance();
+		$this->adapters = Adapters\Init::get_instance();
+		
 		Download::get_instance();
 		Templates::init();
 
@@ -151,9 +161,11 @@ class Init {
 	}
 
 	public function admin_scripts() {
-		if ( ! $this->is_admin_page() ) {
-			return;
-		}
+		// if ( ! $this->is_admin_page() ) {
+			// return;
+		// }
+
+		wp_enqueue_style( 'material-icons' );
 
 		$this->enqueue->enqueue( 'styles', 'admin', [] );
 		$scripts = $this->enqueue->enqueue( 'scripts', 'admin', ['jquery', 'select2'] );
@@ -276,6 +288,8 @@ class Init {
 		if ( defined( 'TRIBE_EVENTS_FILE' ) ) {
 			Integrations\EventsCalendar::get_instance();
 		}
+
+
 	}
 
 	/**
