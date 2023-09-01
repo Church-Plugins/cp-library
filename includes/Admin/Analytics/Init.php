@@ -116,7 +116,8 @@ class Init {
       $page = (int) $_POST['page'];
     }
 
-    $date = self::get_time( "$timeframe days ago" );
+    // we want to get all items, so just set the date to 0 to get everything after that
+    $date = self::get_time( "0" );
 
     $items = $this->get_items_since( $date, $page );
 
@@ -246,13 +247,13 @@ class Init {
               item.*,
               SUM(CASE WHEN (log.action = 'audio_view' OR log.action = 'video_view') THEN 1 ELSE 0 END) as views,
               SUM(CASE WHEN (log.action = 'engaged_audio_view' OR log.action = 'engaged_video_view') THEN 1 ELSE 0 END) as engaged_views,
-              AVG(CASE WHEN log.action = 'view_duration' THEN CAST(log.data AS SIGNED) ELSE NULL END) as view_duration
+              AVG(CASE WHEN log.action = 'view_duration' THEN JSON_EXTRACT(log.data, '$.watch_duration') ELSE NULL END) as view_duration
             FROM
               wp_cpl_item as item
             LEFT JOIN
               wp_cp_log as log ON item.id = log.object_id
             WHERE
-              log.created > '%s'
+              item.updated > '%s'
             GROUP BY
               item.id
             ORDER BY

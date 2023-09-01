@@ -170,6 +170,8 @@ class Init {
 		wp_enqueue_script( 'inline-edit-post' );
 		$scripts = $this->enqueue->enqueue( 'scripts', 'admin', ['jquery', 'select2'] );
 
+		$this->enqueue->enqueue( 'styles', 'admin', [] );
+
 		// Expose variables to JS
 		$entry_point = array_pop( $scripts['js'] );
 		wp_localize_script(
