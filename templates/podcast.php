@@ -180,7 +180,7 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 		else {
 			while ( have_posts() ) {
 				the_post();
-				\Templates::get_template_part( "parts/podcast-item" );
+				Templates::get_template_part( "parts/podcast-item" );
 			}
 		}
 		?>
