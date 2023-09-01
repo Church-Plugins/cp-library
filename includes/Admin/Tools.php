@@ -201,7 +201,7 @@ class Tools {
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
 							</tr>
 
-							f<tr>
+							<tr>
 								<td><?php _e( 'Date', 'cp-library' ); ?></td>
 								<td>
 									<select name="cp-import-field[date]" class="cp-import-csv-column"
