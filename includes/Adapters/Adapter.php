@@ -4,7 +4,7 @@
  * Imports data from external sources and adds it to CP Library
  *
  * @package CP_Library
- * @since 1.1.0
+ * @since 1.3.0
  */
 
 namespace CP_Library\Adapters;
@@ -17,7 +17,7 @@ use CP_Library\Admin\Settings;
  * Imports data from external sources and adds it to CP Library
  *
  * @package CP_Library
- * @since 1.1.0
+ * @since 1.3.0
  */
 abstract class Adapter extends \WP_Background_Process {
 	/**
@@ -165,7 +165,7 @@ abstract class Adapter extends \WP_Background_Process {
 		/**
 		 * The default cron aruments
 		 * 
-		 * @since 1.1.0
+		 * @since 1.3.0
 		 * 
 		 * @param array $args {
 		 *  @type int $timestamp The timestamp to start the cron
@@ -190,7 +190,7 @@ abstract class Adapter extends \WP_Background_Process {
 	 * @throws Exception If the item could not be loaded.
 	 *
 	 * @return T the created item
-	 * @since 1.1.0
+	 * @since 1.3.0
 	 */
 	public function load_item( $item, $model ) {
 		$external_id = $item['external_id'];
@@ -227,7 +227,7 @@ abstract class Adapter extends \WP_Background_Process {
 	 * Process items retrieved from the API
 	 *
 	 * @param bool $hard_pull Whether to do a full pull or not.
-	 * @since 1.1.0
+	 * @since 1.3.0
 	 */
 	public function process( $hard_pull = false ) {
 		$this->delete_all();
@@ -298,7 +298,7 @@ abstract class Adapter extends \WP_Background_Process {
 	 * 
 	 * @param array $itemdata
 	 * @return void
-	 * @since 1.1.0
+	 * @since 1.3.0
 	 * @author Jonathan Roley
 	 */
 	public function task( $item_data ) {
@@ -337,7 +337,7 @@ abstract class Adapter extends \WP_Background_Process {
 	 * Remove an item from the database
 	 * 
 	 * @param int $external_id
-	 * @since 1.1.0
+	 * @since 1.3.0
 	 */
 	public function remove_item( $external_id ) {
 		$id = $this->get_item_id_from_external( $external_id );
@@ -355,7 +355,7 @@ abstract class Adapter extends \WP_Background_Process {
 	 * @param $external_id
 	 *
 	 * @return string|null
-	 * @since  1.1.0
+	 * @since  1.3.0
 	 */
 	public function get_item_id_from_external( $external_id ) {
 		global $wpdb;
@@ -416,7 +416,7 @@ abstract class Adapter extends \WP_Background_Process {
 	 * 
 	 * @param string $type the store type
 	 * @return array;
-	 * @since 1.1.0
+	 * @since 1.3.0
 	 */
 	public function get_store( $type ) {
 		return get_option( "cpl_{$this->type}_adapter_store_{$type}", [] );
@@ -426,7 +426,7 @@ abstract class Adapter extends \WP_Background_Process {
 	 * Update the store with new values
 	 * 
 	 * @param array $items
-	 * @since 1.1.0
+	 * @since 1.3.0
 	 */
 	public function update_store( $items, $type ) {
 		$store = [];
@@ -443,7 +443,7 @@ abstract class Adapter extends \WP_Background_Process {
 	 * 
 	 * @param mixed $item
 	 * @return string
-	 * @since 1.1.0
+	 * @since 1.3.0
 	 */
 	public function create_store_key( $item ) {
 		return md5( serialize( $item ) );

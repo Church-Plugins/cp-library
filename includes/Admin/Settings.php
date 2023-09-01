@@ -654,7 +654,7 @@ class Settings {
 	 * @param int $object_id
 	 * @param string $object_type
 	 * @param CMB2_Types $field_type_object
-	 * @since 1.1.0
+	 * @since 1.3.0
 	 * @return void
 	 */
 	public function custom_button_form_field( $field, $escaped_value, $object_id, $object_type, $field_type_object ) {

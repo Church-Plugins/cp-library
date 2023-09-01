@@ -33,6 +33,8 @@ class Init {
 
 	/**
 	 * @var Adapters\Init
+	 * 
+	 * @since 1.3.0
 	 */
 	public $adapters;
 
