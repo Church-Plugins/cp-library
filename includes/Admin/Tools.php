@@ -514,26 +514,19 @@ class Tools {
 	 */
 	public function get_formatted_item( $data ) {
 
-		$series = $this->sanitize_array( $data['types'] );
-		$series = implode( ',', wp_list_pluck( $series, 'title' ) );
+		$series = $this->get_csv_string( $data['types'], 'title' );
 
-		$scripture = $this->sanitize_array( $data['scripture'] );
-		$scripture = implode( ',', wp_list_pluck( $scripture, 'name' ) );
+		$scripture = $this->get_csv_string( $data['scripture'], 'name' );
 
-		$topics = $this->sanitize_array( $data['topics'] );
-		$topics = implode( ',', wp_list_pluck( $topics, 'name' ) );
+		$topics = $this->get_csv_string( $data['topics'], 'name' );
 
-		$speakers = $this->sanitize_array( $data['speakers'] );
-		$speakers = implode( ',', wp_list_pluck( $speakers, 'title' ) );
+		$speakers = $this->get_csv_string( $data['speakers'], 'title' );
 
-		$locations = $this->sanitize_array( $data['locations'] );
-		$locations = implode( ',', wp_list_pluck( $locations, 'name' ) );
+		$locations = $this->get_csv_string( $data['locations'], 'name' );
 
-		$service_types = $this->sanitize_array( $data['service_types'] );
-		$service_types = implode( ',', wp_list_pluck( $service_types, 'title' ) );
+		$service_types = $this->get_csv_string( $data['service_types'], 'title' );
 
-		$seasons = $this->sanitize_array( $data['seasons'] );
-		$seasons = implode( ',', wp_list_pluck( $seasons, 'name' ) );
+		$seasons = $this->get_csv_string( $data['seasons'], 'name' );
 
 		return array(
 			'Title'        => $data['title'],
@@ -554,18 +547,17 @@ class Tools {
 	}
 
 	/**
-	 * Sanitizes data to be an array
+	 * Gets data from an array and converts it to a comma seperated string
 	 * 
 	 * @param mixed $data
-	 * @return array
+	 * @param string $key
+	 * @return string
 	 */
-	public function sanitize_array( $data ) {
-		if( is_array( $data ) ) {
-			return $data;
+	public function get_csv_string( $data, $key ) {
+		if( ! is_array( $data )  ) {
+			$data = empty( $data ) ? array() : array( $data );
 		}
-		if( empty( $data ) ) {
-			return array();
-		}
-		return array( $data );
+
+		return implode( ',', wp_list_pluck( $data, $key ) );
 	}
 }
