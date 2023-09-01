@@ -14,7 +14,7 @@ class Init {
 	 * @var Init
 	 */
   public static $page_name = 'cpl-analytics';
-  
+
   /**
    * The class instance
    */
@@ -23,7 +23,7 @@ class Init {
   /**
    * The date format as it is stored in wp_cp_log table
    */
-  public static $date_format = 'Y-m-d H:i:s';  
+  public static $date_format = 'Y-m-d H:i:s';
 
   /**
    * The number of items to show per page
@@ -59,7 +59,7 @@ class Init {
 	 * @return void
 	 */
 	protected function includes() {
-		
+
 	}
 
 	/**
@@ -70,7 +70,7 @@ class Init {
 	protected function actions() {
     add_action( 'admin_menu', [ $this, 'analytics_menu' ] );
     add_action( 'wp_ajax_cpl-analytics-load-items', [ $this, 'load_items' ] );
-    add_action( 'wp_ajax_cpl-analytics-get-overview',   [ $this, 'get_overview' ] ); 
+    add_action( 'wp_ajax_cpl-analytics-get-overview',   [ $this, 'get_overview' ] );
 	}
 
   /**
@@ -79,11 +79,11 @@ class Init {
   public function analytics_menu() {
     $post_type = cp_library()->setup->post_types->item_type_enabled() ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
 
-    $page = add_submenu_page( 
-      'edit.php?post_type=' . $post_type, 
+    $page = add_submenu_page(
+      'edit.php?post_type=' . $post_type,
       __( 'CP Sermon Library Analytics', 'cp-library' ),
-      __( 'Analytics', 'cp-library' ), 'manage_options', self::$page_name, 
-      [ $this,'page_callback'] 
+      __( 'Analytics', 'cp-library' ), 'manage_options', self::$page_name,
+      [ $this,'page_callback']
     );
 
     do_action( 'cpl-load-analytics-page', $page );
@@ -239,10 +239,10 @@ class Init {
     global $wpdb;
 
     $per_page = self::$per_page;
-  
+
     $start = $page * self::$per_page;
 
-    $sql = "SELECT 
+    $sql = "SELECT
               item.*,
               SUM(CASE WHEN (log.action = 'audio_view' OR log.action = 'video_view') THEN 1 ELSE 0 END) as views,
               SUM(CASE WHEN (log.action = 'engaged_audio_view' OR log.action = 'engaged_video_view') THEN 1 ELSE 0 END) as engaged_views,
@@ -252,7 +252,7 @@ class Init {
             LEFT JOIN
               wp_cp_log as log ON item.id = log.object_id
             WHERE
-              item.updated > '%s'
+              log.created > '%s'
             GROUP BY
               item.id
             ORDER BY
