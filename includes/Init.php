@@ -301,7 +301,7 @@ class Init {
 	}
 
 	/**
-	 * Add query vars
+	 * Add custom query vars to the allowed list
 	 *
 	 * @param array $vars
 	 * @return array
