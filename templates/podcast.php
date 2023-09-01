@@ -155,9 +155,6 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 		do_action( 'rss2_head' ); // Core: Fires at the end of the RSS2 Feed Header (before items).
 		
 		if( is_comment_feed() ) {
-			/**
-			 * @var \CP_Library\Models\Item[] $items
-			 */
 			$items = array();
 
 			if( get_post_type() === cp_library()->setup->post_types->item_type->post_type ) {
@@ -183,7 +180,7 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 		else {
 			while ( have_posts() ) {
 				the_post();
-				\CP_Library\Templates::get_template_part( "parts/podcast-item" );
+				\Templates::get_template_part( "parts/podcast-item" );
 			}
 		}
 		?>
