@@ -86,7 +86,9 @@ class SermonAudio extends Adapter {
 			'post_date' => gmdate( 'Y-m-d H:i:s', $item->publishTimestamp ),
 			'post_status' => 'publish',
 			'post_type' => cp_library()->setup->post_types->item->post_type,
-			'meta_input' => array()
+			'post_content' => wp_kses_post( $item->moreInfoText ),
+			'meta_input' => array(),
+			'cpl_data' => array()
 		);
 
 		if( $item->hasAudio ) {
@@ -97,6 +99,10 @@ class SermonAudio extends Adapter {
 			$args['meta_input']['video_url'] = $item->media->video[0]->streamURL;
 		}
 
+		if( $item->bibleText ) {
+			$args['cpl_data']['scripture'] = $item->bibleText;
+		}
+
 		return $args;
 	}
 
@@ -104,26 +110,43 @@ class SermonAudio extends Adapter {
 	 * Formats a Series
 	 */
 	public function format_item_type( $item_type ) {
-		return array(
+	 	$args = array(
 			'external_id'  => $item_type->seriesID,
 			'post_title'   => $item_type->title,
 			'post_status'  => 'publish',
 			'post_type'    => cp_library()->setup->post_types->item_type->post_type,
 			'post_content' => wp_kses_post( $item_type->description ),
+			'cpl_data'     => array()
 		);
+
+		if( $item_type->image ) {
+			$args['cpl_data']['featured_image'] = $item_type->image;
+		}
+		else if( $item_type->broadcaster->imageURL ) {
+			$args['cpl_data']['featured_image'] = $item_type->broadcaster->imageURL;
+		}
+
+		return $args;
 	}
 
 	/**
 	 * Formats a Speaker
 	 */
 	public function format_speaker( $speaker ) {
-		return array(
+		$args = array(
 			'external_id'  => $speaker->speakerID,
 			'post_title'   => $speaker->displayName,
 			'post_status'  => 'publish',
 			'post_type'    => cp_library()->setup->post_types->speaker->post_type,
 			'post_content' => wp_kses_post( $speaker->bio ),
+			'cpl_data'     => array()
 		);
+
+		if( $speaker->portraitURL ) {
+			$args['cpl_data']['featured_image'] = $speaker->portraitURL;
+		}
+
+		return $args;
 	}
 
 	/**
@@ -157,6 +180,21 @@ class SermonAudio extends Adapter {
 		}
 		else if( $attachment_key === 'cpl_item_type' ) {
 			$item->add_type( $attachment->id );
+		}
+	}
+
+	/**
+	 * Handle processing custom data
+	 * 
+	 * @param \CP_Library\Models\Item $item
+	 * @param array $data
+	 * @param string $post_type
+	 */
+	public function process_cpl_data( $item, $cpl_data, $post_type ) {
+		if( $post_type === 'cpl_item' ) {
+			if( isset( $cpl_data['scripture'] ) ) {
+				$item->update_scripture( $cpl_data['scripture'] );
+			}
 		}
 	}
 } 

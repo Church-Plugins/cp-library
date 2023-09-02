@@ -93,6 +93,14 @@ abstract class Adapter extends \WP_Background_Process {
 	 */
 	abstract public function add_attachment( $item, $attachment, $attachment_key );
 
+	/**
+	 * Process cpl_data
+	 * 
+	 * @param \CP_Library\Models\Table $item The item to process.
+	 * @param array $cpl_data The cpl_data to process.
+	 * @param string $post_type The post type of the item being processed.
+	 */
+	abstract public function process_cpl_data( $item, $cpl_data, $post_type );
 
 	/**
 	 * Actions
@@ -200,7 +208,10 @@ abstract class Adapter extends \WP_Background_Process {
 			$item['ID'] = $existing_item_id;
 		}
 
+		$cpl_data = $item['cpl_data'] ?? [];
+
 		unset( $item['external_id'] );
+		unset( $item['cpl_data'] );
 
 		$post_id = wp_insert_post( $item, true );
 
@@ -209,6 +220,10 @@ abstract class Adapter extends \WP_Background_Process {
 		}
 
 		update_post_meta( $post_id, 'external_id', $external_id );
+
+		if( isset( $cpl_data['featured_image'] ) ) {
+			$this->upload_featured_image( $cpl_data['featured_image'], $post_id );
+		}
 
 		// Will throw an error if invoked incorrectly.
 		$item_model = $model::get_instance_from_origin( $post_id );
@@ -219,6 +234,8 @@ abstract class Adapter extends \WP_Background_Process {
 				$item_model->update_meta_value( $key, $value );
 			}
 		}
+
+		$this->process_cpl_data( $item_model, $cpl_data, $item['post_type'] );
 
 		return $item_model;
 	}
@@ -542,5 +559,37 @@ abstract class Adapter extends \WP_Background_Process {
 	 */
 	public function get_setting( $key, $default = '' ) {
 		return Settings::get( $this->option_id( $key ), $default, "cpl_{$this->type}_adapter_options" );
+	}
+
+
+	/**
+	 * Upload and attach a featured image to a post
+	 * 
+	 * @param string $url The URL of the image to upload.
+	 * @param int $post_id The post ID to attach the image to.
+	 */
+	public function upload_featured_image( $url, $post_id ) {
+		$upload_dir = wp_upload_dir();
+		$image_data = file_get_contents( $url );
+		$filename = basename( $url );
+		if ( wp_mkdir_p( $upload_dir['path'] ) ) {
+			$file = $upload_dir['path'] . '/' . $filename;
+		} else {
+			$file = $upload_dir['basedir'] . '/' . $filename;
+		}
+		file_put_contents( $file, $image_data );
+
+		$wp_filetype = wp_check_filetype( $filename, null );
+		$attachment = array(
+			'post_mime_type' => $wp_filetype['type'],
+			'post_title'     => sanitize_file_name( $filename ),
+			'post_content'   => '',
+			'post_status'    => 'inherit'
+		);
+		$attach_id = wp_insert_attachment( $attachment, $file, $post_id );
+		require_once( ABSPATH . 'wp-admin/includes/image.php' );
+		$attach_data = wp_generate_attachment_metadata( $attach_id, $file );
+		wp_update_attachment_metadata( $attach_id, $attach_data );
+		set_post_thumbnail( $post_id, $attach_id );
 	}
 }
