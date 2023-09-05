@@ -2,6 +2,8 @@
 
 namespace CP_Library\Admin\Analytics;
 
+use CP_Library\Admin\Settings;
+
 // Exit if accessed directly
 defined( 'ABSPATH' ) || exit;
 
@@ -77,7 +79,7 @@ class Init {
    * Adds an Analytics sub-menu item to the admin menu
    */
   public function analytics_menu() {
-    $post_type = cp_library()->setup->post_types->item_type_enabled() ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
+	$post_type = Settings::get_advanced( 'default_menu_item', 'item_type' ) === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
 
     $page = add_submenu_page(
       'edit.php?post_type=' . $post_type,
@@ -170,7 +172,7 @@ class Init {
   public function get_action_count_since($date, $action) {
     global $wpdb;
 
-    $sql = "SELECT COUNT(log.id) FROM wp_cp_log as log WHERE log.action = %s AND created > %s";
+    $sql = "SELECT COUNT(log.id) FROM {$wpdb->prefix}cp_log as log WHERE log.action = %s AND created > %s";
 
     return $wpdb->get_var( $wpdb->prepare( $sql, $action, $date ) );
   }
@@ -218,7 +220,7 @@ class Init {
     global $wpdb;
 
     $sql = "SELECT COUNT(DISTINCT item.id)
-            FROM wp_cpl_item as item";
+            FROM {$wpdb->prefix}cpl_item as item";
 
     $total_rows = $wpdb->get_var( $wpdb->prepare( $sql ) );
 
