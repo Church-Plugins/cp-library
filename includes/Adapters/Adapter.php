@@ -110,6 +110,7 @@ abstract class Adapter extends \WP_Background_Process {
 		add_action( 'init', [ $this, 'schedule_cron' ] );
 		add_action( "cpl_adapter_pull_{$this->type}", [ $this, 'update_check' ] );
 		add_action( "cpl_adapter_hard_pull_{$this->type}", [ $this, 'hard_pull' ] );
+		add_action( "cpl_adapter_import_{$this->type}", [ $this, 'import' ] );
 	}
 
 	/**
@@ -155,6 +156,23 @@ abstract class Adapter extends \WP_Background_Process {
 				$page++;
 			}
 			wp_send_json_success( array( 'message' => 'Update process started' ) );
+		}
+		catch( Exception $e ) {
+			error_log( $e->getMessage() );
+			wp_send_json_error( array( 'error' => $e->getMessage() ) );
+		}
+	}
+
+	/**
+	 * Handles the initial import
+	 * 
+	 * @return void
+	 */
+	public function import() {
+		try {
+			$this->hard_pull();
+			update_option( $this->option_id( 'import_complete' ), true );
+			wp_send_json_success( array( 'message' => 'Data pulled. Import initialized' ) );
 		}
 		catch( Exception $e ) {
 			error_log( $e->getMessage() );
@@ -222,7 +240,7 @@ abstract class Adapter extends \WP_Background_Process {
 		update_post_meta( $post_id, 'external_id', $external_id );
 
 		if( isset( $cpl_data['featured_image'] ) ) {
-			$this->sideload_featured_image( $cpl_data['featured_image'], $post_id );
+			$this->maybe_sideload_thumbnail( $cpl_data['featured_image'], $post_id );
 		}
 
 		// Will throw an error if invoked incorrectly.
@@ -247,9 +265,9 @@ abstract class Adapter extends \WP_Background_Process {
 	 * @since 1.3.0
 	 */
 	public function process( $hard_pull = false ) {
-		$items = apply_filters( "cpl_adapter_process_items", $this->items, $this );
+		$this->items = apply_filters( "cpl_adapter_process_items", $this->items, $this );
 
-		if( empty( $items ) ) {
+		if( empty( $this->items ) ) {
 			return;
 		}
 
@@ -259,7 +277,7 @@ abstract class Adapter extends \WP_Background_Process {
 			$this->add_items_to_queue( $attachments, $attachment_key, $hard_pull );
 		}
 
-		$this->add_items_to_queue( $items, 'items', $hard_pull );
+		$this->add_items_to_queue( $this->items, 'items', $hard_pull );
 
 		$this->items = null;
 		$this->attachments = null;
@@ -498,6 +516,25 @@ abstract class Adapter extends \WP_Background_Process {
 			'desc' => __( 'Enter the API key from your Sermon Audio account here', 'cp-library' )
 		) );
 
+		$cmb->add_field( array(
+			'name' => sprintf( __( 'Ignore %s Before', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'id'   => $this->option_id( 'ignore_before' ),
+			'type' => 'text_date',
+			'desc' => sprintf( __( 'Ignore all %s before specified date.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label )
+		) );
+
+		if( get_option( $this->option_id( 'import_complete' ), false ) === false ) {
+			$cmb->add_field( array(
+				'name' => __( 'Start initial import', 'cp-library' ),
+				'id'   => $this->option_id( 'start_initial_import' ),
+				'type' => 'cpl_submit_button',
+				'desc' => __( 'Start initial import', 'cp-library' ),
+				'query_args' => array(
+					'cp_action' => "cpl_adapter_import_{$this->type}"
+				)
+			) );
+		}
+
 		$cron_schedules = wp_get_schedules();
 		$schedule_options = array();
 		foreach ( $cron_schedules as $key => $schedule ) {
@@ -514,6 +551,16 @@ abstract class Adapter extends \WP_Background_Process {
 		) );
 
 		$cmb->add_field( array(
+			'name'       => __( 'Check Now', 'cp-library' ),
+			'id'         => $this->option_id( 'check_now' ),
+			'type'       => 'cpl_submit_button',
+			'desc'       => sprintf( __( 'Check for new %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'query_args' => array(
+				'cp_action' => "cpl_adapter_pull_{$this->type}"
+			)
+		) );
+
+		$cmb->add_field( array(
 			'name' => __( 'Check Count', 'cp-library' ),
 			'desc' => __( 'The number of sermons to check for updates each time the cron runs.', 'cp-library' ),
 			'id'   => $this->option_id( 'check_count' ),
@@ -527,25 +574,15 @@ abstract class Adapter extends \WP_Background_Process {
 			)
 		) );
 
-		$cmb->add_field( array(
-			'name'       => __( 'Check Now', 'cp-library' ),
-			'id'         => $this->option_id( 'check_now' ),
-			'type'       => 'cpl_submit_button',
-			'desc'       => sprintf( __( 'Check for new %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
-			'query_args' => array(
-				'cp_action' => "cpl_adapter_pull_{$this->type}"
-			)
-		) );
-
-		$cmb->add_field( array(
-			'name'       => 'Hard Pull',
-			'id'         => $this->option_id( 'hard_pull' ),
-			'type'       => 'cpl_submit_button',
-			'desc'       => __( 'Pull all sermons immediately', 'cp-library' ),
-			'query_args' => array(
-				'cp_action' => "cpl_adapter_hard_pull_{$this->type}"
-			)
-		) );
+		// $cmb->add_field( array(
+		// 	'name'       => 'Hard Pull',
+		// 	'id'         => $this->option_id( 'hard_pull' ),
+		// 	'type'       => 'cpl_submit_button',
+		// 	'desc'       => __( 'Pull all sermons immediately', 'cp-library' ),
+		// 	'query_args' => array(
+		// 		'cp_action' => "cpl_adapter_hard_pull_{$this->type}"
+		// 	)
+		// ) );
 	}
 
 	/**

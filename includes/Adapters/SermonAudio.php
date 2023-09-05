@@ -7,6 +7,11 @@ use CP_Library\Admin\Settings;
 class SermonAudio extends Adapter {
 	public $base_url;
 
+	/**
+	 * Gets all sermons since sermon audio doesn't provide a good way to only get sermons since a certain date
+	 */
+	protected $pulled_sermons = [];
+
 	public function __construct() {
 		$this->base_url = 'https://api.sermonaudio.com/v2/node/sermons';
 
@@ -16,35 +21,21 @@ class SermonAudio extends Adapter {
 		parent::__construct();
 	}
 
-	public function pull( int $amount, int $page ) {
-		$url = add_query_arg( array(
-			'pageSize' => $amount,
-			'page' => $page,
-			'sortBy' => 'updated',
-			'broadcasterID' => $this->get_setting( 'api_key', '' )
-		), $this->base_url );
 
-		$response = wp_remote_get($url);
+	/**
+	 * Process all items
+	 */
+	public function hard_pull() {
+		$sermons = $this->load_since_date();
+		$this->handle_pull( $sermons, true );
+	}
 
-		if( is_wp_error( $response ) ) {
-			throw new \ChurchPlugins\Exception( $response->get_error_message() );
-		}
-
-		$data = json_decode( $response['body'] );
-
-		if( isset( $data->errors ) ) {
-			$errors = (array) $data->errors;
-			$key = array_keys( $errors )[0];
-			$value = $errors[$key];
-			throw new \ChurchPlugins\Exception( "$key: $value" );
-		}
-
-
+	public function handle_pull( $sermons, $hard_pull = false ) {
 		$items = array();
 		$speakers = array();
 		$item_types = array();
 
-		foreach( $data->results as $sermon ) {
+		foreach( $sermons as $sermon ) {
 			$item = $this->format_item( $sermon );
 
 			$item['attachments'] = array();
@@ -70,10 +61,109 @@ class SermonAudio extends Adapter {
 		// enqueues attachments to be processed with the items
 		$this->add_attachments( $speakers,   'cpl_speaker' );
 		$this->add_attachments( $item_types, 'cpl_item_type' );
-		$this->process();
+		$this->process( $hard_pull );
+	}
+
+	public function pull( int $amount, int $page ) {
+		$query = array(
+			'pageSize' => $amount,
+			'page' => $page,
+			'sortBy' => 'updated',
+			'broadcasterID' => $this->get_setting( 'api_key', '' ),
+		);
+
+		$data = $this->get_results( $query );
+
+		$this->handle_pull( $data->results, false );
 
 		// whether or not there are more pages
 		return (bool) $data->next;
+	}
+
+	protected function get_recently_updated( int $amount ) {
+		$url = add_query_arg( array(
+			'pageSize' => $amount,
+			'sortBy' => 'updated',
+			'broadcasterID' => $this->get_setting( 'api_key', '' ),
+		), $this->base_url );
+
+		return $this->get_results( $url );
+	}
+
+	protected function get_results( $query ) {
+		$url = add_query_arg( $query, $this->base_url );
+
+		$response = wp_remote_get($url);
+
+		if( is_wp_error( $response ) ) {
+			throw new \ChurchPlugins\Exception( $response->get_error_message() );
+		}
+
+		$data = json_decode( $response['body'] );
+
+		if( isset( $data->errors ) ) {
+			$errors = (array) $data->errors;
+			$key = array_keys( $errors )[0];
+			$value = $errors[$key];
+			throw new \ChurchPlugins\Exception( "$key: $value" );
+		}
+
+		return $data;
+	}
+
+	protected function load_results( $query ) {
+		unset( $query['page'] );
+
+		$results = [];
+		$page = 1;
+
+		// loop through all pages
+		do {
+			$query['page'] = $page;
+			try {
+				$data = $this->get_results( $query );
+			} catch( \ChurchPlugins\Exception $e ) {
+				error_log( $e->getMessage() );
+				break;
+			}
+			$results = array_merge( $results, $data->results );
+			$page++;
+		} while( $data->next );
+
+		return $results;
+	}
+
+	protected function load_since_date() {
+		$sermons = [];
+
+		$date = new \DateTime( $this->get_setting( 'ignore_before', '0' ) );
+
+		$current_year = (int) date( 'Y' );
+		$min_year     = (int) $date->format( 'Y' );
+
+		// loop through years and months up to the current date
+		for ( $year = $min_year; $year <= $current_year; $year++ ) {
+			$query = array(
+				'pageSize' => 100,
+				'broadcasterID' => $this->get_setting( 'api_key', '' ),
+				'year' => $year,
+			);
+			
+			$results = $this->load_results( $query );
+			$results = array_filter( $results, [ $this, 'is_valid_result' ] );
+			$sermons = array_merge( $sermons, $results );
+		}
+
+		return $sermons;
+	}
+
+	/**
+	 * Checks if a sermon is valid, meaning it is after the specified cutoff date
+	 */
+	protected function is_valid_result( $sermon ) {
+		$min_date = strtotime( $this->get_setting( 'ignore_before', '0' ) );
+		$sermon_date = strtotime( $sermon->preachDate );
+		return $sermon_date >= $min_date;
 	}
 	
 	/**
