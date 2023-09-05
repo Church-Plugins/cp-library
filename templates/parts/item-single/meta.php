@@ -19,7 +19,7 @@ $fields = \CP_Library\Admin\Settings::get_item( 'meta_items', [ 'date', 'topics'
 
 <div class="cpl-meta">
 	<?php foreach( $fields as $field ) : ?>
-		<?php if ( 'date' == $item ) : ?>
+		<?php if ( 'date' == $field ) : ?>
 			<div class="cpl-meta--date">
 				<?php echo Helpers::get_icon( 'date' ); ?>
 

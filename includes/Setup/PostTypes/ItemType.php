@@ -89,7 +89,6 @@ class ItemType extends PostType  {
 			add_filter( "{$source_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 			add_filter( "{$service_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 		}
-
 	}
 
 	/**

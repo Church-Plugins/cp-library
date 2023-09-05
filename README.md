@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.2.0
+* Add sermon export
+
 #### 1.1.1
 * Updates to importer
 

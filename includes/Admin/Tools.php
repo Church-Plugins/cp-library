@@ -514,33 +514,19 @@ class Tools {
 	 */
 	public function get_formatted_item( $data ) {
 
-		$series = implode(',', array_map( function( $series) {
-			return $series['title'];
-		}, $data['types'] ) );
+		$series = $this->get_csv_string( $data['types'], 'title' );
 
-		$scripture = implode( ',', array_map( function( $scripture ) {
-			return $scripture['name'];
-		}, $data['scripture'] ) );
+		$scripture = $this->get_csv_string( $data['scripture'], 'name' );
 
-		$topics = implode( ',', array_map( function( $topic ) {
-			return $topic['name'];
-		}, $data['topics'] ) );
+		$topics = $this->get_csv_string( $data['topics'], 'name' );
 
-		$speakers = implode( ',', array_map( function( $speaker ) {
-			return $speaker['title'];
-		}, $data['speakers'] ) );
+		$speakers = $this->get_csv_string( $data['speakers'], 'title' );
 
-		$locations = implode( ',', array_map( function( $location ) {
-			return $location['name'];
-		}, $data['locations'] ) );
+		$locations = $this->get_csv_string( $data['locations'], 'name' );
 
-		$service_types = implode( ',', array_map( function( $type ) {
-			return $type['title'];
-		}, $data['service_types'] ) );
+		$service_types = $this->get_csv_string( $data['service_types'], 'title' );
 
-		$seasons = implode( ',', array_map( function( $season ) {
-			return $season['name'];
-		}, $data['seasons'] ) );
+		$seasons = $this->get_csv_string( $data['seasons'], 'name' );
 
 		return array(
 			'Title'        => $data['title'],
@@ -558,5 +544,20 @@ class Tools {
 			'Video'        => $data['video']['value'],
 			'Audio'        => $data['audio'],
 		);
+	}
+
+	/**
+	 * Gets data from an array and converts it to a comma seperated string
+	 * 
+	 * @param mixed $data
+	 * @param string $key
+	 * @return string
+	 */
+	public function get_csv_string( $data, $key ) {
+		if( ! is_array( $data )  ) {
+			$data = empty( $data ) ? array() : array( $data );
+		}
+
+		return implode( ',', wp_list_pluck( $data, $key ) );
 	}
 }
