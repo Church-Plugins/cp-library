@@ -42,6 +42,7 @@ class Init {
 	protected function includes() {
 		Settings::get_instance();
 		Tools::get_instance();
+		Analytics\Init::get_instance();
 	}
 
 	/**

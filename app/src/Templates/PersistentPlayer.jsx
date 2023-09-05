@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
-import VideoPlayer from "react-player";
+import PlayerWrapper from '../Components/PlayerWrapper';
 import FilePlayer from 'react-player/file';
 import Slider from '@mui/material/Slider';
 import IconButton from '@mui/material/IconButton';
@@ -173,7 +173,10 @@ export default function PersistentPlayer(props) {
 		          height="100%"
 	           onMouseMove={onMouseMove}
 		     >
-			     <VideoPlayer
+			     <PlayerWrapper
+					 	 key={`${mode}-${item.id}`}
+					 	 mode={mode}
+					 	 item={item}
 				     ref={playerInstance}
 				     className="itemDetail__video"
 				     url={item.video.value}
@@ -367,7 +370,10 @@ export default function PersistentPlayer(props) {
 
         {mode === "audio" &&
          <Box>
-	         <VideoPlayer
+	         <PlayerWrapper
+					   key={`${mode}-${item.id}`}
+					 	 mode={mode}
+					 	 item={item}
 		         ref={playerInstance}
 		         controls={false}
 		         url={item.audio}
@@ -387,7 +393,7 @@ export default function PersistentPlayer(props) {
 		         progressInterval={100}
 	         >
 		         Your browser does not support the audio element.
-	         </VideoPlayer>
+	         </PlayerWrapper>
 
 	         <Box position='absolute' zIndex={50} top={0} right={0} className='persistentPlayer__close'>
 		         <IconButton onClick={closePlayer}><Cancel/></IconButton>

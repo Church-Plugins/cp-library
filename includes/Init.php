@@ -116,6 +116,13 @@ class Init {
 		add_action( 'init', [ $this, 'rewrite_rules' ], 100 );
 	}
 
+	/**
+	 * Entry point for initializing the Analytics dashboard React component
+	 */
+	public function analytics_init( $page_hook ) {
+		add_action( "load-$page_hook", [ $this, 'enqueue_analytics_scripts' ] );
+	}
+
 	public function rewrite_rules() {
 
 		if ( $this->setup->post_types->item_type_enabled() ) {
@@ -150,13 +157,21 @@ class Init {
 		return str_replace( ' src', ' async defer src', $tag );
 	}
 
+	public function enqueue_analytics_scripts() {
+		$this->enqueue->enqueue( 'app', 'analytics', [ 'js_dep' => [ 'jquery' ] ] );
+	}
+
 	public function admin_scripts() {
 		if ( ! $this->is_admin_page() ) {
-			return;
+			 return;
 		}
 
 		$this->enqueue->enqueue( 'styles', 'admin', [] );
+		wp_enqueue_style( 'material-icons' );
+		wp_enqueue_script( 'inline-edit-post' );
 		$scripts = $this->enqueue->enqueue( 'scripts', 'admin', ['jquery', 'select2'] );
+
+		$this->enqueue->enqueue( 'styles', 'admin', [] );
 
 		// Expose variables to JS
 		$entry_point = array_pop( $scripts['js'] );
@@ -170,7 +185,13 @@ class Init {
 	}
 
 	public function is_admin_page() {
-		return in_array( get_post_type(), $this->setup->post_types->get_post_types() );
+		$post_type = get_post_type();
+
+		if ( ! $post_type && isset( $_GET['post_type'] ) ) {
+			$post_type = $_GET['post_type'];
+		}
+
+		return in_array( $post_type, $this->setup->post_types->get_post_types() );
 	}
 
 
@@ -286,6 +307,7 @@ class Init {
 	protected function actions() {
 		add_filter( 'query_vars', [ $this, 'query_vars' ] );
 		add_action( 'wp_head', [ $this, 'global_css_vars' ] );
+		add_action( 'cpl-load-analytics-page', [ $this, 'analytics_init' ] );
 	}
 
 	/** Actions **************************************/

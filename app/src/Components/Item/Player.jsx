@@ -5,7 +5,7 @@ import MenuItem from '@mui/material/MenuItem';
 import { cplVar, cplLog, cplMarker } from '../../utils/helpers';
 
 import { Play, Volume1, Share2 } from "react-feather"
-import VideoPlayer from "react-player";
+import PlayerWrapper from '../PlayerWrapper';
 
 import useBreakpoints from '../../Hooks/useBreakpoints';
 import { usePersistentPlayer } from '../../Contexts/PersistentPlayerContext';
@@ -212,7 +212,10 @@ export default function Player({
 	               height="100%"
 	               onMouseMove={onMouseMove}
 	          >
-		          <VideoPlayer
+		          <PlayerWrapper
+								key={`${mode}-${item.id}`}
+								mode={mode}
+								item={item}
 			          ref={playerInstance}
 			          className="itemDetail__video"
 			          url={playingURL}
