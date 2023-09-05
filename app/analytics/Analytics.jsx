@@ -46,7 +46,7 @@ export default function Analytics() {
 
   return (
     <div className='cpl-analytics postbox'>
-      <h3>Analytics</h3>
+      <h3>Analytics (Beta)</h3>
       <div className='cpl-analytics--actions'>
         <select className='cpl-analytics-timeframe' value={timeframe} onChange={e => setTimeframe(e.target.value)}>
           <option value='7'>Past 7 days</option>
@@ -90,13 +90,13 @@ export default function Analytics() {
         </div>
 
       </div>
-      
+
       <DataTable items={items} loading={loading} />
 
       <div className='cpl-analytics-pagination'>
         {
           overview &&
-          <Pagination 
+          <Pagination
             pages={overview.pages}
             onPageChange={page => setPage(page.selected)}
             currentPage={page}
