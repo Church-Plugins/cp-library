@@ -77,7 +77,6 @@ class ServiceType extends PostType {
 	public function get_args() {
 		$args                       = parent::get_args();
 		$args['menu_icon']          = apply_filters( "{$this->post_type}_icon", 'dashicons-format-gallery' );
-		$args['publicly_queryable'] = false;
 		$args['show_in_menu']       = 'edit.php?post_type=' . cp_library()->setup->post_types->item->post_type;
 
 		return $args;

@@ -13,12 +13,13 @@ if (! defined( 'ABSPATH' )) {
 }
 
 use CP_Library\Admin\Settings\Podcast;
+use CP_Library\Templates;
 
 // Podcast settings array.
 // Key is setting ID without podcast_ prefix, value is default when setting value empty.
 $settings = array(
 	'image'        => '',
-	'title'        => get_bloginfo( 'name' ),
+	'title'        => get_the_title_rss(),
 	'subtitle'     => get_bloginfo( 'description' ),
 	'summary'      => Podcast::get( 'subtitle', get_bloginfo( 'description' ) ),
 	'author'       => get_bloginfo( 'name' ),
@@ -43,7 +44,6 @@ foreach ($settings as $setting => $default) {
 
 	// Create variable with same name as key ($title, $summary, etc.).
 	extract( array( $setting => $value ) );
-
 }
 
 // Category.
@@ -153,11 +153,70 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 
 		do_action( 'rss2_head' ); // Core: Fires at the end of the RSS2 Feed Header (before items).
 
-		while ( have_posts() ) {
-			the_post();
-			\CP_Library\Templates::get_template_part( "parts/podcast-item" );
-		}
+		if( is_comment_feed() ) {
+			$items = array();
 
+			if( get_post_type() === cp_library()->setup->post_types->item_type->post_type ) {
+				$items = \CP_Library\Models\ItemType::get_instance_from_origin( get_the_ID() )->get_items();
+				$items = wp_list_pluck( $items, 'origin_id' );
+			}
+			else if( get_post_type() === cp_library()->setup->post_types->speaker->post_type ) {
+				$items = \CP_Library\Models\Speaker::get_instance_from_origin( get_the_ID() )->get_all_items();
+			}
+			else if( get_post_type() === cp_library()->setup->post_types->service_type->post_type ) {
+				$items = \CP_Library\Models\ServiceType::get_instance_from_origin( get_the_ID() )->get_all_items();
+			}
+
+			if ( ! empty( $items ) ) {
+				$items = get_posts(
+					array(
+						'post_type'      => cp_library()->setup->post_types->item->post_type,
+						'post__in'       => $items,
+						'posts_per_page' => get_option( 'posts_per_rss', 10 ),
+						'orderby'        => 'post__in',
+						'post_status'    => 'publish',
+						'fields'         => 'ids',
+						'meta_query'     => array(
+								'relation' => 'AND',
+								array(
+									'key'     => 'enclosure',
+									'value'   => '',
+									'compare' => '!=',
+								),
+								array(
+									'relation' => 'OR',
+									array(
+										'key'     => 'podcast_exclude',
+										'value'   => '',
+										'compare' => '=',
+									),
+									array(
+										'key'     => 'podcast_exclude',
+										'value'   => '',
+										// empty required for back compat with WP 3.8 and below (core bug).
+										'compare' => 'NOT EXISTS',
+										// field did not always exist, so don't just check empty; check not exist and include those.
+									),
+								),
+							)
+					)
+				);
+
+				foreach ( $items as $item_id ) {
+					global $post;
+					$post = get_post( $item_id );
+					setup_postdata( $post );
+
+					Templates::get_template_part( 'parts/podcast-item' );
+				}
+				wp_reset_postdata();
+			}
+		} else {
+			while ( have_posts() ) {
+				the_post();
+				Templates::get_template_part( "parts/podcast-item" );
+			}
+		}
 		?>
 
 	</channel>
