@@ -116,9 +116,7 @@ class Init {
       $page = (int) $_POST['page'];
     }
 
-    // we want to get all items, so just set the date to 0 to get everything after that
     $date = self::get_time( "$timeframe days ago" );
-
     $items = $this->get_analytics_since( $date, $page );
 
 
