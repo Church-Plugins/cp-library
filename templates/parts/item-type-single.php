@@ -121,9 +121,9 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 		</div>
 	<?php endif; ?>
 
-	<p class="cpl-single-type--items-title"><?php printf( '%s: %s', cp_library()->setup->post_types->item->plural_label, count( $item_type['items'] ) ); ?></p>
+	<p class="cpl-single-type--items-title" id="cpl-single-type--items-title"><?php printf( '%s: %s', cp_library()->setup->post_types->item->plural_label, count( $item_type['items'] ) ); ?></p>
 
-	<section class="cpl-single-type--items">
+	<section class="cpl-single-type--items" id="cpl-single-type--items">
 		<?php
 		// Items come in ASC order, show in DESC
 		$ids = array_reverse( wp_list_pluck( $item_type['items'], 'originID' ) );
@@ -137,7 +137,7 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 		) );
 		?>
 
-		<?php while( $item_query->have_posts() ) : $item_query->the_post() ?>		
+		<?php while( $item_query->have_posts() ) : $item_query->the_post() ?>
 			<?php \CP_Library\Templates::get_template_part( "parts/item-list" ); ?>
 		<?php endwhile; ?>
 
@@ -146,7 +146,7 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 		<div class="cpl-single-type--items--pagination">
 			<?php
 			echo paginate_links( array(
-				'base' => get_permalink() . '?cpl_page=%#%',
+				'base' => get_permalink() . '?cpl_page=%#%#cpl-single-type--items-title',
 				'format' => '?cpl_page=%#%',
 				'current' => max( 1, get_query_var( 'cpl_page' ) ),
 				'total' => $item_query->max_num_pages
