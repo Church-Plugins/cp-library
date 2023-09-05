@@ -305,6 +305,7 @@ class Init {
 	 * @return void
 	 */
 	protected function actions() {
+		add_filter( 'query_vars', [ $this, 'query_vars' ] );
 		add_action( 'wp_head', [ $this, 'global_css_vars' ] );
 		add_action( 'cpl-load-analytics-page', [ $this, 'analytics_init' ] );
 	}
@@ -319,6 +320,17 @@ class Init {
 			}
 		</style>
 		<?php
+	}
+
+	/**
+	 * Add custom query vars to the allowed list
+	 *
+	 * @param array $vars
+	 * @return array
+	 */
+	public function query_vars( $vars ) {
+		$vars[] = 'cpl_page';
+		return $vars;
 	}
 
 	/**
