@@ -85,7 +85,7 @@ class ItemType extends PostType  {
 			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
 		}
 
-		if ( $this->show_in_menu() ) {
+		if ( $this->show_in_menu() && 'item_type' === Settings::get_advanced( 'default_menu_item', 'item_type' ) ) {
 			$source_type  = Speaker::get_instance()->post_type;
 			$service_type = ServiceType::get_instance()->post_type;
 
@@ -169,6 +169,16 @@ class ItemType extends PostType  {
 		return $new_columns;
 	}
 
+	/**
+	 * Print custom column data
+	 *
+	 * @since  1.2.0
+	 *
+	 * @param $column
+	 * @param $post_id
+	 *
+	 * @author Tanner Moushey, 9/5/23
+	 */
 	public function item_type_data_column_cb( $column, $post_id ) {
 		switch( $column ) {
 			case 'items' :
@@ -264,6 +274,11 @@ class ItemType extends PostType  {
 	public function get_args() {
 		$args                    = parent::get_args();
 		$args['menu_icon']       = apply_filters( "{$this->post_type}_icon", 'dashicons-list-view' );
+
+		// show in Item menu if default item type is item
+		if ( 'item' === Settings::get_advanced( 'default_menu_item', 'item_type' ) ) {
+			$args['show_in_menu']    = 'edit.php?post_type=' . cp_library()->setup->post_types->item->post_type;
+		}
 
 		return $args;
 	}
