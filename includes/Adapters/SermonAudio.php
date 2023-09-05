@@ -21,16 +21,22 @@ class SermonAudio extends Adapter {
 		parent::__construct();
 	}
 
-
 	/**
-	 * Process all items
+	 * Performs a hard pull
+	 * 
+	 * @return void
 	 */
 	public function hard_pull() {
-		$sermons = $this->load_since_date();
-		$this->handle_pull( $sermons, true );
+		$sermons = $this->fetch_all_since_date();
+		$this->format_and_process( $sermons, true );
 	}
 
-	public function handle_pull( $sermons, $hard_pull = false ) {
+	/**
+	 * Formats and enqueues items to be processed
+	 * 
+	 * @return void
+	 */
+	public function format_and_process( $sermons, $hard_pull = false ) {
 		$items = array();
 		$speakers = array();
 		$item_types = array();
@@ -64,6 +70,9 @@ class SermonAudio extends Adapter {
 		$this->process( $hard_pull );
 	}
 
+	/**
+	 * Implements the pulling functionality used by the parent
+	 */
 	public function pull( int $amount, int $page ) {
 		$query = array(
 			'pageSize' => $amount,
@@ -74,22 +83,17 @@ class SermonAudio extends Adapter {
 
 		$data = $this->get_results( $query );
 
-		$this->handle_pull( $data->results, false );
+		$this->format_and_process( $data->results, false );
 
 		// whether or not there are more pages
 		return (bool) $data->next;
 	}
 
-	protected function get_recently_updated( int $amount ) {
-		$url = add_query_arg( array(
-			'pageSize' => $amount,
-			'sortBy' => 'updated',
-			'broadcasterID' => $this->get_setting( 'api_key', '' ),
-		), $this->base_url );
-
-		return $this->get_results( $url );
-	}
-
+	/**
+	 * Gets results from sermon audio based on a query
+	 * 
+	 * @param array $query The url query array 
+	 */
 	protected function get_results( $query ) {
 		$url = add_query_arg( $query, $this->base_url );
 
@@ -111,6 +115,11 @@ class SermonAudio extends Adapter {
 		return $data;
 	}
 
+	/**
+	 * Loads all results from sermon audio, looping through pages and accumulating data
+	 * 
+	 * @param array $query The url query array
+	 */
 	protected function load_results( $query ) {
 		unset( $query['page'] );
 
@@ -133,7 +142,10 @@ class SermonAudio extends Adapter {
 		return $results;
 	}
 
-	protected function load_since_date() {
+	/**
+	 * Loads all sermons since the user specified date. Sermon audio doesn't provide a simple way to do this, so some custom logic is required
+	 */
+	protected function fetch_all_since_date() {
 		$sermons = [];
 
 		$date = new \DateTime( $this->get_setting( 'ignore_before', '0' ) );
