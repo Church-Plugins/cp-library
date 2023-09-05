@@ -44,7 +44,6 @@ foreach ($settings as $setting => $default) {
 
 	// Create variable with same name as key ($title, $summary, etc.).
 	extract( array( $setting => $value ) );
-
 }
 
 // Category.
@@ -153,7 +152,7 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 		<?php
 
 		do_action( 'rss2_head' ); // Core: Fires at the end of the RSS2 Feed Header (before items).
-		
+
 		if( is_comment_feed() ) {
 			$items = array();
 
@@ -168,16 +167,51 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 				$items = \CP_Library\Models\ServiceType::get_instance_from_origin( get_the_ID() )->get_all_items();
 			}
 
-			foreach( $items as $origin_id ) {
-				global $post;
-				$post = get_post( $origin_id );
-				setup_postdata( $post );
+			if ( ! empty( $items ) ) {
+				$items = get_posts(
+					array(
+						'post_type'      => cp_library()->setup->post_types->item->post_type,
+						'post__in'       => $items,
+						'posts_per_page' => get_option( 'posts_per_rss', 10 ),
+						'orderby'        => 'post__in',
+						'post_status'    => 'publish',
+						'fields'         => 'ids',
+						'meta_query'     => array(
+								'relation' => 'AND',
+								array(
+									'key'     => 'enclosure',
+									'value'   => '',
+									'compare' => '!=',
+								),
+								array(
+									'relation' => 'OR',
+									array(
+										'key'     => 'podcast_exclude',
+										'value'   => '',
+										'compare' => '=',
+									),
+									array(
+										'key'     => 'podcast_exclude',
+										'value'   => '',
+										// empty required for back compat with WP 3.8 and below (core bug).
+										'compare' => 'NOT EXISTS',
+										// field did not always exist, so don't just check empty; check not exist and include those.
+									),
+								),
+							)
+					)
+				);
 
-				Templates::get_template_part( 'parts/podcast-item' );
+				foreach ( $items as $item_id ) {
+					global $post;
+					$post = get_post( $item_id );
+					setup_postdata( $post );
+
+					Templates::get_template_part( 'parts/podcast-item' );
+				}
+				wp_reset_postdata();
 			}
-			wp_reset_postdata();
-		}
-		else {
+		} else {
 			while ( have_posts() ) {
 				the_post();
 				Templates::get_template_part( "parts/podcast-item" );
