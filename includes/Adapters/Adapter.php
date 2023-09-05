@@ -222,7 +222,7 @@ abstract class Adapter extends \WP_Background_Process {
 		update_post_meta( $post_id, 'external_id', $external_id );
 
 		if( isset( $cpl_data['featured_image'] ) ) {
-			$this->upload_featured_image( $cpl_data['featured_image'], $post_id );
+			$this->sideload_featured_image( $cpl_data['featured_image'], $post_id );
 		}
 
 		// Will throw an error if invoked incorrectly.
@@ -267,7 +267,13 @@ abstract class Adapter extends \WP_Background_Process {
 		$this->save()->dispatch();
 	}
 
-
+	/**
+	 * Adds items to the queue and updates the store
+	 * 
+	 * @param array  $items The items to add to the queue.
+	 * @param string $store_key The store key to use.
+	 * @param bool   $hard_pull Whether to do a full pull or not.
+	 */
 	public function add_items_to_queue( $items, $store_key, $hard_pull = false ) {
 		$store_data = $this->get_store( $store_key );
 
@@ -568,7 +574,7 @@ abstract class Adapter extends \WP_Background_Process {
 	 * @param string $url The URL of the image to upload.
 	 * @param int $post_id The post ID to attach the image to.
 	 */
-	public function upload_featured_image( $url, $post_id ) {
+	public function maybe_sideload_thumbnail( $url, $post_id ) {
 		$upload_dir = wp_upload_dir();
 		$image_data = file_get_contents( $url );
 		$filename = basename( $url );
