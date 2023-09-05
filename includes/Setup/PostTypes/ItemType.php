@@ -53,7 +53,7 @@ class ItemType extends PostType  {
 	public function add_actions() {
 		parent::add_actions();
 
-		$item_type = Item::get_instance()->post_type;
+		$item = Item::get_instance()->post_type;
 
 		// give other code a chance to hook into sources
 		add_action( 'save_post', function() {
@@ -70,12 +70,16 @@ class ItemType extends PostType  {
 		add_action( 'shutdown', [ $this, 'save_post_date'], 99 );
 		add_action( 'save_post', [ $this, 'post_date' ] );
 		add_filter( 'cmb2_save_field_cpl_series', [ $this, 'save_item_series' ], 10, 3 );
-		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'item_type_column' ] );
-		add_action( "manage_{$item_type}_posts_custom_column", [ $this, 'item_type_column_cb' ], 10, 2 );
 		add_action( 'pre_get_posts', [ $this, 'default_posts_per_page' ] );
 		add_action( 'pre_get_posts', [ $this, 'item_item_type_query' ] );
 		add_filter( 'post_updated_messages', [ $this, 'post_update_messages' ] );
 		add_filter( "{$this->post_type}_slug", [ $this, 'custom_slug' ] );
+
+		add_filter( "manage_{$item}_posts_columns", [ $this, 'item_data_column' ] );
+		add_action( "manage_{$item}_posts_custom_column", [ $this, 'item_data_column_cb' ], 10, 2 );
+
+		add_filter( "manage_{$this->post_type}_posts_columns", [ $this, 'item_type_data_column' ], 20 );
+		add_action( "manage_{$this->post_type}_posts_custom_column", [ $this, 'item_type_data_column_cb' ], 10, 2 );
 
 		if ( empty( $_GET['cpl-recovery'] ) ) {
 			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
@@ -85,11 +89,10 @@ class ItemType extends PostType  {
 			$source_type  = Speaker::get_instance()->post_type;
 			$service_type = ServiceType::get_instance()->post_type;
 
-			add_filter( "{$item_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
+			add_filter( "{$item}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 			add_filter( "{$source_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 			add_filter( "{$service_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 		}
-
 	}
 
 	/**
@@ -100,7 +103,7 @@ class ItemType extends PostType  {
 	 *
 	 * @author Tanner Moushey
 	 */
-	public function item_type_column( $columns ) {
+	public function item_data_column( $columns ) {
 		$new_columns = [];
 		foreach( $columns as $key => $column ) {
 			if ( 'date' === $key ) {
@@ -118,7 +121,7 @@ class ItemType extends PostType  {
 		return $new_columns;
 	}
 
-	public function item_type_column_cb( $column, $post_id ) {
+	public function item_data_column_cb( $column, $post_id ) {
 		switch( $column ) {
 			case 'item_type' :
 				$item = new \CP_Library\Controllers\Item( $post_id );
@@ -136,6 +139,52 @@ class ItemType extends PostType  {
 					 echo implode( ', ', $list );
 				 }
 
+				break;
+		}
+	}
+
+	/**
+	 * @param $columns
+	 *
+	 * @return array
+	 * @since  1.2.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function item_type_data_column( $columns ) {
+		$new_columns = [];
+		foreach( $columns as $key => $column ) {
+			if ( 'date' === $key ) {
+				$new_columns['items'] = cp_library()->setup->post_types->item->plural_label;
+			}
+
+			$new_columns[ $key ] = $column;
+		}
+
+		// in case date isn't set
+		if ( ! isset( $columns['date'] ) ) {
+			$new_columns['items'] = cp_library()->setup->post_types->item->plural_label;
+		}
+
+		return $new_columns;
+	}
+
+	public function item_type_data_column_cb( $column, $post_id ) {
+		switch( $column ) {
+			case 'items' :
+				try {
+					$item_type = Model::get_instance_from_origin( $post_id );
+					$items = $item_type->get_items();
+
+					 if ( empty( $items ) ) {
+						 _e( '—', 'cp-library' );
+					 } else {
+						 $url = add_query_arg( 'post_type', cp_library()->setup->post_types->item->post_type, get_admin_url( null, 'edit.php' ) );
+						 echo sprintf( '<a href="%s">%s</a>', add_query_arg( 'type', $item_type->id, $url ), count( $items ) );
+					 }
+				} catch ( \Exception $e ) {
+					_e( '—', 'cp-library' );
+				}
 				break;
 		}
 	}
