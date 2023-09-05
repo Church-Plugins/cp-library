@@ -119,7 +119,7 @@ class Init {
     // we want to get all items, so just set the date to 0 to get everything after that
     $date = self::get_time( "$timeframe days ago" );
 
-    $items = $this->get_items_since( $date, $page );
+    $items = $this->get_analytics_since( $date, $page );
 
 
     wp_send_json( $items );
@@ -216,14 +216,13 @@ class Init {
    * @param date string
    * @return string|null
    */
-  public function get_num_pages( $date ) {
+  public function get_num_pages() {
     global $wpdb;
 
     $sql = "SELECT COUNT(DISTINCT item.id)
-            FROM wp_cpl_item as item
-            WHERE item.updated > '%s'";
+            FROM wp_cpl_item as item";
 
-    $total_rows = $wpdb->get_var( $wpdb->prepare( $sql, $date ) );
+    $total_rows = $wpdb->get_var( $wpdb->prepare( $sql ) );
 
     $total_pages = ceil( $total_rows / self::$per_page );
 
@@ -236,7 +235,7 @@ class Init {
    * @param page int
    * @return array|object|null
    */
-  public function get_items_since( $date, $page ) {
+  public function get_analytics_since( $date, $page ) {
     global $wpdb;
 
     $per_page = self::$per_page;
