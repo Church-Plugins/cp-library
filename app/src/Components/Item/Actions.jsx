@@ -64,8 +64,6 @@ export default function Actions({
 	const isVideoURL = item.video.value && isURL(item.video.value);
 	const isAudioURL = item.audio       && isURL(item.audio);
 
-	console.log(item.audio)
-
 	return (
 		<Box className="cpl-list-item--actions">
 				<Box className="cpl-list-item--actions--buttons cpl-touch-hide">
