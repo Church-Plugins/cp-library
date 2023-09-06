@@ -172,7 +172,7 @@ class Init {
   public function get_action_count_since($date, $action) {
     global $wpdb;
 
-    $sql = "SELECT COUNT(log.id) FROM {$wpdb->prefix}cp_log as log WHERE log.action = %s AND created > %s";
+    $sql = "SELECT COUNT(log.id) FROM {$wpdb->prefix}cp_log as log WHERE log.action = %s AND log.created > %s";
 
     return $wpdb->get_var( $wpdb->prepare( $sql, $action, $date ) );
   }
@@ -204,7 +204,7 @@ class Init {
 
     $table_name = $wpdb->prefix . 'cp_log';
 
-    $query = $this->query_by_sql( "SELECT AVG(CAST(log.data as UNSIGNED)) FROM $table_name as log WHERE action = 'view_duration' AND created > '%s'", $date);
+    $query = $this->query_by_sql( "SELECT AVG(JSON_EXTRACT(log.data, '$.watch_duration')) FROM $table_name as log WHERE action = 'view_duration' AND created > '%s'", $date);
 
     $views = $wpdb->get_var( $query );
 
