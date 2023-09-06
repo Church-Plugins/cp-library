@@ -337,6 +337,28 @@ class Item extends Controller{
 	}
 
 	/**
+	 * Get the seasons for this Item
+	 * @return array|mixed|void
+	 * @since 1.0.4
+	 */
+	public function get_seasons() {
+		$return = [];
+		$terms  = get_the_terms( $this->post->ID, cp_library()->setup->taxonomies->season->taxonomy );
+
+		if ( $terms ) {
+			foreach ( $terms as $term ) {
+				$return[ $term->slug ] = [
+					'name' => $term->name,
+					'slug' => $term->slug,
+					'url'  => get_term_link( $term )
+				];
+			}
+		}
+
+		return $this->filter( $return, __FUNCTION__ );
+	}
+
+	/**
 	 * Get speakers for this Item
 	 *
 	 * @return mixed|void
@@ -393,6 +415,24 @@ class Item extends Controller{
 		}
 
 		return $this->filter( $service_types, __FUNCTION__ );
+	}
+
+	/**
+	 * Get passage for this Item
+	 * @return mixed (get_post_meta)
+	 * @since 1.0.4
+	 */
+	public function get_passage() {
+		return get_post_meta( $this->post->ID, 'passage', true );
+	}
+
+	/**
+	 * Get sermon timestamp for this Item
+	 * @return mixed (get_post_meta)
+	 * @since 1.0.4
+	 */
+	public function get_timestamp() {
+		return get_post_meta( $this->post->ID, 'message_timestamp', true );
 	}
 
 	/*************** Variation Functions ****************/
@@ -739,29 +779,32 @@ class Item extends Controller{
 
 		try {
 			$data = [
-				'id'         => $this->model->id,
-				'originID'   => $this->post->ID,
-				'permalink'  => $this->get_permalink(),
-				'status'     => get_post_status( $this->post ),
-				'slug'       => $this->post->post_name,
-				'thumb'      => $this->get_thumbnail(),
-				'title'      => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
-				'desc'       => $this->get_content(),
-				'date'       => [
+				'id'            => $this->model->id,
+				'originID'      => $this->post->ID,
+				'permalink'     => $this->get_permalink(),
+				'status'        => get_post_status( $this->post ),
+				'slug'          => $this->post->post_name,
+				'thumb'         => $this->get_thumbnail(),
+				'title'         => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
+				'desc'          => $this->get_content(),
+				'date'          => [
 					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
 					'timestamp' => $this->get_publish_date()
 				],
-				'category'   => $this->get_categories(),
-				'speakers'   => $this->get_speakers(),
-				'locations'  => $this->get_locations(),
-				'video'      => $this->get_video(),
-				'audio'      => $this->get_audio(),
-				'embed'      => $this->get_embed(),
-				'types'      => $this->get_types(),
+				'category'      => $this->get_categories(),
+				'speakers'      => $this->get_speakers(),
+				'locations'     => $this->get_locations(),
+				'video'         => $this->get_video(),
+				'audio'         => $this->get_audio(),
+				'embed'         => $this->get_embed(),
+				'types'         => $this->get_types(),
+				'topics'        => $this->get_topics(),
+				'scripture'     => $this->get_scripture(),
+				'seasons'       => $this->get_seasons(),
 				'service_types' => $this->get_service_types(),
-				'topics'     => $this->get_topics(),
-				'scripture'  => $this->get_scripture(),
-				'variations' => null,
+				'passage'       => $this->get_passage(),
+				'timestamp'     => $this->get_timestamp(),
+				'variations'    => null,
 			];
 
 			if ( $include_variations ) {

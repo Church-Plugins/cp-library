@@ -2,6 +2,8 @@
 
 namespace CP_Library\Admin;
 
+use CP_Library\Controllers\Item;
+
 /**
  * Plugin Tools
  *
@@ -36,6 +38,7 @@ class Tools {
 		add_action( 'cp_batch_import_class_include', [ $this, 'include_class' ] );
 		add_filter( 'cp_importer_is_class_allowed', [ $this, 'importer_class' ] );
 		add_filter( 'upload_mimes', [ $this, 'import_mime_type' ] );
+		add_action( 'cp_export_items', [ $this, 'export_data' ] );
 	}
 
 	public function import_mime_type( $existing_mimes ) {
@@ -71,11 +74,11 @@ class Tools {
 			? sanitize_key( $_GET['tab'] )
 			: 'import_export';
 
-//		wp_enqueue_script( 'cp-admin-tools' );
+		// wp_enqueue_script( 'cp-admin-tools' );
 
 		if ( 'import_export' === $active_tab ) {
 			wp_enqueue_script( 'cp-admin-tools-import' );
-//			wp_enqueue_script( 'cp-admin-tools-export' );
+			// wp_enqueue_script( 'cp-admin-tools-export' );
 		}
 		?>
 
@@ -132,9 +135,9 @@ class Tools {
 		?>
 
 		<div class="postbox cp-import-payment-history">
-			<h3><span><?php esc_html_e( 'Import Sermons', 'cp-library' ); ?></span></h3>
+			<h3><span><?php echo sprintf( esc_html__( 'Import %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label); ?></span></h3>
 			<div class="inside">
-				<p><?php esc_html_e( 'Import a CSV file of sermons.', 'cp-library' ); ?></p>
+				<p><?php echo sprintf( esc_html__( 'Import a CSV file of %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label); ?></p>
 				<form id="cp-import-sermons" class="cp-import-form cp-import-export-form"
 					  action="<?php echo esc_url( add_query_arg( 'cp_action', 'cp_upload_import_file', admin_url() ) ); ?>"
 					  method="post" enctype="multipart/form-data">
@@ -367,6 +370,18 @@ class Tools {
 			</div><!-- .inside -->
 		</div><!-- .postbox -->
 
+		<div class="postbox cp-import-payment-history">
+			<h3><span><?php esc_html_e( 'Export data', 'cp-library' ) ?></span></h3>
+			<div class="inside">
+
+				<?php $action_url = esc_url( add_query_arg( 'cp_action', 'cp_export_items', admin_url() ) ); ?>
+				<form id="cpl_export_data" action="<?php echo $action_url ?>" method="POST" enctype="multipart/form-data">
+					<button class="button button-primary"><?php echo sprintf( esc_html__( 'Export all %s as CSV', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ); ?></button>
+				</form>
+
+			</div>
+		</div>
+
 		<?php
 		do_action( 'cp_library_tools_import_export_after' );
 	}
@@ -379,7 +394,7 @@ class Tools {
 
 			// Define all tabs
 			$tabs = array(
-				//'system_info'   => __( 'System Info', 'cp-library' ),
+				// 'system_info'   => __( 'System Info', 'cp-library' ),
 				'import_export' => __( 'Import/Export', 'cp-library' )
 			);
 
@@ -424,4 +439,125 @@ class Tools {
 		<?php
 	}
 
+	/**
+	 * Exports all Sermons when form is submitted
+	 * @return void
+	 * @since 1.0.4
+	 * @author Jonathan Roley
+	 */
+	public function export_data() {
+		$return_value = [];
+
+		$args = [
+			'post_type'      =>  CP_LIBRARY_UPREFIX . "_item",
+			'post_status'    => array('publish','private','draft','future'),
+			'posts_per_page' => -1,
+		];
+
+		$posts = new \WP_Query( $args );
+
+		$upload_dir = wp_upload_dir();
+		// WP-CLI may need to find a fallback directory
+		if( empty( $upload_dir ) || empty( $upload_dir['path'] ) ) {
+			$upload_dir['path'] = dirname( __FILE__ );
+		} else {
+			wp_mkdir_p( $upload_dir['path'] );
+		}
+
+		$filename = sanitize_file_name( sprintf( "%s_" . date( 'Y-m-d' ) . ".csv", cp_library()->setup->post_types->item->plural_label ) );
+		$file_path = trailingslashit( $upload_dir['path'] ) . $filename;
+		$file_handle = fopen( $file_path, 'w');
+
+		$header_added = false;
+
+		foreach( $posts->posts as $post ) {
+
+			try {
+				$item = new Item( $post->ID );
+
+				$data = $item->get_api_data();
+
+				$formatted_data = $this->get_formatted_item( $data );
+
+				if( ! $header_added ) {
+					fputcsv($file_handle, array_keys($formatted_data));
+					$header_added = true;
+				}
+
+				fputcsv($file_handle, $formatted_data);
+			} catch ( \Exception $e ) {
+				$return_value['error'] = $e->getMessage();
+				error_log( $e->getMessage() );
+			}
+		}
+
+		fclose($file_handle);
+
+		header("Content-Type: text/csv");
+		header( "Content-disposition: attachment; filename=\"" . $filename . "\"" );
+
+		if ( isset( $headers['content-length'] ) ) {
+			header( "Content-Length: " . $headers['content-length'] );
+		}
+
+		session_write_close();
+		readfile( rawurldecode( $file_path ) );
+
+    exit();
+	}
+
+	/**
+	 * Formats data for exporting as CSV
+	 * @param array $data
+	 * @return array
+	 * @since 1.0.4
+	 */
+	public function get_formatted_item( $data ) {
+
+		$series = $this->get_csv_string( $data['types'], 'title' );
+
+		$scripture = $this->get_csv_string( $data['scripture'], 'name' );
+
+		$topics = $this->get_csv_string( $data['topics'], 'name' );
+
+		$speakers = $this->get_csv_string( $data['speakers'], 'title' );
+
+		$locations = $this->get_csv_string( $data['locations'], 'name' );
+
+		$service_types = $this->get_csv_string( $data['service_types'], 'title' );
+
+		$seasons = $this->get_csv_string( $data['seasons'], 'name' );
+
+		return array(
+			'Title'        => $data['title'],
+			'Description'  => preg_replace("/\n/", "\\n", $data['desc']),
+			'Series'       => $series,
+			'Date'         => $data['date']['timestamp'],
+			'Passage'      => $data['passage'],
+			'Location'     => $locations,
+			'Service Type' => $service_types,
+			'Speaker'      => $speakers,
+			'Topics'       => $topics,
+			'Season'       => $seasons,
+			'Scripture'    => $scripture,
+			'Thumbnail'    => $data['thumb'],
+			'Video'        => $data['video']['value'],
+			'Audio'        => $data['audio'],
+		);
+	}
+
+	/**
+	 * Gets data from an array and converts it to a comma seperated string
+	 * 
+	 * @param mixed $data
+	 * @param string $key
+	 * @return string
+	 */
+	public function get_csv_string( $data, $key ) {
+		if( ! is_array( $data )  ) {
+			$data = empty( $data ) ? array() : array( $data );
+		}
+
+		return implode( ',', wp_list_pluck( $data, $key ) );
+	}
 }
