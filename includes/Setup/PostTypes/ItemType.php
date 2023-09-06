@@ -106,8 +106,6 @@ class ItemType extends PostType  {
 			wp_die();
 		}
 
-		sleep(5);
-
 		$id = absint( $_GET['id'] );
 		$page = absint( $_GET['page'] );
 
