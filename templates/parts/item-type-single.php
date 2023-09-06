@@ -123,37 +123,16 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 
 	<p class="cpl-single-type--items-title" id="cpl-single-type--items-title"><?php printf( '%s: %s', cp_library()->setup->post_types->item->plural_label, count( $item_type['items'] ) ); ?></p>
 
-	<section class="cpl-single-type--items" id="cpl-single-type--items">
-		<?php
-		// Items come in ASC order, show in DESC
-		$ids = array_reverse( wp_list_pluck( $item_type['items'], 'originID' ) );
-		$page = get_query_var( 'cpl_page' ) ? get_query_var( 'cpl_page' ) : 1;
-		$item_query = new WP_Query( array(
-			'post_type' => cp_library()->setup->post_types->item->post_type,
-			'post__in' => $ids,
-			'orderby' => 'post__in',
-			'posts_per_page' => 10,
-			'paged' => $page
-		) );
-		?>
-
-		<?php while( $item_query->have_posts() ) : $item_query->the_post() ?>
-			<?php \CP_Library\Templates::get_template_part( "parts/item-list" ); ?>
-		<?php endwhile; ?>
-
-		<?php wp_reset_postdata(); ?>
-
-		<div class="cpl-single-type--items--pagination">
-			<?php
-			echo paginate_links( array(
-				'base' => get_permalink() . '?cpl_page=%#%#cpl-single-type--items-title',
-				'format' => '?cpl_page=%#%',
-				'current' => max( 1, get_query_var( 'cpl_page' ) ),
-				'total' => $item_query->max_num_pages
-			) );
-			?>
-		</div>
-	</section>
+	<?php
+	$ajax_config = array(
+		'action' => 'cpl_item_type_items',
+		'id'     => $item_type['id']
+	);
+	?>
+	<section 
+		class="cpl-single-type--items cp-infinite-scroll" 
+		data-url="<?php echo admin_url( 'admin-ajax.php' ) ?>" 
+		data-config="<?php echo esc_attr( json_encode( $ajax_config ) ) ?>"></section>
 </div>
 
 <?php do_action( 'cpl_single_type_after', $item_type ); ?>

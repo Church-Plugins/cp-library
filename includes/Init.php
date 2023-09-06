@@ -206,6 +206,8 @@ class Init {
 		$this->enqueue->enqueue( 'scripts', 'main', [ 'js_dep' => ['jquery'] ] );
 		$scripts = $this->enqueue->enqueue( 'app', 'main', [ 'js_dep' => ['jquery'] ] );
 
+		wp_enqueue_script( 'cp-infinite-scroll' );
+
 		$cpl_vars = apply_filters( 'cpl_app_vars', [
 			'site' => [
 				'title' => get_bloginfo( 'name', 'display' ),
