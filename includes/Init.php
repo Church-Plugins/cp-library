@@ -87,34 +87,6 @@ class Init {
 		Templates::init();
 
 		include_once( CP_LIBRARY_INCLUDES . '/CLI/CP_Migrate.php' );
-
-		$this->maybe_migrate();
-	}
-
-	/**
-	 * Handle migrations from previous versions
-	 *
-	 * @since  1.2.0
-	 *
-	 * @param $version
-	 *
-	 * @author Tanner Moushey, 9/6/23
-	 */
-	public function maybe_migrate( $version = false ) {
-		$current_version = get_option( 'cpl_version', false );
-
-		if ( $current_version === $this->get_version() ) {
-			return;
-		}
-
-		if ( ! $version ) {
-			$version = $this->get_version();
-		}
-
-		flush_rewrite_rules();
-		update_option( 'cpl_version', $this->get_version() );
-
-		do_action( 'cpl_migrate', $current_version, $version );
 	}
 
 	/**
@@ -333,12 +305,40 @@ class Init {
 	 * @return void
 	 */
 	protected function actions() {
+		add_action( 'init', [ $this, 'maybe_migrate' ] );
 		add_filter( 'query_vars', [ $this, 'query_vars' ] );
 		add_action( 'wp_head', [ $this, 'global_css_vars' ] );
 		add_action( 'cpl-load-analytics-page', [ $this, 'analytics_init' ] );
 	}
 
 	/** Actions **************************************/
+
+
+	/**
+	 * Handle migrations from previous versions
+	 *
+	 * @since  1.2.0
+	 *
+	 * @param $version
+	 *
+	 * @author Tanner Moushey, 9/6/23
+	 */
+	public function maybe_migrate( $version = false ) {
+		$current_version = get_option( 'cpl_version', false );
+
+		if ( $current_version === $this->get_version() ) {
+			return;
+		}
+
+		if ( ! $version ) {
+			$version = $this->get_version();
+		}
+
+		flush_rewrite_rules();
+		update_option( 'cpl_version', $this->get_version() );
+
+		do_action( 'cpl_migrate', $current_version, $version );
+	}
 
 	public function global_css_vars() {
 		?>
