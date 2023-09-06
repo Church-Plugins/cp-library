@@ -248,9 +248,9 @@ class Init {
               SUM(CASE WHEN (log.action = 'engaged_audio_view' OR log.action = 'engaged_video_view') THEN 1 ELSE 0 END) as engaged_views,
               AVG(CASE WHEN log.action = 'view_duration' THEN JSON_EXTRACT(log.data, '$.watch_duration') ELSE NULL END) as view_duration
             FROM
-              wp_cpl_item as item
+              {$wpdb->prefix}cpl_item as item
             LEFT JOIN
-              wp_cp_log as log ON item.id = log.object_id AND log.created > '%s'
+              {$wpdb->prefix}cp_log as log ON item.id = log.object_id AND log.created > '%s'
             GROUP BY
               item.id
             ORDER BY
