@@ -87,6 +87,34 @@ class Init {
 		Templates::init();
 
 		include_once( CP_LIBRARY_INCLUDES . '/CLI/CP_Migrate.php' );
+
+		$this->maybe_migrate();
+	}
+
+	/**
+	 * Handle migrations from previous versions
+	 *
+	 * @since  1.2.0
+	 *
+	 * @param $version
+	 *
+	 * @author Tanner Moushey, 9/6/23
+	 */
+	public function maybe_migrate( $version = false ) {
+		$current_version = get_option( 'cpl_version', false );
+
+		if ( $current_version === $this->get_version() ) {
+			return;
+		}
+
+		if ( ! $version ) {
+			$version = $this->get_version();
+		}
+
+		flush_rewrite_rules();
+		update_option( 'cpl_version', $this->get_version() );
+
+		do_action( 'cpl_migrate', $current_version, $version );
 	}
 
 	/**
