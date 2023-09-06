@@ -241,7 +241,7 @@ class Item extends Controller{
 		];
 
 		if ( $url = $this->model->get_meta_value( 'video_url' ) ) {
-			$return['value'] = esc_url( $url );
+			$return['value'] = $url;
 		}
 
 		if ( ! $url ) {
@@ -260,7 +260,7 @@ class Item extends Controller{
 	}
 
 	public function get_audio() {
-		return $this->filter( esc_url ( $this->model->get_meta_value( 'audio_url' ) ), __FUNCTION__ );
+		return $this->filter( $this->model->get_meta_value( 'audio_url' ), __FUNCTION__ );
 	}
 
 	public function get_embed() {

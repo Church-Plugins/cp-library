@@ -41,15 +41,9 @@ add_action( 'cpl_single_item_before', 'cpl_item_back' );
 			</div>
 		</div>
 
-		<?php if( empty( $item['embed'] ) ) : ?>
-			<div class="cpl-single-item--media">
-				<div class="itemDetail__rightContent cpl_item_player" data-item="<?php echo esc_attr( json_encode( $item ) ); ?>"></div>
-			</div>
-		<?php else : ?>
-			<div class="cpl-embed-wrapper cpl-single-item--media">
-				<?php echo $item['embed']; ?>
-			</div>
-		<?php endif; ?>
+		<div class="cpl-single-item--media">
+			<div class="itemDetail__rightContent cpl_item_player" data-item="<?php echo esc_attr( json_encode( $item ) ); ?>"></div>
+		</div>
 	</div>
 
 </div>

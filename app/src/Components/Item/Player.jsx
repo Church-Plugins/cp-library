@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
-import { cplVar, cplLog, cplMarker } from '../../utils/helpers';
+import { cplVar, cplLog, cplMarker, isURL } from '../../utils/helpers';
 
 import { Play, Volume1, Share2 } from "react-feather"
 import VideoPlayer from "react-player";
@@ -42,7 +42,6 @@ export default function Player({
   const [hasPlayed, setHasPlayed] = useState(false);
   const [playedSeconds, setPlayedSeconds] = useState(0.0);
   const [duration, setDuration] = useState(0.0);
-  const [playingURL, setPlayingURL] = useState('');
   const [playbackRate, setPlaybackRate] = useState(1 );
 	const [displayBg, setDisplayBG]   = useState( {backgroundColor: "#C4C4C4"} );
 	const [showFSControls, setShowFSControls]   = useState( false );
@@ -55,6 +54,8 @@ export default function Player({
 	const playingClass   = isPlaying ? ' is_playing' : '';
 	const hasVariations = Boolean(item.variations?.length)
 	const [currentItem, setCurrentItem] = useState(hasVariations ? item.variations[0] : item)
+	const [currentMedia, setCurrentMedia] = useState(currentItem.video.value || currentItem.audio || '');
+
 
 	const onMouseMove = (e) => {
 		if (showFSControls || ! mode) return;
@@ -105,7 +106,7 @@ export default function Player({
 	const updateMode = (mode, url = null) => {
 		setMode(mode);
 		setPlayedSeconds(0);
-		setPlayingURL( url || ('video' === mode ? currentItem.video.value : currentItem.audio) );
+		setCurrentMedia( url || ('video' === mode ? currentItem.video.value : currentItem.audio) );
 		setIsPlaying(false);
 
 		// give the player a chance to initialize before we set it to play
@@ -198,175 +199,187 @@ export default function Player({
 
           <div className="cpl-touch-hide" dangerouslySetInnerHTML={{__html: cplVar( 'mobileTop', 'components' ) }} />
 
-          <Box
-            className="itemDetail__featureImage"
-            position="relative"
-            paddingTop="56.26%"
-            backgroundColor={mode === "audio" ? "#C4C4C4" : "transparent"}
-          >
-	          <Box className="itemPlayer__video"
-	               position="absolute"
-	               top={0}
-	               left={0}
-	               width="100%"
-	               height="100%"
-	               onMouseMove={onMouseMove}
-	          >
-		          <VideoPlayer
-			          ref={playerInstance}
-			          className="itemDetail__video"
-			          url={playingURL}
-			          width="100%"
-			          height="100%"
-			          controls={false}
-			          playbackRate={playbackRate}
-			          playing={isPlaying}
-			          onPlay={() => setIsPlaying(true)}
-			          onPause={() => setIsPlaying(false)}
-			          onDuration={duration => {
-				          setDuration(duration);
-				          playerInstance.current.seekTo(playedSeconds, 'seconds');
-				          setIsPlaying(true);
-			          }}
-			          onProgress={progress => setPlayedSeconds(progress.playedSeconds)}
-			          progressInterval={100}
-		          />
+						<Box
+							className="itemDetail__featureImage"
+							position="relative"
+							paddingTop="56.26%"
+							backgroundColor={mode === "audio" ? "#C4C4C4" : "transparent"}
+						>
+							{
+								isURL(currentMedia) ?
+								<>
+								<Box className="itemPlayer__video"
+										position="absolute"
+										top={0}
+										left={0}
+										width="100%"
+										height="100%"
+										onMouseMove={onMouseMove}
+								>
+									<VideoPlayer
+										ref={playerInstance}
+										className="itemDetail__video"
+										url={currentMedia}
+										width="100%"
+										height="100%"
+										controls={false}
+										playbackRate={playbackRate}
+										playing={isPlaying}
+										onPlay={() => setIsPlaying(true)}
+										onPause={() => setIsPlaying(false)}
+										onDuration={duration => {
+											setDuration(duration);
+											playerInstance.current.seekTo(playedSeconds, 'seconds');
+											setIsPlaying(true);
+										}}
+										onProgress={progress => setPlayedSeconds(progress.playedSeconds)}
+										progressInterval={100}
+									/>
 
 
-		          {!mode ? null : (
-			          <Box className="itemPlayer__video__playWrap" onClick={() => setIsPlaying(!isPlaying)}></Box>
-		          )}
+									{!mode ? null : (
+										<Box className="itemPlayer__video__playWrap" onClick={() => setIsPlaying(!isPlaying)}></Box>
+									)}
 
-		          {!showFSControls ? null : (
-			          <Box className="itemPlayer__controlsWrapper cpl-touch-hide">
+									{!showFSControls ? null : (
+										<Box className="itemPlayer__controlsWrapper cpl-touch-hide">
 
-				          <Box className="itemPlayer__controls" display="flex" flexDirection="row"
-				               justifyContent="space-around" margin="auto">
+											<Box className="itemPlayer__controls" display="flex" flexDirection="row"
+													justifyContent="space-around" margin="auto">
 
-					          <Box display="flex" alignItems="center">
-						          <PlayPause playedSeconds={playedSeconds} flex={0} padding={2} isPlaying={isPlaying} circleIcon={false} onClick={() => setIsPlaying(!isPlaying)}/>
-					          </Box>
+												<Box display="flex" alignItems="center">
+													<PlayPause playedSeconds={playedSeconds} flex={0} padding={2} isPlaying={isPlaying} circleIcon={false} onClick={() => setIsPlaying(!isPlaying)}/>
+												</Box>
 
-					          <IconButton
-					                      onClick={() => playerInstance.current.seekTo(playedSeconds - 10, 'seconds')}>
-						          <Replay10 fontSize="inherit"/>
-					          </IconButton>
+												<IconButton
+																		onClick={() => playerInstance.current.seekTo(playedSeconds - 10, 'seconds')}>
+													<Replay10 fontSize="inherit"/>
+												</IconButton>
 
-					          <IconButton
-					                      onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')}>
-						          <Forward30 fontSize="inherit"/>
-					          </IconButton>
+												<IconButton
+																		onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')}>
+													<Forward30 fontSize="inherit"/>
+												</IconButton>
 
-					          <Box className="itemPlayer__controls__rate" display="flex" alignItems="center"
-					               onClick={updatePlaybackRate}>
-						          <span>{playbackRate}x</span>
-					          </Box>
+												<Box className="itemPlayer__controls__rate" display="flex" alignItems="center"
+														onClick={updatePlaybackRate}>
+													<span>{playbackRate}x</span>
+												</Box>
 
-				          </Box>
+											</Box>
 
-				          <Box className="itemPlayer__progress" flex={1} display="flex" flexDirection="column">
-					          <Box display="flex" flexDirection="row" alignItems="center">
+											<Box className="itemPlayer__progress" flex={1} display="flex" flexDirection="column">
+												<Box display="flex" flexDirection="row" alignItems="center">
 
-						          <Slider
-							          min={0}
-							          defaultValue={0}
-							          max={duration}
-							          step={.01}
-							          size="medium"
-							          value={playedSeconds}
-							          sx={{padding: '10px 0 !important'}}
-							          marks={videoMarks}
-							          onChange={(_, value) => {
-								          setIsPlaying(false);
+													<Slider
+														min={0}
+														defaultValue={0}
+														max={duration}
+														step={.01}
+														size="medium"
+														value={playedSeconds}
+														sx={{padding: '10px 0 !important'}}
+														marks={videoMarks}
+														onChange={(_, value) => {
+															setIsPlaying(false);
 
-								          if (_ && _.type && 'mousedown' === _.type) {
-									          setPlayedSeconds(value);
-									          playerInstance.current.seekTo(playedSeconds);
-								          } else {
-									          throttleScroll(value);
-								          }
+															if (_ && _.type && 'mousedown' === _.type) {
+																setPlayedSeconds(value);
+																playerInstance.current.seekTo(playedSeconds);
+															} else {
+																throttleScroll(value);
+															}
 
-							          }}
-							          onChangeCommitted={(_, value) => {
-								          setIsPlaying(false);
-								          setTimeout(
-									          () => {
-										          setPlayedSeconds(value);
-										          playerInstance.current.seekTo(playedSeconds);
-										          setIsPlaying(true);
-									          }
-								          );
-							          }}
-						          />
+														}}
+														onChangeCommitted={(_, value) => {
+															setIsPlaying(false);
+															setTimeout(
+																() => {
+																	setPlayedSeconds(value);
+																	playerInstance.current.seekTo(playedSeconds);
+																	setIsPlaying(true);
+																}
+															);
+														}}
+													/>
 
-						          <Box
-							          display="flex"
-							          className="itemPlayer__remaining"
-						          >
-							          {formatDuration(duration - playedSeconds)}
-						          </Box>
-					          </Box>
+													<Box
+														display="flex"
+														className="itemPlayer__remaining"
+													>
+														{formatDuration(duration - playedSeconds)}
+													</Box>
+												</Box>
 
-				          </Box>
+											</Box>
 
-				          {!screenfull.isFullscreen && (
-					          <Box className="itemPlayer__controls" display="flex" flexDirection="row"
-				               justifyContent="space-around" margin="auto">
-						          {mode === 'video' && (
-								          <IconButton onClick={handleClickFullscreen}><OpenInFull/></IconButton>
-						          )}
+											{!screenfull.isFullscreen && (
+												<Box className="itemPlayer__controls" display="flex" flexDirection="row"
+													justifyContent="space-around" margin="auto">
+													{mode === 'video' && (
+															<IconButton onClick={handleClickFullscreen}><OpenInFull/></IconButton>
+													)}
 
-						          <IconButton sx={{ transform: 'scaley(-1)'}} onClick={handleClickPersistent}><PictureInPicture fontSize="inherit"/></IconButton>
-					          </Box>
-				          )}
+													<IconButton sx={{ transform: 'scaley(-1)'}} onClick={handleClickPersistent}><PictureInPicture fontSize="inherit"/></IconButton>
+												</Box>
+											)}
 
-			          </Box>
-		          )}
+										</Box>
+									)}
+								</Box>
+								</> :
+								<Box 
+									className='itemDetail__audio' 
+									display='flex'
+									alignItems='center'
+									justifyContent='center'
+									height='100%'
+									width='100%'
+									position='absolute'
+									top={0}
+									left={0}
+									dangerouslySetInnerHTML={{ __html: currentMedia.replace(/\\\"/g, '"') }} />
+							}
+							{mode !== 'video' && !currentMedia && (
+									<Box
+										className="itemDetail__audio"
+										sx={displayBg}
+										display="flex"
+										alignItems="center"
+										justifyContent="center"
+										height="100%"
+										width="100%"
+										position="absolute"
+										top={0}
+										left={0}
+									>
+										{item.thumb ? (
+											<>
+												{isPlaying ? (
+													<></>
+												) : (
+													<PlayCircleOutline onClick={() => {
+														let defaultMode = ( currentItem.video.value ) ? 'video' : 'audio';
 
-		          {mode !== 'video' && (
-			          <Box
-				          className="itemDetail__audio"
-				          sx={displayBg}
-				          display="flex"
-				          alignItems="center"
-				          justifyContent="center"
-				          height="100%"
-				          width="100%"
-				          position="absolute"
-				          top={0}
-				          left={0}
-			          >
-				          {item.thumb ? (
-					          <>
-						          {isPlaying ? (
-							          <></>
-						          ) : (
-							          <PlayCircleOutline onClick={() => {
-													let defaultMode = ( currentItem.video.value ) ? 'video' : 'audio';
-
-								          if (persistentPlayerIsActive) {
-									          passToPersistentPlayer({
-										          item         : mediaState.current.item,
-										          mode         : defaultMode,
-										          isPlaying    : true,
-										          playedSeconds: 0.0,
-									          });
-								          } else {
-									          updateMode( defaultMode );
-								          }
-							          }} sx={{fontSize: 75}}/>
-						          )}
-					          </>
-				          ) : (
-					          <Logo/>
-				          )}
-			          </Box>
-		          )}
-	          </Box>
-
-
-          </Box>
-
+														if (persistentPlayerIsActive) {
+															passToPersistentPlayer({
+																item         : mediaState.current.item,
+																mode         : defaultMode,
+																isPlaying    : true,
+																playedSeconds: 0.0,
+															});
+														} else {
+															updateMode( defaultMode );
+														}
+													}} sx={{fontSize: 75}}/>
+												)}
+											</>
+										) : (
+											<Logo/>
+										)}
+									</Box>
+								)}
+						</Box>
 					{
 						hasVariations ?
 						item.variations.map((variation) => {

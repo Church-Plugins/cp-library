@@ -2,7 +2,7 @@ import React from 'react';
 import IconButton from '@mui/material/IconButton';
 import { ChevronRight } from "react-feather"
 import { useHistory } from "react-router-dom";
-import { cplVar } from '../../utils/helpers';
+import { cplVar, isURL } from '../../utils/helpers';
 import Box from '@mui/material/Box';
 import useBreakpoints from '../../Hooks/useBreakpoints';
 
@@ -61,13 +61,18 @@ export default function Actions({
 
   const history = useHistory();
 
+	const isVideoURL = item.video.value && isURL(item.video.value);
+	const isAudioURL = item.audio       && isURL(item.audio);
+
+	console.log(item.audio)
+
 	return (
 		<Box className="cpl-list-item--actions">
 				<Box className="cpl-list-item--actions--buttons cpl-touch-hide">
-					{item.video.value && (
+					{isVideoURL && (
 						<PlayVideo onClick={playVideo}/>
 					)}
-					{item.audio && (
+					{isAudioURL && (
 						<PlayAudio onClick={playAudio}/>
 					)}
 				</Box>

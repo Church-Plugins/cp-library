@@ -73,6 +73,8 @@ class Item extends PostType  {
 		if ( empty( $_GET['cpl-recovery'] ) ) {
 			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
 		}
+
+		add_action( 'cmb2_sanitize_text', [ $this, 'sanitize_text_field' ], 10, 5 );
 	}
 
 	/**
@@ -431,17 +433,17 @@ class Item extends PostType  {
 
 	protected function item_meta_fields( $cmb ) {
 		$cmb->add_field( [
-			'name' => __( 'Audio URL', 'cp-library' ),
-			'desc' => __( 'The URL of the audio to show, leave blank to hide this field.', 'cp-library' ),
+			'name' => sprintf( __( '%s Audio', 'cp-library' ), $this->single_label ),
+			'desc' => __( 'This can be either a URL of an audio file, or the HTML for an embed.', 'cp-library' ),
 			'id'   => 'audio_url',
-			'type' => 'file',
+			'type' => 'text',
 		] );
 
 		$cmb->add_field( [
-			'name' => __( 'Video URL', 'cp-library' ),
-			'desc' => __( 'The URL of the video to show, leave blank to hide this field.', 'cp-library' ),
+			'name' => sprintf( __( '%s Video', 'cp-library' ), $this->single_label ),
+			'desc' => __( 'This can be either a URL of a video file, or the HTML for an embed.', 'cp-library' ),
 			'id'   => 'video_url',
-			'type' => 'file',
+			'type' => 'text',
 		] );
 
 		$cmb->add_field( [
@@ -817,5 +819,15 @@ class Item extends PostType  {
 			}
 		}
 
+	}
+
+	/**
+	 * CMB2 removes all markup from text fields. We want to allow it for embeds.
+	 */
+	public function sanitize_text_field( $override_value, $value, $object_id, $field_args, $sanitize_object ) {
+		if( $field_args['id'] === 'audio_url' || $field_args['id'] === 'video_url' ) {
+			return $value;
+		}
+		return $override_value;
 	}
 }
