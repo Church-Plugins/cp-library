@@ -106,11 +106,11 @@ class ItemType extends PostType  {
 			wp_die();
 		}
 
-		$id = absint( $_GET['id'] );
+		$id   = absint( $_GET['id'] );
 		$page = absint( $_GET['page'] );
 
 		$item_type = Model::get_instance( $id );
-		
+
 		$items = $item_type->get_items();
 		$items = array_reverse( $items );
 		$items = array_slice( $items, ( $page - 1 ) * 10, 10 );
