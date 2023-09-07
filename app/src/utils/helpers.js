@@ -68,3 +68,12 @@ export function cplMarker( item, mode, duration ) {
 	}
 }
 
+export function isURL(string) {
+	try {
+		new URL(string);
+		return true;
+	}
+	catch(e) {
+		return false;
+	}
+}

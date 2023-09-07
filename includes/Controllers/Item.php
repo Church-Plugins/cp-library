@@ -241,7 +241,7 @@ class Item extends Controller{
 		];
 
 		if ( $url = $this->model->get_meta_value( 'video_url' ) ) {
-			$return['value'] = esc_url( $url );
+			$return['value'] = $url;
 		}
 
 		if ( ! $url ) {
@@ -768,31 +768,28 @@ class Item extends Controller{
 
 		try {
 			$data = [
-				'id'         => $this->model->id,
-				'originID'   => $this->post->ID,
-				'permalink'  => $this->get_permalink(),
-				'status'     => get_post_status( $this->post ),
-				'slug'       => $this->post->post_name,
-				'thumb'      => $this->get_thumbnail(),
-				'title'      => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
-				'desc'       => $this->get_content(),
-				'date'       => [
+				'id'            => $this->model->id,
+				'originID'      => $this->post->ID,
+				'permalink'     => $this->get_permalink(),
+				'status'        => get_post_status( $this->post ),
+				'slug'          => $this->post->post_name,
+				'thumb'         => $this->get_thumbnail(),
+				'title'         => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
+				'desc'          => $this->get_content(),
+				'date'          => [
 					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
 					'timestamp' => $this->get_publish_date()
 				],
-				'category'  => $this->get_categories(),
-				'speakers'  => $this->get_speakers(),
-				'locations' => $this->get_locations(),
-				'video'     => $this->get_video(),
-				'audio'     => $this->get_audio(),
-				'types'     => $this->get_types(),
-				'topics'    => $this->get_topics(),
-				'scripture' => $this->get_scripture(),
-				'seasons'   => $this->get_seasons(),
+				'category'   => $this->get_categories(),
+				'speakers'   => $this->get_speakers(),
+				'locations'  => $this->get_locations(),
+				'video'      => $this->get_video(),
+				'audio'      => $this->get_audio(),
+				'types'      => $this->get_types(),
 				'service_types' => $this->get_service_types(),
-				'passage'   => $this->get_passage(),
-				'timestamp' => $this->get_timestamp(),
-				'variations' => null,
+				'passage'       => $this->get_passage(),
+				'timestamp'     => $this->get_timestamp(),
+				'variations'    => null,
 			];
 
 			if ( $include_variations ) {
