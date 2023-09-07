@@ -339,7 +339,6 @@ class Item extends Table  {
 	 * @type array  $speakers  An array of speakers to add to the new variant
 	 * @type string $audio_url The url to use for the audio file
 	 * @type string $video_url The url to use for the video file
-	 * @type string $embed     The embed code to use for the item file
 	 * }
 	 *
 	 *
@@ -435,7 +434,7 @@ class Item extends Table  {
 			$variant->model->update_speakers( $item_data['speakers'] );
 		}
 
-		$media_meta = [ 'video_url', 'audio_url', 'item_embed', 'video_id_facebook', 'video_id_vimeo', 'video_id_youtube' ];
+		$media_meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo', 'video_id_youtube' ];
 		foreach ( $media_meta as $k ) {
 			if ( empty( $item_data[ $k ] ) ) {
 				delete_post_meta( $variant->post->ID, $k );

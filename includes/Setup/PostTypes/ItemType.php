@@ -565,7 +565,7 @@ class ItemType extends PostType  {
 				'date'    => date( 'Y-m-d\TH:i:s', $item->get_publish_date() ),
 			];
 
-			$meta = [ 'video_url', 'audio_url', 'item_embed', 'video_id_facebook', 'video_id_vimeo' ];
+			$meta = [ 'video_url', 'audio_url', 'video_id_facebook', 'video_id_vimeo' ];
 			foreach ( $meta as $key ) {
 				$item_data[ $key ] = $item->model->get_meta_value( $key );
 			}

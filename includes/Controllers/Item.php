@@ -260,17 +260,7 @@ class Item extends Controller{
 	}
 
 	public function get_audio() {
-		return $this->filter( $this->model->get_meta_value( 'audio_url' ), __FUNCTION__ );
-	}
-
-	public function get_embed() {
-		$embed = $this->model->get_meta_value( 'item_embed' );
-
-		if ( ! $embed ) {
-			return false;
-		}
-
-		return $this->filter( $embed, __FUNCTION__ );
+		return $this->filter( esc_url ( $this->model->get_meta_value( 'audio_url' ) ), __FUNCTION__ );
 	}
 
 	/**
@@ -629,7 +619,6 @@ class Item extends Controller{
 				'id'        => $item->get_variation_source_id(),
 				'audio'     => $item->get_audio(),
 				'video'     => $item->get_video(),
-				'embed'     => $item->get_embed(),
 				'speakers'  => $item->get_speakers(),
 				'permalink' => $this->get_permalink()
 			);
@@ -791,16 +780,12 @@ class Item extends Controller{
 					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
 					'timestamp' => $this->get_publish_date()
 				],
-				'category'      => $this->get_categories(),
-				'speakers'      => $this->get_speakers(),
-				'locations'     => $this->get_locations(),
-				'video'         => $this->get_video(),
-				'audio'         => $this->get_audio(),
-				'embed'         => $this->get_embed(),
-				'types'         => $this->get_types(),
-				'topics'        => $this->get_topics(),
-				'scripture'     => $this->get_scripture(),
-				'seasons'       => $this->get_seasons(),
+				'category'   => $this->get_categories(),
+				'speakers'   => $this->get_speakers(),
+				'locations'  => $this->get_locations(),
+				'video'      => $this->get_video(),
+				'audio'      => $this->get_audio(),
+				'types'      => $this->get_types(),
 				'service_types' => $this->get_service_types(),
 				'passage'       => $this->get_passage(),
 				'timestamp'     => $this->get_timestamp(),
