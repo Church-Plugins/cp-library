@@ -230,21 +230,30 @@ class Item extends Controller{
 		return $this->filter( $return, __FUNCTION__ );
 	}
 
+	/**
+	 * Returns the video for this item.
+	 */
 	public function get_video() {
-
 		$timestamp = get_post_meta( $this->model->origin_id, 'message_timestamp', true );
 		$timestamp = ItemModel::duration_to_seconds( $timestamp );
-		$return = [
-			'type'  	=> 'url',
-			'value' 	=> false,
-			'marker'	=> $timestamp
-		];
+		$return    = array(
+			'type'   => 'url',
+			'value'  => false,
+			'marker' => $timestamp,
+		);
 
-		if ( $url = $this->model->get_meta_value( 'video_url' ) ) {
-			$return['value'] = esc_url( $url );
+		$value = $this->model->get_meta_value( 'video_url' );
+
+		if ( $value ) {
+			$return['value'] = self::sanitize_embed( $value );
+
+			// if the value is not a URL, we'll assume it's an embed.
+			if ( ! filter_var( $value, FILTER_VALIDATE_URL ) ) {
+				$return['type'] = 'embed';
+			}
 		}
 
-		if ( ! $url ) {
+		if ( ! $value ) {
 			if ( $id = $this->model->get_meta_value( 'video_id_vimeo' ) ) {
 				$return['type']  = 'vimeo';
 				$return['id']    = $id;
@@ -259,8 +268,11 @@ class Item extends Controller{
 		return $this->filter( $return, __FUNCTION__ );
 	}
 
+	/**
+	 * Returns the audio for this item.
+	 */
 	public function get_audio() {
-		return $this->filter( esc_url ( $this->model->get_meta_value( 'audio_url' ) ), __FUNCTION__ );
+		return $this->filter( self::sanitize_embed( $this->model->get_meta_value( 'audio_url' ) ), __FUNCTION__ );
 	}
 
 	/**
@@ -768,31 +780,28 @@ class Item extends Controller{
 
 		try {
 			$data = [
-				'id'         => $this->model->id,
-				'originID'   => $this->post->ID,
-				'permalink'  => $this->get_permalink(),
-				'status'     => get_post_status( $this->post ),
-				'slug'       => $this->post->post_name,
-				'thumb'      => $this->get_thumbnail(),
-				'title'      => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
-				'desc'       => $this->get_content(),
-				'date'       => [
+				'id'            => $this->model->id,
+				'originID'      => $this->post->ID,
+				'permalink'     => $this->get_permalink(),
+				'status'        => get_post_status( $this->post ),
+				'slug'          => $this->post->post_name,
+				'thumb'         => $this->get_thumbnail(),
+				'title'         => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
+				'desc'          => $this->get_content(),
+				'date'          => [
 					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
 					'timestamp' => $this->get_publish_date()
 				],
-				'category'  => $this->get_categories(),
-				'speakers'  => $this->get_speakers(),
-				'locations' => $this->get_locations(),
-				'video'     => $this->get_video(),
-				'audio'     => $this->get_audio(),
-				'types'     => $this->get_types(),
-				'topics'    => $this->get_topics(),
-				'scripture' => $this->get_scripture(),
-				'seasons'   => $this->get_seasons(),
+				'category'   => $this->get_categories(),
+				'speakers'   => $this->get_speakers(),
+				'locations'  => $this->get_locations(),
+				'video'      => $this->get_video(),
+				'audio'      => $this->get_audio(),
+				'types'      => $this->get_types(),
 				'service_types' => $this->get_service_types(),
-				'passage'   => $this->get_passage(),
-				'timestamp' => $this->get_timestamp(),
-				'variations' => null,
+				'passage'       => $this->get_passage(),
+				'timestamp'     => $this->get_timestamp(),
+				'variations'    => null,
 			];
 
 			if ( $include_variations ) {
@@ -858,4 +867,48 @@ class Item extends Controller{
 		do_enclose( $audio, $this->post->ID );
 	}
 
+	/**
+	 * Returns the sanitized HTML for an embed.
+	 *
+	 * @param string $embed_html The HTML to sanitize.
+	 * @return string The sanitized HTML.
+	 */
+	public static function sanitize_embed( $embed_html ) {
+		$allowed_html = array(
+			'iframe' => array(
+				'src'             => true,
+				'width'           => true,
+				'height'          => true,
+				'frameborder'     => true,
+				'allowfullscreen' => true,
+				'scrolling'       => true,
+				'style'           => true,
+				'tabindex'        => true,
+				'class'           => true,
+				'title'           => true,
+				'name'            => true,
+				'id'              => true,
+				'aria-*'          => true,
+				'data-*'          => true,
+			),
+			'script' => array(
+				'src'  => true,
+				'type' => true,
+			),
+			'div'    => array(
+				'style'  => true,
+				'class'  => true,
+				'id'     => true,
+				'data'   => true,
+				'data-*' => true,
+			),
+			'p'      => array(
+				'*' => true,
+			),
+		);
+
+		$sanitized = wp_kses( $embed_html, $allowed_html );
+
+		return $sanitized;
+	}
 }
