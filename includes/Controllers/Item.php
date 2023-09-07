@@ -888,16 +888,18 @@ class Item extends Controller{
 			),
 			'div' => array(
 				// Allow any attributes for <div> tags.
-				'*' => true,
+				'style' => true,
+				'class' => true,
+				'id'    => true,
 			),
 			'p' => array(
 				// Allow any attributes for <p> tags.
 				'*' => true,
 			),
-			// Exclude the <a> tag.
-			// Add more tags and attributes as needed.
 		);
 
-		return wp_kses( $embed_html, $allowed_html );
+		$sanitized = wp_kses( $embed_html, $allowed_html );
+
+		return $sanitized;
 	}
 }
