@@ -30,6 +30,7 @@ npm run build
 * Add Analytics panel for sermon views
 * Update podcast feed to work with series and taxonomies
 * Add setting to control the admin default menu for sermons
+* Add support for embeds in sermon audio and video
 
 #### 1.1.1
 * Updates to importer
