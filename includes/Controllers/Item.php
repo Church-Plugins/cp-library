@@ -881,19 +881,28 @@ class Item extends Controller{
 				'height'          => true,
 				'frameborder'     => true,
 				'allowfullscreen' => true,
+				'scrolling'       => true,
+				'style'           => true,
+				'tabindex'        => true,
+				'class'           => true,
+				'title'           => true,
+				'name'            => true,
+				'id'              => true,
+				'aria-*'          => true,
+				'data-*'          => true,
 			),
 			'script' => array(
 				'src'  => true,
 				'type' => true,
 			),
-			'div' => array(
+			'div'    => array(
 				'style'  => true,
 				'class'  => true,
 				'id'     => true,
 				'data'   => true,
 				'data-*' => true,
 			),
-			'p' => array(
+			'p'      => array(
 				'*' => true,
 			),
 		);
