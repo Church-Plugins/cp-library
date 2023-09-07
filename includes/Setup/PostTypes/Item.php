@@ -812,31 +812,7 @@ class Item extends PostType  {
 	 */
 	public function sanitize_text_field( $override_value, $value, $object_id, $field_args, $sanitize_object ) {
 		if ( 'audio_url' === $field_args['id'] || 'video_url' === $field_args['id'] ) {
-			$allowed_html = array(
-				'iframe' => array(
-					'src'             => true,
-					'width'           => true,
-					'height'          => true,
-					'frameborder'     => true,
-					'allowfullscreen' => true,
-				),
-				'script' => array(
-					'src'  => true,
-					'type' => true,
-				),
-				'div' => array(
-					// Allow any attributes for <div> tags.
-					'*' => true,
-				),
-				'p' => array(
-					// Allow any attributes for <p> tags.
-					'*' => true,
-				),
-				// Exclude the <a> tag.
-				// Add more tags and attributes as needed.
-			);
-
-			return wp_kses( $value, $allowed_html );
+			return \CP_Library\Controllers\Item::sanitize_embed( $value );
 		}
 		return $override_value;
 	}
