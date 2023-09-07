@@ -811,8 +811,32 @@ class Item extends PostType  {
 	 * CMB2 removes all markup from text fields. We want to allow it for embeds.
 	 */
 	public function sanitize_text_field( $override_value, $value, $object_id, $field_args, $sanitize_object ) {
-		if( $field_args['id'] === 'audio_url' || $field_args['id'] === 'video_url' ) {
-			return $value;
+		if ( 'audio_url' === $field_args['id'] || 'video_url' === $field_args['id'] ) {
+			$allowed_html = array(
+				'iframe' => array(
+					'src'             => true,
+					'width'           => true,
+					'height'          => true,
+					'frameborder'     => true,
+					'allowfullscreen' => true,
+				),
+				'script' => array(
+					'src'  => true,
+					'type' => true,
+				),
+				'div' => array(
+					// Allow any attributes for <div> tags.
+					'*' => true,
+				),
+				'p' => array(
+					// Allow any attributes for <p> tags.
+					'*' => true,
+				),
+				// Exclude the <a> tag.
+				// Add more tags and attributes as needed.
+			);
+
+			return wp_kses( $value, $allowed_html );
 		}
 		return $override_value;
 	}

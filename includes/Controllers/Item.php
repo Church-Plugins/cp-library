@@ -260,7 +260,7 @@ class Item extends Controller{
 	}
 
 	public function get_audio() {
-		return $this->filter( esc_url ( $this->model->get_meta_value( 'audio_url' ) ), __FUNCTION__ );
+		return $this->filter( $this->model->get_meta_value( 'audio_url' ), __FUNCTION__ );
 	}
 
 	/**
