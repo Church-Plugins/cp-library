@@ -888,9 +888,11 @@ class Item extends Controller{
 			),
 			'div' => array(
 				// Allow any attributes for <div> tags.
-				'style' => true,
-				'class' => true,
-				'id'    => true,
+				'style'  => true,
+				'class'  => true,
+				'id'     => true,
+				'data'   => true,
+				'data-*' => true,
 			),
 			'p' => array(
 				// Allow any attributes for <p> tags.
