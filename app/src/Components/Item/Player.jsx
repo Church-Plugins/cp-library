@@ -54,7 +54,7 @@ export default function Player({
 	const playingClass   = isPlaying ? ' is_playing' : '';
 	const hasVariations = Boolean(item.variations?.length)
 	const [currentItem, setCurrentItem] = useState(hasVariations ? item.variations[0] : item)
-	const [currentMedia, setCurrentMedia] = useState(currentItem.video.value || currentItem.audio || '');
+	const [currentMedia, setCurrentMedia] = useState('');
 
 
 	const onMouseMove = (e) => {
