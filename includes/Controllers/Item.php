@@ -9,6 +9,7 @@ use CP_Library\Exception;
 use CP_Library\Models\Item as ItemModel;
 use CP_Library\Models\ServiceType;
 use CP_Library\Models\Speaker;
+use CP_Library\Templates;
 use CP_Library\Util\Convenience;
 
 class Item extends Controller{
@@ -648,7 +649,6 @@ class Item extends Controller{
 	 *
 	 * @since  1.0.4
 	 *
-	 *
 	 * @return mixed|void
 	 * @author Tanner Moushey, 4/10/23
 	 */
@@ -671,14 +671,15 @@ class Item extends Controller{
 	 *
 	 * @since  1.0.4
 	 *
-	 *
 	 * @return mixed|void
 	 * @author Tanner Moushey, 4/10/23
 	 */
 	public function get_podcast_summary() {
 		$content = $this->get_podcast_content();
 
-		// iTunes limits to 4000 characers
+		$content = Templates::plaintext_convert( $content );
+
+		// iTunes limits to 4000 characters.
 		return $this->filter( Helpers::str_truncate( $content, 4000 ), __FUNCTION__ );
 	}
 
@@ -706,6 +707,8 @@ class Item extends Controller{
 			$excerpt
 		);
 
+		$excerpt = Templates::plaintext_convert( $excerpt );
+
 		if ( $max_chars ) {
 			$excerpt = Helpers::str_truncate( $this->get_podcast_excerpt(), $max_chars );
 		}
@@ -722,7 +725,7 @@ class Item extends Controller{
 	 * @author Tanner Moushey, 4/10/23
 	 */
 	public function get_podcast_description() {
-		// max characters for iTunes
+		// max characters for iTunes.
 		return $this->filter( $this->get_podcast_excerpt( 4000 ), __FUNCTION__ );
 	}
 
@@ -735,7 +738,7 @@ class Item extends Controller{
 	 * @author Tanner Moushey, 4/10/23
 	 */
 	public function get_podcast_subtitle() {
-		// max characters for iTunes
+		// max characters for iTunes.
 		return $this->filter( $this->get_podcast_excerpt( 225 ), __FUNCTION__ );
 	}
 

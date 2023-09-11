@@ -589,4 +589,22 @@ class Templates {
 		];
 	}
 
+	/**
+	 * Replace certain characters in a string with plaintext alternatives
+	 * and remove any HTML entities
+	 *
+	 * @param string $content The content to convert.
+	 * @return string The converted content.
+	 * @since 1.2.1
+	 * @author Jonathan Roley
+	 */
+	public static function plaintext_convert( $content ) {
+		$content = str_replace( '&amp;', 'and', $content );
+		$content = str_replace( '&#8211;', '-', $content );
+		$content = str_replace( '&#8230;', '...', $content );
+
+		$content = preg_replace( '/&#?[a-z0-9]{2,8};/i', '', $content );
+
+		return $content;
+	}
 }

@@ -4,11 +4,12 @@
  *
  * Note: Not relying on DOMDocument to avoid issue in rare case that is not available.
  *
- * @since      1.4
+ * @since 1.4
+ * @package CP_Library
  */
 
 // No direct access.
-if (! defined( 'ABSPATH' )) {
+if ( ! defined( 'ABSPATH' )) {
 	exit;
 }
 
@@ -33,7 +34,7 @@ $settings = array(
 );
 
 // Loop settings to prepare values.
-foreach ($settings as $setting => $default) {
+foreach ( $settings as $setting => $default ) {
 
 	// Get setting value.
 	$value = Podcast::get( $setting, $default );
@@ -47,7 +48,7 @@ foreach ($settings as $setting => $default) {
 }
 
 // Category.
-if ($category && 'none' !== $category) {
+if ( $category && 'none' !== $category ) {
 	list( $category, $subcategory ) = explode( '|', $category );
 } else {
 	$category = '';
@@ -55,7 +56,7 @@ if ($category && 'none' !== $category) {
 
 // Other podcast settings.
 $owner_name = htmlspecialchars( get_bloginfo( 'name' ) ); // Owner name as site name.
-$explicit = $not_explicit ? 'no' : 'yes'; // Explicit or not.
+$explicit = $not_explicit ? 'false' : 'true'; // Explicit or not.
 
 // Character set from WordPress settings.
 $charset = get_option( 'blog_charset' );
@@ -85,7 +86,7 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 
 		<atom:link href="<?php self_link(); ?>" rel="self" type="application/rss+xml" />
 
-		<?php if ($link) : ?>
+		<?php if ( $link ) : ?>
 			<link><?php echo esc_url( $link ); ?></link>
 		<?php endif; ?>
 
@@ -98,12 +99,12 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 		<itunes:author><?php echo esc_html( $author ); ?></itunes:author>
 		<googleplay:author><?php echo esc_html( $author ); ?></googleplay:author>
 
-		<?php if ($summary) : ?>
+		<?php if ( $summary ) : ?>
 			<description><?php echo esc_html( $summary ); ?></description>
 			<googleplay:description><?php echo esc_html( $summary ); ?></googleplay:description>
 		<?php endif; ?>
 
-		<?php if ($email) : ?>
+		<?php if ( $email ) : ?>
 
 			<itunes:owner>
 				<itunes:name><?php echo esc_html( $owner_name ); ?></itunes:name>
@@ -115,7 +116,7 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 
 		<?php endif; ?>
 
-		<?php if ($image) : ?>
+		<?php if ( $image ) : ?>
 			<itunes:image href="<?php echo esc_url( $image ); ?>"></itunes:image>
 			<googleplay:image href="<?php echo esc_url( $image ); ?>"></googleplay:image>
 		<?php endif; ?>
@@ -137,33 +138,34 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 		<itunes:explicit><?php echo esc_html( $explicit ); ?></itunes:explicit>
 		<googleplay:explicit><?php echo esc_html( $explicit ); ?></googleplay:explicit>
 
-		<?php if ($new_url) : ?>
+		<?php if ( $new_url ) : ?>
 			<itunes:new-feed-url><?php echo esc_url( $new_url ); ?></itunes:new-feed-url>
 		<?php endif; ?>
 
 		<sy:updatePeriod><?php echo apply_filters( 'rss_update_period', 'hourly' ); // Core filter. ?></sy:updatePeriod>
 		<sy:updateFrequency><?php echo apply_filters( 'rss_update_frequency', '1' ); // Core filter. ?></sy:updateFrequency>
 
-		<lastBuildDate><?php // from core, standard practice.
-			$date = get_lastpostmodified( 'GMT' );
-			echo $date ? mysql2date( 'r', $date, false ) : date( 'r' );
-		?></lastBuildDate>
+		<lastBuildDate>
+		<?php
+		// from core, standard practice.
+		$date = get_lastpostmodified( 'GMT' );
+		echo $date ? mysql2date( 'r', $date, false ) : date( 'r' );
+		?>
+		</lastBuildDate>
 
 		<?php
 
 		do_action( 'rss2_head' ); // Core: Fires at the end of the RSS2 Feed Header (before items).
 
-		if( is_comment_feed() ) {
+		if ( is_comment_feed() ) {
 			$items = array();
 
-			if( get_post_type() === cp_library()->setup->post_types->item_type->post_type ) {
+			if ( get_post_type() === cp_library()->setup->post_types->item_type->post_type ) {
 				$items = \CP_Library\Models\ItemType::get_instance_from_origin( get_the_ID() )->get_items();
 				$items = wp_list_pluck( $items, 'origin_id' );
-			}
-			else if( get_post_type() === cp_library()->setup->post_types->speaker->post_type ) {
+			} elseif ( get_post_type() === cp_library()->setup->post_types->speaker->post_type ) {
 				$items = \CP_Library\Models\Speaker::get_instance_from_origin( get_the_ID() )->get_all_items();
-			}
-			else if( get_post_type() === cp_library()->setup->post_types->service_type->post_type ) {
+			} elseif ( get_post_type() === cp_library()->setup->post_types->service_type->post_type ) {
 				$items = \CP_Library\Models\ServiceType::get_instance_from_origin( get_the_ID() )->get_all_items();
 			}
 
@@ -204,8 +206,8 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 
 				foreach ( $items as $item_id ) {
 					global $post;
-					$post = get_post( $item_id );
-					setup_postdata( $post );
+					$current_post = get_post( $item_id );
+					setup_postdata( $current_post );
 
 					Templates::get_template_part( 'parts/podcast-item' );
 				}
@@ -214,7 +216,7 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 		} else {
 			while ( have_posts() ) {
 				the_post();
-				Templates::get_template_part( "parts/podcast-item" );
+				Templates::get_template_part( 'parts/podcast-item' );
 			}
 		}
 		?>

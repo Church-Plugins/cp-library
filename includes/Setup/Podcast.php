@@ -22,7 +22,7 @@ class Podcast
 	 * @return Podcast
 	 */
 	public static function get_instance() {
-		if( !self::$_instance instanceof Podcast ) {
+		if ( ! self::$_instance instanceof Podcast ) {
 			self::$_instance = new self();
 		}
 
@@ -40,7 +40,6 @@ class Podcast
 	 * Whether Podcast is enabled
 	 *
 	 * @since  1.0.4
-	 *
 	 *
 	 * @return mixed|void
 	 * @author Tanner Moushey, 4/13/23
@@ -65,7 +64,7 @@ class Podcast
 	 * @since  1.0.4
 	 * @updated 1.2.0 - Added support for taxonomies
 	 *
-	 * @param $query \WP_Query
+	 * @param \WP_Query $query The query object.
 	 *
 	 * @author Tanner Moushey, 4/11/23
 	 */
@@ -76,23 +75,23 @@ class Podcast
 
 		$is_tax = false;
 
-		foreach( cp_library()->setup->taxonomies->get_taxonomies() as $taxonomy ) {
+		foreach ( cp_library()->setup->taxonomies->get_taxonomies() as $taxonomy ) {
 			if ( $query->get( $taxonomy ) ) {
 				$is_tax = true;
 				$query->set( 'post_type', cp_library()->setup->post_types->item->post_type );
 			}
 		}
 
-		if( $query->get( 'post_type' ) !== cp_library()->setup->post_types->item->post_type && ! $is_tax ) {
+		if ( $query->get( 'post_type' ) !== cp_library()->setup->post_types->item->post_type && ! $is_tax ) {
 			return;
 		}
 
-		if ( 'feed' == $query->get( cp_library()->setup->post_types->item->post_type ) ) {
+		if ( 'feed' === $query->get( cp_library()->setup->post_types->item->post_type ) ) {
 			unset( $query->query_vars[ cp_library()->setup->post_types->item->post_type ] );
 			unset( $query->query[ cp_library()->setup->post_types->item->post_type ] );
 		}
 
-		if ( 'feed' == $query->get( 'name' ) ) {
+		if ( 'feed' === $query->get( 'name' ) ) {
 			unset( $query->query_vars[ 'name' ] );
 			unset( $query->query[ 'name' ] );
 		}
@@ -104,29 +103,32 @@ class Podcast
 		$query->is_archive      = true;
 
 		// Only sermons having an enclosure.
-		$query->set( 'meta_query', array(
-			'relation' => 'AND',
+		$query->set(
+			'meta_query',
 			array(
-				'key'     => 'enclosure',
-				'value'   => '',
-				'compare' => '!=',
-			),
-			array(
-				'relation' => 'OR',
+				'relation' => 'AND',
 				array(
-					'key'     => 'podcast_exclude',
+					'key'     => 'enclosure',
 					'value'   => '',
-					'compare' => '=',
+					'compare' => '!=',
 				),
 				array(
-					'key'     => 'podcast_exclude',
-					'value'   => '',
-					// empty required for back compat with WP 3.8 and below (core bug).
-					'compare' => 'NOT EXISTS',
-					// field did not always exist, so don't just check empty; check not exist and include those.
+					'relation' => 'OR',
+					array(
+						'key'     => 'podcast_exclude',
+						'value'   => '',
+						'compare' => '=',
+					),
+					array(
+						'key'     => 'podcast_exclude',
+						'value'   => '',
+						// empty required for back compat with WP 3.8 and below (core bug).
+						'compare' => 'NOT EXISTS',
+						// field did not always exist, so don't just check empty; check not exist and include those.
+					),
 				),
-			),
-		) );
+			)
+		);
 	}
 
 	/**
