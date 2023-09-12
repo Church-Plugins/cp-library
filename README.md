@@ -24,6 +24,10 @@ npm run build
 
 ### Change Log
 
+#### 1.2.1
+* Fix bug with series sermon rewrite rules
+* Fix html in podcast feed
+
 #### 1.2.0
 * Add sermon export
 * Add pagination for series with more than 10 sermons
