@@ -11,14 +11,15 @@ import Rectangular from '../Elements/Buttons/Rectangular';
 import { usePersistentPlayer, PersistentPlayerProvider } from '../Contexts/PersistentPlayerContext';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../Templates/Theme";
+import Providers from '../Contexts/Providers';
 
 export default function ItemWidget( { item } ) {
 
   return (
   	<ThemeProvider theme={theme}>
-	    <PersistentPlayerProvider>
+	    <Providers>
 	      <ItemWidgetContent widgetItem={item}  />
-	    </PersistentPlayerProvider>
+	    </Providers>
 	  </ThemeProvider>
   );
 };

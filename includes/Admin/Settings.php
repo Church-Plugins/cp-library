@@ -61,10 +61,18 @@ class Settings {
 	 *
 	 * @return mixed|void
 	 * @since  1.0.0
+	 * @updated 1.2.0 - handle default_menu_item
 	 *
 	 * @author Tanner Moushey
 	 */
 	public static function get_advanced( $key, $default = '' ) {
+		// force item as the default menu item if item type is not enabled
+		if ( 'default_menu_item' == $key ) {
+			if ( ! cp_library()->setup->post_types->item_type_enabled() ) {
+				return 'item';
+			}
+		}
+
 		return self::get( $key, $default, 'cpl_advanced_options' );
 	}
 
@@ -95,7 +103,8 @@ class Settings {
 
 	public function register_main_options_metabox() {
 
-		$post_type = cp_library()->setup->post_types->item_type_enabled() ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
+		$post_type = Settings::get_advanced( 'default_menu_item', 'item_type' ) === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
+
 		/**
 		 * Registers main options page menu item and form.
 		 */
@@ -566,6 +575,28 @@ class Settings {
 				0 => __( 'Disable', 'cp-library' ),
 			]
 		) );
+
+		if ( cp_library()->setup->post_types->item_type_enabled() ) {
+
+			// @todo move this out of conditional once we add more settings
+			$advanced_options->add_field( array(
+				'name' => __( 'Settings' ),
+				'id'   => 'settings',
+				'type' => 'title',
+			) );
+
+			$advanced_options->add_field( [
+				'name'    => __( 'Set default menu item', 'cp-library' ),
+				'id'      => 'default_menu_item',
+				'type'    => 'select',
+				'options' => [
+					'item'      => cp_library()->setup->post_types->item->plural_label,
+					'item_type' => cp_library()->setup->post_types->item_type->plural_label,
+				],
+				'default' => 'item_type',
+				'desc'    => sprintf( __( 'Select which object to use for the Admin menu item.', 'cp-library' ), cp_library()->setup->post_types->item_type->plural_label, cp_library()->setup->post_types->item->plural_label ),
+			] );
+		}
 
 	}
 

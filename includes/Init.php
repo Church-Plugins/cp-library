@@ -116,12 +116,19 @@ class Init {
 		add_action( 'init', [ $this, 'rewrite_rules' ], 100 );
 	}
 
+	/**
+	 * Entry point for initializing the Analytics dashboard React component
+	 */
+	public function analytics_init( $page_hook ) {
+		add_action( "load-$page_hook", [ $this, 'enqueue_analytics_scripts' ] );
+	}
+
 	public function rewrite_rules() {
 
 		if ( $this->setup->post_types->item_type_enabled() ) {
 			$type = get_post_type_object( $this->setup->post_types->item_type->post_type )->rewrite['slug'];
 			add_rewrite_tag( '%type-item%', '([^&]+)' );
-			add_rewrite_rule("^$type/([^/]*)/([^/]*)?",'index.php?cpl_item_type=$matches[1]&type-item=$matches[2]','top');
+			add_rewrite_rule("^$type/([^/]*)/(?!feed$)(?!feed/.*$)([^/]*?)?",'index.php?cpl_item_type=$matches[1]&type-item=$matches[2]','top');
 		}
 
 		$flush = '1';
@@ -150,13 +157,21 @@ class Init {
 		return str_replace( ' src', ' async defer src', $tag );
 	}
 
+	public function enqueue_analytics_scripts() {
+		$this->enqueue->enqueue( 'app', 'analytics', [ 'js_dep' => [ 'jquery' ] ] );
+	}
+
 	public function admin_scripts() {
 		if ( ! $this->is_admin_page() ) {
-			return;
+			 return;
 		}
 
 		$this->enqueue->enqueue( 'styles', 'admin', [] );
+		wp_enqueue_style( 'material-icons' );
+		wp_enqueue_script( 'inline-edit-post' );
 		$scripts = $this->enqueue->enqueue( 'scripts', 'admin', ['jquery', 'select2'] );
+
+		$this->enqueue->enqueue( 'styles', 'admin', [] );
 
 		// Expose variables to JS
 		$entry_point = array_pop( $scripts['js'] );
@@ -170,7 +185,13 @@ class Init {
 	}
 
 	public function is_admin_page() {
-		return in_array( get_post_type(), $this->setup->post_types->get_post_types() );
+		$post_type = get_post_type();
+
+		if ( ! $post_type && isset( $_GET['post_type'] ) ) {
+			$post_type = $_GET['post_type'];
+		}
+
+		return in_array( $post_type, $this->setup->post_types->get_post_types() );
 	}
 
 
@@ -284,10 +305,40 @@ class Init {
 	 * @return void
 	 */
 	protected function actions() {
+		add_action( 'init', [ $this, 'maybe_migrate' ] );
+		add_filter( 'query_vars', [ $this, 'query_vars' ] );
 		add_action( 'wp_head', [ $this, 'global_css_vars' ] );
+		add_action( 'cpl-load-analytics-page', [ $this, 'analytics_init' ] );
 	}
 
 	/** Actions **************************************/
+
+
+	/**
+	 * Handle migrations from previous versions
+	 *
+	 * @since  1.2.0
+	 *
+	 * @param $version
+	 *
+	 * @author Tanner Moushey, 9/6/23
+	 */
+	public function maybe_migrate( $version = false ) {
+		$current_version = get_option( 'cpl_version', false );
+
+		if ( $current_version === $this->get_version() ) {
+			return;
+		}
+
+		if ( ! $version ) {
+			$version = $this->get_version();
+		}
+
+		flush_rewrite_rules();
+		update_option( 'cpl_version', $this->get_version() );
+
+		do_action( 'cpl_migrate', $current_version, $version );
+	}
 
 	public function global_css_vars() {
 		?>
@@ -297,6 +348,17 @@ class Init {
 			}
 		</style>
 		<?php
+	}
+
+	/**
+	 * Add custom query vars to the allowed list
+	 *
+	 * @param array $vars
+	 * @return array
+	 */
+	public function query_vars( $vars ) {
+		$vars[] = 'cpl_page';
+		return $vars;
 	}
 
 	/**

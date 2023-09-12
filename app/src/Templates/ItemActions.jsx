@@ -3,13 +3,14 @@ import { PersistentPlayerProvider } from '../Contexts/PersistentPlayerContext';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../Templates/Theme";
 import Actions from '../Components/Item/Actions';
+import Providers from '../Contexts/Providers';
 
 export default function ItemActions( { item } ) {
   return (
   	<ThemeProvider theme={theme}>
-	    <PersistentPlayerProvider>
+	    <Providers>
 	      <Actions item={item} />
-	    </PersistentPlayerProvider>
+	    </Providers>
 	  </ThemeProvider>
   );
 };

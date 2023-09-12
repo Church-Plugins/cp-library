@@ -16,9 +16,9 @@ export function cplVar( key, index ) {
 	return window.cplVars[ index ][ key ];
 }
 
-export function cplLog( itemID, action ) {
+export function cplLog( itemID, action, payload = null ) {
 	const restRequest = new Controllers_WP_REST_Request();
-	return restRequest.post({endpoint: `items/${itemID}/log`, data: {action: action}});
+	return restRequest.post({endpoint: `items/${itemID}/log`, data: {action, payload}});
 }
 
 /**
@@ -68,3 +68,12 @@ export function cplMarker( item, mode, duration ) {
 	}
 }
 
+export function isURL(string) {
+	try {
+		new URL(string);
+		return true;
+	}
+	catch(e) {
+		return false;
+	}
+}

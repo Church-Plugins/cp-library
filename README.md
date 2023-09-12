@@ -24,6 +24,14 @@ npm run build
 
 ### Change Log
 
+#### 1.2.0
+* Add sermon export
+* Add pagination for series with more than 10 sermons
+* Add Analytics panel for sermon views
+* Update podcast feed to work with series and taxonomies
+* Add setting to control the admin default menu for sermons
+* Add support for embeds in sermon audio and video
+
 #### 1.1.1
 * Updates to importer
 
