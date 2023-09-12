@@ -128,15 +128,9 @@ class Init {
 		if ( $this->setup->post_types->item_type_enabled() ) {
 			$type = get_post_type_object( $this->setup->post_types->item_type->post_type )->rewrite['slug'];
 			add_rewrite_tag( '%type-item%', '([^&]+)' );
-			add_rewrite_rule("^$type/([^/]*)/(?!feed$)(?!feed/.*$)([^/]*?)?",'index.php?cpl_item_type=$matches[1]&type-item=$matches[2]','top');
+			add_rewrite_rule("^$type/([^/]*)/(?!feed)([^/]+)?",'index.php?cpl_item_type=$matches[1]&type-item=$matches[2]','top');
 		}
 
-		$flush = '1';
-
-		if ( get_option( '_cpl_needs_flush' ) != $flush ) {
-			flush_rewrite_rules(true);
-			update_option( '_cpl_needs_flush', $flush );
-		}
 	}
 
 	/**
