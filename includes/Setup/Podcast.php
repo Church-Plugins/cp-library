@@ -34,6 +34,32 @@ class Podcast
 	 */
 	protected function __construct() {
 		add_action( 'init', [ $this, 'add_feed' ] );
+
+		add_filter( 'cpl_podcast_content', 'convert_chars' );
+		add_filter( 'cpl_podcast_content', 'ent2ncr' );
+		add_filter( 'cpl_podcast_content', [ $this, 'convert_amp' ] );
+
+		add_filter( 'cpl_podcast_text', 'strip_tags' );
+		add_filter( 'cpl_podcast_text', 'ent2ncr' );
+		add_filter( 'cpl_podcast_text', 'esc_html' );
+		add_filter( 'cpl_podcast_text', [ $this, 'convert_amp' ] );
+	}
+
+	/**
+	 * Convert &amp; to and
+	 *
+	 * @since  1.2.1
+	 *
+	 * @param $content
+	 *
+	 * @return array|string|string[]
+	 * @author Tanner Moushey, 9/12/23
+	 */
+	public function convert_amp( $content ) {
+		$content = str_replace( '&amp;', 'and', $content );
+		$content = str_replace( '&#38;', 'and', $content );
+
+		return $content;
 	}
 
 	/**
