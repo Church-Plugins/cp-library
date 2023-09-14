@@ -156,6 +156,8 @@ class Init {
 	}
 
 	public function admin_scripts() {
+		$this->enqueue->enqueue( 'app', 'migration', array( 'js_dep' => array( 'jquery' ) ) );
+
 		if ( ! $this->is_admin_page() ) {
 			 return;
 		}
@@ -163,6 +165,7 @@ class Init {
 		$this->enqueue->enqueue( 'styles', 'admin', [] );
 		wp_enqueue_style( 'material-icons' );
 		wp_enqueue_script( 'inline-edit-post' );
+		
 		$scripts = $this->enqueue->enqueue( 'scripts', 'admin', ['jquery', 'select2'] );
 
 		$this->enqueue->enqueue( 'styles', 'admin', [] );

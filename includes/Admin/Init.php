@@ -43,6 +43,7 @@ class Init {
 		Settings::get_instance();
 		Tools::get_instance();
 		Analytics\Init::get_instance();
+		Migrate\Init::get_instance();
 	}
 
 	/**
@@ -50,8 +51,7 @@ class Init {
 	 *
 	 * @return void
 	 */
-	protected function actions() {
-	}
+	protected function actions() {}
 
 	/** Actions ***************************************************/
 

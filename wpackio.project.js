@@ -58,7 +58,8 @@ module.exports = {
 			name: 'app',
 			entry: {
 				main: ['./app/src/index.jsx'],
-				analytics: ['./app/analytics/index.jsx']
+				analytics: ['./app/analytics/index.jsx'],
+				migration: ['./app/migrate/index.jsx']
 			},
 //			webpackConfig: {
 //				module: {

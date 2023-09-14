@@ -65,3 +65,28 @@ function cp_library_load_textdomain() {
 
 }
 add_action( 'init', 'cp_library_load_textdomain' );
+
+
+/**
+ * Runs on plugin activation.
+ *
+ * @return void
+ */
+function cpl_activation() {
+	add_option( 'Activated_Plugin', 'cp-library' );
+}
+
+/**
+ * Calls an action once when the plugin is activated.
+ *
+ * @return void
+ */
+function cpl_after_activation() {
+	if ( is_admin() && get_option( 'Activated_Plugin', false ) === 'cp-library' ) {
+		delete_option( 'Activated_Plugin' );
+		do_action( 'cpl_after_activation' );
+	}
+}
+
+register_activation_hook( __FILE__, 'cpl_activation' );
+add_action( 'admin_init', 'cpl_after_activation' );

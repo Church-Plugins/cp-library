@@ -99,6 +99,11 @@ class Settings {
 	protected function __construct() {
 		add_action( 'cmb2_admin_init', [ $this, 'register_main_options_metabox' ] );
 		add_action( 'cmb2_save_options_page_fields', 'flush_rewrite_rules' );
+		add_action( 'cmb2_save_field_color_primary', function() {
+			echo "Hellom wolrd";
+			do_action( 'cpl_after_activation' );
+			exit;
+		} );
 	}
 
 	public function register_main_options_metabox() {

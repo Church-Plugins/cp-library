@@ -1,6 +1,6 @@
 jQuery( function( $ ){
 
-	const wp_inline_edit_function = false;
+	let wp_inline_edit_function = false;
 	if( "undefined" !== typeof inlineEditPost ) {
 		wp_inline_edit_function = inlineEditPost.edit ?? false;
 	}

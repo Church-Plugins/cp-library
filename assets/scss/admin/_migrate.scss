@@ -1,0 +1,17 @@
+
+.cpl-migrate-progressbar-wrapper {
+	position: relative;
+	height: 30px;
+	border-radius: 30px;
+	overflow: hidden;
+	background: #e9e9e9;
+
+	.cpl-migrate-progressbar {
+		position: absolute;
+		top: 0;
+		left: 0;
+		height: 100%;
+		background: #00a0d2;
+		transition: width 0.3s ease-in-out;
+	}
+}
