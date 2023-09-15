@@ -23,6 +23,13 @@ class SetupWizard {
 	public $sermon_manager;
 
 	/**
+	 * Church Content
+	 *
+	 * @var ChurchContent
+	 */
+	public $church_content;
+
+	/**
 	 * The page name
 	 *
 	 * @var string
@@ -75,6 +82,7 @@ class SetupWizard {
 	 */
 	protected function includes() {
 		$this->sermon_manager = SermonManager::get_instance();
+		$this->church_content = ChurchContent::get_instance();
 	}
 
 	/**
@@ -101,17 +109,22 @@ class SetupWizard {
 
 		foreach ( $this->get_possible_migrations() as $migration ) {
 			$migrations[] = array(
-				'name' => $migration->name,
-				'type' => $migration->type,
+				'name'  => $migration->name,
+				'type'  => $migration->type,
+				'count' => $migration->get_item_count(),
 			);
 		}
 
 		?>
-		<h1>CP Library Migration Wizard</h1>
-
-		<p>Thank you for choosing CP Library! It looks like you have content created with another sermon managing plugin. Would you like to run an automatic migration?</p>
-
-		<div id="cpl-migration-root" data-details="<?php echo esc_attr( wp_json_encode( $migrations ) ); ?>"></div>
+		<div class="wrap"></div>
+			<div class="postbox">
+				<div class="inside">
+					<h1>CP Library Migration Wizard</h1>
+					<p>Thank you for choosing CP Library! It looks like you have content created with another sermon managing plugin. Would you like to run an automatic migration?</p>
+					<div id="cpl-migration-root" data-details="<?php echo esc_attr( wp_json_encode( $migrations ) ); ?>"></div>
+				</div>
+			</div>
+		</div>
 		<?php
 	}
 
@@ -147,6 +160,7 @@ class SetupWizard {
 	public function get_migrations() {
 		return array(
 			$this->sermon_manager,
+			$this->church_content,
 		);
 	}
 
@@ -157,7 +171,7 @@ class SetupWizard {
 	 */
 	public function migration_exists() {
 		foreach ( $this->get_migrations() as $migration ) {
-			if ( $migration->check_for_plugin() ) {
+			if ( $migration->get_item_count() > 0 ) {
 				return true;
 			}
 		}
@@ -173,7 +187,7 @@ class SetupWizard {
 		$migrations = array();
 
 		foreach ( $this->get_migrations() as $migration ) {
-			if ( $migration->check_for_plugin() ) {
+			if ( $migration->get_item_count() > 0 ) {
 				$migrations[] = $migration;
 			}
 		}

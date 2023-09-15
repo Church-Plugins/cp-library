@@ -32,17 +32,18 @@ abstract class Migration extends \WP_Background_Process {
 	 * The class constructor
 	 */
 	protected function __construct() {
+		$this->action = "cpl_migration_{$this->type}";
 		parent::__construct();
 		add_action( "wp_ajax_cpl_poll_migration_{$this->type}", array( $this, 'send_progress' ) );
 		add_action( "wp_ajax_cpl_start_migration_{$this->type}", array( $this, 'start_migration' ) );
 	}
 
 	/**
-	 * Check for existence of the plugin to migrate from
+	 * Check for the count of items to migrate, 0 if none.
 	 *
-	 * @return bool
+	 * @return int
 	 */
-	abstract public function check_for_plugin();
+	abstract public function get_item_count();
 
 	/**
 	 * Gets all data to migrate.
@@ -77,7 +78,6 @@ abstract class Migration extends \WP_Background_Process {
 			error_log( $e->getMessage() );
 			return false;
 		}
-		sleep( 1 );
 		return false;
 	}
 
@@ -121,11 +121,21 @@ abstract class Migration extends \WP_Background_Process {
 		$status = get_transient( "cpl_migration_status_{$this->type}" );
 
 		if ( ! $status ) {
-			wp_send_json_error( array( 'message' => 'No migration process started' ) );
+			wp_send_json_error(
+				array(
+					'progress' => 0,
+					'status'   => 'loading',
+				)
+			);
 		}
 
 		$percentage = ( $status['progress'] / $status['migration_count'] ) * 100;
 
-		wp_send_json_success( array( 'progress' => $percentage ) );
+		wp_send_json_success(
+			array(
+				'progress' => $percentage,
+				'status'   => 'in_progress',
+			)
+		);
 	}
 }

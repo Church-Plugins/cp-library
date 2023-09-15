@@ -1,7 +1,7 @@
 <?php // phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 
 /**
- * Migrate Sermon Manager content to CP Library
+ * Migrate Church Content sermons to CP Library
  *
  * @package CP_Library
  * @since 1.3.0
@@ -15,16 +15,16 @@ use ChurchPlugins\Exception;
 use CP_Library\Models\Speaker;
 
 /**
- * SermonManager migration class
+ * ChurchContent migration class
  *
  * @since 1.3.0
  */
-class SermonManager extends Migration {
+class ChurchContent extends Migration {
 
 	/**
 	 * The single instance of the class.
 	 *
-	 * @var SermonManager
+	 * @var ChurchContent
 	 */
 	protected static $_instance; // phpcs:ignore PSR2.Classes.PropertyDeclaration.Underscore
 
@@ -33,29 +33,29 @@ class SermonManager extends Migration {
 	 *
 	 * @var string
 	 */
-	public $name = 'Sermons Pro';
+	public $name = 'Church Content';
 
 	/**
 	 * The migration type identifier
 	 *
 	 * @var string
 	 */
-	public $type = 'wpfc_sermon';
+	public $type = 'ctc_sermon';
 
 	/**
 	 * The post type to migrate from
 	 *
 	 * @var string
 	 */
-	public $post_type = 'wpfc_sermon';
+	public $post_type = 'ctc_sermon';
 
 	/**
-	 * Only make one instance of the SermonManager
+	 * Only make one instance of the ChurchContent
 	 *
-	 * @return SermonManager
+	 * @return ChurchContent
 	 */
 	public static function get_instance() {
-		if ( ! self::$_instance instanceof SermonManager ) {
+		if ( ! self::$_instance instanceof ChurchContent ) {
 			self::$_instance = new self();
 		}
 		return self::$_instance;
@@ -70,7 +70,7 @@ class SermonManager extends Migration {
 	}
 
 	/**
-	 * SermonManager actions
+	 * ChurchContent actions
 	 *
 	 * @return void
 	 */
@@ -78,9 +78,9 @@ class SermonManager extends Migration {
 	}
 
 	/**
-	 * Get the number of items to migrate, 0 if none.
+	 * Gets count of items to migrate, 0 of none.
 	 *
-	 * @return bool
+	 * @return int
 	 */
 	public function get_item_count() {
 		global $wpdb;
@@ -96,7 +96,7 @@ class SermonManager extends Migration {
 	}
 
 	/**
-	 * Returns all posts from SermonManager
+	 * Returns all posts from ChurchContent
 	 */
 	public function get_migration_data() {
 		global $wpdb;
@@ -117,17 +117,18 @@ class SermonManager extends Migration {
 	 * @param mixed $post The post to migrate.
 	 */
 	public function migrate_item( $post ) {
-		$series_taxonomy  = 'wpfc_sermon_series';
-		$speaker_taxonomy = 'wpfc_preacher';
+		$series_taxonomy  = 'ctc_sermon_series';
+		$speaker_taxonomy = 'ctc_sermon_speaker';
+		$book_taxonomy    = 'ctc_sermon_book';
 
 		$item_post_type      = cp_library()->setup->post_types->item->post_type;
 		$item_type_post_type = cp_library()->setup->post_types->item_type->post_type;
 
 		$existing_item = get_posts(
 			array(
-				'meta_key'   => 'migration_id',
-				'meta_value' => $post->ID,
-				'post_type'  => $item_post_type,
+				'meta_key'    => 'migration_id',
+				'meta_value'  => $post->ID,
+				'post_type'   => $item_post_type,
 				'numberposts' => 1,
 			)
 		);
@@ -150,25 +151,26 @@ class SermonManager extends Migration {
 			),
 		);
 
-		$new_post_id = wp_insert_post( $new_post );
+		$new_post_id = wp_insert_post( $new_post, true );
 
-		if ( ! $new_post_id ) {
+		if ( is_wp_error( $new_post_id ) ) {
+			error_log( 'Error creating post: ' . $new_post_id->get_error_message() );
 			return;
 		}
 
 		$meta     = get_post_meta( $post->ID );
 		$series   = get_the_terms( $post->ID, $series_taxonomy );
 		$speakers = get_the_terms( $post->ID, $speaker_taxonomy );
+		$books    = get_the_terms( $post->ID, $book_taxonomy );
 
 		try {
 			$item = Item::get_instance_from_origin( $new_post_id );
 
-			$scripture = $meta['bible_passage'][0] ?? false;
-			$video_url = $meta['sermon_video_link'][0] ?? false;
-			$audio_url = $meta['sermon_audio'][0] ?? false;
+			$video_url = $meta['_ctc_sermon_video'][0] ?? false;
+			$audio_url = $meta['_ctc_sermon_audio'][0] ?? false;
 
-			if ( $scripture ) {
-				$item->update_scripture( $scripture );
+			if ( $books && ! is_wp_error( $books ) ) {
+				$item->update_scripture( wp_list_pluck( $books, 'name' ) );
 			}
 
 			if ( $video_url ) {
@@ -181,11 +183,11 @@ class SermonManager extends Migration {
 				$item->update_meta_value( 'audio_url', $audio_url );
 			}
 
-			if ( $series ) {
+			if ( $series && ! is_wp_error( $series ) ) {
 				$this->add_series( $item, $series );
 			}
 
-			if ( $speakers ) {
+			if ( $speakers && ! is_wp_error( $series ) ) {
 				$this->add_speakers( $item, $speakers );
 			}
 		} catch ( \Exception $e ) {
