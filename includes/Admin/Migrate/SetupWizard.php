@@ -60,7 +60,10 @@ class SetupWizard {
 	 */
 	protected function __construct() {
 		$this->includes();
-		if ( $this->migration_exists() ) {
+
+		$wizard_initialized = get_option( 'cp-library-setup-wizard-initialized', false );
+
+		if ( $wizard_initialized ) {
 			$this->actions();
 		}
 	}
@@ -138,17 +141,22 @@ class SetupWizard {
 	}
 
 	/**
+	 * Clean up any wizard options. Runs when plugin is deactivated.
+	 */
+	public function cleanup() {
+		delete_option( 'cp-library-setup-wizard-initialized' );
+	}
+
+	/**
 	 * Enqueue scripts
 	 */
 	public function scripts() {
-		wp_register_script( 'cp-library-setup-wizard', CP_LIBRARY_PLUGIN_URL . 'assets/js/setup-wizard.js', array( 'jquery' ), CP_LIBRARY_PLUGIN_VERSION, true );
-
 		$screen          = get_current_screen();
 		$post_type       = Convenience::get_primary_post_type();
 		$screen_check_id = "{$post_type}_page_" . self::$page_name;
 
 		if ( $screen->id === $screen_check_id ) {
-			wp_enqueue_script( 'cp-library-setup-wizard' );
+			\CP_Library\Init::get_instance()->enqueue->enqueue( 'app', 'migration', array( 'js_dep' => array( 'jquery' ) ) );
 		}
 	}
 

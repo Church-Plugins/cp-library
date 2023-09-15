@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
+import { pluralize } from "./util";
 
 
 
-export default function Migrate({ plugin }) {
+export default function Migrate({ plugin, onComplete }) {
 	const [status, setStatus] = useState('ready')
 	const [progress, setProgress] = useState(0)
 	const [error, setError] = useState(null)
-	const intervalRef = useRef()
 
 	const triggerMigrationStart = () => {
 		return new Promise((resolve, reject) => {
@@ -25,9 +25,17 @@ export default function Migrate({ plugin }) {
 		})
 	}
 
-	const checkProgress = () => {
-		console.log('action: ' + `cpl_poll_migration_${plugin.type}`)
+	const updateProgress = (progress) => {
+		if( progress >= 100 ) {
+			setStatus('complete')
+			onComplete?.()
+		}
+		setProgress(currentProgress => (
+			Math.max(currentProgress, progress)
+		))
+	}
 
+	const checkProgress = () => {
 		jQuery.ajax({
 			url: ajaxurl,
 			type: "GET",
@@ -36,23 +44,19 @@ export default function Migrate({ plugin }) {
 				action: `cpl_poll_migration_${plugin.type}`
 			},
 			success: function (response) {
-				console.log(response)
-
 				if( ! response.success ) {
 					console.log("Error getting progress", response)
-					return
+					return;
 				}
 
-				setProgress(response.data.progress)
+				updateProgress(response.data.progress)
 
-				if (response.data.progress === 100) {
-					setStatus('complete')
-					clearInterval(intervalRef.current)
+				if( response.data.progress < 100 ) {
+					checkProgress()
 				}
 			},
 			error: function (error) {
-				clearInterval(intervalRef.current)
-				console.log("Error getting progress", error)
+				setError(error.message)
 			}
 		})
 	}
@@ -61,15 +65,15 @@ export default function Migrate({ plugin }) {
 		setStatus('started')
 		try {
 			await triggerMigrationStart()
-			setProgress(5)
+			updateProgress(5)
 		} catch (error) {
 			console.log("Error starting migration", error)
 			setStatus('ready')
 			setError("Error starting migration: " + error.message)
 			return;
 		}
-		
-		intervalRef.current = setInterval(checkProgress, 1000)
+		// kick off the progress check
+		checkProgress()
 	}
 	
 	useEffect(() => {
@@ -79,29 +83,37 @@ export default function Migrate({ plugin }) {
 
 	const widthPercent = `${Math.max(0, Math.min(100, progress))}%`
 
-	return status === 'started' ? (
+	return (status === 'started' || status === 'complete') ? (
 		<div>
-			<h2>Migrating content from {plugin.name}</h2>
-			<div className="cpl-migrate-progressbar-label">{`${Math.round(progress)}%`}</div>
-			<div className="cpl-migrate-progressbar-wrapper">
-				<div className="cpl-migrate-progressbar" style={{ width: widthPercent }}></div>
-			</div>
+			<h1>{
+				status === 'started' ?
+				`Migrating content from ${plugin.name}` :
+				`Migration complete!`
+			}</h1>
+			
+			{
+				status === 'started' &&
+				<>
+				<div className="cpl-migration-progressbar-label">{`${Math.round(progress)}%`}</div>
+				<div className="cpl-migration-progressbar-wrapper">
+					<div className={`cpl-migration-progressbar loading`} style={{ width: widthPercent }}></div>
+				</div>
+				</>
+			}
 		</div>
 	) : status === 'ready' ? (
 		<div>
-			<h2>Migration from {plugin.name}</h2>
+			<h1>Migrate from {plugin.name}</h1>
 			{ error && <div class="error">{ error }</div> }
 			<button className="button primary" onClick={startMigration}>
 				{
 					error ?
 					"Retry" :
-					`Start Migration from ${plugin.name}`
+					`Copy ${plugin.count} ${pluralize(plugin.count, 'sermon')} from ${plugin.name}`
 				}
 			</button>
 		</div>
 	) : (
-		<div>
-			<h2>Migration complete!</h2>
-		</div>
+		false
 	)
 }

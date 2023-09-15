@@ -46,7 +46,7 @@ class Init {
 	 */
 	protected function __construct() {
 		add_action( 'cpl_after_activation', array( $this, 'on_activation' ) );
-
+		add_action( 'cpl_deactivation', array( $this, 'on_deactivation' ) );
 		$this->wizard = SetupWizard::get_instance();
 	}
 
@@ -57,5 +57,12 @@ class Init {
 		if ( $this->wizard->migration_exists() ) {
 			$this->wizard->launch();
 		}
+	}
+
+	/**
+	 * Runs when the plugin is deactivated.
+	 */
+	public function on_deactivation() {
+		$this->wizard->cleanup();
 	}
 }

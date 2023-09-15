@@ -36,6 +36,8 @@ abstract class Migration extends \WP_Background_Process {
 		parent::__construct();
 		add_action( "wp_ajax_cpl_poll_migration_{$this->type}", array( $this, 'send_progress' ) );
 		add_action( "wp_ajax_cpl_start_migration_{$this->type}", array( $this, 'start_migration' ) );
+		add_action( "wp_ajax_cpl_pause_migration_{$this->type}", array( $this, 'pause_migration' ) );
+		add_action( "wp_ajax_cpl_resume_migration_{$this->type}", array( $this, 'resume_migration' ) );
 	}
 
 	/**
@@ -109,6 +111,26 @@ abstract class Migration extends \WP_Background_Process {
 
 		$this->save()->dispatch();
 
+		wp_send_json_success();
+	}
+
+	/**
+	 * Pauses the migration
+	 *
+	 * @return void
+	 */
+	public function pause_migration() {
+		$this->pause();
+		wp_send_json_success();
+	}
+
+	/**
+	 * Resume the migration
+	 *
+	 * @return void
+	 */
+	public function resume_migration() {
+		$this->resume();
 		wp_send_json_success();
 	}
 
