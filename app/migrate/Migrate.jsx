@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 export default function Migrate({ plugin }) {
 	const [status, setStatus] = useState('ready')
 	const [progress, setProgress] = useState(0)
+	const [error, setError] = useState(null)
 	const intervalRef = useRef()
 
 	const triggerMigrationStart = () => {
@@ -25,6 +26,8 @@ export default function Migrate({ plugin }) {
 	}
 
 	const checkProgress = () => {
+		console.log('action: ' + `cpl_poll_migration_${plugin.type}`)
+
 		jQuery.ajax({
 			url: ajaxurl,
 			type: "GET",
@@ -55,22 +58,23 @@ export default function Migrate({ plugin }) {
 	}
 
 	const startMigration = async () => {
+		setStatus('started')
 		try {
 			await triggerMigrationStart()
+			setProgress(5)
 		} catch (error) {
 			console.log("Error starting migration", error)
-			return
+			setStatus('ready')
+			setError("Error starting migration: " + error.message)
+			return;
 		}
-		setStatus('started')
+		
 		intervalRef.current = setInterval(checkProgress, 1000)
 	}
-
+	
 	useEffect(() => {
-		return () => {
-			if (intervalRef.current) {
-				clearInterval(intervalRef.current)
-			}
-		}
+		console.log("migration", plugin)
+		return () => clearInterval(intervalRef.current)
 	}, [])
 
 	const widthPercent = `${Math.max(0, Math.min(100, progress))}%`
@@ -78,6 +82,7 @@ export default function Migrate({ plugin }) {
 	return status === 'started' ? (
 		<div>
 			<h2>Migrating content from {plugin.name}</h2>
+			<div className="cpl-migrate-progressbar-label">{`${Math.round(progress)}%`}</div>
 			<div className="cpl-migrate-progressbar-wrapper">
 				<div className="cpl-migrate-progressbar" style={{ width: widthPercent }}></div>
 			</div>
@@ -85,7 +90,14 @@ export default function Migrate({ plugin }) {
 	) : status === 'ready' ? (
 		<div>
 			<h2>Migration from {plugin.name}</h2>
-			<button onClick={startMigration}>Start Migration from {plugin.name}</button>
+			{ error && <div class="error">{ error }</div> }
+			<button className="button primary" onClick={startMigration}>
+				{
+					error ?
+					"Retry" :
+					`Start Migration from ${plugin.name}`
+				}
+			</button>
 		</div>
 	) : (
 		<div>
