@@ -88,5 +88,13 @@ function cpl_after_activation() {
 	}
 }
 
+/**
+ * Runs on plugin deactivation.
+ */
+function cpl_deactivation() {
+	do_action( 'cpl_deactivation' );
+}
+
 register_activation_hook( __FILE__, 'cpl_activation' );
+register_deactivation_hook( __FILE__, 'cpl_deactivation' );
 add_action( 'admin_init', 'cpl_after_activation' );
