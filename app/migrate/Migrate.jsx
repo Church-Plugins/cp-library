@@ -4,7 +4,7 @@ import { pluralize } from "./util";
 
 
 export default function Migrate({ plugin, onComplete }) {
-	const [status, setStatus] = useState('ready')
+	const [status, setStatus] = useState('not_started')
 	const [progress, setProgress] = useState(0)
 	const [error, setError] = useState(null)
 
@@ -25,13 +25,16 @@ export default function Migrate({ plugin, onComplete }) {
 		})
 	}
 
-	const updateProgress = (progress) => {
-		if( progress >= 100 ) {
-			setStatus('complete')
-			onComplete?.()
+	const updateProgress = (data) => {
+		if( data.status === 'complete' ) {
+			// short delay for progressbar transition.
+			setTimeout(() => {
+				setStatus('complete')
+				onComplete?.()
+			}, 500)
 		}
 		setProgress(currentProgress => (
-			Math.max(currentProgress, progress)
+			Math.max(currentProgress, data.progress)
 		))
 	}
 
@@ -46,12 +49,14 @@ export default function Migrate({ plugin, onComplete }) {
 			success: function (response) {
 				if( ! response.success ) {
 					console.log("Error getting progress", response)
+					setError(response.data.message)
+					setStatus('not_started')
 					return;
 				}
 
-				updateProgress(response.data.progress)
+				updateProgress(response.data)
 
-				if( response.data.progress < 100 ) {
+				if( response.data.status === 'in_progress' ) {
 					checkProgress()
 				}
 			},
@@ -62,13 +67,13 @@ export default function Migrate({ plugin, onComplete }) {
 	}
 
 	const startMigration = async () => {
-		setStatus('started')
+		setStatus('in_progress')
 		try {
 			await triggerMigrationStart()
-			updateProgress(5)
+			updateProgress({ status: 'in_progress', progress: 5 })
 		} catch (error) {
 			console.log("Error starting migration", error)
-			setStatus('ready')
+			setStatus('not_started')
 			setError("Error starting migration: " + error.message)
 			return;
 		}
@@ -77,22 +82,21 @@ export default function Migrate({ plugin, onComplete }) {
 	}
 	
 	useEffect(() => {
-		console.log("migration", plugin)
 		return () => clearInterval(intervalRef.current)
 	}, [])
 
 	const widthPercent = `${Math.max(0, Math.min(100, progress))}%`
 
-	return (status === 'started' || status === 'complete') ? (
+	return (status === 'in_progress' || status === 'complete') ? (
 		<div>
 			<h1>{
-				status === 'started' ?
+				status === 'in_progress' ?
 				`Migrating content from ${plugin.name}` :
 				`Migration complete!`
 			}</h1>
 			
 			{
-				status === 'started' &&
+				status === 'in_progress' &&
 				<>
 				<div className="cpl-migration-progressbar-label">{`${Math.round(progress)}%`}</div>
 				<div className="cpl-migration-progressbar-wrapper">
@@ -101,7 +105,7 @@ export default function Migrate({ plugin, onComplete }) {
 				</>
 			}
 		</div>
-	) : status === 'ready' ? (
+	) : status === 'not_started' ? (
 		<div>
 			<h1>Migrate from {plugin.name}</h1>
 			{ error && <div class="error">{ error }</div> }

@@ -8,6 +8,10 @@
 
 namespace CP_Library\Admin\Migrate;
 
+use CP_Library\Models\ItemType;
+use CP_Library\Models\Speaker;
+use ChurchPlugins\Exception;
+
 /**
  * Base class for handling migrations
  *
@@ -68,18 +72,29 @@ abstract class Migration extends \WP_Background_Process {
 	 * @param mixed $item The data to migrate.
 	 */
 	public function task( $item ) {
-		try {
-			$this->migrate_item( $item );
-			$status = get_transient( "cpl_migration_status_{$this->type}" );
-			if ( ! $status ) {
-				return false;
-			}
-			$status['progress']++;
-			set_transient( "cpl_migration_status_{$this->type}", $status, HOUR_IN_SECONDS );
-		} catch ( \ChurchPlugins\Exception $e ) {
-			error_log( $e->getMessage() );
+		$status = get_transient( "cpl_migration_status_{$this->type}" );
+		if ( ! $status ) {
 			return false;
 		}
+
+		$failed = false;
+		try {
+			$this->migrate_item( $item );
+		} catch ( \ChurchPlugins\Exception $e ) {
+			error_log( $e->getMessage() );
+			$failed = true;
+			return false;
+		}
+
+		$status['progress']++;
+		if ( $status['progress'] >= $status['migration_count'] ) {
+			$status['status'] = 'complete';
+		}
+		if ( $failed ) {
+			$status['failed']++;
+		}
+
+		set_transient( "cpl_migration_status_{$this->type}", $status, HOUR_IN_SECONDS );
 		return false;
 	}
 
@@ -98,9 +113,10 @@ abstract class Migration extends \WP_Background_Process {
 		set_transient(
 			"cpl_migration_status_{$this->type}",
 			array(
-				'status'          => 'started',
-				'migration_count' => max( count( $items ), 1 ),
+				'status'          => count( $items ) ? 'in_progress' : 'complete',
+				'migration_count' => count( $items ),
 				'progress'        => 0,
+				'failed'          => 0,
 			),
 			HOUR_IN_SECONDS
 		);
@@ -109,9 +125,209 @@ abstract class Migration extends \WP_Background_Process {
 			$this->push_to_queue( $item );
 		}
 
-		$this->save()->dispatch();
+		if ( count( $items ) > 0 ) {
+			$this->save()->dispatch();
+		}
 
 		wp_send_json_success();
+	}
+
+	/**
+	 * It's not possible to use get_the_terms() once a plugin has been deactivated, due to the taxonomy not being registered.
+	 * This gets the terms directly from the database instead of using WordPress functions.
+	 *
+	 * @param string $taxonomy The taxonomy to get terms for.
+	 * @param int    $post_id The post ID to get terms for.
+	 */
+	public function get_terms( $taxonomy, $post_id ) {
+		global $wpdb;
+
+		$query = "
+			SELECT t.*, tt.*
+			FROM {$wpdb->terms} AS t
+			INNER JOIN {$wpdb->term_taxonomy} AS tt ON t.term_id = tt.term_id
+			INNER JOIN {$wpdb->term_relationships} AS tr ON tr.term_taxonomy_id = tt.term_taxonomy_id
+			INNER JOIN {$wpdb->posts} AS p ON p.ID = tr.object_id
+			WHERE tt.taxonomy = %s AND tr.object_id = %d
+		";
+
+		$terms = $wpdb->get_results( $wpdb->prepare( $query, $taxonomy, $post_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+
+		return $terms;
+	}
+
+	/**
+	 * Checks if a post name exists
+	 *
+	 * @param string $post_type The post type to check.
+	 * @param string $name The post name to check.
+	 */
+	public function post_name_exists( $post_type, $name ) {
+		global $wpdb;
+		return $wpdb->get_var(
+			$wpdb->prepare( 'SELECT 1 FROM %s WHERE post_name = %s AND post_type = %s', $wpdb->posts, $name, $post_type )
+		);
+	}
+
+	/**
+	 * Creates and manages series coming from a taxonomy
+	 *
+	 * @param Item  $item The item being processed.
+	 * @param array $series The series taxonomy terms.
+	 */
+	protected function add_series_from_terms( $item, $series ) {
+		foreach ( $series as $term ) {
+			$this->add_series_from_term( $item, $term );
+		}
+	}
+
+	/**
+	 * Creates and manages series coming from a taxonomy
+	 *
+	 * @param Item   $item The item being processed.
+	 * @param object $term The series taxonomy term.
+	 */
+	protected function add_series_from_term( $item, $term ) {
+		$series_posts = get_posts(
+			array(
+				'name'           => $term->slug,
+				'post_type'      => cp_library()->setup->post_types->item_type->post_type,
+				'posts_per_page' => 1,
+				'post_status'    => 'any',
+			)
+		);
+
+		$post = current( $series_posts );
+
+		if ( ! $post ) {
+			$args = array(
+				'post_title'   => $term->name,
+				'post_name'    => $term->slug,
+				'post_type'    => cp_library()->setup->post_types->item_type->post_type,
+				'post_content' => $term->description,
+				'post_status'  => 'publish',
+			);
+
+			$post = wp_insert_post( $args );
+
+			if ( ! $post ) {
+				return;
+			}
+		} else {
+			$post = $post->ID;
+		}
+
+		try {
+			$item_type = ItemType::get_instance_from_origin( $post );
+			$item->add_type( $item_type->id );
+		} catch ( \Exception $e ) {
+			return;
+		}
+	}
+
+	/**
+	 * Inserts a new post if a migration hasn't already been performed
+	 *
+	 * @param mixed $post The post to migrate.
+	 * @return int|false The new post ID or false if the post already exists or an error occurs.
+	 */
+	public function maybe_insert_post( $post ) {
+		$item_post_type      = cp_library()->setup->post_types->item->post_type;
+		$item_type_post_type = cp_library()->setup->post_types->item_type->post_type;
+
+		$existing_item = current(
+			get_posts(
+				array(
+					'meta_key'    => 'migration_id',
+					'meta_value'  => $post->ID,
+					'post_type'   => $item_post_type,
+					'numberposts' => 1,
+				)
+			)
+		);
+
+		if ( $existing_item ) {
+			return false;
+		}
+
+		$new_post = array(
+			'post_title'    => $post->post_title,
+			'post_content'  => $post->post_content,
+			'post_name'     => $post->post_name,
+			'post_author'   => $post->post_author,
+			'post_date'     => $post->post_date,
+			'post_date_gmt' => $post->post_date_gmt,
+			'post_status'   => 'publish',
+			'post_type'     => $item_post_type,
+			'meta_input'    => array(
+				'migration_id' => $post->ID,
+			),
+		);
+
+		$new_post_id = wp_insert_post( $new_post );
+
+		if ( is_wp_error( $new_post_id ) ) {
+			error_log( 'Error creating post: ' . $new_post_id->get_error_message() );
+			return false;
+		}
+
+		return $new_post_id;
+	}
+
+	/**
+	 * Creates and manages speakers coming from a taxonomy
+	 *
+	 * @param Item  $item The item being processed.
+	 * @param array $speakers The speakers taxonomy terms.
+	 */
+	protected function add_speakers_from_terms( $item, $speakers ) {
+		foreach ( $speakers as $term ) {
+			$this->add_speaker_from_term( $item, $term );
+		}
+	}
+
+	/**
+	 * Creates and manages speakers coming from a taxonomy
+	 *
+	 * @param Item   $item The item being processed.
+	 * @param object $term The speaker taxonomy term.
+	 */
+	protected function add_speaker_from_term( $item, $term ) {
+		$speaker_posts = get_posts(
+			array(
+				'name'           => $term->slug,
+				'post_type'      => cp_library()->setup->post_types->speaker->post_type,
+				'posts_per_page' => 1,
+				'post_status'    => 'any',
+			)
+		);
+
+		$post = current( $speaker_posts );
+
+		if ( ! $post ) {
+			$args = array(
+				'post_title'   => $term->name,
+				'post_name'    => $term->slug,
+				'post_type'    => cp_library()->setup->post_types->speaker->post_type,
+				'post_content' => $term->description,
+				'post_status'  => 'publish',
+			);
+
+			$post = wp_insert_post( $args );
+
+			if ( ! $post ) {
+				return;
+			}
+		} else {
+			$post = $post->ID;
+		}
+
+		try {
+			$speaker = Speaker::get_instance_from_origin( $post );
+			$item->update_speakers( array( $speaker->id ) );
+		} catch ( Exception $e ) {
+			return;
+		}
 	}
 
 	/**
@@ -145,18 +361,23 @@ abstract class Migration extends \WP_Background_Process {
 		if ( ! $status ) {
 			wp_send_json_error(
 				array(
-					'progress' => 0,
-					'status'   => 'loading',
+					'progress'   => 0,
+					'item_count' => 0,
+					'status'     => 'not_started',
+					'failed'     => 0,
 				)
 			);
 		}
 
-		$percentage = ( $status['progress'] / $status['migration_count'] ) * 100;
+		$migration_count = max( $status['migration_count'], 1 ); // Prevent division by zero.
+		$percentage      = 'complete' === $status['status'] ? 100 : ( $status['progress'] / $migration_count ) * 100;
 
 		wp_send_json_success(
 			array(
-				'progress' => $percentage,
-				'status'   => 'in_progress',
+				'progress'   => $percentage,
+				'item_count' => $migration_count,
+				'status'     => $status['status'],
+				'failed'     => $status['failed'],
 			)
 		);
 	}

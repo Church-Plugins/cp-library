@@ -101,10 +101,10 @@ class SermonManager extends Migration {
 	public function get_migration_data() {
 		global $wpdb;
 
-		$posts = get_posts(
-			array(
-				'post_type'      => $this->post_type,
-				'posts_per_page' => -1,
+		$posts = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM $wpdb->posts WHERE post_type = %s",
+				$this->post_type
 			)
 		);
 
@@ -120,45 +120,15 @@ class SermonManager extends Migration {
 		$series_taxonomy  = 'wpfc_sermon_series';
 		$speaker_taxonomy = 'wpfc_preacher';
 
-		$item_post_type      = cp_library()->setup->post_types->item->post_type;
-		$item_type_post_type = cp_library()->setup->post_types->item_type->post_type;
-
-		$existing_item = get_posts(
-			array(
-				'meta_key'   => 'migration_id',
-				'meta_value' => $post->ID,
-				'post_type'  => $item_post_type,
-				'numberposts' => 1,
-			)
-		);
-
-		if ( current( $existing_item ) ) {
-			return;
-		}
-
-		$new_post = array(
-			'post_title'    => $post->post_title,
-			'post_content'  => $post->post_content,
-			'post_name'     => $post->post_name,
-			'post_author'   => $post->post_author,
-			'post_date'     => $post->post_date,
-			'post_date_gmt' => $post->post_date_gmt,
-			'post_status'   => 'publish',
-			'post_type'     => $item_post_type,
-			'meta_input'    => array(
-				'migration_id' => $post->ID,
-			),
-		);
-
-		$new_post_id = wp_insert_post( $new_post );
+		$new_post_id = $this->maybe_insert_post( $post );
 
 		if ( ! $new_post_id ) {
 			return;
 		}
 
 		$meta     = get_post_meta( $post->ID );
-		$series   = get_the_terms( $post->ID, $series_taxonomy );
-		$speakers = get_the_terms( $post->ID, $speaker_taxonomy );
+		$series   = $this->get_terms( 'wpfc_sermon_series', $post->ID );
+		$speakers = $this->get_terms( 'wpfc_sermon_series', $post->ID );
 
 		try {
 			$item = Item::get_instance_from_origin( $new_post_id );
@@ -182,126 +152,14 @@ class SermonManager extends Migration {
 			}
 
 			if ( $series ) {
-				$this->add_series( $item, $series );
+				$this->add_series_from_terms( $item, $series );
 			}
 
 			if ( $speakers ) {
-				$this->add_speakers( $item, $speakers );
+				$this->add_speakers_from_terms( $item, $speakers );
 			}
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			error_log( $e->getMessage() );
-		}
-	}
-
-	/**
-	 * Creates and manages series coming from a taxonomy
-	 *
-	 * @param Item  $item The item being processed.
-	 * @param array $series The series taxonomy terms.
-	 */
-	protected function add_series( $item, $series ) {
-		foreach ( $series as $term ) {
-			$this->add_series_term( $item, $term );
-		}
-	}
-
-	/**
-	 * Creates and manages series coming from a taxonomy
-	 *
-	 * @param Item     $item The item being processed.
-	 * @param \WP_Term $term The series taxonomy term.
-	 */
-	protected function add_series_term( $item, $term ) {
-		$series_posts = get_posts(
-			array(
-				'name'           => $term->slug,
-				'post_type'      => cp_library()->setup->post_types->item_type->post_type,
-				'posts_per_page' => 1,
-				'post_status'    => 'any',
-			)
-		);
-
-		$post = current( $series_posts );
-
-		if ( ! $post ) {
-			$args = array(
-				'post_title'   => $term->name,
-				'post_name'    => $term->slug,
-				'post_type'    => cp_library()->setup->post_types->item_type->post_type,
-				'post_content' => $term->description,
-				'post_status'  => 'publish',
-			);
-
-			$post = wp_insert_post( $args );
-
-			if ( ! $post ) {
-				return;
-			}
-		} else {
-			$post = $post->ID;
-		}
-
-		try {
-			$item_type = ItemType::get_instance_from_origin( $post );
-			$item->add_type( $item_type->id );
-		} catch ( \Exception $e ) {
-			return;
-		}
-	}
-
-	/**
-	 * Creates and manages speakers coming from a taxonomy
-	 *
-	 * @param Item  $item The item being processed.
-	 * @param array $speakers The speakers taxonomy terms.
-	 */
-	protected function add_speakers( $item, $speakers ) {
-		foreach ( $speakers as $term ) {
-			$this->add_speaker_term( $item, $term );
-		}
-	}
-
-	/**
-	 * Creates and manages speakers coming from a taxonomy
-	 *
-	 * @param Item     $item The item being processed.
-	 * @param \WP_Term $term The speaker taxonomy term.
-	 */
-	protected function add_speaker_term( $item, $term ) {
-		$speaker_posts = get_posts(
-			array(
-				'name'           => $term->slug,
-				'post_type'      => cp_library()->setup->post_types->speaker->post_type,
-				'posts_per_page' => 1,
-				'post_status'    => 'any',
-			)
-		);
-
-		$post = current( $speaker_posts );
-
-		if ( ! $post ) {
-			$args = array(
-				'post_title'   => $term->name,
-				'post_name'    => $term->slug,
-				'post_type'    => cp_library()->setup->post_types->speaker->post_type,
-				'post_content' => $term->description,
-				'post_status'  => 'publish',
-			);
-
-			$post = wp_insert_post( $args );
-
-			if ( ! $post ) {
-				return;
-			}
-		} else {
-			$post = $post->ID;
-		}
-
-		try {
-			$speaker = Speaker::get_instance_from_origin( $post );
-			$item->update_speakers( array( $speaker->id ) );
-		} catch ( \Exception $e ) {
-			return;
 		}
 	}
 }
