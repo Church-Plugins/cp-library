@@ -153,11 +153,11 @@ class SermonAudio extends Adapter {
 		$current_year = (int) date( 'Y' );
 		$min_year     = (int) $date->format( 'Y' );
 
-		// loop through years and months up to the current date
+		// loop through years up to the current date
 		for ( $year = $min_year; $year <= $current_year; $year++ ) {
 			$query = array(
 				'pageSize' => 100,
-				'broadcasterID' => $this->get_setting( 'api_key', '' ),
+				'broadcasterID' => $this->get_setting( 'broadcaster_id', '' ),
 				'year' => $year,
 			);
 			
