@@ -123,7 +123,7 @@ class SetupWizard {
 			<div class="postbox">
 				<div class="inside">
 					<h1>CP Library Migration Wizard</h1>
-					<p>Thank you for choosing CP Library! It looks like you have content created with another sermon managing plugin. Would you like to run an automatic migration?</p>
+					<p>It looks like you have content created with another sermon managing plugin. Would you like to run an automatic migration?</p>
 					<div id="cpl-migration-root" data-details="<?php echo esc_attr( wp_json_encode( $migrations ) ); ?>"></div>
 				</div>
 			</div>
