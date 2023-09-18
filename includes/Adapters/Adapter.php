@@ -504,21 +504,21 @@ abstract class Adapter extends \WP_Background_Process {
 
 	/**
 	 * Register settings
-	 * 
+	 *
 	 * @param CMB2 $cmb The CMB2 object to register settings fields with.
 	 * @since 1.3.0
 	 */
 	public function register_settings( $cmb ) {
 		$cmb->add_field( array(
-			'name' => __( 'API Key', 'cp-library' ),
-			'id'   => $this->option_id( 'api_key' ),
+			'name' => __( 'Broadcaster ID', 'cp-library' ),
+			'id'   => 'broadcaster_id',
 			'type' => 'text',
-			'desc' => __( 'Enter the API key from your Sermon Audio account here', 'cp-library' )
+			'desc' => __( 'Enter your broadcaster ID from Sermon Audio here.', 'cp-library' )
 		) );
 
 		$cmb->add_field( array(
 			'name' => sprintf( __( 'Ignore %s Before', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
-			'id'   => $this->option_id( 'ignore_before' ),
+			'id'   => 'ignore_before',
 			'type' => 'text_date',
 			'desc' => sprintf( __( 'Ignore all %s before specified date.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label )
 		) );
@@ -526,12 +526,12 @@ abstract class Adapter extends \WP_Background_Process {
 		if( get_option( $this->option_id( 'import_complete' ), false ) === false ) {
 			$cmb->add_field( array(
 				'name' => __( 'Start initial import', 'cp-library' ),
-				'id'   => $this->option_id( 'start_initial_import' ),
+				'id'   => 'start_initial_import',
 				'type' => 'cpl_submit_button',
 				'desc' => __( 'Start initial import', 'cp-library' ),
 				'query_args' => array(
 					'cp_action' => "cpl_adapter_import_{$this->type}"
-				)
+				),
 			) );
 		}
 
@@ -544,7 +544,7 @@ abstract class Adapter extends \WP_Background_Process {
 		$cmb->add_field( array(
 			'name'    => __( 'Update Check', 'cp-library' ),
 			'desc'    => sprintf( __( 'The interval at which to check for updated %s.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
-			'id'      => $this->option_id( 'update_check' ),
+			'id'      => 'update_check',
 			'type'    => 'select',
 			'options' => $schedule_options,
 			'default' => 'twicedaily'
@@ -552,7 +552,7 @@ abstract class Adapter extends \WP_Background_Process {
 
 		$cmb->add_field( array(
 			'name'       => __( 'Check Now', 'cp-library' ),
-			'id'         => $this->option_id( 'check_now' ),
+			'id'         => 'check_now',
 			'type'       => 'cpl_submit_button',
 			'desc'       => sprintf( __( 'Check for new %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
 			'query_args' => array(
@@ -563,7 +563,7 @@ abstract class Adapter extends \WP_Background_Process {
 		$cmb->add_field( array(
 			'name' => __( 'Check Count', 'cp-library' ),
 			'desc' => __( 'The number of sermons to check for updates each time the cron runs.', 'cp-library' ),
-			'id'   => $this->option_id( 'check_count' ),
+			'id'   => 'check_count',
 			'type' => 'text_small',
 			'default' => 50,
 			'attributes' => array(
@@ -571,18 +571,8 @@ abstract class Adapter extends \WP_Background_Process {
 				'max' => 100,
 				'step' => 1,
 				'type' => 'number',
-			)
+			),
 		) );
-
-		// $cmb->add_field( array(
-		// 	'name'       => 'Hard Pull',
-		// 	'id'         => $this->option_id( 'hard_pull' ),
-		// 	'type'       => 'cpl_submit_button',
-		// 	'desc'       => __( 'Pull all sermons immediately', 'cp-library' ),
-		// 	'query_args' => array(
-		// 		'cp_action' => "cpl_adapter_hard_pull_{$this->type}"
-		// 	)
-		// ) );
 	}
 
 	/**
@@ -601,7 +591,7 @@ abstract class Adapter extends \WP_Background_Process {
 	 * @param mixed $default The default value to return if the setting is not found.
 	 */
 	public function get_setting( $key, $default = '' ) {
-		return Settings::get( $this->option_id( $key ), $default, "cpl_{$this->type}_adapter_options" );
+		return Settings::get( $key, $default, "cpl_{$this->type}_adapter_options" );
 	}
 
 
