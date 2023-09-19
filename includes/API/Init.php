@@ -22,6 +22,13 @@ class Init {
 	public $sources;
 
 	/**
+	 * AJAX class instance
+	 *
+	 * @var AJAX
+	 */
+	public $ajax;
+
+	/**
 	 * Only make one instance of Init
 	 *
 	 * @return Init
@@ -39,10 +46,11 @@ class Init {
 	 *
 	 */
 	protected function __construct() {
-		$this->items = new Items_API();
+		$this->items      = new Items_API();
 		$this->item_types = new ItemTypes_API();
-		$this->sources = new Sources_API();
-		add_action( 'rest_api_init', [ $this, 'load_api_routes' ] );
+		$this->sources    = new Sources_API();
+		$this->ajax       = AJAX::get_instance();
+		add_action( 'rest_api_init', array( $this, 'load_api_routes' ) );
 	}
 
 	/** Actions **************************************/

@@ -196,26 +196,33 @@ class Init {
 	 * @author costmo
 	 */
 	public function app_enqueue() {
-		$this->enqueue->enqueue( 'styles', 'main', [] );
-		$this->enqueue->enqueue( 'scripts', 'main', [ 'js_dep' => ['jquery'] ] );
-		$scripts = $this->enqueue->enqueue( 'app', 'main', [ 'js_dep' => ['jquery'] ] );
+		$this->enqueue->enqueue( 'styles', 'main', array() );
+		$this->enqueue->enqueue( 'scripts', 'main', array( 'js_dep' => array( 'jquery' ) ) );
 
-		$cpl_vars = apply_filters( 'cpl_app_vars', [
-			'site' => [
-				'title' => get_bloginfo( 'name', 'display' ),
-				'thumb' => Settings::get( 'default_thumbnail', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
-				'logo'  => Settings::get( 'logo', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
-				'url'   => get_site_url(),
-				'path'  => '',
-			],
-			'components' => [
-				'mobileTop' => ''
-			],
-			'i18n' => [
-				'playAudio' => Settings::get( 'label_play_audio', __( 'Listen', 'cp-library' ) ),
-				'playVideo' => Settings::get( 'label_play_video', __( 'Watch', 'cp-library' ) ),
-			],
-		] );
+		wp_register_script( 'cpl_facets', CP_LIBRARY_PLUGIN_URL . '/assets/js/facets.js', array( 'jquery' ), CP_LIBRARY_PLUGIN_VERSION, true );
+
+		$scripts = $this->enqueue->enqueue( 'app', 'main', array( 'js_dep' => array( 'jquery', 'cpl_facets' ) ) );
+
+		$cpl_vars = apply_filters(
+			'cpl_app_vars',
+			array(
+				'site' => array(
+					'title' => get_bloginfo( 'name', 'display' ),
+					'thumb' => Settings::get( 'default_thumbnail', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
+					'logo'  => Settings::get( 'logo', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
+					'url'   => get_site_url(),
+					'path'  => '',
+				),
+				'components' => array(
+					'mobileTop' => '',
+				),
+				'i18n' => array(
+					'playAudio' => Settings::get( 'label_play_audio', __( 'Listen', 'cp-library' ) ),
+					'playVideo' => Settings::get( 'label_play_video', __( 'Watch', 'cp-library' ) ),
+				),
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+			)
+		);
 
 		if ( isset( $scripts['js'], $scripts['js'][0], $scripts['js'][0]['handle'] ) ) {
 			wp_localize_script( $scripts['js'][0]['handle'], 'cplVars', $cpl_vars );

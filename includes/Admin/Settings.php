@@ -598,6 +598,63 @@ class Settings {
 			] );
 		}
 
+		$advanced_options->add_field(
+			array(
+				'name' => __( 'Filters', 'cp-library' ),
+				'id'   => 'filters',
+				'type' => 'title',
+			)
+		);
+
+		$advanced_options->add_field(
+			array(
+				'name'    => __( 'Count Threshold', 'cp-library' ),
+				'id'      => 'filter_count_threshold',
+				/* translators: %s is the plural label for the item post type */
+				'desc'    => sprintf( __( 'The minimum number of %s to show a filter field for.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+				'type'    => 'text_small',
+				'default' => 3,
+			)
+		);
+
+		$taxonomies = cp_library()->setup->taxonomies->get_objects();
+
+		foreach ( $taxonomies as $taxonomy ) {
+			$advanced_options->add_field(
+				array(
+					/* translators: %s is the single label for the taxonomy */
+					'name'    => sprintf( __( 'Sort %s', 'cp-library' ), $taxonomy->single_label ),
+					'id'      => 'sort_' . $taxonomy->taxonomy,
+					'type'    => 'select',
+					'options' => array(
+						/* translators: %s is the plural label for the item post type */
+						'count' => sprintf( __( 'By %s Count', 'cp-library' ), cp_library()->setup->post_types->item->single_label ),
+						'name'  => __( 'Alphabetically', 'cp-library' ),
+					),
+				)
+			);
+		}
+
+		$sources = array(
+			'speaker'      => cp_library()->setup->post_types->speaker,
+			'service_type' => cp_library()->setup->post_types->service_type
+		);
+
+		foreach ( $sources as $key => $source ) {
+			$advanced_options->add_field(
+				array(
+					/* translators: %s is the single label for the source post type */
+					'name'    => sprintf( __( 'Sort %s', 'cp-library' ), $source->single_label ),
+					'id'      => "sort_{$key}",
+					'type'    => 'select',
+					'options' => array(
+						/* translators: %s is the plural label for the item post type */
+						'count' => sprintf( __( 'By %s Count', 'cp-library' ), cp_library()->setup->post_types->item->single_label ),
+						'name'  => __( 'Alphabetically', 'cp-library' ),
+					),
+				)
+			);
+		}
 	}
 
 	/**
