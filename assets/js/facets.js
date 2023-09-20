@@ -3,16 +3,18 @@
 
 
 jQuery($ => {
+	$('.cpl-filter--toggle--button').on('click', function(e) {
+		e.preventDefault();
+		$('.cpl-filter--has-dropdown').toggle();
+	});
+
 	$('.cpl-ajax-facet').each(function(index, element) {
 		const facetType = $(element).data('facet-type');
-		const label     = $(element).data('label');
 
 		if(!facetType) return;
 
 		const params = new URLSearchParams(window.location.search)
 		const preSelected = formatQueryParams(params)[facetType] || [];
-
-		$(element).hide();
 
 		$.ajax({
 			url: cplVars.ajax_url,
@@ -21,14 +23,16 @@ jQuery($ => {
 				action: "cpl_dropdown_facet",
 				facet_type: facetType,
 				selected: preSelected,
-				label: label
+				query_vars: cplVars.query_vars
 			},
 			success: function(data) {
-				console.log("Data", data)
 				if( data.trim() ) {
 					$(element).html(data);
-					$(element).show();
 					initializeDropdown(element);
+				}
+				else {
+					console.log("Hiding element", $(element).parent())
+					$(element).parent().remove()
 				}
 			},
 			error: function(error) {
@@ -54,17 +58,12 @@ jQuery($ => {
 	}
 
 	function initializeDropdown(element) {
-		$(element).find('.cpl-filter--has-dropdown a').on('click', function(e) {
+		$(element).parent().find('a').on('click', function(e) {
 			e.preventDefault();
-			$(this).parent().toggleClass('open');
+			$(element).parent().toggleClass('open');
 		})
 
 		$(element).find('input[type="checkbox"]').on('change', submitOnChange)
-
-		$('.cpl-filter--toggle--button').on('click', function(e) {
-			e.preventDefault();
-			$(element).find('.cpl-filter--has-dropdown').toggle()
-		});
 	}
 
 	function submitOnChange(e) {

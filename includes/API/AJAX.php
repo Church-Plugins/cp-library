@@ -4,6 +4,7 @@ namespace CP_Library\API;
 
 use ChurchPlugins\Helpers;
 use CP_Library\Admin\Settings;
+use WP_Query;
 
 /**
  * CP Library AJAX methods.
@@ -51,8 +52,6 @@ class AJAX {
 	 */
 	protected function includes() {}
 
-
-
 	/**
 	 * Render a dropdown filter
 	 *
@@ -62,7 +61,7 @@ class AJAX {
 		// phpcs:disable WordPress.Security.NonceVerification
 		$facet_type = Helpers::get_param( $_POST, 'facet_type', false );
 		$selected   = Helpers::get_param( $_POST, 'selected', array() );
-		$label      = Helpers::get_param( $_POST, 'label', '' );
+		$query_vars = Helpers::get_param( $_POST, 'query_vars', array() );
 		// phpcs:enable WordPress.Security.NonceVerification
 
 		if ( ! $facet_type || ! is_array( $selected ) ) {
@@ -71,15 +70,45 @@ class AJAX {
 
 		$items = array();
 
+		$query_vars['no_found_rows']          = true;
+		$query_vars['posts_per_page']         = 9999;
+		$query_vars['fields']                 = 'ids';
+		$query_vars['update_post_meta_cache'] = false;
+		$query_vars['update_post_term_cache'] = false;
+
+		$terms = $query_vars[ $facet_type ] ?? array();
+
+		if ( ( $query_vars['taxonomy'] ?? false ) === $facet_type ) {
+			unset( $query_vars['taxonomy'] );
+		}
+		if ( in_array( ( $query_vars['term'] ?? false ), $terms, true ) ) {
+			unset( $query_vars['term'] );
+		}
+		unset( $query_vars[ $facet_type ] );
+		unset( $query_vars['paged'] );
+
+		$query = new WP_Query( $query_vars );
+
+		$post_ids = $query->posts;
+
+		$args = array(
+			'post__in'   => $post_ids,
+			'order_by'   => Settings::get_advanced( 'sort_speaker', 'count' ),
+			'threshold'  => (int) Settings::get_advanced( 'filter_count_threshold', 3 ),
+			'facet_type' => $facet_type,
+		);
+
+		wp_reset_postdata();
+
 		switch ( $facet_type ) {
 			case 'speaker':
 			case 'service_type':
-				$items = $this->get_sources( $facet_type );
+				$items = $this->get_sources( $args );
 				break;
 			case 'cpl_scripture':
 			case 'cpl_topic':
 			case 'cpl_season':
-				$items = $this->get_terms( $facet_type );
+				$items = $this->get_terms( $args );
 				break;
 		}
 
@@ -88,16 +117,11 @@ class AJAX {
 		}
 
 		?>
-		<div class="cpl-filter--<?php echo esc_attr( $facet_type ); ?> cpl-filter--has-dropdown">
-			<a href="#" class="cpl-filter--dropdown-button cpl-button is-light"><?php echo esc_html( $label ); ?></a>
-			<div class="cpl-filter--dropdown">
-				<?php foreach ( $items as $item ) : ?>
-					<label>
-						<input type="checkbox" <?php checked( in_array( $item->value, $selected, true ) ); ?> name="<?php echo esc_attr( $facet_type ); ?>[]" value="<?php echo esc_attr( $item->value ); ?>"/> <?php echo esc_html( $item->title ); ?> (<?php echo esc_html( $item->count ); ?>)
-					</label>
-				<?php endforeach; ?>
-			</div>
-		</div>
+		<?php foreach ( $items as $item ) : ?>
+			<label>
+				<input type="checkbox" <?php checked( in_array( $item->value, $selected, true ) ); ?> name="<?php echo esc_attr( $facet_type ); ?>[]" value="<?php echo esc_attr( $item->value ); ?>"/> <?php echo esc_html( $item->title ); ?> (<?php echo esc_html( $item->count ); ?>)
+			</label>
+		<?php endforeach; ?>
 		<?php
 		wp_die();
 	}
@@ -105,36 +129,60 @@ class AJAX {
 	/**
 	 * Get sources (speakers or service types)
 	 *
-	 * @param string $type The type of source to get.
+	 * @param array $args The arguments for the query.
 	 * @return array
+	 * @throws \ChurchPlugins\Exception If the arguments are invalid.
 	 */
-	public function get_sources( $type ) {
-		$order_by = Settings::get_advanced( 'sort_speaker', 'count' );
+	public function get_sources( $args ) {
+		$args = wp_parse_args(
+			$args,
+			array(
+				'order_by'   => 'count',
+				'threshold'  => 3,
+				'facet_type' => '',
+				'post__in'   => array(),
+			)
+		);
 
-		if ( 'count' === $order_by ) {
-			$order_by = 'count DESC';
+		if ( ! in_array( $args['facet_type'], array( 'speaker', 'service_type' ) ) ) {
+			throw new \ChurchPlugins\Exception( 'Invalid facet type' );
+		}
+
+		$last_updated = get_option( 'cpl_item_last_updated' );
+		$hash         = md5( serialize( $args ) );
+
+		$cache = wp_cache_get( $hash . $last_updated );
+
+		if ( false !== $cache ) {
+			return $cache;
+		}
+
+		$order_by = ( 'count' === $args['order_by'] ) ? 'count DESC' : 'title ASC';
+
+		if ( ! empty( $args['post__in'] ) ) {
+			$args['post__in'] = 'sermon.origin_id IN (' . implode( ',', array_map( 'absint', $args['post__in'] ) ) . ')';
 		} else {
-			$order_by = 'title ASC';
+			$args['post__in'] = '1 = 1';
 		}
 
 		$sql = 'SELECT
-			speaker.id AS value,
-			speaker.title AS title,
+			source.id AS value,
+			source.title AS title,
 			COUNT(sermon.id) AS count
 		FROM 
-			%1$s AS speaker
+			%1$s AS source
 		LEFT JOIN 
-			%2$s AS meta ON meta.source_id = speaker.id
+			%2$s AS meta ON meta.source_id = source.id
 		INNER JOIN
 			%3$s AS type ON meta.source_type_id = type.id AND type.title = "%4$s"
 		LEFT JOIN 
-			%5$s AS sermon ON meta.item_id = sermon.id
+			%5$s AS sermon ON meta.item_id = sermon.id AND %6$s
 		GROUP BY
-			speaker.id
+			source.id
 		HAVING
-			count >= %6$d
+			count >= %7$d
 		ORDER BY
-			%7$s';
+			%8$s;';
 
 		global $wpdb;
 
@@ -144,9 +192,10 @@ class AJAX {
 			'wp_cp_source',
 			'wp_cp_source_meta',
 			'wp_cp_source_type',
-			$type,
+			$args['facet_type'],
 			'wp_cpl_item',
-			(int) Settings::get_advanced( 'filter_count_threshold', 3 ),
+			$args['post__in'],
+			$args['threshold'],
 			$order_by
 		);
 
@@ -163,16 +212,30 @@ class AJAX {
 	/**
 	 * Get terms
 	 *
-	 * @param string $taxonomy The taxonomy to get terms for.
+	 * @param array $args The arguments for getting terms.
 	 * @return array
 	 */
-	public function get_terms( $taxonomy ) {
-		$order_by = Settings::get_advanced( "sort_{$taxonomy}", 'count' );
+	public function get_terms( $args ) {
+		$args = wp_parse_args(
+			$args,
+			array(
+				'order_by'   => 'count',
+				'threshold'  => 3,
+				'facet_type' => '',
+				'post__in'   => array(),
+			)
+		);
 
-		if ( 'count' === $order_by ) {
-			$order_by = 'count DESC';
+		if ( ! in_array( $args['facet_type'], cp_library()->setup->taxonomies->get_taxonomies(), true ) ) {
+			throw new \ChurchPlugins\Exception( 'Invalid facet type' );
+		}
+
+		$order_by = ( 'count' === $args['order_by'] ) ? 'count DESC' : 'title ASC';
+
+		if ( ! empty( $args['post__in'] ) ) {
+			$args['post__in'] = 'p.ID IN (' . implode( ',', array_map( 'absint', $args['post__in'] ) ) . ')';
 		} else {
-			$order_by = 'title ASC';
+			$args['post__in'] = '1 = 1';
 		}
 
 		global $wpdb;
@@ -189,11 +252,11 @@ class AJAX {
 		LEFT JOIN
 			{$wpdb->term_relationships} AS tr ON tt.term_taxonomy_id = tr.term_taxonomy_id
 		LEFT JOIN
-			{$wpdb->posts} AS p ON tr.object_id = p.ID
+			{$wpdb->posts} AS p ON tr.object_id = p.ID AND %s
 		WHERE
-			tt.taxonomy = %s
+			tt.taxonomy = '%s'
 		AND
-			p.post_type = %s
+			p.post_type = '%s'
 		AND
 			p.post_status = 'publish'
 		GROUP BY
@@ -204,15 +267,45 @@ class AJAX {
 			{$order_by}
 		";
 
-		$query = $wpdb->prepare(
-			$query, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$taxonomy,
+		$query = sprintf(
+			$query,
+			$args['post__in'],
+			$args['facet_type'],
 			cp_library()->setup->post_types->item->post_type,
-			(int) Settings::get_advanced( 'filter_count_threshold', 3 )
+			$args['threshold']
 		);
 
 		$output = $wpdb->get_results( $query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 		return $output ? $output : array();
 	}
+
+
+
 }
+
+// SELECT 
+// 	t.name AS title,
+// 	t.term_id AS id,
+// 	t.slug AS value,
+// 	COUNT(p.ID) AS count
+// FROM
+// 	wp_terms AS t
+// LEFT JOIN
+// 	wp_term_taxonomy AS tt ON t.term_id = tt.term_id
+// LEFT JOIN
+// 	wp_term_relationships AS tr ON tt.term_taxonomy_id = tr.term_taxonomy_id
+// LEFT JOIN
+// 	wp_posts AS p ON tr.object_id = p.ID AND p.ID IN (27829,27831,27830,27832,27833)
+// WHERE
+// 	tt.taxonomy = cpl_scripture
+// AND
+// 	p.post_type = cpl_item
+// AND
+// 	p.post_status = 'publish'
+// GROUP BY
+// 	t.term_id
+// HAVING
+// 	count >= 1
+// ORDER BY
+// 	count DESC

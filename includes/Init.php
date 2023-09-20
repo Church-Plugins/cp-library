@@ -203,6 +203,8 @@ class Init {
 
 		$scripts = $this->enqueue->enqueue( 'app', 'main', array( 'js_dep' => array( 'jquery', 'cpl_facets' ) ) );
 
+		global $wp_query;
+
 		$cpl_vars = apply_filters(
 			'cpl_app_vars',
 			array(
@@ -221,6 +223,7 @@ class Init {
 					'playVideo' => Settings::get( 'label_play_video', __( 'Watch', 'cp-library' ) ),
 				),
 				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'query_vars' => $wp_query->query_vars,
 			)
 		);
 
