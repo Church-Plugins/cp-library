@@ -11,6 +11,27 @@ namespace CP_Library\Integrations;
  * Beaver Builder class
  */
 class BeaverBuilder {
+
+	/**
+	 * The class instance
+	 *
+	 * @var BeaverBuilder
+	 */
+	protected static $instance;
+
+	/**
+	 * Get the class instance
+	 *
+	 * @return BeaverBuilder
+	 */
+	public static function get_instance() {
+		if ( ! self::$instance instanceof BeaverBuilder ) {
+			self::$instance = new BeaverBuilder();
+		}
+
+		return self::$instance;
+	}
+
 	/**
 	 * Class constructor
 	 */

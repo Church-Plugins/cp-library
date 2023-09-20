@@ -161,7 +161,8 @@ module.exports = {
 			name : 'scripts',
 			entry: {
 				main: ['./assets/js/main.js'],
-				admin: ['./assets/js/admin.js']
+				admin: ['./assets/js/admin.js'],
+				divi: ['./divi-modules/includes/index.js']
 			},
 		}
 	],

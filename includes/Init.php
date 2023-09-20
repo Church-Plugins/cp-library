@@ -206,6 +206,7 @@ class Init {
 				'playAudio' => Settings::get( 'label_play_audio', __( 'Listen', 'cp-library' ) ),
 				'playVideo' => Settings::get( 'label_play_video', __( 'Watch', 'cp-library' ) ),
 			],
+			'ajax_url' => admin_url( 'admin-ajax.php' ),
 		] );
 
 		if ( isset( $scripts['js'], $scripts['js'][0], $scripts['js'][0]['handle'] ) ) {
@@ -287,8 +288,10 @@ class Init {
 		}
 
 		if ( defined( 'FL_BUILDER_VERSION' ) ) {
-			new Integrations\BeaverBuilder();
+			Integrations\BeaverBuilder::get_instance();
 		}
+
+		Integrations\Divi::get_instance();
 	}
 
 	/**

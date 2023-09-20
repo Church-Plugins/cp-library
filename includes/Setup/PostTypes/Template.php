@@ -52,6 +52,7 @@ class Template extends PostType {
 		add_filter( 'default_content', array( $this, 'populate_content' ), 10, 2 );
 		add_filter( "{$this->post_type}_show_in_menu", array( $this, 'show_in_submenu' ) );
 		add_filter( "{$this->post_type}_slug", array( $this, 'custom_slug' ) );
+		add_action( 'wp_ajax_cpl_render_template', array( $this, 'render_ajax_content' ) );
 		parent::add_actions();
 	}
 
@@ -211,5 +212,27 @@ class Template extends PostType {
 		}
 
 		return $templates;
+	}
+
+	/**
+	 * Render the template content for a given template id.
+	 *
+	 * @param int $template_id The template id.
+	 */
+	public function render_content( int $template_id = 0 ) {
+		if ( 0 === absint( $template_id ) ) {
+			return;
+		}
+
+		echo do_shortcode( "[{$this->shortcode_slug} id={$template_id}]" );
+	}
+
+	/**
+	 * Handles an ajax request
+	 */
+	public function render_ajax_content() {
+		$template_id = isset( $_GET['templateId'] ) ? absint( $_GET['templateId'] ) : 0;
+		$this->render_content( $template_id );
+		wp_die();
 	}
 }
