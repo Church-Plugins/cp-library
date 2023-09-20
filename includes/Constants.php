@@ -69,3 +69,12 @@ if( !defined( 'CP_LIBRARY_ASSET_MANIFEST' ) ) {
 	 	plugin_dir_path( dirname( __FILE__ ) ) . 'app/build/asset-manifest.json'
 	);
 }
+
+if ( ! defined( 'CP_LIBRARY_FL_MODULES_DIR' ) ) {
+	define( 'CP_LIBRARY_FL_MODULES_DIR', CP_LIBRARY_PLUGIN_DIR . 'fl-modules/' );
+}
+
+if ( ! defined( 'CP_LIBRARY_FL_MODULES_URL' ) ) {
+	define( 'CP_LIBRARY_FL_MODULES_URL', CP_LIBRARY_PLUGIN_URL . 'fl-modules/' );
+}
+

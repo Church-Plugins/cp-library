@@ -285,6 +285,10 @@ class Init {
 		if ( defined( 'TRIBE_EVENTS_FILE' ) ) {
 			Integrations\EventsCalendar::get_instance();
 		}
+
+		if ( defined( 'FL_BUILDER_VERSION' ) ) {
+			new Integrations\BeaverBuilder();
+		}
 	}
 
 	/**
