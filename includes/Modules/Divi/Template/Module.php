@@ -5,10 +5,12 @@
  * @package CP_Library
  */
 
+namespace CP_Library\Modules\Divi\Template;
+
 /**
  * CP Library Template module
  */
-class CP_Library_Template_Divi_Module extends ET_Builder_Module {
+class Module extends \ET_Builder_Module {
 
 	/**
 	 * Module properties initialization
@@ -55,5 +57,3 @@ class CP_Library_Template_Divi_Module extends ET_Builder_Module {
 	}
 
 }
-
-new CP_Library_Template_Divi_Module();

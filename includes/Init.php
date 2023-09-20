@@ -31,6 +31,13 @@ class Init {
 	 */
 	public $admin;
 
+	/**
+	 * CP Library modules for page builders
+	 *
+	 * @var Modules\Init
+	 */
+	public $modules;
+
 	public $enqueue;
 
 	/**
@@ -287,11 +294,7 @@ class Init {
 			Integrations\EventsCalendar::get_instance();
 		}
 
-		if ( defined( 'FL_BUILDER_VERSION' ) ) {
-			Integrations\BeaverBuilder::get_instance();
-		}
-
-		Integrations\Divi::get_instance();
+		$this->modules = Modules\Init::get_instance();
 	}
 
 	/**

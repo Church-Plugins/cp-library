@@ -1,32 +1,32 @@
-<?php // phpcs:disable WordPress.Files.FileName.InvalidClassFileName
+<?php // phpcs:ignore
 /**
  * Register custom modules for Beaver Builder
  *
  * @package CP_Library
  */
 
-namespace CP_Library\Integrations;
+namespace CP_Library\Modules\BeaverBuilder;
 
 /**
  * Beaver Builder class
  */
-class BeaverBuilder {
+class Init {
 
 	/**
 	 * The class instance
 	 *
-	 * @var BeaverBuilder
+	 * @var Init
 	 */
 	protected static $instance;
 
 	/**
 	 * Get the class instance
 	 *
-	 * @return BeaverBuilder
+	 * @return Init
 	 */
 	public static function get_instance() {
-		if ( ! self::$instance instanceof BeaverBuilder ) {
-			self::$instance = new BeaverBuilder();
+		if ( ! self::$instance instanceof Init ) {
+			self::$instance = new Init();
 		}
 
 		return self::$instance;
@@ -36,6 +36,15 @@ class BeaverBuilder {
 	 * Class constructor
 	 */
 	public function __construct() {
+		if ( defined( 'FL_BUILDER_VERSION' ) ) {
+			$this->actions();
+		}
+	}
+
+	/**
+	 * Class actions
+	 */
+	public function actions() {
 		add_action( 'init', array( $this, 'modules' ) );
 	}
 
@@ -45,8 +54,6 @@ class BeaverBuilder {
 	 * @return void
 	 */
 	public function modules() {
-		if ( class_exists( 'FLBuilder' ) ) {
-			require_once CP_LIBRARY_FL_MODULES_DIR . 'cpl-template/cpl-template.php';
-		}
+		require_once dirname( __FILE__ ) . '/Template/Template.php';
 	}
 }

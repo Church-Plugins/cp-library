@@ -5,10 +5,12 @@
  * @package CP_Library
  */
 
+namespace CP_Library\Modules\BeaverBuilder;
+
 /**
  * Template module class
  */
-class CP_Library_Template extends FLBuilderModule {
+class Template extends \FLBuilderModule {
 	/**
 	 * Class constructor
 	 */
@@ -19,8 +21,8 @@ class CP_Library_Template extends FLBuilderModule {
 				'description'     => __( 'Displays a Template created with the CP Library template builder.', 'cp-library' ),
 				'group'           => __( 'CP Library', 'cp-library' ),
 				'category'        => __( 'Content', 'cp-library' ),
-				'dir'             => CP_LIBRARY_FL_MODULES_DIR . 'cpl-template/',
-				'url'             => CP_LIBRARY_FL_MODULES_URL . 'cpl-template/',
+				'dir'             => CP_LIBRARY_FL_MODULES_DIR . 'Template/',
+				'url'             => CP_LIBRARY_FL_MODULES_URL . 'Template/',
 				'icon'            => 'layout.svg',
 				'editor_export'   => true,
 				'enabled'         => true,
@@ -33,8 +35,8 @@ class CP_Library_Template extends FLBuilderModule {
 /**
  * Register the module and its form settings.
  */
-FLBuilder::register_module(
-	'CP_Library_Template',
+\FLBuilder::register_module(
+	Template::class,
 	array(
 		'general' => array(
 			'title'    => __( 'General', 'cp-library' ),

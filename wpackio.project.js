@@ -161,9 +161,47 @@ module.exports = {
 			name : 'scripts',
 			entry: {
 				main: ['./assets/js/main.js'],
-				admin: ['./assets/js/admin.js'],
-				divi: ['./divi-modules/includes/index.js']
+				admin: ['./assets/js/admin.js']
 			},
+		},
+		{
+			name: 'modules',
+			entry: {
+				divi: ['./includes/Modules/Divi/index.js']
+			},
+			// apply scss loader
+			webpackConfig: (config, merge, appDir, isDev) => {
+				const customRules = {
+					module: {
+						rules: [
+							{
+								test: /\.scss/,
+								issuer: issuerForStyleFiles,
+								use: [
+									{
+										loader: 'style-loader',
+									},
+									{
+										loader: 'css-loader',
+										options: {
+											sourceMap: isDev,
+										},
+									},
+									{
+										loader: 'sass-loader',
+										options: {
+											sourceMap: isDev,
+										},
+									},
+								],
+							}
+						]
+					}
+				}
+
+				return merge(config, customRules);
+			}
+
 		}
 	],
 

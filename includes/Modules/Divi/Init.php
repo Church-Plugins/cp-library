@@ -1,39 +1,39 @@
-<?php // phpcs:disable WordPress.Files.FileName.InvalidClassFileName
+<?php // phpcs:ignore
 /**
  * Register custom modules for Beaver Builder
  *
  * @package CP_Library
  */
 
-namespace CP_Library\Integrations;
+namespace CP_Library\Modules\Divi;
 
 /**
- * Beaver Builder class
+ * Divi Init class
  */
-class Divi {
+class Init {
 
 	/**
 	 * The class instance
 	 *
-	 * @var Divi
+	 * @var Init
 	 */
 	protected static $instance;
 
 	/**
 	 * The Divi extension
 	 *
-	 * @var \CP_Library_Divi_Extension
+	 * @var Extension
 	 */
 	public $extension;
 
 	/**
 	 * Get the class instance
 	 *
-	 * @return Divi
+	 * @return Init
 	 */
 	public static function get_instance() {
-		if ( ! self::$instance instanceof Divi ) {
-			self::$instance = new Divi();
+		if ( ! self::$instance instanceof Init ) {
+			self::$instance = new Init();
 		}
 
 		return self::$instance;
@@ -43,6 +43,13 @@ class Divi {
 	 * Class constructor
 	 */
 	protected function __construct() {
+		$this->actions();
+	}
+
+	/**
+	 * Class actions
+	 */
+	public function actions() {
 		add_action( 'divi_extensions_init', array( $this, 'init_extension' ) );
 	}
 
@@ -52,7 +59,6 @@ class Divi {
 	 * @return void
 	 */
 	public function init_extension() {
-		require_once CP_LIBRARY_PLUGIN_DIR . 'divi-modules/includes/DiviExtension.php';
-		$this->extension = new \CP_Library_Divi_Extension();
+		$this->extension = new Extension();
 	}
 }

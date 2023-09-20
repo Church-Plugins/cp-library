@@ -5,10 +5,12 @@
  * @package CP_Library
  */
 
+namespace CP_Library\Modules\Divi;
+
 /**
  * CP Library Divi Extension
  */
-class CP_Library_Divi_Extension extends DiviExtension {
+class Extension extends \DiviExtension {
 
 	/**
 	 * The gettext domain for the extension's translations.
@@ -20,7 +22,7 @@ class CP_Library_Divi_Extension extends DiviExtension {
 	public $gettext_domain = 'cp-library';
 
 	/**
-	 * The extension's WP Plugin name.
+	 * The extension's Plugin name.
 	 *
 	 * @since 1.0.0
 	 *
@@ -54,7 +56,7 @@ class CP_Library_Divi_Extension extends DiviExtension {
 	 * Initialization
 	 */
 	protected function _initialize() {
-		DiviExtensions::add( $this );
+		\DiviExtensions::add( $this );
 
 		$this->_set_debug_mode();
 		$this->_set_bundle_dependencies();
@@ -74,13 +76,13 @@ class CP_Library_Divi_Extension extends DiviExtension {
 	 * Initialize modules
 	 */
 	public function modules() {
-		require_once CP_LIBRARY_PLUGIN_DIR . 'divi-modules/includes/modules/template/Template.php';
+		new Template\Module();
 	}
 
 	/**
 	 * Register module assets
 	 */
 	public function enqueue_assets() {
-		cp_library()->enqueue->enqueue( 'scripts', 'divi', array( 'js_dep' => array( 'jquery' ) ) );
+		cp_library()->enqueue->enqueue( 'modules', 'divi', array( 'js_dep' => array( 'jquery' ) ) );
 	}
 }

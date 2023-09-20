@@ -71,10 +71,10 @@ if( !defined( 'CP_LIBRARY_ASSET_MANIFEST' ) ) {
 }
 
 if ( ! defined( 'CP_LIBRARY_FL_MODULES_DIR' ) ) {
-	define( 'CP_LIBRARY_FL_MODULES_DIR', CP_LIBRARY_PLUGIN_DIR . 'fl-modules/' );
+	define( 'CP_LIBRARY_FL_MODULES_DIR', CP_LIBRARY_PLUGIN_DIR . 'includes/Modules/BeaverBuilder/' );
 }
 
 if ( ! defined( 'CP_LIBRARY_FL_MODULES_URL' ) ) {
-	define( 'CP_LIBRARY_FL_MODULES_URL', CP_LIBRARY_PLUGIN_URL . 'fl-modules/' );
+	define( 'CP_LIBRARY_FL_MODULES_URL', CP_LIBRARY_PLUGIN_URL . 'includes/Modules/BeaverBuilder/' );
 }
 
