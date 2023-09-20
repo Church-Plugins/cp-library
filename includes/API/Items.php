@@ -471,6 +471,7 @@ class Items extends WP_REST_Controller {
 			'description' => __( 'Whether to hide upcoming items', 'cp-library' ),
 			'default' => false
 		);
+		return $params;
 	}
 
 	public function rest_query_args( $args, $request ) {
