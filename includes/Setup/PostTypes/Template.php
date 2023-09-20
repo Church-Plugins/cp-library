@@ -17,7 +17,7 @@ class Template extends PostType {
 
 	/**
 	 * The shortcode name
-	 * 
+	 *
 	 * @var string
 	 */
 	public $shortcode_slug;

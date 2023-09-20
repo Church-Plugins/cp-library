@@ -57,7 +57,7 @@ abstract class Block {
   /**
    * Class constructor
    */
-  protected function __construct() {
+  public function __construct() {
     if( !$this->name ) {
       throw new Exception( "Block must have a name" );
     }

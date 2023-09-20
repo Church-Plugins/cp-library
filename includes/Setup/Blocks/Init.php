@@ -43,18 +43,19 @@ class Init {
 	 * @return void
 	 */
 	protected function includes() {
-		new Query();
-		new ItemTitle();
-		new SermonTemplate();
-		new ItemGraphic();
-		new SermonSpeaker();
-		new Pagination();
-		new SermonActions();
-		new SermonSeries();
-		new SermonTopics();
-		new SermonScripture();
 		new ItemDate();
 		new ItemDescription();
+		new ItemGraphic();
+		new ItemTitle();
+		new Pagination();
+		new Query();
+		new SermonActions();
+		new SermonScripture();
+		new SermonSeries();
+		new SermonSpeaker();
+		new SermonTemplate();
+		new SermonTopics();
+		new ShortcodeTemplate();
 	}
 
 	/**
