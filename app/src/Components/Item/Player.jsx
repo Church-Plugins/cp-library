@@ -54,7 +54,13 @@ export default function Player({
 	const playingClass   = isPlaying ? ' is_playing' : '';
 	const hasVariations = Boolean(item.variations?.length)
 	const [currentItem, setCurrentItem] = useState(hasVariations ? item.variations[0] : item)
-	const [currentMedia, setCurrentMedia] = useState('');
+	const [currentMedia, setCurrentMedia] = useState(() => {
+		const media = currentItem.video?.value || currentItem.audio || null;
+		if( isURL( media ) ) {
+			return ''
+		}
+		return media
+	});
 
 
 	const onMouseMove = (e) => {
