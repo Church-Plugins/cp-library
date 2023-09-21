@@ -61,7 +61,7 @@ export default function Player({
 		}
 		return media
 	});
-
+	const isSoundcloud = isURL( currentMedia ) && new URL(currentMedia).origin === 'https://soundcloud.com';
 
 	const onMouseMove = (e) => {
 		if (showFSControls || ! mode) return;
@@ -166,14 +166,10 @@ export default function Player({
     }
   }, [])
 
-  // If item has both video and audio, prefer video.
   useEffect(() => {
-    if (!currentItem) return;
-
-    if ( currentItem.thumb ) {
-    	setDisplayBG( { background: "url(" + currentItem.thumb + ")", backgroundSize: "cover", backgroundPosition: "center center" } );
+    if ( currentItem?.thumb ) {
+    	setDisplayBG( { background: "url(" + item.thumb + ")", backgroundSize: "cover", backgroundPosition: "center center" } );
     }
-
   }, [currentItem]);
 
 	let marker = cplMarker( item, mode, duration );
@@ -349,7 +345,8 @@ export default function Player({
 									left={0}
 									dangerouslySetInnerHTML={{ __html: currentMedia.replace(/\\\"/g, '"') }} />
 							}
-							{mode !== 'video' && !currentMedia && (
+							{/* Display thumbnail when playing audio except for soundcloud links */}
+							{mode !== 'video' && (!currentMedia || (isURL( currentMedia ) && !isSoundcloud)) && (
 									<Box
 										className="itemDetail__audio"
 										sx={displayBg}
