@@ -30,6 +30,11 @@
 				display: block;
 			}
 		}
+
+		&.disabled {
+			opacity: 0.5;
+			pointer-events: none;
+		}
 	}
 
 	&--dropdown-button {

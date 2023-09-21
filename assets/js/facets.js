@@ -32,7 +32,7 @@ jQuery($ => {
 				}
 				else {
 					console.log("Hiding element", $(element).parent())
-					$(element).parent().remove()
+					$(element).parent().addClass('disabled');
 				}
 			},
 			error: function(error) {
