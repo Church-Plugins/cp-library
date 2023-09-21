@@ -66,7 +66,7 @@ class Init {
 	 * @return void
 	 */
 	public function init() {
-		// $this->elementor      = Elementor\Init::get_instance();
+		$this->elementor      = Elementor\Init::get_instance();
 		$this->beaver_builder = BeaverBuilder\Init::get_instance();
 		$this->divi           = Divi\Init::get_instance();
 	}

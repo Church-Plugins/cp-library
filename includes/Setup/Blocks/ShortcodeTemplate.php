@@ -40,6 +40,6 @@ class ShortcodeTemplate extends Block {
 			return '';
 		}
 
-		return sprintf( '[%s id=%d]', cp_library()->setup->post_types->template->shortcode_slug, absint( $attributes['templateId'] ) );
+		return \CP_Library\Setup\PostTypes\Template::render_content( $attributes['templateId'] );
 	}
 }

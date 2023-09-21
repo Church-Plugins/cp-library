@@ -5,12 +5,12 @@
  * @package CP_Library
  */
 
-namespace CP_Library\Modules\BeaverBuilder;
+namespace CP_Library\Modules\BeaverBuilder\Template;
 
 /**
  * Template module class
  */
-class Template extends \FLBuilderModule {
+class Module extends \FLBuilderModule {
 	/**
 	 * Class constructor
 	 */
@@ -36,7 +36,7 @@ class Template extends \FLBuilderModule {
  * Register the module and its form settings.
  */
 \FLBuilder::register_module(
-	Template::class,
+	Module::class,
 	array(
 		'general' => array(
 			'title'    => __( 'General', 'cp-library' ),

@@ -54,6 +54,6 @@ class Init {
 	 * @return void
 	 */
 	public function modules() {
-		require_once dirname( __FILE__ ) . '/Template/Template.php';
+		require_once dirname( __FILE__ ) . '/Template/Module.php';
 	}
 }

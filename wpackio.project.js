@@ -167,7 +167,7 @@ module.exports = {
 		{
 			name: 'modules',
 			entry: {
-				divi: ['./includes/Modules/Divi/index.js']
+				divi: ['./includes/Modules/Divi/client/index.js']
 			},
 			// apply scss loader
 			webpackConfig: (config, merge, appDir, isDev) => {

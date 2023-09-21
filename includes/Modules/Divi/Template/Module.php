@@ -37,7 +37,11 @@ class Module extends \ET_Builder_Module {
 	 * @param string|null $render_slug The module slug.
 	 */
 	public function render( $attrs, $content = null, $render_slug = null ) {
-		return 'Hello, divi midule';
+		$template_id = absint( $attrs['template_id'] ?? 0 );
+		if ( 0 === $template_id ) {
+			return '';
+		}
+		return \CP_Library\Setup\PostTypes\Template::render_content( $template_id );
 	}
 
 	/**
@@ -47,7 +51,7 @@ class Module extends \ET_Builder_Module {
 	 */
 	public function get_fields() {
 		return array(
-			'templateId' => array(
+			'template_id' => array(
 				'label'   => esc_html__( 'Template', 'cp-library' ),
 				'type'    => 'select',
 				'options' => cp_library()->setup->post_types->template->get_shortcode_templates(),

@@ -46,6 +46,7 @@ class Init {
 	 */
 	public function actions() {
 		add_action( 'elementor/widgets/register', array( $this, 'register_widgets' ) );
+		add_action( 'elementor/elements/categories_registered', array( $this, 'register_widget_categories' ) );
 	}
 
 	/**
@@ -55,5 +56,20 @@ class Init {
 	 */
 	public function register_widgets( $widgets_manager ) {
 		$widgets_manager->register_widget_type( new Template\Module() );
+	}
+
+	/**
+	 * Register Elementor widget categories
+	 *
+	 * @param \Elementor\Elements_Manager $elements_manager Elementor elements manager.
+	 */
+	public function register_widget_categories( $elements_manager ) {
+		$elements_manager->add_category(
+			'cp-library',
+			array(
+				'title' => __( 'CP Library', 'cp-library' ),
+				'icon'  => 'fa fa-plug',
+			)
+		);
 	}
 }

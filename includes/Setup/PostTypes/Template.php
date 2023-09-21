@@ -23,7 +23,7 @@ class Template extends PostType {
 	 *
 	 * @var string
 	 */
-	public $shortcode_slug;
+	public static $shortcode_slug;
 
 	/**
 	 * Child class constructor
@@ -34,7 +34,7 @@ class Template extends PostType {
 		$this->single_label = apply_filters( "cploc_single_{$this->post_type}_label", 'Template' );
 		$this->plural_label = apply_filters( "cploc_plural_{$this->post_type}_label", 'Templates' );
 
-		$this->shortcode_slug = CP_LIBRARY_UPREFIX . '_template';
+		self::$shortcode_slug = CP_LIBRARY_UPREFIX . '_template';
 
 		parent::__construct();
 
@@ -47,7 +47,7 @@ class Template extends PostType {
 	 */
 	public function add_actions() {
 		add_action( 'add_meta_boxes', array( $this, 'meta_boxes' ) );
-		add_shortcode( $this->shortcode_slug, array( $this, 'display' ) );
+		add_shortcode( self::$shortcode_slug, array( $this, 'display' ) );
 		add_filter( 'allowed_block_types_all', array( $this, 'allowed_block_types' ), 10, 2 );
 		add_filter( 'default_content', array( $this, 'populate_content' ), 10, 2 );
 		add_filter( "{$this->post_type}_show_in_menu", array( $this, 'show_in_submenu' ) );
@@ -74,7 +74,8 @@ class Template extends PostType {
 	 * @param \WP_Post $post The post object.
 	 */
 	public function shortcode_meta_box( $post ) {
-		$shortcode = "[{$this->shortcode_slug} id={$post->ID}]";
+		$slug      = self::$shortcode_slug;
+		$shortcode = "[{$slug} id={$post->ID}]";
 		?>
 		<input type='text' disabled value="<?php echo esc_attr( $shortcode ); ?>">
 		<button class="button" onclick="navigator.clipboard.writeText('<?php echo esc_attr( $shortcode ); ?>')"><?php echo esc_html_e( 'Copy shortcode', 'cp-library' ); ?></button>
@@ -95,22 +96,10 @@ class Template extends PostType {
 				'id' => 0,
 			),
 			$atts,
-			$this->shortcode_slug
+			$shortcode_tag
 		);
 
-		$atts['id'] = absint( $atts['id'] );
-
-		if ( ! $atts['id'] ) {
-			return esc_html__( 'Invalid template id', 'cp-library' );
-		}
-
-		$post = get_post( $atts['id'] );
-
-		if ( ! $post ) {
-			return esc_html__( 'Template not found', 'cp-library' );
-		}
-
-		return apply_filters( 'the_content', $post->post_content );
+		return self::render_content( $atts['id'] );
 	}
 
 	/**
@@ -143,6 +132,9 @@ class Template extends PostType {
 					'cp-library/sermon-season',
 					'cp-library/sermon-topics',
 					'cp-library/query',
+					'core/post-title',
+					'core/title',
+					'core/paragraph',
 				)
 			);
 		}
@@ -217,14 +209,32 @@ class Template extends PostType {
 	/**
 	 * Render the template content for a given template id.
 	 *
-	 * @param int $template_id The template id.
+	 * @param mixed $template_id The template id.
 	 */
-	public function render_content( int $template_id = 0 ) {
-		if ( 0 === absint( $template_id ) ) {
-			return;
+	public static function render_content( $template_id = 0 ) {
+		$template_id = absint( $template_id );
+
+		if ( 0 === $template_id ) {
+			return esc_html__( 'Invalid template id', 'cp-library' );
 		}
 
-		echo do_shortcode( "[{$this->shortcode_slug} id={$template_id}]" );
+		$template = get_post( $template_id );
+
+		if ( ! $template ) {
+			return esc_html__( 'Template not found', 'cp-library' );
+		}
+
+		$content = $template->post_content;
+
+		$content = shortcode_unautop( $content );
+		$content = do_shortcode( $content );
+		$content = do_blocks( $content );
+		$content = wptexturize( $content );
+		$content = convert_smilies( $content );
+		$content = wp_filter_content_tags( $content, 'template' );
+		$content = str_replace( ']]>', ']]&gt;', $content );
+
+		return '<div class="wp-site-blocks">' . $content . '</div>';
 	}
 
 	/**
@@ -232,7 +242,7 @@ class Template extends PostType {
 	 */
 	public function render_ajax_content() {
 		$template_id = isset( $_GET['templateId'] ) ? absint( $_GET['templateId'] ) : 0;
-		$this->render_content( $template_id );
+		self::render_content( $template_id );
 		wp_die();
 	}
 }

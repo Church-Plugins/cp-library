@@ -17,7 +17,7 @@ class Template extends Component {
 			url: cplVars.ajax_url,
 			data: {
 				action: 'cpl_render_template',
-				templateId: this.props.templateId
+				templateId: this.props.template_id
 			},
 			success: (response) => {
 				this.setState({
@@ -29,7 +29,7 @@ class Template extends Component {
 	}
 
 	componentDidUpdate(prevProps) {
-		if (prevProps.templateId !== this.props.templateId) {
+		if (prevProps.template_id !== this.props.template_id) {
 			this.setState({
 				templateLoading: true,
 				templateHTML: ''
@@ -42,7 +42,7 @@ class Template extends Component {
 	render() {
 		console.log(this.state)
 
-		if(this.props.templateId == 0) {
+		if(this.props.template_id == 0) {
 			return (
 				<div className='cpl-divi-template-module'>No Template Selected</div>
 			);
