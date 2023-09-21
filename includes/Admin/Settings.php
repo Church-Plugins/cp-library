@@ -620,6 +620,17 @@ class Settings {
 		$taxonomies = cp_library()->setup->taxonomies->get_objects();
 
 		foreach ( $taxonomies as $taxonomy ) {
+			$option_key = "disable_filter_{$taxonomy->taxonomy}";
+
+			$advanced_options->add_field(
+				array(
+					'name'       => $taxonomy->plural_label,
+					'id'         => $option_key,
+					'type'       => 'checkbox',
+					'desc'       => __( 'Disable', 'cp-library' )
+				)
+			);
+
 			$advanced_options->add_field(
 				array(
 					/* translators: %s is the single label for the taxonomy */
@@ -631,16 +642,30 @@ class Settings {
 						'count' => sprintf( __( 'By %s Count', 'cp-library' ), cp_library()->setup->post_types->item->single_label ),
 						'name'  => __( 'Alphabetically', 'cp-library' ),
 					),
+					'attributes' => array(
+						'data-conditional-id'     => $option_key,
+						'data-conditional-value'  => 'on',
+						'data-conditional-invert' => true,
+					),
 				)
 			);
 		}
 
 		$sources = array(
 			'speaker'      => cp_library()->setup->post_types->speaker,
-			'service_type' => cp_library()->setup->post_types->service_type
+			'service_type' => cp_library()->setup->post_types->service_type,
 		);
 
 		foreach ( $sources as $key => $source ) {
+			$option_key = "disable_filter_{$key}";
+			$advanced_options->add_field(
+				array(
+					'name' => $source->plural_label,
+					'id'   => $option_key,
+					'type' => 'checkbox',
+					'desc' => __( 'Disable', 'cp-library' ),
+				)
+			);
 			$advanced_options->add_field(
 				array(
 					/* translators: %s is the single label for the source post type */
@@ -651,6 +676,11 @@ class Settings {
 						/* translators: %s is the plural label for the item post type */
 						'count' => sprintf( __( 'By %s Count', 'cp-library' ), cp_library()->setup->post_types->item->single_label ),
 						'name'  => __( 'Alphabetically', 'cp-library' ),
+					),
+					'attributes' => array(
+						'data-conditional-id'     => $option_key,
+						'data-conditional-value'  => 'on',
+						'data-conditional-invert' => true,
 					),
 				)
 			);

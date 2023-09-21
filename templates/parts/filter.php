@@ -25,20 +25,26 @@ $display = apply_filters( 'cpl_filters_display', $display );
 		</div>
 
 		<?php foreach ( $taxonomies as $facet ) : ?>
+			<?php if ( Settings::get_advanced( "disable_filter_{$facet->taxonomy}", 'off' ) === 'on' ) : ?>
+				<?php continue; ?>
+			<?php endif; ?>
+
 			<div class="cpl-filter--<?php echo esc_attr( $facet->taxonomy ); ?> cpl-filter--has-dropdown" <?php echo $display; // phpcs:ignore ?>>
 				<a href="#" class="cpl-filter--dropdown-button cpl-button is-light"><?php echo esc_html( $facet->plural_label ); ?></a>
 				<div class="cpl-filter--dropdown cpl-ajax-facet" data-facet-type="<?php echo esc_attr( $facet->taxonomy ); ?>"></div>
 			</div>
 		<?php endforeach; ?>
 
-		<?php if ( $is_item_archive && cp_library()->setup->post_types->speaker_enabled() ) : ?>
+		<?php
+		if ( $is_item_archive && cp_library()->setup->post_types->speaker_enabled() && Settings::get_advanced( 'disable_filter_speaker', 'off' ) === 'off' ) :
+			?>
 			<div class="cpl-filter--speaker cpl-filter--has-dropdown" <?php echo $display; // phpcs:ignore ?>>
 				<a href="#" class="cpl-filter--dropdown-button cpl-button is-light"><?php echo esc_html( cp_library()->setup->post_types->speaker->plural_label ); ?></a>
 				<div class="cpl-filter--dropdown cpl-ajax-facet" data-facet-type="speaker"></div>
 			</div>
 		<?php endif; ?>
 
-		<?php if ( $is_item_archive && cp_library()->setup->post_types->service_type_enabled() ) : ?>
+		<?php if ( $is_item_archive && cp_library()->setup->post_types->service_type_enabled() && Settings::get_advanced( 'disable_filter_service_type', 'off' ) === 'off' ) : ?>
 			<div class="cpl-filter--service_type cpl-filter--has-dropdown" <?php echo $display; // phpcs:ignore ?>>
 				<a href="#" class="cpl-filter--dropdown-button cpl-button is-light"><?php echo esc_html( cp_library()->setup->post_types->service_type->plural_label ); ?></a>
 				<div class="cpl-filter--dropdown cpl-ajax-facet" data-facet-type="service_type"></div>
