@@ -25,7 +25,7 @@ npm run build
 ### Change Log
 
 #### 1.2.2
-* Fix but that was preventing the thumbnail from showing in the media player
+* Fix bug that was preventing the thumbnail from showing in the media player
 * Fix error handling on single series template
 
 #### 1.2.1
