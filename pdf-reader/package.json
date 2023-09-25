@@ -1,0 +1,14 @@
+{
+  "name": "pdf-reader",
+  "version": "1.0.0",
+  "description": "Convert PDF files to HTML",
+  "main": "bin/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mission Lab",
+  "license": "ISC",
+  "dependencies": {
+    "pdfjs-dist": "^3.11.174"
+  }
+}
