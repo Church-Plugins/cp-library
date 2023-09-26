@@ -138,13 +138,14 @@ class ImportSermons extends BatchImport {
 
 			try {
 				$this->row = $row;
+				$date = $this->get_field_value( 'date' );
 
 				$post_id      = false;
 				$location_id  = false;
 				$title        = trim( $this->get_field_value( 'title' ) );
 				$desc         = trim( $this->get_field_value( 'description' ) );
 				$series       = explode( ';', $this->get_field_value( 'series' ) )[0];
-				$date         = strtotime( $this->get_field_value( 'date' ) );
+				$date         = is_numeric( $date ) ? $date : strtotime( $this->get_field_value( 'date' ) );
 				$location     = trim( strtolower( $this->get_field_value( 'location' ) ) );
 				$service_type = array_filter( array_map( 'trim', explode( ',', $this->get_field_value( 'service_type' ) ) ) );
 				$speakers     = array_filter( array_map( 'trim', explode( ',', $this->get_field_value( 'speaker' ) ) ) );
@@ -187,6 +188,14 @@ class ImportSermons extends BatchImport {
 				}
 
 				$cp_hash = md5( $title . $date . $location_id );
+
+				// update existing post if it exists
+				$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT post_id from $wpdb->postmeta WHERE `meta_key` = '_cp_import_id' AND `meta_value` = %s", $cp_hash ) );
+
+				if( empty( $post_id ) ) {
+					$post_type = cp_library()->setup->post_types->item->post_type;
+					$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s AND post_type='%s'", $title, $post_type ));
+				}
 
 				$args = [
 					'post_type'    => Item::get_prop( 'post_type' ),

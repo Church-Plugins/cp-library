@@ -17,9 +17,9 @@ try {
 	<link><?php the_permalink_rss(); ?></link>
 
 	<?php if ( $item->get_podcast_speakers() ) : ?>
-		<dc:creator><?php echo esc_html( $item->get_podcast_speakers() ); ?></dc:creator>
-		<itunes:author><?php echo esc_html( $item->get_podcast_speakers() ); ?></itunes:author>
-		<googleplay:author><?php echo esc_html( $item->get_podcast_speakers() ); ?></googleplay:author>
+		<dc:creator><?php echo $item->get_podcast_speakers(); ?></dc:creator>
+		<itunes:author><?php echo $item->get_podcast_speakers(); ?></itunes:author>
+		<googleplay:author><?php echo $item->get_podcast_speakers(); ?></googleplay:author>
 	<?php endif; ?>
 
 	<?php if ( $item->get_podcast_subtitle() ) : ?>

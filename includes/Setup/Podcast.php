@@ -34,8 +34,32 @@ class Podcast
 	 */
 	protected function __construct() {
 		add_action( 'init', [ $this, 'add_feed' ] );
-		add_action( 'rss2_head', [ $this, 'rss_feed_head' ] );
-		add_action( 'rss2_item', [ $this, 'rss_feed_item' ] );
+
+		add_filter( 'cpl_podcast_content', 'convert_chars' );
+		add_filter( 'cpl_podcast_content', 'ent2ncr' );
+		add_filter( 'cpl_podcast_content', [ $this, 'convert_amp' ] );
+
+		add_filter( 'cpl_podcast_text', 'strip_tags' );
+		add_filter( 'cpl_podcast_text', 'ent2ncr' );
+		add_filter( 'cpl_podcast_text', 'esc_html' );
+		add_filter( 'cpl_podcast_text', [ $this, 'convert_amp' ] );
+	}
+
+	/**
+	 * Convert &amp; to and
+	 *
+	 * @since  1.2.1
+	 *
+	 * @param $content
+	 *
+	 * @return array|string|string[]
+	 * @author Tanner Moushey, 9/12/23
+	 */
+	public function convert_amp( $content ) {
+		$content = str_replace( '&amp;', 'and', $content );
+		$content = str_replace( '&#38;', 'and', $content );
+
+		return $content;
 	}
 
 	/**
@@ -65,6 +89,7 @@ class Podcast
 	 * Query params for podcast feed
 	 *
 	 * @since  1.0.4
+	 * @updated 1.2.0 - Added support for taxonomies
 	 *
 	 * @param $query \WP_Query
 	 *
@@ -75,7 +100,34 @@ class Podcast
 			return;
 		}
 
-		$query->set( 'post_type', cp_library()->setup->post_types->item->post_type );
+		$is_tax = false;
+
+		foreach( cp_library()->setup->taxonomies->get_taxonomies() as $taxonomy ) {
+			if ( $query->get( $taxonomy ) ) {
+				$is_tax = true;
+				$query->set( 'post_type', cp_library()->setup->post_types->item->post_type );
+			}
+		}
+
+		if( $query->get( 'post_type' ) !== cp_library()->setup->post_types->item->post_type && ! $is_tax ) {
+			return;
+		}
+
+		if ( 'feed' == $query->get( cp_library()->setup->post_types->item->post_type ) ) {
+			unset( $query->query_vars[ cp_library()->setup->post_types->item->post_type ] );
+			unset( $query->query[ cp_library()->setup->post_types->item->post_type ] );
+		}
+
+		if ( 'feed' == $query->get( 'name' ) ) {
+			unset( $query->query_vars[ 'name' ] );
+			unset( $query->query[ 'name' ] );
+		}
+
+		$query->set( 'post_status', 'publish' );
+		$query->is_comment_feed = false;
+		$query->is_single       = false;
+		$query->is_singular     = false;
+		$query->is_archive      = true;
 
 		// Only sermons having an enclosure.
 		$query->set( 'meta_query', array(
@@ -112,40 +164,33 @@ class Podcast
 	 * @author Tanner Moushey, 4/10/23
 	 */
 	public function get_feed_name() {
-		return apply_filters( 'cpl_podcast_feed_name', 'sermon-podcast' );
+		return apply_filters( 'cpl_podcast_feed_name', 'podcast' );
 	}
 
 	/**
 	 * Return the feed url for the podcast
 	 *
 	 * @since  1.0.4
+	 * @updated 1.2.0 to retrieve feed url from post type archive feed link
 	 *
 	 * @return mixed|void
 	 * @author Tanner Moushey, 4/10/23
 	 */
 	public function get_feed_url() {
-		return apply_filters( 'cpl_podcast_feed_url', get_feed_link( $this->get_feed_name() ) );
+		$feed_link = get_post_type_archive_feed_link( cp_library()->setup->post_types->item->post_type, $this->get_feed_name() );
+		return apply_filters( 'cpl_podcast_feed_url', $feed_link );
 	}
 
 	/**
-	 * Adds custom podcast meta to head
+	 * Return the feed uri for the podcast
+	 *
+	 * @since  1.2.0
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 9/5/23
 	 */
-	public function rss_feed_head() {
-		if( get_post_type() !== cp_library()->setup->post_types->item->post_type ) {
-			return;
-		}
-
-		Templates::get_template_part( 'podcast-meta' );
-	}
-
-	/**
-	 * Adds custom podcast meta to each item in the feed
-	 */
-	public function rss_feed_item() {
-		if( get_post_type() !== cp_library()->setup->post_types->item->post_type ) {
-			return;
-		}
-
-		Templates::get_template_part( 'parts/podcast-item-meta' );
+	public function get_feed_uri() {
+		$feed_link = get_feed_link( $this->get_feed_name() );
+		return apply_filters( 'cpl_podcast_feed_uri', str_replace( home_url(), '', $feed_link ) );
 	}
 }

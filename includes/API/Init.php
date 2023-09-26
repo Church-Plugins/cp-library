@@ -17,6 +17,10 @@ class Init {
 	 */
 	protected static $_instance;
 
+	public $items;
+	public $item_types;
+	public $sources;
+
 	/**
 	 * Only make one instance of Init
 	 *
@@ -35,6 +39,9 @@ class Init {
 	 *
 	 */
 	protected function __construct() {
+		$this->items = new Items_API();
+		$this->item_types = new ItemTypes_API();
+		$this->sources = new Sources_API();
 		add_action( 'rest_api_init', [ $this, 'load_api_routes' ] );
 		add_filter( 'posts_clauses', [ $this, 'upcoming_series_filter' ], 15, 2 );
 		add_filter( 'posts_clauses', [ $this, 'upcoming_sermons_filter' ], 15, 2 );
@@ -50,11 +57,10 @@ class Init {
 	 * @author Tanner Moushey
 	 */
 	public function load_api_routes() {
-
 		$api_instance = [
-			new Items_API(),
-			new ItemTypes_API(),
-			new Sources_API()
+			$this->items,
+			$this->item_types,
+			$this->sources
 		];
 
 		foreach( $api_instance as $api ) {

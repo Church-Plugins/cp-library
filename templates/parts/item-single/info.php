@@ -18,7 +18,7 @@ $fields = \CP_Library\Admin\Settings::get_item( 'info_items', [ 'speakers', 'loc
 ?>
 <div class="cpl-item--info cpl-info">
 	<?php foreach( $fields as $field ) : ?>
-		<?php if ( 'date' == $item ) : ?>
+		<?php if ( 'date' == $field ) : ?>
 			<div class="cpl-info--date">
 				<?php echo Helpers::get_icon( 'date' ); ?>
 

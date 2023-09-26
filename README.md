@@ -24,6 +24,25 @@ npm run build
 
 ### Change Log
 
+#### 1.2.2
+* Fix bug that was preventing the thumbnail from showing in the media player
+* Fix error handling on single series template
+
+#### 1.2.1
+* Fix bug with series sermon rewrite rules
+* Fix html in podcast feed
+
+#### 1.2.0
+* Add sermon export
+* Add pagination for series with more than 10 sermons
+* Add Analytics panel for sermon views
+* Update podcast feed to work with series and taxonomies
+* Add setting to control the admin default menu for sermons
+* Add support for embeds in sermon audio and video
+
+#### 1.1.1
+* Updates to importer
+
 #### 1.1.0
 * New Scripture and Verse selector
 * New beta feature: Sermon Groupings
