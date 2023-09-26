@@ -49,7 +49,7 @@ class ItemDate extends Block {
 		}
 	
 		if ( isset( $attributes['isLink'] ) && $attributes['isLink'] ) {
-			$formatted_date = sprintf( '<a href="%1s">%2s</a>', get_the_permalink( $post_ID ), $formatted_date );
+			$formatted_date = sprintf( '<a href="%1s" class="cpl-item-date-link">%2s</a>', get_the_permalink( $post_ID ), $formatted_date );
 		}
 	
 		return sprintf(
