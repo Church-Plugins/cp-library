@@ -33,8 +33,8 @@ class Items extends WP_REST_Controller {
 	public function __construct() {
 		$this->namespace = cp_library()->get_api_namespace();
 		$this->rest_base = 'items';
-		$this->post_type	=  CP_LIBRARY_UPREFIX . "_item";
-		$this->register_custom_query_parameters();
+		$this->post_type = CP_LIBRARY_UPREFIX . '_item';
+		add_action( 'rest_api_init', array( $this, 'register_custom_query_parameters' ) );
 	}
 
 	/**
@@ -465,10 +465,12 @@ class Items extends WP_REST_Controller {
 		return $this->rest_base;
 	}
 
+	/**
+	 * Registers the custom query parameters for the items collection.
+	 */
 	public function register_custom_query_parameters() {
-		$post_type = cp_library()->setup->post_types->item->post_type;
-		add_filter( "rest_{$post_type}_collection_params", [ $this, 'custom_collection_params' ], 10, 2 );
-		add_filter( "rest_{$post_type}_query", [ $this, 'rest_query_args' ], 10, 2 );
+		add_filter( "rest_{$this->post_type}_collection_params", array( $this, 'custom_collection_params' ), 10, 2 );
+		add_filter( "rest_{$this->post_type}_query", array( $this, 'rest_query_args' ), 10, 2 );
 	}
 
 	public function custom_collection_params( $params, $post_type ) {
