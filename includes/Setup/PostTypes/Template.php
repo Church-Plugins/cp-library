@@ -53,6 +53,7 @@ class Template extends PostType {
 		add_filter( "{$this->post_type}_show_in_menu", array( $this, 'show_in_submenu' ) );
 		add_filter( "{$this->post_type}_slug", array( $this, 'custom_slug' ) );
 		add_action( 'wp_ajax_cpl_render_template', array( $this, 'render_ajax_content' ) );
+		add_filter( 'block_editor_settings_all', array( $this, 'block_editor_settings' ), 10, 2 );
 		parent::add_actions();
 	}
 
@@ -242,7 +243,49 @@ class Template extends PostType {
 	 */
 	public function render_ajax_content() {
 		$template_id = isset( $_GET['templateId'] ) ? absint( $_GET['templateId'] ) : 0;
-		self::render_content( $template_id );
+		echo self::render_content( $template_id ); // phpcs:ignore WordPress.Security.EscapeOutput
 		wp_die();
+	}
+
+	/**
+	 * Adds custom block editor settings
+	 *
+	 * @param array                    $editor_settings The block editor settings.
+	 * @param \WP_Block_Editor_Context $block_editor_context The block editor context.
+	 */
+	public function block_editor_settings( $editor_settings, $block_editor_context ) {
+		if ( $block_editor_context->post->post_type !== $this->post_type ) {
+			return $editor_settings;
+		}
+
+		if ( ! isset( $editor_settings['__experimentalFeatures']['spacing']['padding'] ) ) {
+			$editor_settings['__experimentalFeatures']['spacing']['padding'] = true;
+		}
+
+		if ( ! isset( $editor_settings['__experimentalFeatures']['spacing']['margin'] ) ) {
+			$editor_settings['__experimentalFeatures']['spacing']['margin'] = true;
+		}
+
+		if ( ! isset( $editor_settings['__experimentalFeatures']['spacing']['blockGap'] ) ) {
+			$editor_settings['__experimentalFeatures']['spacing']['blockGap'] = true;
+		}
+
+		if ( ! isset( $editor_settings['__experimentalFeatures']['border']['color'] ) ) {
+			$editor_settings['__experimentalFeatures']['border']['color'] = true;
+		}
+
+		if ( ! isset( $editor_settings['__experimentalFeatures']['border']['radius'] ) ) {
+			$editor_settings['__experimentalFeatures']['border']['radius'] = true;
+		}
+
+		if ( ! isset( $editor_settings['__experimentalFeatures']['border']['style'] ) ) {
+			$editor_settings['__experimentalFeatures']['border']['style'] = true;
+		}
+
+		if ( ! isset( $editor_settings['__experimentalFeatures']['border']['width'] ) ) {
+			$editor_settings['__experimentalFeatures']['border']['width'] = true;
+		}
+
+		return $editor_settings;
 	}
 }
