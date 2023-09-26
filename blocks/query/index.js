@@ -14,6 +14,12 @@ import save from './save';
 import queryInspectorControls from './hooks';
 import './editor.scss';
 
-registerBlockType(metadata, { edit, save, icon })
+registerBlockType(metadata, { 
+	edit, 
+	save, 
+	icon: (
+    <span className='material-icons-outlined'>subscriptions</span>
+  )
+})
 
 addFilter( 'editor.BlockEdit', 'cp-groups/query', queryInspectorControls )

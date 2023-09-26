@@ -21,6 +21,10 @@ import { __ } from '@wordpress/i18n';
  */
 import { useScopedBlockVariations, useBlockNameForPatterns } from '../utils';
 
+const DEFAULT_TEMPLATE = [
+	[ 'cp-library/sermon-template' ]
+];
+
 export default function QueryPlaceholder( {
 	attributes,
 	clientId,
@@ -34,6 +38,7 @@ export default function QueryPlaceholder( {
 		clientId,
 		attributes
 	);
+	const { replaceInnerBlocks } = useDispatch( blockEditorStore );
 
 	const { blockType, allVariations, hasPatterns } = useSelect(
 		( select ) => {
@@ -59,17 +64,17 @@ export default function QueryPlaceholder( {
 		matchingVariation?.icon ||
 		blockType?.icon?.src;
 	const label = matchingVariation?.title || blockType?.title;
-	if ( isStartingBlank ) {
-		return (
-			<QueryVariationPicker
-				clientId={ clientId }
-				attributes={ attributes }
-				setAttributes={ setAttributes }
-				icon={ icon }
-				label={ label }
-			/>
-		);
-	}
+	// if ( isStartingBlank ) {
+	// 	return (
+	// 		<QueryVariationPicker
+	// 			clientId={ clientId }
+	// 			attributes={ attributes }
+	// 			setAttributes={ setAttributes }
+	// 			icon={ icon }
+	// 			label={ label }
+	// 		/>
+	// 	);
+	// }
 	return (
 		<div { ...blockProps }>
 			<Placeholder
@@ -91,7 +96,11 @@ export default function QueryPlaceholder( {
 				<Button
 					variant="secondary"
 					onClick={ () => {
-						setIsStartingBlank( true );
+						replaceInnerBlocks(
+							clientId,
+							createBlocksFromInnerBlocksTemplate( DEFAULT_TEMPLATE ),
+							false
+						)
 					} }
 				>
 					{ __( 'Start blank' ) }
