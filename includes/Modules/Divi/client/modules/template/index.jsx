@@ -28,6 +28,10 @@ class Template extends Component {
 		})
 	}
 
+	componentDidMount() {
+		this.fetchTemplate();
+	}
+
 	componentDidUpdate(prevProps) {
 		if (prevProps.template_id !== this.props.template_id) {
 			this.setState({
