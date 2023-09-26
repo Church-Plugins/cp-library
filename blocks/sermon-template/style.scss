@@ -5,7 +5,7 @@
 	margin-top: 0;
 	margin-bottom: 0;
 	max-width: 100%;
-	list-style: none;
+	list-style: none !important;
 	padding: 0;
 
 	// Unset background colors that can be inherited from Global Styles with extra specificity.

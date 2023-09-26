@@ -91,6 +91,7 @@ export default function ItemDateEdit( {
 		postDate = (
 			<a
 				href="#post-date-pseudo-link"
+				className="cpl-item-date-link"
 				onClick={ ( event ) => event.preventDefault() }
 			>
 				{ postDate }

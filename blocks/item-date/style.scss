@@ -1,4 +1,10 @@
-.wp-block-post-date {
+.wp-block-cp-library-item-date {
 	// This block has customizable padding, border-box makes that more predictable.
 	box-sizing: border-box;
+
+	a.cpl-item-date-link.cpl-item-date-link {
+		line-height: 1.5rem;
+		text-decoration: none;
+		cursor: pointer;
+	}
 }
