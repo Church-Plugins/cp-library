@@ -51,11 +51,14 @@
 		},
 		"customGradient": {
 			"type": "string"
+		},
+		"verticalAlign": {
+			"type": "string",
+			"default": "center"
 		}
 	},
 	"usesContext": [ "postId", "postType", "queryId", "thumbnailAction", "item" ],
 	"supports": {
-		"align": [ "left", "right", "center", "wide", "full" ],
 		"anchor": true,
 		"color": {
 			"__experimentalDuotone": "img, .wp-block-cp-library-item-graphic__placeholder, .components-placeholder__illustration, .components-placeholder::before",

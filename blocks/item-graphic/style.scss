@@ -4,16 +4,44 @@
 .wp-block-cp-library-item-graphic {
 	margin-left: 0;
 	margin-right: 0;
+	box-sizing: border-box;
+
 	a {
 		display: block;
 		height: 100%;
 	}
 	img {
+		position: absolute;
+		top: 0;
+		left: 0;
 		max-width: 100%;
 		width: 100%;
 		height: auto;
 		vertical-align: bottom;
 		box-sizing: border-box;
+	}
+
+	.image-wrapper {
+		display: grid;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		padding: inherit;
+		box-sizing: border-box;
+	}
+
+	.image-wrapper.has-align-bottom {
+		align-items: end;
+	}
+
+	.image-wrapper.has-align-center {
+		align-items: center;
+	}
+
+	.image-wrapper.has-align-top {
+		align-items: start;
 	}
 
 	&.alignwide img,
@@ -43,14 +71,6 @@
 		}
 	}
 }
-
-.cpl-item-graphic-inner-blocks-wrapper {
-	position: absolute;
-	inset: 0;
-	display: grid;
-	place-items: center;
-} 
-
 
 .cpl-play-btn-overlay {
 	position: absolute; 

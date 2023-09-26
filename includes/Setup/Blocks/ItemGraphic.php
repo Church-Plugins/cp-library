@@ -1,27 +1,44 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName.InvalidClassFileName
+/**
+ * Server-side rendering of the `cp-library/item-graphic` block.
+ *
+ * @package CP_Library\Setup\Blocks
+ */
 
 namespace CP_Library\Setup\Blocks;
 
 use CP_Library\Models\Item;
 use CP_Library\Setup\Blocks\Block;
 
+/**
+ * Item Graphic block class.
+ */
 class ItemGraphic extends Block {
-	public $name = 'item-graphic';
-	public $is_dynamic = true;
 
+	/**
+	 * Class constructor
+	 */
 	public function __construct() {
+		$this->name       = 'item-graphic';
+		$this->is_dynamic = true;
+
 		parent::__construct();
 
-		add_filter( 'wp_get_attachment_image_attributes', function( $attr, $attachment, $size ) {
-			return $attr;
-		}, 10, 3 );
+		add_filter(
+			'wp_get_attachment_image_attributes',
+			function( $attr, $attachment, $size ) {
+				return $attr;
+			},
+			10,
+			3
+		);
 	}
 
 	/**
 	 * Renders the `cp-library/item-graphic` block on the server.
 	 *
-	 * @param array    $attributes Block attributes.
-	 * @param string   $content    Block default content.
+	 * @param array     $attributes Block attributes.
+	 * @param string    $content    Block default content.
 	 * @param \WP_Block $block      Block instance.
 	 * @return string Returns the HTML for the item graphic.
 	 */
@@ -73,20 +90,27 @@ class ItemGraphic extends Block {
 			$attr['style'] = empty( $attr['style'] ) ? $extra_styles : $attr['style'] . $extra_styles;
 		}
 
+		$vertical_alignment_class = array(
+			'center' => 'has-align-center',
+			'bottom' => 'has-align-bottom',
+			'top'    => 'has-align-top',
+		);
+
+		$vertical_alignment_class = $vertical_alignment_class[ $attributes['verticalAlign'] ?? 'center' ];
+
 		$featured_image = get_the_post_thumbnail( $post_ID, $size_slug, $attr );
 
-		if( ! $featured_image ) {
+		if ( ! $featured_image ) {
 			try {
-				$item = $block->context['postType'] === 'cpl_item' ? 
-					new \CP_Library\Controllers\Item( $post_ID ) : 
+				$item = 'cpl_item' === $block->context['postType'] ?
+					new \CP_Library\Controllers\Item( $post_ID ) :
 					new \CP_Library\Controllers\ItemType( $post_ID );
 
-				$attr['src'] = $item->get_thumbnail();
+				$attr['src']    = $item->get_thumbnail();
 				$featured_image = sprintf( '<img %1$s>', $this->attributes_to_string( $attr ) );
-			}
-			catch(\CP_Library\Exception $err) {
+			} catch ( \CP_Library\Exception $err ) {
 				return '';
-			}  
+			}
 		}
 
 		if ( $is_link ) {
@@ -123,7 +147,7 @@ class ItemGraphic extends Block {
 
 		$inner_block_html = $this->get_inner_blocks( $block, $content );
 
-		return "<figure {$wrapper_attributes}>{$featured_image}{$inner_block_html}</figure>";
+		return "<figure {$wrapper_attributes}><div class='image-wrapper {$vertical_alignment_class}'>{$featured_image}{$inner_block_html}</div></figure>";
 	}
 
 	/**
@@ -136,27 +160,27 @@ class ItemGraphic extends Block {
 	public function get_border_attributes( $attributes ) {
 		$border_styles = array();
 		$sides         = array( 'top', 'right', 'bottom', 'left' );
-	
+
 		// Border radius.
 		if ( isset( $attributes['style']['border']['radius'] ) ) {
 			$border_styles['radius'] = $attributes['style']['border']['radius'];
 		}
-	
+
 		// Border style.
 		if ( isset( $attributes['style']['border']['style'] ) ) {
 			$border_styles['style'] = $attributes['style']['border']['style'];
 		}
-	
+
 		// Border width.
 		if ( isset( $attributes['style']['border']['width'] ) ) {
 			$border_styles['width'] = $attributes['style']['border']['width'];
 		}
-	
+
 		// Border color.
 		$preset_color           = array_key_exists( 'borderColor', $attributes ) ? "var:preset|color|{$attributes['borderColor']}" : null;
 		$custom_color           = _wp_array_get( $attributes, array( 'style', 'border', 'color' ), null );
 		$border_styles['color'] = $preset_color ? $preset_color : $custom_color;
-	
+
 		// Individual border styles e.g. top, left etc.
 		foreach ( $sides as $side ) {
 			$border                 = _wp_array_get( $attributes, array( 'style', 'border', $side ), null );
@@ -166,7 +190,7 @@ class ItemGraphic extends Block {
 				'width' => isset( $border['width'] ) ? $border['width'] : null,
 			);
 		}
-	
+
 		$styles     = wp_style_engine_get_styles( array( 'border' => $border_styles ) );
 		$attributes = array();
 		if ( ! empty( $styles['classnames'] ) ) {
@@ -245,41 +269,40 @@ class ItemGraphic extends Block {
 
 	/**
 	 * Turns an associative array into a list of attributes
-	 * 
-	 * @param array $attributes
-	 * @return string
+	 *
+	 * @param array $attributes Associative array of attributes.
+	 * @return string String of attributes.
 	 */
-	public function attributes_to_string($attributes) {
+	public function attributes_to_string( $attributes ) {
 		$attribute_parts = array_map(
-				function($key, $value) {
-						return sprintf('%s="%s"', $key, esc_attr($value));
-				},
-				array_keys($attributes),
-				array_values($attributes)
+			function( $key, $value ) {
+					return sprintf( '%s="%s"', $key, esc_attr( $value ) );
+			},
+			array_keys( $attributes ),
+			array_values( $attributes )
 		);
 
-		return implode(' ', $attribute_parts);
+		return implode( ' ', $attribute_parts );
 	}
 
-	/** 
+	/**
 	 * Gets the wrapper as well as the inner blocks for the current block
-	 * 
-	 * @param \WP_Block $block
-	 * @param string $content
-	*/
+	 *
+	 * @param \WP_Block $block Block instance.
+	 * @param string    $content Inner blocks content.
+	 */
 	public function get_inner_blocks( $block, $content ) {
-		$show_play_btn = $block->context['thumbnailAction'] !== false && $block->context['postType'] === 'cpl_item';
+		$show_play_btn = false !== $block->context['thumbnailAction'] && 'cpl_item' === $block->context['postType'];
 
-		if( $block->context['postType'] === 'cpl_item' ) {
+		if ( 'cpl_item' === $block->context['postType'] ) {
 			try {
 				$item = new \CP_Library\Controllers\Item( $block->context['postId'], true );
 				$item = $item->get_video();
 
-				if( ! $item['value'] ) {
+				if ( ! $item['value'] ) {
 					$show_play_btn = false;
 				}
-			}
-			catch( \CP_Library\Exception $err ) {
+			} catch ( \CP_Library\Exception $err ) {
 				$show_play_btn = false;
 			}
 		}
