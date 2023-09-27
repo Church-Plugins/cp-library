@@ -20,8 +20,10 @@ import Logo from '../Elements/Logo';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../Templates/Theme";
 import throttle from 'lodash.throttle';
+import { usePersistentPlayer } from '../Contexts/PersistentPlayerContext';
 
 export default function PersistentPlayer(props) {
+	const { closePersistentPlayer } = usePersistentPlayer();
   const { isDesktop } = useBreakpoints();
   const [item, setItem] = useState(props.item);
   const [loading, setLoading] = useState(false);
@@ -63,15 +65,6 @@ export default function PersistentPlayer(props) {
 				setPlaybackRate(1);
 				break;
 		}
-	};
-
-	const closePlayer = () => {
-		const player = window.top.document.getElementById('cpl_persistent_player');
-		ReactDOM.unmountComponentAtNode(player);
-    window.top.document.body.classList.remove('cpl-persistent-player');
-    window.top.postMessage({
-      action: "CPL_PERSISTENT_PLAYER_CLOSED",
-    });
 	};
 
 	const handleClickFullscreen = () => {
@@ -206,7 +199,7 @@ export default function PersistentPlayer(props) {
 						     </Box>
 
 						     <Box position="absolute" zIndex={50} top={0} right={0} className="persistentPlayer__close">
-							     <IconButton sx={{color: '#ffffff'}} onClick={closePlayer}><Cancel/></IconButton>
+							     <IconButton sx={{color: '#ffffff'}} onClick={closePersistentPlayer}><Cancel/></IconButton>
 						     </Box>
 
 						     <Box position="absolute" zIndex={50} top={0} left={0} className="persistentPlayer__fullscreen">
@@ -396,7 +389,7 @@ export default function PersistentPlayer(props) {
 	         </PlayerWrapper>
 
 	         <Box position='absolute' zIndex={50} top={0} right={0} className='persistentPlayer__close'>
-		         <IconButton onClick={closePlayer}><Cancel/></IconButton>
+		         <IconButton onClick={closePersistentPlayer}><Cancel/></IconButton>
 	         </Box>
          </Box>
         }
