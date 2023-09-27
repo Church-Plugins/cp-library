@@ -23,7 +23,7 @@ import throttle from 'lodash.throttle';
 import { usePersistentPlayer } from '../Contexts/PersistentPlayerContext';
 
 export default function PersistentPlayer(props) {
-	const { closePersistentPlayer } = usePersistentPlayer();
+  const { closePersistentPlayer } = usePersistentPlayer();
   const { isDesktop } = useBreakpoints();
   const [item, setItem] = useState(props.item);
   const [loading, setLoading] = useState(false);

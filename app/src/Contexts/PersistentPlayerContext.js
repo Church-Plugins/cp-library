@@ -102,7 +102,7 @@ function PersistentPlayerProvider({children}) {
 
   const closePersistentPlayer = () => {
     const player = window.top.document.getElementById('cpl_persistent_player');
-		ReactDOM.unmountComponentAtNode(player);
+    ReactDOM.unmountComponentAtNode(player);
     window.top.document.body.classList.remove('cpl-persistent-player');
     window.top.postMessage({
       action: "CPL_PERSISTENT_PLAYER_CLOSED",
