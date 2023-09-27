@@ -2,8 +2,8 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 2,
 	"name": "cp-library/query",
-	"title": "CP Library Sermons",
-	"category": "cp-library",
+	"title": "CP Library Sermons/Series",
+	"category": "cp-library-queries",
 	"description": "Displays a list of sermons or series",
 	"textdomain": "cp-library",
 	"attributes": {
