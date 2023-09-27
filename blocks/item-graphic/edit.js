@@ -12,7 +12,7 @@ import {
 	ToggleControl,
 	PanelBody,
 	Placeholder,
-	TextControl
+	TextControl,
 } from '@wordpress/components';
 import {
 	InspectorControls,
@@ -20,8 +20,6 @@ import {
 	useBlockProps,
 	store as blockEditorStore,
 	__experimentalUseBorderProps as useBorderProps,
-	BlockVerticalAlignmentToolbar,
-	BlockControls
 } from '@wordpress/block-editor';
 import { __, sprintf } from '@wordpress/i18n';
 import { store as noticesStore } from '@wordpress/notices';
@@ -59,9 +57,7 @@ export default function ItemGraphicEdit( {
 		sizeSlug,
 		rel,
 		linkTarget,
-		verticalAlign,
 	} = attributes;
-
 	const [ featuredImage, setFeaturedImage ] = useEntityProp(
 		'postType',
 		postTypeSlug,
@@ -145,15 +141,6 @@ export default function ItemGraphicEdit( {
 				setAttributes={ setAttributes }
 				imageSizeOptions={ imageSizeOptions }
 			/>
-			<BlockControls>
-				<BlockVerticalAlignmentToolbar
-					onChange={ alignment => {
-						console.log(alignment)
-						setAttributes( { verticalAlign: alignment } );
-					} }
-					value={ verticalAlign }
-				/>
-			</BlockControls>
 			<InspectorControls>
 				<PanelBody title={ __( 'Settings' ) }>
 					<ToggleControl
@@ -240,12 +227,6 @@ export default function ItemGraphicEdit( {
 		image = placeholder();
 	}
 
-	const verticalAlignClass = (
-		verticalAlign === 'center' ? 'has-align-center' : 
-		verticalAlign === 'bottom' ? 'has-align-bottom' : 
-		verticalAlign === 'top'    ? 'has-align-top' : ''
-	)
-
 	/**
 	 * When the post featured image block:
 	 * - Has an image assigned
@@ -256,28 +237,26 @@ export default function ItemGraphicEdit( {
 		<>
 			{ controls }
 			<figure { ...blockProps }>
-				<div className={`image-wrapper ${verticalAlignClass}`}>
-					{ image }
-					<Overlay
-						attributes={ attributes }
-						setAttributes={ setAttributes }
-						clientId={ clientId }
-					/>
-					{
-						Boolean(thumbnailAction && item?.video?.value) ?
-						<div className='cpl-play-btn-overlay'>
-							<Play fill='currentColor' size='30%' />
-						</div> :
-						!thumbnailAction ?
-						<div className='cpl-item-graphic-inner-blocks-wrapper'>
-							{
-								imageRef.current && imageRef.current.offsetWidth > 300 &&
-								<InnerBlocks allowedBlocks={ getAllowedBlocks( postTypeSlug ) } />
-							}
-						</div> :
-						null
-					}
-				</div>
+				{ image }
+				<Overlay
+					attributes={ attributes }
+					setAttributes={ setAttributes }
+					clientId={ clientId }
+				/>
+				{
+					Boolean(thumbnailAction && item?.video?.value) ?
+					<div className='cpl-play-btn-overlay'>
+						<Play fill='currentColor' size='30%' />
+					</div> :
+					!thumbnailAction ?
+					<div className='cpl-item-graphic-inner-blocks-wrapper'>
+						{
+							imageRef.current && imageRef.current.offsetWidth > 300 &&
+							<InnerBlocks allowedBlocks={ getAllowedBlocks( postTypeSlug ) } />
+						}
+					</div> :
+					null
+				}
 			</figure>
 		</>
 	);
