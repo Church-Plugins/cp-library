@@ -1,4 +1,9 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName.InvalidClassFileName
+/**
+ * CP Library block initialization class
+ *
+ * @package CP_Library/Setup/Blocks
+ */
 
 namespace CP_Library\Setup\Blocks;
 
@@ -10,6 +15,8 @@ use CP_Library\Admin\Settings;
 class Init {
 
 	/**
+	 * Single class instance
+	 *
 	 * @var Init
 	 */
 	protected static $_instance;
@@ -64,24 +71,29 @@ class Init {
 	 * @return void
 	 */
 	protected function actions() {
-		add_filter( 'default_post_metadata', [ $this, 'default_thumbnail' ], 10, 5 );
-		add_filter( 'block_categories_all', [ $this, 'block_categories' ] );
+		add_filter( 'default_post_metadata', array( $this, 'default_thumbnail' ), 10, 5 );
+		add_filter( 'block_categories_all', array( $this, 'block_categories' ) );
 	}
 
 	/**
 	 * Sets default thumbnail for sermon and series post types
-	 * 
+	 *
+	 * @param mixed  $value the value of the meta field.
+	 * @param int    $object_id the post ID.
+	 * @param string $meta_key the meta key.
+	 * @param bool   $single whether to return a single value.
+	 * @param string $meta_type the type of metadata.
 	 * @author Jonathan Roley
 	 */
 	public function default_thumbnail( $value, $object_id, $meta_key, $single, $meta_type ) {
-		if( $value ) {
+		if ( $value ) {
 			return $value;
 		}
-		if( $meta_key === '_thumbnail_id' && $meta_type === 'post' ) {
+		if ( '_thumbnail_id' === $meta_key && 'post' === $meta_type ) {
 			$post_type = get_post_type( $object_id );
-			if( $post_type === cp_library()->setup->post_types->item->post_type || $post_type === cp_library()->setup->post_types->item_type->post_type ) {
+			if ( cp_library()->setup->post_types->item->post_type === $post_type || cp_library()->setup->post_types->item_type->post_type === $post_type ) {
 				$image = Settings::get( 'default_thumbnail', false );
-				if( $image ) {
+				if ( $image ) {
 					$image = attachment_url_to_postid( $image );
 				}
 				return $image ? $image : $value;
@@ -92,12 +104,20 @@ class Init {
 
 	/**
 	 * Adds a custom block category to be used by custom Gutenberg blocks
-	 * @param array $categories the default block categories
+	 *
+	 * @param array $categories the default block categories.
+	 * @return array the updated block categories.
 	 */
 	public function block_categories( $categories ) {
+
 		$categories[] = array(
 			'slug'  => 'cp-library',
-			'title' => 'CP Library'
+			'title' => 'CP Library',
+		);
+
+		$categories[] = array(
+			'slug'  => 'cp-library-queries',
+			'title' => 'CP Library Queries',
 		);
 
 		return $categories;
