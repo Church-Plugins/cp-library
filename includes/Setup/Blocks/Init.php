@@ -71,6 +71,7 @@ class Init {
 	 * @return void
 	 */
 	protected function actions() {
+		add_action( 'init', array( $this, 'register_block_patterns' ) );
 		add_filter( 'default_post_metadata', array( $this, 'default_thumbnail' ), 10, 5 );
 		add_filter( 'block_categories_all', array( $this, 'block_categories' ) );
 	}
@@ -121,5 +122,21 @@ class Init {
 		);
 
 		return $categories;
+	}
+
+	/**
+	 * Register block patterns
+	 */
+	public function register_block_patterns() {
+		$patterns_dir = CP_LIBRARY_PLUGIN_DIR . 'block-patterns/';
+
+		$files = glob( $patterns_dir . '*.php' );
+
+		foreach ( $files as $file ) {
+			$registered = register_block_pattern(
+				'cp-library/' . basename( $file, '.php' ),
+				require $file
+			);
+		}
 	}
 }
