@@ -251,7 +251,6 @@ export default function ItemGraphicEdit( {
 					!thumbnailAction ?
 					<div className='cpl-item-graphic-inner-blocks-wrapper'>
 						{
-							imageRef.current && imageRef.current.offsetWidth > 300 &&
 							<InnerBlocks allowedBlocks={ getAllowedBlocks( postTypeSlug ) } />
 						}
 					</div> :
