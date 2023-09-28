@@ -111,7 +111,7 @@ class Template extends PostType {
 	 * @return bool|string[] Array of allowed block types.
 	 */
 	public function allowed_block_types( $allowed, $context ) {
-		if ( $context->post->post_type === $this->post_type ) {
+		if ( $context->post && $context->post->post_type === $this->post_type ) {
 			return apply_filters(
 				'cp_library_shortcodes_block_types',
 				array(
@@ -254,7 +254,7 @@ class Template extends PostType {
 	 * @param \WP_Block_Editor_Context $block_editor_context The block editor context.
 	 */
 	public function block_editor_settings( $editor_settings, $block_editor_context ) {
-		if ( $block_editor_context->post->post_type !== $this->post_type ) {
+		if ( ! $block_editor_context->post || $block_editor_context->post->post_type !== $this->post_type ) {
 			return $editor_settings;
 		}
 
