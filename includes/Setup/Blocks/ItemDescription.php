@@ -1,4 +1,4 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName.InvalidClassFileName
 /**
  * Initialization and server-side rendering of the `cp-library/item-description` block.
  *
@@ -6,13 +6,21 @@
  */
 
 namespace CP_Library\Setup\Blocks;
+
 use CP_Library\Setup\Blocks\Block;
 
+/**
+ * ItemDescription block class.
+ */
 class ItemDescription extends Block {
-	public $name = 'item-description';
-	public $is_dynamic = true;
 
+	/**
+	 * Class constructor.
+	 */
 	public function __construct() {
+		$this->name       = 'item-description';
+		$this->is_dynamic = true;
+
 		parent::__construct();
 
 		/**
@@ -35,7 +43,7 @@ class ItemDescription extends Block {
 
 	/**
 	 * Renders the cp-library/item-description block on the server
-	 * 
+	 *
 	 * @param array    $attributes Block attributes.
 	 * @param string   $content    Block default content.
 	 * @param WP_Block $block      Block instance.
@@ -45,7 +53,7 @@ class ItemDescription extends Block {
 		if ( ! isset( $block->context['postId'] ) ) {
 			return '';
 		}
-	
+
 		/*
 		* The purpose of the excerpt length setting is to limit the length of both
 		* automatically generated and user-created excerpts.
@@ -57,11 +65,12 @@ class ItemDescription extends Block {
 		if ( isset( $excerpt_length ) ) {
 			$excerpt = wp_trim_words( $excerpt, $excerpt_length );
 		}
-	
+
 		$more_text           = ! empty( $attributes['moreText'] ) ? '<a class="wp-block-cp-library-item-description__more-link" href="' . esc_url( get_the_permalink( $block->context['postId'] ) ) . '">' . wp_kses_post( $attributes['moreText'] ) . '</a>' : '';
 		$filter_excerpt_more = function( $more ) use ( $more_text ) {
 			return empty( $more_text ) ? $more : '';
 		};
+
 		/**
 		 * Some themes might use `excerpt_more` filter to handle the
 		 * `more` link displayed after a trimmed excerpt. Since the
@@ -80,7 +89,12 @@ class ItemDescription extends Block {
 			$classes[] = 'has-link-color';
 		}
 		$wrapper_attributes = get_block_wrapper_attributes( array( 'class' => implode( ' ', $classes ) ) );
-	
+
+		// Hide block if there is no content.
+		if ( empty( trim( $excerpt ) ) && empty( trim( $more_text ) ) ) {
+			return '';
+		}
+
 		$content               = '<p class="wp-block-cp-library-item-description__excerpt">' . $excerpt;
 		$show_more_on_new_line = ! isset( $attributes['showMoreOnNewLine'] ) || $attributes['showMoreOnNewLine'];
 		if ( $show_more_on_new_line && ! empty( $more_text ) ) {
@@ -89,6 +103,7 @@ class ItemDescription extends Block {
 			$content .= " $more_text</p>";
 		}
 		remove_filter( 'excerpt_more', $filter_excerpt_more );
+
 		return sprintf( '<div %1$s>%2$s</div>', $wrapper_attributes, $content );
 	}
 }
