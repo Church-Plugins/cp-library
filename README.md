@@ -27,6 +27,7 @@ npm run build
 #### 1.2.3
 * Fix deprication error
 * Allow beta updates
+* Fix player issues
 
 #### 1.2.2
 * Fix bug that was preventing the thumbnail from showing in the media player
