@@ -35,6 +35,7 @@ import { getValidBlocks } from '../../../utils/allowed-blocks';
 import { useDispatch, useSelect } from '@wordpress/data';
 import PostSearchControl from './post-search-control';
 import metadata from '../../block.json';
+import RelatedPostsControls from './related-posts-controls';
 
 
 export default function QueryInspectorControls( {
@@ -44,7 +45,7 @@ export default function QueryInspectorControls( {
 	setDisplayLayout,
 	clientId
 } ) {
-	const { query, displayLayout, showUpcoming, singleItem } = attributes;
+	const { query, displayLayout, showUpcoming, singleItem, showFilters } = attributes;
 	const {
 		order,
 		orderBy,
@@ -110,7 +111,7 @@ export default function QueryInspectorControls( {
 		!singleItem &&
 		!! taxonomies?.length &&
 		isControlAllowed( allowedControls, 'taxQuery' );
-	const showAuthorControl = !singleItem && isControlAllowed( allowedControls, 'author' );
+	const showAuthorControl = !singleItem && isControlAllowed( allowedControls, 'author' ) && false; // hide author control
 	const showSearchControl = !singleItem && isControlAllowed( allowedControls, 'search' );
 	const showParentControl =
 		!singleItem &&
@@ -160,6 +161,19 @@ export default function QueryInspectorControls( {
 									setAttributes({ showUpcoming: val })
 								}}
 								help={upcomingHelpText}
+							/>
+						}
+
+						{/* TODO: add frontend filters. */}
+						{
+							false && !singleItem && postType === 'cpl_item' &&
+							<ToggleControl 
+								label={ __( 'Display Filters', 'cp-library' ) }
+								checked={ showFilters }
+								onChange={(val) => {
+									setAttributes({ showFilters: val })
+								}}
+								help={ __( 'Display filters for sorting and filtering sermons. (Will be visible on page)', 'cp-library' ) }
 							/>
 						}
 
@@ -275,12 +289,21 @@ export default function QueryInspectorControls( {
 								hasValue={ () =>
 									Object.values( taxQuery || {} ).some(
 										( terms ) => !! terms.length
-									)
+									) || query.cpl_speakers || query.cpl_service_types
 								}
 								onDeselect={ () =>
-									setQuery( { taxQuery: null } )
+									setQuery( { 
+										taxQuery: null,
+										cpl_speakers: null,
+										cpl_service_types: null,
+									} )
 								}
 							>
+								<RelatedPostsControls 
+									onChange={ setQuery }
+									query={ query }
+									postType={ postType }
+								/>
 								<TaxonomyControls
 									onChange={ setQuery }
 									query={ query }

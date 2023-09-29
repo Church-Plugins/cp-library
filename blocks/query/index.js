@@ -15,7 +15,7 @@ import './editor.scss';
 
 registerBlockType(metadata, { 
 	edit, 
-	save, 
+	save,
 	icon: (
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 195.02 156.81">
 			<g id="Layer_2" data-name="Layer 2">

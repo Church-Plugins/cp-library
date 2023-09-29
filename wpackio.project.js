@@ -162,7 +162,8 @@ module.exports = {
 			name : 'scripts',
 			entry: {
 				main: ['./assets/js/main.js'],
-				admin: ['./assets/js/admin.js']
+				admin: ['./assets/js/admin.js'],
+				block_editor: ['./assets/js/block_editor.js'],
 			},
 		},
 		{

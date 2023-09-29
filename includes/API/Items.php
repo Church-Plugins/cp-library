@@ -475,16 +475,37 @@ class Items extends WP_REST_Controller {
 
 	public function custom_collection_params( $params, $post_type ) {
 		$params['cpl_hide_upcoming'] = array(
-			'type' => 'boolean',
+			'type'        => 'boolean',
 			'description' => __( 'Whether to hide upcoming items', 'cp-library' ),
-			'default' => false
+			'default'     => false,
 		);
+
+		$params['cpl_speakers'] = array(
+			'type'        => 'array',
+			'description' => __( 'Filter by speaker', 'cp-library' ),
+			'default'     => array(),
+		);
+
+		$params['cpl_service_types'] = array(
+			'type'        => 'array',
+			'description' => __( 'Filter by service type', 'cp-library' ),
+			'default'     => array(),
+		);
+
 		return $params;
 	}
 
 	public function rest_query_args( $args, $request ) {
 		if ( isset( $_GET['cpl_hide_upcoming'] ) && $_GET['cpl_hide_upcoming'] === 'true' ) {
 			$args['cpl_hide_upcoming'] = true;
+		}
+
+		if ( isset( $_GET['cpl_speakers'] ) && is_array( $_GET['cpl_speakers'] ) ) {
+			$args['cpl_speakers'] = (array) $_GET['cpl_speakers'];
+		}
+
+		if ( isset( $_GET['cpl_service_types'] ) && is_array( $_GET['cpl_service_types'] ) ) {
+			$args['cpl_service_types'] = (array) $_GET['cpl_service_types'];
 		}
 
 		return $args;

@@ -1,22 +1,35 @@
-<?php
+<?php // phpcs:ignore WordPress.Files.FileName.InvalidClassFileName
 /**
  * Registering and server-side rendering of the `cp-library/sermon-template` block.
+ *
+ * @package CP_Library
  */
 
 namespace CP_Library\Setup\Blocks;
+
 use CP_Library\Setup\Blocks\Block;
 use CP_Library\Templates;
 use WP_Query;
 use WP_Block;
 
+/**
+ * Sermon Template class
+ *
+ * @since 1.3.0
+ */
 class SermonTemplate extends Block {
-	public $name = 'sermon-template';
-	public $is_dynamic = true;
 
+	/**
+	 * Class constructor
+	 */
 	public function __construct() {
+		$this->name       = 'sermon-template';
+		$this->is_dynamic = true;
+
 		parent::__construct();
-		add_filter( "wp-block-cp-library-{$this->name}_block_args", [ $this, 'block_args' ] );
-		add_filter( 'query_loop_block_query_vars', [ $this, 'custom_query_args' ], 10, 3 );
+
+		add_filter( "wp-block-cp-library-{$this->name}_block_args", array( $this, 'block_args' ) );
+		add_filter( 'query_loop_block_query_vars', array( $this, 'custom_query_args' ), 10, 3 );
 	}
 
 	/**
@@ -79,13 +92,13 @@ class SermonTemplate extends Block {
 				new WP_Block(
 					$block_instance,
 					array(
-						'postType' => get_post_type(),
-						'postId'   => get_the_ID(),
-						'thumbnailAction' => $attributes['thumbnailAction']
+						'postType'        => get_post_type(),
+						'postId'          => get_the_ID(),
+						'thumbnailAction' => $attributes['thumbnailAction'],
 					)
 				)
 			)->render( array( 'dynamic' => false ) );
-			
+
 			// Wrap the render inner blocks in a `li` element with the appropriate post classes.
 			$post_classes = implode( ' ', get_post_class( 'wp-block-post' ) );
 			$content     .= '<li class="' . esc_attr( $post_classes ) . '">' . $block_content . '</li>';
@@ -98,11 +111,17 @@ class SermonTemplate extends Block {
 		*/
 		wp_reset_postdata();
 
-		return sprintf(
-			'<ul %1$s>%2$s</ul>',
-			$wrapper_attributes,
-			$content
-		);
+		$output = '';
+
+		if ( isset( $block->context['showFilters'] ) && $block->context['showFilters'] ) {
+			ob_start();
+			Templates::get_template_part( 'parts/filter' );
+			$output .= ob_get_clean();
+		}
+
+		$output .= sprintf( '<ul %1$s>%2$s</ul>', $wrapper_attributes, $content );
+
+		return $output;
 	}
 
 	/**
@@ -133,39 +152,45 @@ class SermonTemplate extends Block {
 
 	/**
 	 * Returns custom block args
-	 * 
-	 * @param array $args existing arguments for registering a block type
-	 * 
-	 * @return array the updated block arguments
+	 *
+	 * @param array $args existing arguments for registering a block type.
+	 * @return array the updated block arguments.
 	 */
 	public function block_args( $args ) {
-		return array_merge( $args, [ 'skip_inner_blocks' => true ] );
+		return array_merge( $args, array( 'skip_inner_blocks' => true ) );
 	}
 
 	/**
 	 * Adds custom query args to the query loop block
-	 * 
-	 * @param array $query the existing query args
-	 * @param \WP_Block $block the block instance
-	 * @param int $page the page
+	 *
+	 * @param array     $query the existing query args.
+	 * @param \WP_Block $block the block instance.
+	 * @param int       $page the page.
+	 * @return array the updated query args.
 	 */
 	public function custom_query_args( $query, $block, $page ) {
-		if( $block->name !== 'cp-library/sermon-template' ) {
+		if ( 'cp-library/sermon-template' !== $block->name ) {
 			return $query;
 		}
 
 		$include = isset( $block->context['query']['include'] ) ? $block->context['query']['include'] : null;
 
-		if( $include && is_array( $include ) && count( $include ) > 0 ) {
+		if ( $include && is_array( $include ) && count( $include ) > 0 ) {
 			$query['post__in'] = $include;
 		}
 
-		if( isset( $block->context['showUpcoming'] ) && $block->context['showUpcoming'] === false ) {
+		if ( isset( $block->context['showUpcoming'] ) && false === $block->context['showUpcoming'] ) {
 			$query['cpl_hide_upcoming'] = true;
+		}
+
+		if ( isset( $block->context['query']['cpl_speakers'] ) ) {
+			$query['cpl_speakers'] = $block->context['query']['cpl_speakers'];
+		}
+
+		if ( isset( $block->context['query']['cpl_service_types'] ) ) {
+			$query['cpl_service_types'] = $block->context['query']['cpl_service_types'];
 		}
 
 		return $query;
 	}
 }
-
-

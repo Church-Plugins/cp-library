@@ -86,8 +86,50 @@ class Init {
 		return in_array( $type, $this->get_post_types() );
 	}
 
+	/**
+	 * Returns an array of post types.
+	 *
+	 * @return array
+	 */
 	public function get_post_types() {
-		return [ $this->item->post_type, $this->speaker->post_type, $this->item_type->post_type, $this->service_type->post_type ];
+		return wp_list_pluck( $this->get_models(), 'post_type' );
+	}
+
+	/**
+	 * Returns metadata for the various post types, used on the frontend.
+	 *
+	 * @return array {
+	 *   The metadata for the post types.
+	 *
+	 *   @type string $postType    The post type slug.
+	 *   @type string $singleLabel The singular label for the post type.
+	 *   @type string $pluralLabel The plural label for the post type.
+	 * }
+	 * @since  1.3.0
+	 */
+	public function get_post_type_info() {
+		$models = $this->get_models();
+		$output = array();
+
+		foreach ( $models as $model ) {
+			$output[ $model->post_type ] = array(
+				'postType'    => $model->post_type,
+				'singleLabel' => $model->single_label,
+				'pluralLabel' => $model->plural_label,
+			);
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Returns CP Library models
+	 *
+	 * @return array
+	 * @since  1.3.0
+	 */
+	public function get_models() {
+		return array( $this->item, $this->speaker, $this->item_type, $this->service_type );
 	}
 
 	/**

@@ -251,6 +251,10 @@ class ItemType extends PostType  {
 			return;
 		}
 
+		if ( $query->get( 'posts_per_page' ) ) {
+			return;
+		}
+
 		$query->set( 'posts_per_page', 12 );
 	}
 

@@ -15,7 +15,8 @@
 		"templateSlug",
 		"previewPostType",
 		"singleItem",
-		"showUpcoming"
+		"showUpcoming",
+		"showFilters"
 	],
 	"supports": {
 		"reusable": false,
