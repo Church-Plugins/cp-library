@@ -26,7 +26,7 @@ export default function SermonSeasonEdit({
 	return (
 		<>
 			<div {...blockProps}>
-			<span className='material-icons-outlined'>menu_book</span>
+			<span className='material-icons-outlined'>park</span>
 			{
 				scriptures.length ?
 				scriptures.map((scripture, index) => (

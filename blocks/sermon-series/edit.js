@@ -15,7 +15,7 @@ export default function SermonSeriesEdit({
 		)
 	}
 
-	const series = item?.types || []
+	const series = item?.types || [ { id: 0, title: __( 'No Series', 'cp-library' ) } ]
 
 	return (
 		<>
@@ -25,11 +25,9 @@ export default function SermonSeriesEdit({
 			{
 				postType !== 'cpl_item' ?
 				__( 'This block only works in a Sermon query.', 'cp-library' ) :
-				series.length ?
 				series.map((singleSeries, index) => (
 					<a className='cpl-series-link' key={singleSeries.id}>{singleSeries.title + (index < series.length - 1 ? ', ' : '')}</a>
-				)) :
-				__( 'No Series', 'cp-library' )
+				))
 			}
 			</div>
 		</>
