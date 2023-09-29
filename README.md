@@ -25,7 +25,7 @@ npm run build
 ### Change Log
 
 #### 1.2.3
-* Fix deprication error
+* Fix deprecation error
 * Allow beta updates
 * Fix player issues
 
