@@ -24,6 +24,10 @@ npm run build
 
 ### Change Log
 
+#### 1.2.3
+* Fix deprication error
+* Allow beta updates
+
 #### 1.2.2
 * Fix bug that was preventing the thumbnail from showing in the media player
 * Fix error handling on single series template
