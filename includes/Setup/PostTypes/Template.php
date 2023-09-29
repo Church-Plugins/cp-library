@@ -134,8 +134,8 @@ class Template extends PostType {
 					'cp-library/sermon-topics',
 					'cp-library/query',
 					'core/post-title',
-					'core/title',
 					'core/paragraph',
+					'core/heading',
 				)
 			);
 		}
