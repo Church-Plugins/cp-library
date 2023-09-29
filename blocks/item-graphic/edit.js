@@ -158,6 +158,7 @@ export default function ItemGraphicEdit( {
 						}
 						onChange={ () => setAttributes( { isLink: ! isLink } ) }
 						checked={ isLink }
+						help={__( 'Warning: will not act as a link if there is nested content.', 'cp-library' )}
 					/>
 					{ isLink && (
 						<>

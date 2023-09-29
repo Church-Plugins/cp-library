@@ -284,6 +284,10 @@ class ItemGraphic extends Block {
 			}
 		}
 
+		if ( ! $show_play_btn && empty( $block->inner_blocks ) ) {
+			return '';
+		}
+
 		$inner_block_html = $show_play_btn ? '<div class="cpl-play-btn-overlay"><i data-feather="play" width="30%" height="30%" fill="currentColor"></i></div>' : do_blocks( $content );
 		return sprintf(
 			'<div class="cpl-item-graphic-inner-blocks-wrapper">%1$s</div>',
