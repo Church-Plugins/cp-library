@@ -10,7 +10,9 @@ export default function SermonScriptureEdit({
 }) {
 	const blockProps = useBlockProps({})
 
-	if( postType !== 'cpl_item' || postType !== 'cpl_item_type' ) {
+	console.log(postType, item)
+
+	if( postType !== 'cpl_item' && postType !== 'cpl_item_type' ) {
 		return (
 			<div {...blockProps}>{ __( 'This block is not compatible with this post type', 'cp-library' ) }</div>
 		)
@@ -24,7 +26,7 @@ export default function SermonScriptureEdit({
 			<span className='material-icons-outlined'>menu_book</span>
 			{
 				scriptures.map((scripture, index) => (
-					<a className='cpl-scripture-link' key={scripture.slug}>{scripture.name}{index < scriptures.length - 1 && ','}</a>
+					<a className='cpl-scripture-link' key={scripture.slug}>{scripture.name}{index < scriptures.length - 1 && ', '}</a>
 				))
 			}
 			</div>
