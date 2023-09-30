@@ -10,7 +10,10 @@ $description = get_the_archive_description();
 	<?php do_action( 'cpl_before_archive' ); ?>
 	<?php do_action( 'cpl_before_archive_'  . $type ); ?>
 
-	<h1 class="page-title"><?php echo apply_filters( 'cpl-archive-title', post_type_archive_title(), $type ); ?></h1>
+	<div class="cpl-archive--header">
+		<h1 class="page-title"><?php echo apply_filters( 'cpl-archive-title', post_type_archive_title(), $type ); ?></h1>
+		<?php Templates::type_switcher(); ?>
+	</div>
 
 	<div class="cpl-archive--container">
 
