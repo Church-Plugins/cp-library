@@ -160,7 +160,8 @@ class Speaker extends PostType {
 		try {
 			$item = ItemModel::get_instance_from_origin( $field->object_id );
 
-			if ( ! is_array( $field->data_to_save[ $field->id( true ) ] ) || ! $speakers = array_map( 'absint', $field->data_to_save[ $field->id( true ) ] ) ) {
+			$data = isset( $field->data_to_save[ $field->id( true ) ] ) ? $field->data_to_save[ $field->id( true ) ] : null;
+			if ( ! is_array( $data ) || ! $speakers = array_map( 'absint', $data ) ) {
 				$speakers = [];
 			}
 
@@ -219,39 +220,48 @@ class Speaker extends PostType {
 		}
 	}
 
+	/**
+	 * Modifies a query to filter by speaker
+	 *
+	 * @param \WP_Query $query the query object.
+	 */
 	public function speaker_query( $query ) {
 
-		if ( empty( $_GET['speaker'] ) ) {
+		// If the query is neither a main query or a query with a speaker filter, exit.
+		if ( ! $query->is_main_query() && ! $query->get( 'cpl_speakers' ) ) {
 			return;
 		}
 
-		if ( ! $query->is_main_query() ) {
+		$speakers = $_GET['speaker'] ?? $query->get( 'cpl_speakers' ); // phpcs:ignore
+
+		if ( empty( $speakers ) ) {
 			return;
 		}
 
-		if ( ! in_array( $query->get('post_type'), [ Item::get_instance()->post_type ] ) ) {
+		if ( ! in_array( $query->get( 'post_type' ), array( Item::get_instance()->post_type ), true ) ) {
 			return;
 		}
-
-		$speakers = $_GET['speaker'];
 
 		if ( ! is_array( $speakers ) ) {
-			$speakers = [ $speakers ];
+			$speakers = array( $speakers );
 		}
 
 		$post_in_orig = $query->get( 'post__in' );
-		$post_in = [];
+		$post_in      = array();
 
-		foreach( $speakers as $speaker ) {
+		foreach ( $speakers as $speaker ) {
 			$speaker = absint( $speaker );
 
 			try {
-				$speaker = Speaker_Model::get_instance( $speaker );
+				$speaker = (
+					$query->get( 'cpl_speakers' ) ?
+					Speaker_Model::get_instance_from_origin( $speaker ) :
+					Speaker_Model::get_instance( $speaker )
+				);
 				$post_in = array_merge( $post_in, $speaker->get_all_items() );
 			} catch ( Exception $e ) {
 				error_log( $e );
 			}
-
 		}
 
 		if ( ! empty( $post_in ) ) {
@@ -261,7 +271,5 @@ class Speaker extends PostType {
 			}
 			$query->set( 'post__in', $post_in );
 		}
-
-
 	}
 }

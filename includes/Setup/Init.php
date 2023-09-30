@@ -2,6 +2,8 @@
 
 namespace CP_Library\Setup;
 
+use CP_Library\Setup\Blocks\Block;
+
 /**
  * Setup plugin initialization
  */
@@ -43,6 +45,11 @@ class Init {
 	public $taxonomies;
 
 	/**
+	 * @var Blocks\Init;
+	 */
+	public $blocks;
+
+	/**
 	 * Only make one instance of Init
 	 *
 	 * @return Init
@@ -76,6 +83,7 @@ class Init {
 		$this->tables     = Tables\Init::get_instance();
 		$this->post_types = PostTypes\Init::get_instance();
 		$this->taxonomies = Taxonomies\Init::get_instance();
+		$this->blocks     = Blocks\Init::get_instance();
 	}
 
 	protected function actions() {}

@@ -312,6 +312,7 @@ class Item extends PostType  {
 	public function get_args() {
 		$args              = parent::get_args();
 		$args['menu_icon'] = apply_filters( "{$this->post_type}_icon", 'dashicons-format-video' );
+		$args['supports'][] = 'excerpt';
 
 		// make hierarchical if we are using variations
 		if ( cp_library()->setup->variations->is_enabled() ) {
@@ -348,6 +349,7 @@ class Item extends PostType  {
 			'context'      => 'normal',
 			'priority'     => 'high',
 			'show_names'   => true,
+			'show_in_rest' => \WP_REST_Server::READABLE
 		] );
 
 		if ( ! $has_parent && cp_library()->setup->variations->is_enabled() ) {

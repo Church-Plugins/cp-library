@@ -1,5 +1,6 @@
 <?php
 use ChurchPlugins\Helpers;
+use CP_Library\Admin\Settings;
 
 if ( empty( $args['item'] ) ) {
 	try {
@@ -48,8 +49,17 @@ $fields = \CP_Library\Admin\Settings::get_item( 'info_items', [ 'speakers', 'loc
 		<?php elseif ( 'speakers' == $field ) : ?>
 			<?php if ( ! empty( $item['speakers'] ) ) : ?>
 				<div class="cpl-info--speakers">
+					<?php 
+					$speakers = array_map( function( $item ) { 
+						if( Settings::get_speaker( 'enable_permalinks', false ) === false ) {
+							return $item['title'];
+						}
+						$url = get_permalink( $item['origin_id'] );
+						return sprintf( '<a href="%s">%s</a>', esc_url( $url ), $item['title'] );
+					}, $item['speakers'] );
+					?>
 					<?php echo Helpers::get_icon( 'speaker' ); ?>
-					<?php echo implode( ', ', wp_list_pluck( $item['speakers'], 'title' ) ); ?>
+					<?php echo implode( ', ', $speakers ); ?>
 				</div>
 			<?php endif; ?>
 		<?php elseif ( 'locations' == $field ) : ?>

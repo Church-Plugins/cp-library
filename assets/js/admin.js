@@ -1,6 +1,6 @@
 jQuery( function( $ ){
 
-	const wp_inline_edit_function = false;
+	let wp_inline_edit_function = false;
 	if( "undefined" !== typeof inlineEditPost ) {
 		wp_inline_edit_function = inlineEditPost.edit ?? false;
 	}
@@ -135,7 +135,7 @@ jQuery( function( $ ){
 	 * @param {DOMEvent} event
 	 */
 	let cancelModal = (event) => {
-		event.preventDefault();
+		event?.preventDefault();
 		$( '#cpl-scripture-list' ).addClass( 'cpl-list-closed' );
 		$( '#cpl-scripture-list-chapter' ).addClass( 'cpl-list-closed' );
 		$( '#cpl-scripture-list-verse' ).addClass( 'cpl-list-closed' );

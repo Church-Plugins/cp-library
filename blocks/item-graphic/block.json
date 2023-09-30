@@ -1,0 +1,86 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 2,
+	"name": "cp-library/item-graphic",
+	"title": "Item Graphic",
+	"category": "cp-library",
+	"description": "Display a sermon or series graphic.",
+	"textdomain": "cp-library",
+	"attributes": {
+		"isLink": {
+			"type": "boolean",
+			"default": false
+		},
+		"aspectRatio": {
+			"type": "string"
+		},
+		"width": {
+			"type": "string"
+		},
+		"height": {
+			"type": "string"
+		},
+		"scale": {
+			"type": "string",
+			"default": "cover"
+		},
+		"sizeSlug": {
+			"type": "string"
+		},
+		"rel": {
+			"type": "string",
+			"attribute": "rel",
+			"default": ""
+		},
+		"linkTarget": {
+			"type": "string",
+			"default": "_self"
+		},
+		"overlayColor": {
+			"type": "string"
+		},
+		"customOverlayColor": {
+			"type": "string"
+		},
+		"dimRatio": {
+			"type": "number",
+			"default": 0
+		},
+		"gradient": {
+			"type": "string"
+		},
+		"customGradient": {
+			"type": "string"
+		}
+	},
+	"usesContext": [ "postId", "postType", "queryId", "thumbnailAction", "item" ],
+	"supports": {
+		"align": [ "left", "right", "center", "wide", "full" ],
+		"anchor": true,
+		"color": {
+			"__experimentalDuotone": "img, .wp-block-cp-library-item-graphic__placeholder, .components-placeholder__illustration, .components-placeholder::before",
+			"text": false,
+			"background": false
+		},
+		"__experimentalBorder": {
+			"color": true,
+			"radius": true,
+			"width": true,
+			"__experimentalSelector": "img, .block-editor-media-placeholder, .wp-block-cp-library-item-graphic__overlay",
+			"__experimentalSkipSerialization": true,
+			"__experimentalDefaultControls": {
+				"color": true,
+				"radius": true,
+				"width": true
+			}
+		},
+		"html": false,
+		"spacing": {
+			"margin": true,
+			"padding": true
+		}
+	},
+	"editorStyle": "file:index.css",
+	"style": "file:style-index.css",
+	"editorScript": "file:index.js"
+}

@@ -45,6 +45,8 @@ $display = apply_filters( 'cpl_filters_display', $display );
 				<a href="#" class="cpl-filter--dropdown-button cpl-button is-light"><?php echo cp_library()->setup->post_types->speaker->plural_label; ?></a>
 				<div class="cpl-filter--dropdown">
 					<?php foreach ( \CP_Library\Models\Speaker::get_all_speakers() as $speaker ) : ?>
+						<?php $speaker = \CP_Library\Models\Speaker::get_instance( $speaker->id ) ?>
+						<?php if( empty( $speaker->get_all_items() ) ) continue; ?> 
 						<label>
 							<input type="checkbox" <?php checked( in_array( $speaker->id, Helpers::get_param( $_GET, 'speaker', [] ) ) ); ?>name="speaker[]" value="<?php echo esc_attr( $speaker->id ); ?>"/> <?php echo esc_html( $speaker->title ); ?>
 						</label>

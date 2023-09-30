@@ -1,0 +1,23 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 2,
+	"name": "cp-library/sermon-actions",
+	"title": "Sermon Actions",
+	"category": "cp-library",
+	"description": "Displays buttons for playing the sermon audio and video if the files exist.",
+	"usesContext": [ "postId", "postType", "queryId", "item" ],
+	"textdomain": "cp-library",
+	"attributes": {},
+	"supports": {
+		"align": [ "wide", "full", "center", "left", "right" ],
+		"anchor": true,
+		"html": false,
+		"spacing": {
+			"padding": true,
+			"margin": true
+		}
+	},
+	"editorStyle": "file:index.css",
+	"editorScript": "file:index.js",
+  "style": "file:style-index.css"
+}

@@ -251,6 +251,10 @@ class ItemType extends PostType  {
 			return;
 		}
 
+		if ( $query->get( 'posts_per_page' ) ) {
+			return;
+		}
+
 		$query->set( 'posts_per_page', 12 );
 	}
 
@@ -274,6 +278,7 @@ class ItemType extends PostType  {
 	public function get_args() {
 		$args                    = parent::get_args();
 		$args['menu_icon']       = apply_filters( "{$this->post_type}_icon", 'dashicons-list-view' );
+		$args['supports'][] = 'excerpt';
 
 		// show in Item menu if default item type is item
 		if ( 'item' === Settings::get_advanced( 'default_menu_item', 'item_type' ) ) {

@@ -448,6 +448,13 @@ class Settings {
 			'default' => cp_library()->setup->post_types->speaker->plural_label,
 		) );
 
+		$options->add_field( array(
+			'name' => sprintf( __( 'Enable %s permalinks', 'cp-library' ), cp_library()->setup->post_types->speaker->single_label ),
+			'desc' => sprintf( __( 'Will make a %s\'s name clickable', 'cp-library' ), cp_library()->setup->post_types->speaker->single_label ),
+			'id'   => 'enable_permalinks',
+			'type' => 'checkbox'
+		) );
+
 	}
 
 	protected function service_type_options() {
