@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.2.4
+* Fix alignment issue on archive page
+
 #### 1.2.3
 * Fix deprecation error
 * Allow beta updates
