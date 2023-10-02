@@ -111,7 +111,6 @@ export default function SermonTemplateEdit( {
 		showUpcoming
 	},
 	__unstableLayoutClassNames,
-	attributes: { thumbnailAction },
 	setAttributes,
 	...props
 } ) {
@@ -244,7 +243,10 @@ export default function SermonTemplateEdit( {
 
 	// fetch needed item data when posts are updated
 	React.useEffect(() => {
-		if(!posts) return
+		if(!posts) {
+			setItems(null)
+			return;
+		}
 
 		const abortController = new AbortController()
 
@@ -281,10 +283,9 @@ export default function SermonTemplateEdit( {
 			items?.map( ( post ) => ( {
 				postType: post.type,
 				postId: post.id,
-				thumbnailAction,
 				item: post.item
 			} ) ),
-		[ items, thumbnailAction ]
+		[ items ]
 	);
 	const hasLayoutFlex = layoutType === 'flex' && columns > 1;
 	const blockProps = useBlockProps( {
@@ -337,18 +338,6 @@ export default function SermonTemplateEdit( {
 					</BlockContextProvider>
 				) ) }
 			</ul>
-			<InspectorControls>
-				<PanelBody title={ __( 'Template settings', 'cp-library' ) }>
-				  <ToggleControl
-						label={ __( 'Show play button on graphic', 'cp-library' ) }
-						checked={thumbnailAction}
-						onChange={(checked) => {
-							setAttributes({ thumbnailAction: checked })
-						}}
-						help={ __( 'If checked, a play button will be shown on the sermon graphic. Otherwise the buttons will be displayed to the side. Will only display if sermon has a video.', 'cp-library' ) }
-					></ToggleControl>
-				</PanelBody>
-			</InspectorControls>
 		</>
 	);
 }

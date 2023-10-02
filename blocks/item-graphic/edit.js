@@ -44,7 +44,7 @@ export default function ItemGraphicEdit( {
 	clientId,
 	attributes,
 	setAttributes,
-	context: { postId, postType: postTypeSlug, queryId, thumbnailAction, item },
+	context: { postId, postType: postTypeSlug, queryId, item },
 } ) {
 	const isDescendentOfQueryLoop = Number.isFinite( queryId );
 	
@@ -57,6 +57,7 @@ export default function ItemGraphicEdit( {
 		sizeSlug,
 		rel,
 		linkTarget,
+		playIcon
 	} = attributes;
 	const [ featuredImage, setFeaturedImage ] = useEntityProp(
 		'postType',
@@ -143,6 +144,16 @@ export default function ItemGraphicEdit( {
 			/>
 			<InspectorControls>
 				<PanelBody title={ __( 'Settings' ) }>
+					{
+						<ToggleControl
+							label={ __( 'Show play button on graphic', 'cp-library' ) }
+							checked={playIcon}
+							onChange={(checked) => {
+								setAttributes({ playIcon: checked })
+							}}
+							help={ __( 'If checked, a play button will be shown on the sermon graphic. Otherwise the buttons will be displayed to the side. Will only display if sermon has a video.', 'cp-library' ) }
+					 	/>
+					}
 					<ToggleControl
 						__nextHasNoMarginBottom
 						label={
@@ -244,11 +255,11 @@ export default function ItemGraphicEdit( {
 					clientId={ clientId }
 				/>
 				{
-					Boolean(thumbnailAction && item?.video?.value) ?
+					Boolean(playIcon && item?.video?.value) ?
 					<div className='cpl-play-btn-overlay'>
 						<Play fill='currentColor' size='30%' />
 					</div> :
-					!thumbnailAction ?
+					!playIcon ?
 					<div className='cpl-item-graphic-inner-blocks-wrapper'>
 						{
 							<InnerBlocks allowedBlocks={ getAllowedBlocks( postTypeSlug ) } />

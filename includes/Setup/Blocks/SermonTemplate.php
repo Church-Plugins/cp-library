@@ -7,6 +7,8 @@
 
 namespace CP_Library\Setup\Blocks;
 
+use CP_Library\Controllers\Item;
+use CP_Library\Controllers\ItemType;
 use CP_Library\Setup\Blocks\Block;
 use CP_Library\Templates;
 use WP_Query;
@@ -49,10 +51,12 @@ class SermonTemplate extends Block {
 		$use_global_query = ( isset( $block->context['query']['inherit'] ) && $block->context['query']['inherit'] );
 		if ( $use_global_query ) {
 			global $wp_query;
+			/** @var WP_Query $query */
 			$query = clone $wp_query;
 		} else {
 			$query_args = build_query_vars_from_query_block( $block, $page );
-			$query      = new WP_Query( $query_args );
+			/** @var WP_Query $query */
+			$query = new WP_Query( $query_args );
 		}
 
 		if ( ! $query->have_posts() ) {
@@ -86,6 +90,25 @@ class SermonTemplate extends Block {
 			// This ensures that for the inner instances of the Post Template block, we do not render any block supports.
 			$block_instance['blockName'] = 'core/null';
 
+			// Get the CP Library model for the current post.
+			switch ( $query->post->post_type ) {
+				case cp_library()->setup->post_types->item->post_type:
+					$item_class = Item::class;
+					break;
+				case cp_library()->setup->post_types->item_type->post_type:
+					$item_class = ItemType::class;
+					break;
+				default:
+					throw new \ChurchPlugins\Exception( 'Invalid post type for CP Library Sermon Template block.' );
+			}
+
+			try {
+				$item = new $item_class( $query->post->ID, true );
+				$item = $item->get_api_data();
+			} catch ( \ChurchPlugins\Exception | \Exception $e ) {
+				continue;
+			}
+
 			// Render the inner blocks of the Post Template block with `dynamic` set to `false` to prevent calling
 			// `render_callback` and ensure that no wrapper markup is included.
 			$block_content = (
@@ -94,7 +117,7 @@ class SermonTemplate extends Block {
 					array(
 						'postType'        => get_post_type(),
 						'postId'          => get_the_ID(),
-						'thumbnailAction' => $attributes['thumbnailAction'],
+						'item'            => $item,
 					)
 				)
 			)->render( array( 'dynamic' => false ) );

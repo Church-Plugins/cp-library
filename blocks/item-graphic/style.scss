@@ -54,14 +54,19 @@
 	margin-inline: 0 !important;
 } 
 
+.cpl_play_overlay {
+	position: absolute; 
+	inset: 0;
+}
 
 .cpl-play-btn-overlay {
-	position: absolute; 
+	position: absolute;
 	inset: 0;
 	display: grid;
 	place-items: center;
 	color: white;
 	background-color: #0007;
+	cursor: pointer;
 
 	svg {
 		width: 30%;

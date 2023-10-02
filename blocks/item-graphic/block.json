@@ -51,9 +51,13 @@
 		},
 		"customGradient": {
 			"type": "string"
+		},
+		"playIcon": {
+			"type": "boolean",
+			"default": false
 		}
 	},
-	"usesContext": [ "postId", "postType", "queryId", "thumbnailAction", "item" ],
+	"usesContext": [ "postId", "postType", "queryId", "item" ],
 	"supports": {
 		"align": [ "left", "right", "center", "wide", "full" ],
 		"anchor": true,
