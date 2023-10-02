@@ -28,8 +28,7 @@ export default function SermonSpeakerEdit({
 		)
 	}
 
-	const speakers = item?.speakers || []
-
+	const speakers = item?.speakers || [ { id: 0, title: __( 'No speakers found', 'cp-library' )  } ]
 
 	return (
 		<>
@@ -37,11 +36,9 @@ export default function SermonSpeakerEdit({
 			<span className='material-icons-outlined'>person</span>
 			
 			{
-				speakers.length ?
 				speakers.map((speaker, index) => (
 					<a className='cpl-speaker-link' key={speaker.id}>{speaker.title}{index < speakers.length - 1 && ','}</a>
-				)) :
-				__( 'No speakers found', 'cp-library' )
+				))
 			}
 			</div>
 		</>

@@ -10,24 +10,24 @@ export default function SermonScriptureEdit({
 }) {
 	const blockProps = useBlockProps({})
 
-	if( postType !== 'cpl_item' ) {
+	console.log(postType, item)
+
+	if( postType !== 'cpl_item' && postType !== 'cpl_item_type' ) {
 		return (
 			<div {...blockProps}>{ __( 'This block is not compatible with this post type', 'cp-library' ) }</div>
 		)
 	}
 
-	const scriptures = Object.values(item?.scripture || {})
+	const scriptures = item?.scripture ? Object.values(item.scripture) : [{ slug: 'none', name: 'No Scriptures' }]
 
 	return (
 		<>
 			<div {...blockProps}>
 			<span className='material-icons-outlined'>menu_book</span>
 			{
-				scriptures.length ?
 				scriptures.map((scripture, index) => (
-					<a className='cpl-scripture-link' key={scripture.slug}>{scripture.name}{index < scriptures.length - 1 && ','}</a>
-				)) :
-				__( 'No Scriptures', 'cp-library' )
+					<a className='cpl-scripture-link' key={scripture.slug}>{scripture.name}{index < scriptures.length - 1 && ', '}</a>
+				))
 			}
 			</div>
 		</>

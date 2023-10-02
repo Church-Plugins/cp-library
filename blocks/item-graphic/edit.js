@@ -65,21 +65,23 @@ export default function ItemGraphicEdit( {
 		'featured_media',
 		postId
 	);
-			
 	const imageRef = React.useRef()
-	const fallbackUrl = item?.thumb || ''
+
+	const fallbackUrl = cplAdmin.site.thumb
 
 
-	const { media, postType } = useSelect(
+	const { media, postType, loading } = useSelect(
 		( select ) => {
-			const { getMedia, getPostType } = select( coreStore );
+			const { getMedia, getPostType, hasFinishedResolution } = select( coreStore );
+
+			const getMediaArgs = [ featuredImage, { context: 'edit' } ];
+
 			return {
 				media:
 					featuredImage && 
-					getMedia( featuredImage, {
-						context: 'view',
-					} ),
+					getMedia( ...getMediaArgs ),
 				postType: postTypeSlug && getPostType( postTypeSlug ),
+				loading: ! hasFinishedResolution( 'getMedia', getMediaArgs ) || ! hasFinishedResolution( 'getPostType', [ postTypeSlug ] )
 			};
 		},
 		[ featuredImage, postTypeSlug ]
@@ -167,6 +169,7 @@ export default function ItemGraphicEdit( {
 						}
 						onChange={ () => setAttributes( { isLink: ! isLink } ) }
 						checked={ isLink }
+						help={__( 'Warning: will not act as a link if there is nested content.', 'cp-library' )}
 					/>
 					{ isLink && (
 						<>
@@ -205,7 +208,7 @@ export default function ItemGraphicEdit( {
 		objectFit: !! ( height || aspectRatio ) && scale,
 	};
 
-	if ( featuredImage && media ) {
+	if ( ! loading && featuredImage && media ) {
 		image = ( 
 			<img
 				className={ borderProps.className }
@@ -223,7 +226,7 @@ export default function ItemGraphicEdit( {
 				ref={imageRef}
 			/>
 		)
-	} else if(fallbackUrl) {
+	} else if( !loading && fallbackUrl ) {
 		image = ( 
 			<img
 				className={ borderProps.className }

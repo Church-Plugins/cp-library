@@ -77,7 +77,7 @@ function RelatedPostsControl({ postType, onChange, postIds, queryKey, label }) {
 	}
 
 	React.useEffect( () => {
-		if ( ! searchHasResolved ) return;
+		if ( ! searchHasResolved || ! searchResults ) return;
 		setSuggestions(searchResults.map(({ id, title }) => ({ id, label: title.rendered })));
 	}, [ searchResults, searchHasResolved ] );
 

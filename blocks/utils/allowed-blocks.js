@@ -8,7 +8,8 @@ const ALLOWED_BLOCKS = [
 	'cp-library/item-graphic',
 	'cp-library/pagination',
 	'cp-library/sermon-template',
-	'cp-library/item-description'
+	'cp-library/item-description',
+	'cp-library/sermon-scripture',
 ]
 
 /**
@@ -23,7 +24,6 @@ export const allowedBlockMapping = {
 		'cp-library/sermon-speaker',
 		'cp-library/sermon-actions',
 		'cp-library/sermon-series',
-		'cp-library/sermon-scripture',
 		'cp-library/sermon-location',
 		'cp-library/sermon-season',
 		'cp-library/sermon-topics'

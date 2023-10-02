@@ -278,6 +278,10 @@ class ItemGraphic extends Block {
 			isset( $block->context['item']['video']['value'] )
 		);
 
+		if ( ! $show_play_btn && empty( $block->inner_blocks ) ) {
+			return '';
+		}
+
 		$inner_block_html = $show_play_btn ?
 		'<div class="cpl_play_overlay" data-item="' . esc_attr( wp_json_encode( $block->context['item'] ) ) . '"></div>' :
 		do_blocks( $content );
