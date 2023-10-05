@@ -52,6 +52,11 @@ foreach ($settings as $setting => $default) {
 	extract( array( $setting => $value ) );
 }
 
+// Default image is post thumbnail, otherwise specified image.
+$fallback_image = $image;
+$image          = get_the_post_thumbnail_url( get_the_ID(), array( 600, 600 ) );
+$image          = $image ? $image : $fallback_image;
+
 // Category.
 if ($category && 'none' !== $category) {
 	list( $category, $subcategory ) = explode( '|', $category );
