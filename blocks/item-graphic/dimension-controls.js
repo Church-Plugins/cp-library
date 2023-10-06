@@ -50,8 +50,7 @@ const scaleHelp = {
 const DimensionControls = ( {
 	clientId,
 	attributes: { aspectRatio, width, height, scale, sizeSlug },
-	setAttributes,
-	imageSizeOptions = [],
+	setAttributes
 } ) => {
 	const defaultUnits = [ 'px', '%', 'vw', 'em', 'rem' ];
 	const units = useCustomUnits( {
@@ -203,31 +202,6 @@ const DimensionControls = ( {
 					>
 						{ SCALE_OPTIONS }
 					</ToggleGroupControl>
-				</ToolsPanelItem>
-			) }
-			{ !! imageSizeOptions.length && (
-				<ToolsPanelItem
-					hasValue={ () => !! sizeSlug }
-					label={ __( 'Resolution' ) }
-					onDeselect={ () =>
-						setAttributes( { sizeSlug: undefined } )
-					}
-					resetAllFilter={ () => ( {
-						sizeSlug: undefined,
-					} ) }
-					isShownByDefault={ false }
-					panelId={ clientId }
-				>
-					<SelectControl
-						__nextHasNoMarginBottom
-						label={ __( 'Resolution' ) }
-						value={ sizeSlug || DEFAULT_SIZE }
-						options={ imageSizeOptions }
-						onChange={ ( nextSizeSlug ) =>
-							setAttributes( { sizeSlug: nextSizeSlug } )
-						}
-						help={ __( 'Select the size of the source image.' ) }
-					/>
 				</ToolsPanelItem>
 			) }
 		</InspectorControls>

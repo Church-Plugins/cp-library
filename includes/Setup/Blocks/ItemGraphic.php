@@ -26,7 +26,7 @@ class ItemGraphic extends Block {
 	 * @return string Returns the HTML for the item graphic.
 	 */
 	public function render( $attributes, $content, $block ) {
-		if ( ! isset( $block->context['postId'] ) ) {
+		if ( ! isset( $block->context['postId'] ) || ! isset( $block->context['item'] ) ) {
 			return '';
 		}
 		$post_ID = $block->context['postId'];
@@ -73,21 +73,8 @@ class ItemGraphic extends Block {
 			$attr['style'] = empty( $attr['style'] ) ? $extra_styles : $attr['style'] . $extra_styles;
 		}
 
-		$featured_image = get_the_post_thumbnail( $post_ID, $size_slug, $attr );
-
-		if( ! $featured_image ) {
-			try {
-				$item = $block->context['postType'] === 'cpl_item' ? 
-					new \CP_Library\Controllers\Item( $post_ID ) : 
-					new \CP_Library\Controllers\ItemType( $post_ID );
-
-				$attr['src'] = $item->get_thumbnail();
-				$featured_image = sprintf( '<img %1$s>', $this->attributes_to_string( $attr ) );
-			}
-			catch(\CP_Library\Exception $err) {
-				return '';
-			}  
-		}
+		$featured_image = attachment_url_to_postid( $block->context['item']['thumb'] );
+		$featured_image = wp_get_attachment_image( $featured_image, $size_slug, $attr );
 
 		if ( $is_link ) {
 			$link_target    = $attributes['linkTarget'];
@@ -275,16 +262,20 @@ class ItemGraphic extends Block {
 		$show_play_btn = (
 			true === $attributes['playIcon'] &&
 			$item_post_type === $block->context['postType'] &&
-			isset( $block->context['item']['video']['value'] )
+			isset( $block->context['item']['video']['value'] ) &&
+			filter_var( $block->context['item']['video']['value'], FILTER_VALIDATE_URL )
 		);
 
 		if ( ! $show_play_btn && empty( $block->inner_blocks ) ) {
 			return '';
 		}
 
-		$inner_block_html = $show_play_btn ?
-		'<div class="cpl_play_overlay" data-item="' . esc_attr( wp_json_encode( $block->context['item'] ) ) . '"></div>' :
-		do_blocks( $content );
+		$inner_block_html = (
+			$show_play_btn ?
+			'<div class="cpl_play_overlay" data-item="' . esc_attr( wp_json_encode( $block->context['item'] ) ) . '"></div>' :
+			do_blocks( $content )
+		);
+
 		return sprintf(
 			'<div class="cpl-item-graphic-inner-blocks-wrapper">%1$s</div>',
 			$inner_block_html
