@@ -76,8 +76,7 @@ $display = apply_filters( 'cpl_filters_display', $display );
 	</form>
 
 	<script>
-			(function ($) {
-				var $ = jQuery;
+			jQuery(document).ready(function ($) {
 				$('.cpl-filter--toggle--button').on('click', function (e) {
 					e.preventDefault();
 					$('.cpl-filter--has-dropdown').toggle();
@@ -133,6 +132,6 @@ $display = apply_filters( 'cpl_filters_display', $display );
 					e.preventDefault();
 					$(this).parent().toggleClass('open');
 				});
-			})(jQuery);
+			});
 	</script>
 </div>
