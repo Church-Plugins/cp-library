@@ -83,10 +83,14 @@ class Init {
 	public function upcoming_series_filter( $clauses, \WP_Query $query ) {
 		global $wpdb;
 
-		if ( isset( $query->query['cpl_hide_upcoming'] ) && cp_library()->setup->post_types->item_type->post_type === $query->query['post_type'] ) {
+		$item_table_name      = "{$wpdb->prefix}cpl_item";
+		$item_type_table_name = "{$wpdb->prefix}cpl_item_type";
+		$item_meta_table_name = "{$wpdb->prefix}cpl_item_meta";
+
+		if ( isset( $query->query['cpl_hide_upcoming'] ) && true === $query->query['cpl_hide_upcoming'] && cp_library()->setup->post_types->item_type->post_type === $query->query['post_type'] ) {
 			$clauses['join']  .= "
-				INNER JOIN wp_cpl_item_type ON wp_cpl_item_type.origin_id = {$wpdb->posts}.ID";
-			$clauses['where'] .= " AND EXISTS ( SELECT 1 FROM wp_cpl_item_meta WHERE wp_cpl_item_meta.key = 'item_type' AND wp_cpl_item_meta.item_type_id = wp_cpl_item_type.id )";
+				INNER JOIN {$item_table_name} ON {$item_type_table_name}.origin_id = {$wpdb->posts}.ID";
+			$clauses['where'] .= " AND EXISTS ( SELECT 1 FROM {$item_meta_table_name} WHERE {$item_meta_table_name}.key = 'item_type' AND {$item_type_table_name}.item_type_id = {$item_type_table_name}.id )";
 		}
 
 		return $clauses;
@@ -106,11 +110,15 @@ class Init {
 	public function upcoming_sermons_filter( $clauses, \WP_Query $query ) {
 		global $wpdb;
 
+		$item_table_name      = "{$wpdb->prefix}cpl_item";
+		$item_type_table_name = "{$wpdb->prefix}cpl_item_type";
+		$item_meta_table_name = "{$wpdb->prefix}cpl_item_meta";
+
 		if ( isset( $query->query['cpl_hide_upcoming'] ) && true === $query->query['cpl_hide_upcoming'] && cp_library()->setup->post_types->item->post_type === $query->query['post_type'] ) {
 			$clauses['join'] .= "
-				INNER JOIN wp_cpl_item ON wp_cpl_item.origin_id = {$wpdb->posts}.ID";
+				INNER JOIN {$item_table_name} ON {$item_table_name}.origin_id = {$wpdb->posts}.ID";
 
-			$clauses['where'] .= " AND EXISTS ( SELECT 1 from wp_cpl_item_meta WHERE ( wp_cpl_item_meta.key = 'audio_url' OR wp_cpl_item_meta.key = 'video_url' ) AND wp_cpl_item_meta.item_id = wp_cpl_item.id AND wp_cpl_item_meta.value != '' )";
+			$clauses['where'] .= " AND EXISTS ( SELECT 1 from {$item_meta_table_name} WHERE ( {$item_meta_table_name}.key = 'audio_url' OR {$item_meta_table_name}.key = 'video_url' ) AND {$item_meta_table_name}.item_id = {$item_table_name}.id AND {$item_meta_table_name}.value != '' )";
 		}
 
 		return $clauses;
