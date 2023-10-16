@@ -10,6 +10,7 @@ use CP_Library\Models\Speaker as Speaker_Model;
 use CP_Library\Controllers\Item as ItemController;
 use ChurchPlugins\Setup\Taxonomies\Taxonomy;
 use ChurchPlugins\Setup\PostTypes\PostType;
+use CP_Library\Templates;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -93,6 +94,36 @@ class ItemType extends PostType  {
 			add_filter( "{$source_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 			add_filter( "{$service_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 		}
+
+		add_action( 'wp_ajax_cpl_item_type_items', [ $this, 'infinite_scroll_items' ] );
+	}
+
+	/**
+	 * Handles infinite scroll for items
+	 */
+	public function infinite_scroll_items() {
+		if ( ! isset( $_GET['id'] ) || ! isset( $_GET['page'] ) ) {
+			wp_die();
+		}
+
+		$id   = absint( $_GET['id'] );
+		$page = absint( $_GET['page'] );
+
+		$item_type = Model::get_instance( $id );
+
+		$items = $item_type->get_items();
+		$items = array_reverse( $items );
+		$items = array_slice( $items, ( $page - 1 ) * 10, 10 );
+
+		foreach ( $items as $item ) {
+			global $post;
+			$post = get_post( $item->origin_id );
+			setup_postdata( $post );
+			Templates::get_template_part( 'parts/item-list' );
+		}
+		wp_reset_postdata();
+
+		wp_die();
 	}
 
 	/**
