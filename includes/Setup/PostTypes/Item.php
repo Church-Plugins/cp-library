@@ -338,7 +338,9 @@ class Item extends PostType  {
 		$id         = Helpers::get_param( $_GET, 'post', Helpers::get_request( 'post_ID' ) );
 
 		Helpers::get_request( 'post' );
-		if ( $id && get_post( $id )->post_parent ) {
+
+		$post_exists = get_post( $id );
+		if ( $id && $post_exists && $post_exists->post_parent ) {
 			$has_parent = true;
 		}
 
