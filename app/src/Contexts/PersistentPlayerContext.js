@@ -5,6 +5,8 @@ import { cplLog } from '../utils/helpers';
 
 import PersistentPlayer from "../Templates/PersistentPlayer";
 import theme from "../Templates/Theme";
+// TODO: Refactor to avoid circular dependency
+import Providers from "./Providers";
 
 const PersistentPlayerContext = createContext()
 
@@ -72,7 +74,11 @@ function PersistentPlayerProvider({children}) {
   const passToPersistentPlayer = useCallback(({ item, mode, isPlaying, playedSeconds }) => {
     if (!state.isActive) {
       const player = window.top.document.getElementById('cpl_persistent_player');
-      ReactDOM.render(<PersistentPlayer />, player);
+      ReactDOM.render(
+        <Providers>
+          <PersistentPlayer />
+        </Providers>, 
+      player);
     }
 
  	  setTimeout(() => {
@@ -94,11 +100,21 @@ function PersistentPlayerProvider({children}) {
 
   }, [state.isActive])
 
+  const closePersistentPlayer = () => {
+    const player = window.top.document.getElementById('cpl_persistent_player');
+    ReactDOM.unmountComponentAtNode(player);
+    window.top.document.body.classList.remove('cpl-persistent-player');
+    window.top.postMessage({
+      action: "CPL_PERSISTENT_PLAYER_CLOSED",
+    });
+  }
+
   // NOTE: you *might* need to memoize this value
   // Learn more in http://kcd.im/optimize-context
   const value = {
     ...state,
     passToPersistentPlayer,
+    closePersistentPlayer,
   }
 
   return <PersistentPlayerContext.Provider value={value}><ThemeProvider theme={theme}>{children}</ThemeProvider></PersistentPlayerContext.Provider>
@@ -107,7 +123,7 @@ function PersistentPlayerProvider({children}) {
 function usePersistentPlayer() {
   const context = useContext(PersistentPlayerContext)
   if (context === undefined) {
-    throw new Error('usePersistentPlayer must be used within a PersistentPlayerComm.Provider')
+    throw new Error('usePersistentPlayer must be used within a PersistentPlayerContext.Provider')
   }
   return context
 }

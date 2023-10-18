@@ -36,8 +36,6 @@ export default function Player({
   const { isDesktop } = useBreakpoints();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState();
-  // Video or audio
-  const [mode, setMode] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasPlayed, setHasPlayed] = useState(false);
   const [playedSeconds, setPlayedSeconds] = useState(0.0);
@@ -49,19 +47,22 @@ export default function Player({
   // Keep frequently-updated states (mainly the progress from the media player) as a ref so they
   // don't trigger re-render.
   const mediaState = useRef({});
-  const { isActive: persistentPlayerIsActive, passToPersistentPlayer } = usePersistentPlayer();
+  const { isActive: persistentPlayerIsActive, passToPersistentPlayer, closePersistentPlayer } = usePersistentPlayer();
   const playerInstance = useRef();
 	const playingClass   = isPlaying ? ' is_playing' : '';
 	const hasVariations = Boolean(item.variations?.length)
 	const [currentItem, setCurrentItem] = useState(hasVariations ? item.variations[0] : item)
 	const [currentMedia, setCurrentMedia] = useState(() => {
-		const media = currentItem.video?.value || currentItem.audio || null;
+		const media = currentItem.video?.value || currentItem.audio;
 		if( isURL( media ) ) {
 			return ''
 		}
-		return media
+		return media || ''
 	});
-	const isSoundcloud = isURL( currentMedia ) && new URL(currentMedia).origin === 'https://soundcloud.com';
+	// Video, audio or embed
+	const [mode, setMode] = useState(currentMedia && (isURL(currentMedia) ? false : 'embed'));
+
+	const isSoundcloud = isURL( currentMedia ) && currentMedia.indexOf('https://soundcloud.com') === 0;
 
 	const onMouseMove = (e) => {
 		if (showFSControls || ! mode) return;
@@ -80,7 +81,11 @@ export default function Player({
 		}
 	};
 
-	useEffect(() => { showControls() }, [mode]);
+	useEffect(() => { 
+		if(mode) {
+			showControls() 
+		}
+	}, [mode]);
 
   let progressIntervalHandle = null;
 
@@ -97,8 +102,9 @@ export default function Player({
 		mediaState.current = { ...mediaState.current, playedSeconds: playedSeconds };
 
 		setIsPlaying( false );
-		setMode( null );
-		setCurrentItem( null )
+		setMode( false );
+		setShowFSControls( false );
+		
 		passToPersistentPlayer({
 			item         : mediaState.current.item,
 			mode         : mediaState.current.mode,
@@ -106,6 +112,21 @@ export default function Player({
 			playedSeconds: mediaState.current.playedSeconds,
 		});
 	};
+
+	const updateItemState = ({ url, ...data }) => {
+
+		if(persistentPlayerIsActive) {
+			if(isURL( url )) {
+				passToPersistentPlayer( data )
+			}
+			else {
+				closePersistentPlayer()
+				updateMode( data.mode, url )
+			}
+		} else {
+			updateMode( data.mode, url )
+		}
+	}
 
 
 
@@ -192,6 +213,12 @@ export default function Player({
 		}, 10
 	);
 
+	const shouldDisplayThumbnail = (
+		( mode === false ) ||
+		( !currentMedia )  ||
+		( mode === 'audio' && ! isSoundcloud )
+	)
+
   return (
     // Margin bottom is to account for audio player. Making sure all content is still visible with
     // the player is up.
@@ -218,29 +245,31 @@ export default function Player({
 										height="100%"
 										onMouseMove={onMouseMove}
 								>
-									<PlayerWrapper
-										key={`${mode}-${item.id}`}
-										mode={mode}
-										item={item}
-										ref={playerInstance}
-										className="itemDetail__video"
-										url={currentMedia}
-										width="100%"
-										height="100%"
-										controls={false}
-										playbackRate={playbackRate}
-										playing={isPlaying}
-										onPlay={() => setIsPlaying(true)}
-										onPause={() => setIsPlaying(false)}
-										onDuration={duration => {
-											setDuration(duration);
-											playerInstance.current.seekTo(playedSeconds, 'seconds');
-											setIsPlaying(true);
-										}}
-										onProgress={progress => setPlayedSeconds(progress.playedSeconds)}
-										progressInterval={100}
-									/>
-
+									{
+										mode && currentItem &&
+										<PlayerWrapper
+											key={`${mode}-${currentItem.id}`}
+											mode={mode}
+											item={currentItem}
+											ref={playerInstance}
+											className="itemDetail__video"
+											url={currentMedia}
+											width="100%"
+											height="100%"
+											controls={false}
+											playbackRate={playbackRate}
+											playing={isPlaying}
+											onPlay={() => setIsPlaying(true)}
+											onPause={() => setIsPlaying(false)}
+											onDuration={duration => {
+												setDuration(duration);
+												playerInstance.current.seekTo(playedSeconds, 'seconds');
+												setIsPlaying(true);
+											}}
+											onProgress={progress => setPlayedSeconds(progress.playedSeconds)}
+											progressInterval={100}
+										/>
+									}
 
 									{!mode ? null : (
 										<Box className="itemPlayer__video__playWrap" onClick={() => setIsPlaying(!isPlaying)}></Box>
@@ -346,7 +375,7 @@ export default function Player({
 									dangerouslySetInnerHTML={{ __html: currentMedia.replace(/\\\"/g, '"') }} />
 							}
 							{/* Display thumbnail when playing audio except for soundcloud links */}
-							{mode !== 'video' && (!currentMedia || (isURL( currentMedia ) && !isSoundcloud)) && (
+							{shouldDisplayThumbnail && (
 									<Box
 										className="itemDetail__audio"
 										sx={displayBg}
@@ -396,25 +425,14 @@ export default function Player({
 									isVariation={true}
 									handleSelect={ (data) => {
 										setCurrentItem( variation )
-										if(persistentPlayerIsActive) {
-											passToPersistentPlayer( data )
-										}
-										else {
-											const url = data.mode === 'video' ? data.item.video.value : data.item.audio 
-											updateMode( data.mode, url )
-										}
+										updateItemState( data )
 									} }
 								/>
 							)
 						})
 						:
 						<Controls item={item} handleSelect={(data) => {
-							if(persistentPlayerIsActive) {
-								passToPersistentPlayer( data )
-							}
-							else {
-								updateMode( data.mode )
-							}
+							updateItemState(data)
 						}} />
 					}
 
