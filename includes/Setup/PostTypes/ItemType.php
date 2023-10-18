@@ -88,10 +88,12 @@ class ItemType extends PostType  {
 		if ( $this->show_in_menu() && 'item_type' === Settings::get_advanced( 'default_menu_item', 'item_type' ) ) {
 			$source_type  = Speaker::get_instance()->post_type;
 			$service_type = ServiceType::get_instance()->post_type;
+			$template = Template::get_instance()->post_type;
 
 			add_filter( "{$item}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 			add_filter( "{$source_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 			add_filter( "{$service_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
+			add_filter( "{$template}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 		}
 	}
 

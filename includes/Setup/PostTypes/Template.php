@@ -50,8 +50,6 @@ class Template extends PostType {
 		add_shortcode( self::$shortcode_slug, array( $this, 'display' ) );
 		add_filter( 'allowed_block_types_all', array( $this, 'allowed_block_types' ), 10, 2 );
 		add_filter( 'default_content', array( $this, 'populate_content' ), 10, 2 );
-		add_filter( "{$this->post_type}_show_in_menu", array( $this, 'show_in_submenu' ) );
-		add_filter( "{$this->post_type}_slug", array( $this, 'custom_slug' ) );
 		add_action( 'wp_ajax_cpl_render_template', array( $this, 'render_ajax_content' ) );
 		add_filter( 'block_editor_settings_all', array( $this, 'block_editor_settings' ), 10, 2 );
 		parent::add_actions();
@@ -158,23 +156,16 @@ class Template extends PostType {
 		return file_get_contents( $html_file );
 	}
 
-	/**
-	 * Displays menu item in Series submenu instead of as a seperate menu item
-	 *
-	 * @return string the submenu in which to display
-	 */
-	public function show_in_submenu() {
-		return 'edit.php?post_type=cpl_item_type';
-	}
+	public function get_args() {
+		$args                 = parent::get_args();
 
-	/**
-	 * Custom rewrite to prevent clashing with other plugins
-	 *
-	 * @param string $slug The default slug.
-	 * @return string
-	 */
-	public function custom_slug( $slug ) {
-		return 'cp_library_template';
+		$args['has_archive']         = false;
+		$args['exclude_from_search'] = true;
+		$args['rewrite']['slug']     = 'cp_library_template';
+		$args['menu_icon']           = apply_filters( "{$this->post_type}_icon", 'dashicons-welcome-widgets-menus' );
+		$args['show_in_menu']        = 'edit.php?post_type=' . cp_library()->setup->post_types->item->post_type;
+
+		return $args;
 	}
 
 	/**

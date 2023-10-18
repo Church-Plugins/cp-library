@@ -532,7 +532,7 @@ class Items extends WP_REST_Controller {
 
 		global $wpdb;
 
-		$query = $wpdb->prepare( "SELECT * FROM wp_cp_log WHERE object_id = '$item_id' AND JSON_EXTRACT(data, '$.user_ip') = '$user_ip'" );
+		$query = $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}cp_log WHERE object_id = '$item_id' AND JSON_EXTRACT(data, '$.user_ip') = '$user_ip'" );
 
 		$data = $wpdb->get_row( $query );
 
