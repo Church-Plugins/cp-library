@@ -16,16 +16,24 @@ return array(
 <div class="wp-block-cp-library-item-graphic"></div>
 <!-- /wp:cp-library/item-graphic -->
 
-<!-- wp:cp-library/item-title {"level":3,"isLink":true,"style":{"spacing":{"margin":{"top":"var:preset|spacing|40"}}},"fontSize":"medium"} /-->
+<!-- wp:cp-library/item-title {"level":3,"isLink":true,"style":{"spacing":{"margin":{"top":"var:preset|spacing|40","bottom":"0"}}},"fontSize":"medium"} /-->
 
-<!-- wp:group {"style":{"spacing":{"padding":{"top":"0","bottom":"0","left":"0","right":"0"},"blockGap":"16px","margin":{"top":"var:preset|spacing|20","bottom":"0px"}}},"layout":{"type":"flex","flexWrap":"nowrap"}} -->
-<div class="wp-block-group" style="margin-top:var(--wp--preset--spacing--20);margin-bottom:0px;padding-top:0;padding-right:0;padding-bottom:0;padding-left:0"><!-- wp:cp-library/sermon-speaker {"style":{"spacing":{"margin":{"top":"0px"},"padding":{"top":"6px","bottom":"6px"}}},"fontSize":"small"} /-->
+<!-- wp:group {"style":{"spacing":{"blockGap":"16px","padding":{"top":"0","bottom":"0","left":"0","right":"0"}}},"layout":{"type":"flex","flexWrap":"nowrap"}} -->
+<div class="wp-block-group" style="padding-top:0;padding-right:0;padding-bottom:0;padding-left:0"><!-- wp:cp-library/sermon-speaker {"fontSize":"small"} /-->
 
 <!-- wp:cp-library/sermon-series {"style":{"spacing":{"padding":{"top":"6px","bottom":"6px"}}},"fontSize":"small"} /--></div>
 <!-- /wp:group -->
 
 <!-- wp:cp-library/sermon-actions {"style":{"spacing":{"margin":{"top":"var:preset|spacing|40"}}}} /--></div>
 <!-- /wp:group -->
-<!-- /wp:cp-library/sermon-template --></div>
+<!-- /wp:cp-library/sermon-template -->
+
+<!-- wp:cp-library/pagination -->
+<!-- wp:query-pagination-previous /-->
+
+<!-- wp:query-pagination-numbers /-->
+
+<!-- wp:query-pagination-next /-->
+<!-- /wp:cp-library/pagination --></div>
 <!-- /wp:cp-library/query -->',
 );
