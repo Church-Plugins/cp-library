@@ -447,7 +447,7 @@ class Init {
 	 * @return string the plugin name
 	 */
 	public function get_plugin_name() {
-		return __( 'Church Plugins - Library', 'cp-library' );
+		return __( 'CP Sermons', 'cp-library' );
 	}
 
 	/**

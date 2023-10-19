@@ -85,12 +85,12 @@ class Init {
 
 		$categories[] = array(
 			'slug'  => 'cp-library',
-			'title' => 'CP Library',
+			'title' => cp_library()->get_plugin_name(),
 		);
 
 		$categories[] = array(
 			'slug'  => 'cp-library-queries',
-			'title' => 'CP Library Queries',
+			'title' => cp_library()->get_plugin_name() . ' Queries',
 		);
 
 		return $categories;
@@ -100,6 +100,15 @@ class Init {
 	 * Register block patterns
 	 */
 	public function register_block_patterns() {
+
+		register_block_pattern_category( 'cpl_item', array(
+			'label' => cp_library()->setup->post_types->item->plural_label
+		) );
+
+		register_block_pattern_category( 'cpl_item_type', array(
+			'label' => cp_library()->setup->post_types->item_type->plural_label
+		) );
+
 		$patterns_dir = CP_LIBRARY_PLUGIN_DIR . 'block-patterns/';
 
 		$files = glob( $patterns_dir . '*.php' );

@@ -4,7 +4,7 @@
 	"name": "cp-library/item-description",
 	"title": "Item Description",
 	"category": "cp-library",
-	"description": "Display a the description of a Sermon or Series",
+	"description": "Display the description of a Sermon or Series",
 	"textdomain": "default",
 	"attributes": {
 		"textAlign": {

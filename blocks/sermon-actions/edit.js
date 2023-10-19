@@ -27,14 +27,14 @@ export default function SermonActionsEdit({
 				{
 					<button style={videoButtonStyle} className='cpl-button cpl-button--primary is-primary cpl-button--rectangle'>
 						<Play style={{ fill: 'currentcolor', stroke: 'none' }} strokeWidth={2} stroke="currentColor" />
-						<span>{ cplAdmin.i18n.playAudio }</span>
+						<span>{ cplAdmin.i18n.playVideo }</span>
 					</button>
-				}			
+				}
 
 				{
 					<button style={audioButtonStyle} className='cpl-button cpl-button--outlined is-outlined cpl-button--rectangle'>
 						<Volume1 style={{ fill: 'none', stroke: 'currentcolor' }} strokeWidth={2} stroke="currentColor" />
-						<span>{ cplAdmin.i18n.playVideo }</span>
+						<span>{ cplAdmin.i18n.playAudio }</span>
 					</button>
 				}
 			</div>

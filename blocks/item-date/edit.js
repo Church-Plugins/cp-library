@@ -180,7 +180,7 @@ export default function ItemDateEdit( {
 				</PanelBody>
 			</InspectorControls>
 
-			<div { ...blockProps }>{ postDate }</div>
+			<div { ...blockProps }><span className='material-icons-outlined'>calendar_today</span>{ postDate }</div>
 		</>
 	);
 }
