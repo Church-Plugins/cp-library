@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "bootstrap": "wpackio-scripts bootstrap",
-    "build": "wpackio-scripts build && npm run build:blocks",
+    "build": "wpackio-scripts build && npm run build:src && npm run build:blocks",
     "start": "wpackio-scripts start",
     "archive": "wpackio-scripts pack",
+    "build:src": "wp-scripts build",
+    "start:src": "wp-scripts start",
     "dev:blocks": "wp-scripts start --webpack-src-dir=blocks/ --output-path=dist/blocks",
     "build:blocks": "wp-scripts build --webpack-src-dir=blocks/ --output-path=dist/blocks"
   },

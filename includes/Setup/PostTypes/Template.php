@@ -54,13 +54,66 @@ class Template extends PostType {
 		add_filter( "{$this->post_type}_slug", array( $this, 'custom_slug' ) );
 		add_action( 'wp_ajax_cpl_render_template', array( $this, 'render_ajax_content' ) );
 		add_filter( 'block_editor_settings_all', array( $this, 'block_editor_settings' ), 10, 2 );
+		add_action( 'admin_enqueue_scripts', array( $this, 'template_editor_scripts' ) );
+		add_action( 'init', array( $this, 'register_meta' ), 15 );
 		parent::add_actions();
+	}
+
+	/**
+	 * Custom arguments for this post type
+	 */
+	public function get_args() {
+		$args                 = parent::get_args();
+		$args['supports'][]   = 'custom-fields';
+		$args['show_in_rest'] = true;
+
+		return $args;
 	}
 
 	/**
 	 * Create CMB2 metaboxes
 	 */
 	public function register_metaboxes() {}
+
+	/**
+	 * Registers meta fields
+	 */
+	public function register_meta() {
+		register_post_meta(
+			$this->post_type,
+			'template_type',
+			array(
+				'type'         => 'string',
+				'single'       => true,
+				'show_in_rest' => true,
+				'description'  => __( 'The template type', 'cp-library' ),
+				'default'      => 'shortcode',
+			)
+		);
+
+		register_post_meta(
+			$this->post_type,
+			'template_location',
+			array(
+				'type'         => 'string',
+				'single'       => true,
+				'show_in_rest' => true,
+				'description'  => __( 'Which post type to display this template on', 'cp-library' ),
+				'default'      => cp_library()->setup->post_types->item->post_type,
+			)
+		);
+
+		register_post_meta(
+			$this->post_type,
+			'post_preview_id',
+			array(
+				'type'         => 'integer',
+				'single'       => true,
+				'show_in_rest' => true,
+				'description'  => __( 'The ID of the post to preview', 'cp-library' ),
+			)
+		);
+	}
 
 	/**
 	 * Adds metaboxes for this CPT
@@ -249,6 +302,59 @@ class Template extends PostType {
 		$template_id = isset( $_GET['templateId'] ) ? absint( $_GET['templateId'] ) : 0;
 		echo self::render_content( $template_id ); // phpcs:ignore WordPress.Security.EscapeOutput
 		wp_die();
+	}
+
+	/**
+	 * Enqueues scripts for the template editor
+	 */
+	public function template_editor_scripts() {
+		global $pagenow;
+		if ( is_admin() && ( 'post.php' === $pagenow || 'post-new.php' === $pagenow ) ) {
+			$post_type = get_post_type();
+			if ( $post_type === $this->post_type ) {
+				cp_library()->enqueue_script( 'template-editor', array(), '1.0' );
+				cp_library()->enqueue_style( 'template-editor', array(), '1.0' );
+			}
+		}
+	}
+
+	/**
+	 * Returns a Template for the current page if one exists
+	 */
+	public static function get_current_template() {
+		$post_type = get_post_type();
+
+		if ( is_single() ) {
+			$template_type = 'single';
+		} elseif ( is_archive() ) {
+			$template_type = 'archive';
+		} else {
+			return false;
+		}
+
+		$query = new \WP_Query(
+			array(
+				'post_type'  => cp_library()->setup->post_types->template->post_type,
+				'meta_query' => array(
+					'relation' => 'AND',
+					array(
+						'key'   => 'template_type',
+						'value' => $template_type,
+					),
+					array(
+						'key'   => 'template_location',
+						'value' => $post_type,
+					),
+				),
+			)
+		);
+		wp_reset_postdata();
+
+		if ( $query->have_posts() ) {
+			return $query->posts[0];
+		}
+
+		return false;
 	}
 
 	/**

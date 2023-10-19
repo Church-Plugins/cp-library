@@ -357,6 +357,48 @@ class Init {
 	}
 
 	/**
+	 * Enqueue a script
+	 *
+	 * @param string $name The entrypoint to include.
+	 * @param array  $deps Additional dependencies.
+	 * @param string $ver Version number.
+	 * @param bool   $in_footer Whether to enqueue in the footer.
+	 */
+	public function enqueue_script( $name, $deps = array(), $ver = false, $in_footer = false ) {
+		$dir    = CP_LIBRARY_PLUGIN_DIR . "build/{$name}.js";
+		$src    = CP_LIBRARY_PLUGIN_URL . "build/{$name}.js";
+		$assets = require CP_LIBRARY_PLUGIN_DIR . "build/{$name}.asset.php";
+
+		if ( ! file_exists( $dir ) ) {
+			return;
+		}
+
+		$hook = "cp-staff-{$name}";
+		$deps = array_merge( $assets['dependencies'], $deps );
+
+		wp_enqueue_script( $hook, $src, $deps, $ver, $in_footer );
+	}
+
+	/**
+	 * Enqueue a style
+	 *
+	 * @param string $name The entrypoint to include.
+	 * @param array  $deps Additional dependencies.
+	 * @param string $ver Version number.
+	 * @param string $media Media type.
+	 */
+	public function enqueue_style( $name, $deps = array(), $ver = false, $media = 'all' ) {
+		if ( ! file_exists( CP_LIBRARY_PLUGIN_DIR . "build/{$name}.css" ) ) {
+			return;
+		}
+
+		$src  = CP_LIBRARY_PLUGIN_URL . "build/{$name}.css";
+		$hook = "cp-staff-{$name}-css";
+
+		wp_enqueue_style( $hook, $src, $deps, $ver, $media );
+	}
+
+	/**
 	 * Returns an array to be set as a global JS object
 	 */
 	public function cpl_vars() {

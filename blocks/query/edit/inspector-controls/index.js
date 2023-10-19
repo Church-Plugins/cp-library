@@ -117,6 +117,9 @@ export default function QueryInspectorControls( {
 		!singleItem &&
 		isControlAllowed( allowedControls, 'parents' ) &&
 		isPostTypeHierarchical;
+	const showItemSearchControl = !inherit && singleItem
+	const showItemCountControl = !inherit && !singleItem
+	const showUpcomingControl = !inherit && !singleItem && postType === 'cpl_item'
 
 	const showFiltersPanel =
 		showTaxControl ||
@@ -142,18 +145,31 @@ export default function QueryInspectorControls( {
 			{ showSettingsPanel && (
 				<InspectorControls>
 					<PanelBody title={ __( 'Settings', 'cp-library' ) }>
-						<SelectControl
-							label={ __( 'Type', 'cp-library' ) }
-							value={ postType }
-							onChange={handlePostTypeChange}
-							options={[
-								{ label: __( 'Series', 'cp-library' ), value: 'cpl_item_type' },
-								{ label: __( 'Sermons', 'cp-library' ), value: 'cpl_item' }
-							]}
+
+						<ToggleControl 
+							label={ __( 'Inherit from main query', 'cp-library' ) }
+							checked={ Boolean(inherit) }
+							onChange={ (checked) => {
+								setQuery({ inherit: checked })
+							}}
+							help={ __( 'Use the main query for this block.', 'cp-library' ) }
 						/>
+						
+						{
+							showPostTypeControl &&
+							<SelectControl
+								label={ __( 'Type', 'cp-library' ) }
+								value={ postType }
+								onChange={handlePostTypeChange}
+								options={[
+									{ label: __( 'Series', 'cp-library' ), value: 'cpl_item_type' },
+									{ label: __( 'Sermons', 'cp-library' ), value: 'cpl_item' }
+								]}
+							/>
+						}
 
 						{
-							!singleItem && postType === 'cpl_item' &&
+						  showUpcomingControl	&&
 							<ToggleControl
 								label={ __( 'Show Upcoming', 'cp-library' ) }
 								checked={ showUpcoming }
@@ -178,6 +194,7 @@ export default function QueryInspectorControls( {
 						}
 
 						{
+							! inherit &&
 							<CheckboxControl 
 								label={ __( 'Single Item', 'cp-library' ) }
 								checked={ Boolean(singleItem) }
@@ -196,7 +213,7 @@ export default function QueryInspectorControls( {
 						}
 
 						{
-							!singleItem && 
+							showItemCountControl && 
 							<NumberControl
 								__unstableInputWidth="60px"
 								label={ __( 'Items to show', 'cp-library' ) }
@@ -222,7 +239,7 @@ export default function QueryInspectorControls( {
 						}
 
 						{
-							singleItem &&
+							showItemSearchControl &&
 							<PostSearchControl
 								value={ query.include || [] }
 								postType={ postType }

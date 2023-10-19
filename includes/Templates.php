@@ -133,6 +133,23 @@ class Templates {
 			return get_404_template();
 		}
 
+		// If there is a FSE template for this page type, use it.
+		if ( wp_is_block_theme() ) {
+			$template_type = is_archive() ? 'archive' : ( is_single() ? 'single' : false );
+			$post_type     = get_post_type();
+			$query = new \WP_Query(
+				array(
+					'post_type' => 'wp_template',
+					'name'      => "$template_type-$post_type",
+				)
+			);
+			wp_reset_postdata();
+
+			if ( $query->have_posts() ) {
+				return $template;
+			}
+		}
+
 		// add the theme slug to the body class
 		add_filter( 'body_class', [ __CLASS__, 'theme_body_class' ] );
 
@@ -356,7 +373,6 @@ class Templates {
 	 * @return string Template path
 	 */
 	public static function get_current_page_template() {
-
 		$template = '';
 
 
@@ -381,12 +397,16 @@ class Templates {
 				$template = self::get_template_hierarchy( 'single', [ 'disable_view_check' => true ] );
 			}
 
+			if ( \CP_Library\Setup\PostTypes\Template::get_current_template() ) {
+				$template = self::get_template_hierarchy( 'dynamic', [ 'disable_view_check' => true ] );
+			}
 		}
 
 		// apply filters
 		return apply_filters( 'cpl_current_view_template', $template );
 
 	}
+
 
 	/**
 	 * Loads the contents into the page template
