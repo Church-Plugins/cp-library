@@ -1,0 +1,12 @@
+
+.wp-block-cp-library-item-title, .editor-styles-wrapper .wp-block-cp-library-item-title {
+	word-break: break-word;
+	// This block has customizable padding, border-box makes that more predictable.
+	box-sizing: border-box;
+
+	&.wp-block-cp-library-item-title > a {
+		display: inline-block;
+		text-decoration: none;
+		color: currentColor;
+	}
+}

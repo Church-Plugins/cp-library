@@ -59,4 +59,5 @@ $display = apply_filters( 'cpl_filters_display', $display );
 		</div>
 
 	</form>
+
 </div>

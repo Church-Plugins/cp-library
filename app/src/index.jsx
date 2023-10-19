@@ -8,6 +8,7 @@ import ItemWidget from './Templates/ItemWidget';
 import VideoWidget from './Templates/VideoWidget';
 import ItemActions from './Templates/ItemActions';
 import ItemPlayer from './Templates/ItemPlayer';
+import PlayOverlay from './Templates/PlayOverlay';
 
 // Possible elements that we may find for shortcodes
 const root = document.getElementById( 'cpl_root' );
@@ -17,6 +18,7 @@ const itemWidget = document.getElementById( 'cpl_item_widget' );
 const videoWidget = document.getElementById( 'cpl_video_widget' );
 const itemActions = document.querySelectorAll( '.cpl_item_actions' );
 const itemPlayers = document.querySelectorAll( '.cpl_item_player' );
+const playBtnOverlays = document.querySelectorAll( '.cpl_play_overlay' )
 
 const renderEvent = new Event( 'cpl-rendered' );
 
@@ -76,6 +78,13 @@ if ( itemPlayers.length ) {
 	for ( let i = 0; i < itemPlayers.length; i++ ) {
 		let item = JSON.parse(itemPlayers[i].getAttribute('data-item'));
 		ReactDOM.render(<ItemPlayer item={item}/>, itemPlayers[i]);
+	}
+}
+
+if ( playBtnOverlays.length ) {
+	for ( const overlay of playBtnOverlays ) {
+		const item = JSON.parse(overlay.getAttribute('data-item'));
+		ReactDOM.render(<PlayOverlay item={item} />, overlay)
 	}
 }
 

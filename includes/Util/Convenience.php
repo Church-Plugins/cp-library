@@ -55,7 +55,7 @@ class Convenience
 
 		$format = ! empty( $format ) ? $format : get_option( 'date_format' );
 
-		if ( ! ctype_digit( $timestamp ) ) {
+		if ( ! is_int( $timestamp ) && ! ctype_digit( $timestamp ) ) {
 			$timestamp = strtotime( $timestamp );
 		}
 
