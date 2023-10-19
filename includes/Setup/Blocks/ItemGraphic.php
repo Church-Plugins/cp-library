@@ -74,7 +74,7 @@ class ItemGraphic extends Block {
 		}
 
 		$featured_image = attachment_url_to_postid( $block->context['item']['thumb'] );
-		$featured_image = wp_get_attachment_image( $featured_image, $size_slug, $attr );
+		$featured_image = wp_get_attachment_image( $featured_image, $size_slug, false, $attr );
 
 		if ( $is_link ) {
 			$link_target    = $attributes['linkTarget'];
@@ -259,11 +259,14 @@ class ItemGraphic extends Block {
 	public function get_inner_blocks( $attributes, $block, $content ) {
 		$item_post_type = cp_library()->setup->post_types->item->post_type;
 
+		$url = $block->context['item']['video']['value'] ?? false;
+		$url = $url ? $url : ( $block->context['item']['audio'] ?? false );
+
 		$show_play_btn = (
 			true === $attributes['playIcon'] &&
 			$item_post_type === $block->context['postType'] &&
-			isset( $block->context['item']['video']['value'] ) &&
-			filter_var( $block->context['item']['video']['value'], FILTER_VALIDATE_URL )
+			$url &&
+			filter_var( $url, FILTER_VALIDATE_URL )
 		);
 
 		if ( ! $show_play_btn && empty( $block->inner_blocks ) ) {

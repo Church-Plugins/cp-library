@@ -6,24 +6,20 @@ import classnames from 'classnames';
 /**
  * WordPress dependencies
  */
-import { useEntityProp, store as coreStore } from '@wordpress/core-data';
-import { useSelect, useDispatch } from '@wordpress/data';
+import { store as coreStore } from '@wordpress/core-data';
+import { useSelect } from '@wordpress/data';
 import {
 	ToggleControl,
 	PanelBody,
-	Placeholder,
 	TextControl,
 } from '@wordpress/components';
 import {
 	InspectorControls,
 	InnerBlocks,
 	useBlockProps,
-	store as blockEditorStore,
 	__experimentalUseBorderProps as useBorderProps,
 } from '@wordpress/block-editor';
 import { __, sprintf } from '@wordpress/i18n';
-import { store as noticesStore } from '@wordpress/notices';
-import { Play } from 'react-feather';
 
 /**
  * Internal dependencies
@@ -31,14 +27,7 @@ import { Play } from 'react-feather';
 import DimensionControls from './dimension-controls';
 import Overlay from './overlay';
 import { getAllowedBlocks } from '../utils/allowed-blocks';
-
-const ALLOWED_MEDIA_TYPES = [ 'image' ];
-
-function getMediaSourceUrlBySizeSlug( media, slug ) {
-	return (
-		media?.media_details?.sizes?.[ slug ]?.source_url || media?.source_url
-	);
-}
+import { PlayOverlayWrapper } from '../../app/src/Templates/PlayOverlay';
 
 export default function ItemGraphicEdit( {
 	clientId,
@@ -46,26 +35,17 @@ export default function ItemGraphicEdit( {
 	setAttributes,
 	context: { postId, postType: postTypeSlug, queryId, item },
 } ) {
-	const isDescendentOfQueryLoop = Number.isFinite( queryId );
-	
+
 	const {
 		isLink,
 		aspectRatio,
 		height,
 		width,
 		scale,
-		sizeSlug,
 		rel,
 		linkTarget,
 		playIcon
 	} = attributes;
-
-	const [ featuredImage, setFeaturedImage ] = useEntityProp(
-		'postType',
-		postTypeSlug,
-		'featured_media',
-		postId
-	);
 
 	const imageRef = React.useRef()
 
@@ -83,11 +63,6 @@ export default function ItemGraphicEdit( {
 		style: { width, height, aspectRatio },
 	} );
 	const borderProps = useBorderProps( attributes );
-
-	const { createErrorNotice } = useDispatch( noticesStore );
-	const onUploadError = ( message ) => {
-		createErrorNotice( message, { type: 'snackbar' } );
-	};
 
 	const controls = (
 		<>
@@ -153,7 +128,6 @@ export default function ItemGraphicEdit( {
 
 	let image;
 
-	const label = __( 'Add a featured image' );
 	const imageStyles = {
 		...borderProps.style,
 		height: ( !! aspectRatio && '100%' ) || height,
@@ -200,17 +174,16 @@ export default function ItemGraphicEdit( {
 					clientId={ clientId }
 				/>
 				{
-					Boolean(playIcon && item?.video?.value) ?
-					<div className='cpl-play-btn-overlay'>
-						<Play fill='currentColor' size='30%' />
-					</div> :
-					!playIcon ?
+					item && playIcon &&
+					<PlayOverlayWrapper item={item} />
+				}
+				{
+					!playIcon &&
 					<div className='cpl-item-graphic-inner-blocks-wrapper'>
 						{
 							<InnerBlocks allowedBlocks={ getAllowedBlocks( postTypeSlug ) } />
 						}
-					</div> :
-					null
+					</div>
 				}
 			</figure>
 		</>
