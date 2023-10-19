@@ -202,7 +202,7 @@ class SermonTemplate extends Block {
 			$query['post__in'] = $include;
 		}
 
-		if ( isset( $block->context['showUpcoming'] ) && false === $block->context['showUpcoming'] ) {
+		if ( isset( $block->context['showUpcoming'] ) && false === $block->context['showUpcoming'] && cp_library()->setup->post_types->item->post_type === $query['post_type'] ) {
 			$query['cpl_hide_upcoming'] = true;
 		}
 
