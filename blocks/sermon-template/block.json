@@ -52,15 +52,6 @@
 			}
 		}
 	},
-	"attributes": {
-		"thumbnailAction": {
-			"type": "boolean",
-			"default": false
-		}
-	},
-	"providesContext": {
-		"thumbnailAction": "thumbnailAction"
-	},
 	"style": "file:style-index.css",
 	"editorStyle": "file:index.css",
 	"editorScript": "file:index.js"

@@ -6,24 +6,20 @@ import classnames from 'classnames';
 /**
  * WordPress dependencies
  */
-import { useEntityProp, store as coreStore } from '@wordpress/core-data';
-import { useSelect, useDispatch } from '@wordpress/data';
+import { store as coreStore } from '@wordpress/core-data';
+import { useSelect } from '@wordpress/data';
 import {
 	ToggleControl,
 	PanelBody,
-	Placeholder,
 	TextControl,
 } from '@wordpress/components';
 import {
 	InspectorControls,
 	InnerBlocks,
 	useBlockProps,
-	store as blockEditorStore,
 	__experimentalUseBorderProps as useBorderProps,
 } from '@wordpress/block-editor';
 import { __, sprintf } from '@wordpress/i18n';
-import { store as noticesStore } from '@wordpress/notices';
-import { Play } from 'react-feather';
 
 /**
  * Internal dependencies
@@ -31,109 +27,42 @@ import { Play } from 'react-feather';
 import DimensionControls from './dimension-controls';
 import Overlay from './overlay';
 import { getAllowedBlocks } from '../utils/allowed-blocks';
-
-const ALLOWED_MEDIA_TYPES = [ 'image' ];
-
-function getMediaSourceUrlBySizeSlug( media, slug ) {
-	return (
-		media?.media_details?.sizes?.[ slug ]?.source_url || media?.source_url
-	);
-}
+import { PlayOverlayWrapper } from '../../app/src/Templates/PlayOverlay';
 
 export default function ItemGraphicEdit( {
 	clientId,
 	attributes,
 	setAttributes,
-	context: { postId, postType: postTypeSlug, queryId, thumbnailAction, item },
+	context: { postId, postType: postTypeSlug, queryId, item },
 } ) {
-	const isDescendentOfQueryLoop = Number.isFinite( queryId );
-	
+
 	const {
 		isLink,
 		aspectRatio,
 		height,
 		width,
 		scale,
-		sizeSlug,
 		rel,
 		linkTarget,
+		playIcon
 	} = attributes;
-	const [ featuredImage, setFeaturedImage ] = useEntityProp(
-		'postType',
-		postTypeSlug,
-		'featured_media',
-		postId
-	);
+
 	const imageRef = React.useRef()
 
-	const fallbackUrl = cplAdmin.site.thumb
+	const mediaUrl = item.thumb || cplAdmin.site.thumb
 
+	const { postType } = useSelect( ( select ) => {
+		const { getPostType } = select( coreStore );
 
-	const { media, postType, loading } = useSelect(
-		( select ) => {
-			const { getMedia, getPostType, hasFinishedResolution } = select( coreStore );
-
-			const getMediaArgs = [ featuredImage, { context: 'edit' } ];
-
-			return {
-				media:
-					featuredImage && 
-					getMedia( ...getMediaArgs ),
-				postType: postTypeSlug && getPostType( postTypeSlug ),
-				loading: ! hasFinishedResolution( 'getMedia', getMediaArgs ) || ! hasFinishedResolution( 'getPostType', [ postTypeSlug ] )
-			};
-		},
-		[ featuredImage, postTypeSlug ]
-	);
-	const mediaUrl = getMediaSourceUrlBySizeSlug( media, sizeSlug );
-
-
-	const imageSizes = useSelect(
-		( select ) => select( blockEditorStore ).getSettings().imageSizes,
-		[]
-	);
-	const imageSizeOptions = imageSizes
-		.filter( ( { slug } ) => {
-			return media?.media_details?.sizes?.[ slug ]?.source_url;
-		} )
-		.map( ( { name, slug } ) => ( {
-			value: slug,
-			label: name,
-		} ) );
+		return {
+			postType: postTypeSlug && getPostType( postTypeSlug ),
+		};
+	})
 
 	const blockProps = useBlockProps( {
 		style: { width, height, aspectRatio },
 	} );
 	const borderProps = useBorderProps( attributes );
-
-	const placeholder = ( content ) => {
-		return (
-			<Placeholder
-				className={ classnames(
-					'block-editor-media-placeholder',
-					borderProps.className
-				) }
-				withIllustration={ false }
-				style={ {
-					...blockProps.style,
-					...borderProps.style,
-				} }
-			>
-				{ content }
-			</Placeholder>
-		);
-	};
-
-	const onSelectImage = ( value ) => {
-		if ( value?.id ) {
-			setFeaturedImage( value.id );
-		}
-	};
-
-	const { createErrorNotice } = useDispatch( noticesStore );
-	const onUploadError = ( message ) => {
-		createErrorNotice( message, { type: 'snackbar' } );
-	};
 
 	const controls = (
 		<>
@@ -141,10 +70,20 @@ export default function ItemGraphicEdit( {
 				clientId={ clientId }
 				attributes={ attributes }
 				setAttributes={ setAttributes }
-				imageSizeOptions={ imageSizeOptions }
 			/>
+
 			<InspectorControls>
 				<PanelBody title={ __( 'Settings' ) }>
+					{
+						<ToggleControl
+							label={ __( 'Show play button on graphic', 'cp-library' ) }
+							checked={playIcon}
+							onChange={(checked) => {
+								setAttributes({ playIcon: checked })
+							}}
+							help={ __( 'If checked, a play button will be shown on the sermon graphic. Otherwise the buttons will be displayed to the side. Will only display if sermon has a video.', 'cp-library' ) }
+					 	/>
+					}
 					<ToggleControl
 						__nextHasNoMarginBottom
 						label={
@@ -186,10 +125,9 @@ export default function ItemGraphicEdit( {
 			</InspectorControls>
 		</>
 	);
+
 	let image;
 
-
-	const label = __( 'Add a featured image' );
 	const imageStyles = {
 		...borderProps.style,
 		height: ( !! aspectRatio && '100%' ) || height,
@@ -197,29 +135,11 @@ export default function ItemGraphicEdit( {
 		objectFit: !! ( height || aspectRatio ) && scale,
 	};
 
-	if ( ! loading && featuredImage && media ) {
-		image = ( 
+	if( mediaUrl ) {
+		image = (
 			<img
 				className={ borderProps.className }
 				src={ mediaUrl }
-				alt={
-					media?.alt_text
-						? sprintf(
-								// translators: %s: The image's alt text.
-								__( 'Featured image: %s', 'cp-library' ),
-								media.alt_text
-							)
-						: __( 'Featured image', 'cp-library' )
-				}
-				style={ imageStyles }
-				ref={imageRef}
-			/>
-		)
-	} else if( !loading && fallbackUrl ) {
-		image = ( 
-			<img
-				className={ borderProps.className }
-				src={ fallbackUrl }
 				alt={ __( 'Featured image', 'cp-library' ) }
 				style={ imageStyles }
 				ref={imageRef}
@@ -227,7 +147,14 @@ export default function ItemGraphicEdit( {
 		)
 	}
 	else {
-		image = placeholder();
+		image = placeholder 
+	}
+
+
+	if( postTypeSlug !== 'cpl_item' && postTypeSlug !== 'cpl_item_type' ) {
+		return (
+			<div {...blockProps}>{ __( 'This block is not compatible with the current post type.', 'cp-library' ) }</div>
+		)
 	}
 
 	/**
@@ -247,17 +174,16 @@ export default function ItemGraphicEdit( {
 					clientId={ clientId }
 				/>
 				{
-					Boolean(thumbnailAction && item?.video?.value) ?
-					<div className='cpl-play-btn-overlay'>
-						<Play fill='currentColor' size='30%' />
-					</div> :
-					!thumbnailAction ?
+					item && playIcon &&
+					<PlayOverlayWrapper item={item} />
+				}
+				{
+					!playIcon &&
 					<div className='cpl-item-graphic-inner-blocks-wrapper'>
 						{
 							<InnerBlocks allowedBlocks={ getAllowedBlocks( postTypeSlug ) } />
 						}
-					</div> :
-					null
+					</div>
 				}
 			</figure>
 		</>

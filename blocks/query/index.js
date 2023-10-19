@@ -27,4 +27,20 @@ registerBlockType(metadata, {
   )
 })
 
-addFilter( 'editor.BlockEdit', 'cp-groups/query', queryInspectorControls )
+addFilter( 'editor.BlockEdit', 'cp-library/query', queryInspectorControls )
+
+// allows the pagination block to be used with the CP Library query block
+addFilter(
+	'blocks.registerBlockType',
+	'cp-library/query-pagination',
+	function( settings, name ) {
+		if ( 'core/query-pagination' === name ) {
+			console.log(settings)
+			return {
+				...settings,
+				parent: [ ...(settings.parent || []), 'cp-library/query' ]
+			}
+		}
+		return settings
+	}
+);

@@ -19,7 +19,7 @@ registerBlockType( metadata, { edit, icon } )
 registerBlockVariation( 'cp-library/item-date', {
 	name: 'post-date-modified',
 	title: __( 'Item Modified Date', 'cp-library' ),
-	description: __( "Display a items's last updated date.", 'cp-library' ),
+	description: __( "Display a item's last updated date.", 'cp-library' ),
 	attributes: { displayType: 'modified' },
 	scope: [ 'block', 'inserter' ],
 	isActive: ( blockAttributes ) =>

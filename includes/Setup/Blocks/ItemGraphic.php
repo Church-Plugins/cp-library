@@ -26,7 +26,7 @@ class ItemGraphic extends Block {
 	 * @return string Returns the HTML for the item graphic.
 	 */
 	public function render( $attributes, $content, $block ) {
-		if ( ! isset( $block->context['postId'] ) ) {
+		if ( ! isset( $block->context['postId'] ) || ! isset( $block->context['item'] ) ) {
 			return '';
 		}
 		$post_ID = $block->context['postId'];
@@ -73,21 +73,8 @@ class ItemGraphic extends Block {
 			$attr['style'] = empty( $attr['style'] ) ? $extra_styles : $attr['style'] . $extra_styles;
 		}
 
-		$featured_image = get_the_post_thumbnail( $post_ID, $size_slug, $attr );
-
-		if( ! $featured_image ) {
-			try {
-				$item = $block->context['postType'] === 'cpl_item' ? 
-					new \CP_Library\Controllers\Item( $post_ID ) : 
-					new \CP_Library\Controllers\ItemType( $post_ID );
-
-				$attr['src'] = $item->get_thumbnail();
-				$featured_image = sprintf( '<img %1$s>', $this->attributes_to_string( $attr ) );
-			}
-			catch(\CP_Library\Exception $err) {
-				return '';
-			}  
-		}
+		$featured_image = attachment_url_to_postid( $block->context['item']['thumb'] );
+		$featured_image = wp_get_attachment_image( $featured_image, $size_slug, false, $attr );
 
 		if ( $is_link ) {
 			$link_target    = $attributes['linkTarget'];
@@ -121,7 +108,7 @@ class ItemGraphic extends Block {
 			$wrapper_attributes = get_block_wrapper_attributes( array( 'style' => $aspect_ratio . $width . $height ) );
 		}
 
-		$inner_block_html = $this->get_inner_blocks( $block, $content );
+		$inner_block_html = $this->get_inner_blocks( $attributes, $block, $content );
 
 		return "<figure {$wrapper_attributes}>{$featured_image}{$inner_block_html}</figure>";
 	}
@@ -261,34 +248,37 @@ class ItemGraphic extends Block {
 		return implode(' ', $attribute_parts);
 	}
 
-	/** 
+	/**
 	 * Gets the wrapper as well as the inner blocks for the current block
-	 * 
-	 * @param \WP_Block $block
-	 * @param string $content
-	*/
-	public function get_inner_blocks( $block, $content ) {
-		$show_play_btn = $block->context['thumbnailAction'] !== false && $block->context['postType'] === 'cpl_item';
+	 *
+	 * @param array     $attributes The block attributes.
+	 * @param \WP_Block $block Block instance.
+	 * @param string    $content Block inner content.
+	 * @return string The inner blocks HTML.
+	 */
+	public function get_inner_blocks( $attributes, $block, $content ) {
+		$item_post_type = cp_library()->setup->post_types->item->post_type;
 
-		if( $block->context['postType'] === 'cpl_item' ) {
-			try {
-				$item = new \CP_Library\Controllers\Item( $block->context['postId'], true );
-				$item = $item->get_video();
+		$url = $block->context['item']['video']['value'] ?? false;
+		$url = $url ? $url : ( $block->context['item']['audio'] ?? false );
 
-				if( ! $item['value'] ) {
-					$show_play_btn = false;
-				}
-			}
-			catch( \CP_Library\Exception $err ) {
-				$show_play_btn = false;
-			}
-		}
+		$show_play_btn = (
+			true === $attributes['playIcon'] &&
+			$item_post_type === $block->context['postType'] &&
+			$url &&
+			filter_var( $url, FILTER_VALIDATE_URL )
+		);
 
 		if ( ! $show_play_btn && empty( $block->inner_blocks ) ) {
 			return '';
 		}
 
-		$inner_block_html = $show_play_btn ? '<div class="cpl-play-btn-overlay"><i data-feather="play" width="30%" height="30%" fill="currentColor"></i></div>' : do_blocks( $content );
+		$inner_block_html = (
+			$show_play_btn ?
+			'<div class="cpl_play_overlay" data-item="' . esc_attr( wp_json_encode( $block->context['item'] ) ) . '"></div>' :
+			do_blocks( $content )
+		);
+
 		return sprintf(
 			'<div class="cpl-item-graphic-inner-blocks-wrapper">%1$s</div>',
 			$inner_block_html
