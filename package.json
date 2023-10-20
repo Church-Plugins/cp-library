@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "bootstrap": "wpackio-scripts bootstrap",
+    "styles" : "wpackio-scripts build",
     "build": "wpackio-scripts build && npm run build:blocks",
     "start": "wpackio-scripts start",
     "archive": "wpackio-scripts pack",

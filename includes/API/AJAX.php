@@ -91,12 +91,20 @@ class AJAX {
 
 		$post_ids = $query->posts;
 
+		// different default for scripture
+		$default_order_by = 'cpl_scripture' === $facet_type ? 'name' : 'sermon_count';
+		$order_by         = Settings::get_advanced( 'sort_' . $facet_type, $default_order_by );
+
 		$args = array(
 			'post__in'   => $post_ids,
-			'order_by'   => Settings::get_advanced( 'sort_speaker', 'count' ),
+			'order_by'   => $order_by,
 			'threshold'  => (int) Settings::get_advanced( 'filter_count_threshold', 3 ),
 			'facet_type' => $facet_type,
 		);
+
+		if ( 'sermon_count' == $args['order_by'] ) {
+			$args['order_by'] = 'count';
+		}
 
 		wp_reset_postdata();
 
@@ -118,8 +126,10 @@ class AJAX {
 
 		?>
 		<?php foreach ( $items as $item ) : ?>
-			<label>
-				<input type="checkbox" <?php checked( in_array( $item->value, $selected, true ) ); ?> name="<?php echo esc_attr( $facet_type ); ?>[]" value="<?php echo esc_attr( $item->value ); ?>"/> <?php echo esc_html( $item->title ); ?> (<?php echo esc_html( $item->count ); ?>)
+			<label class="cp-has-checkmark">
+				<input type="checkbox" <?php checked( in_array( $item->value, $selected, true ) ); ?> name="<?php echo esc_attr( $facet_type ); ?>[]" value="<?php echo esc_attr( $item->value ); ?>"/>
+				<span class="cp-checkmark"></span>
+				<span class="cp-filter-label"><?php echo esc_html( $item->title ); ?> <sup class="cp-filter-count">(<?php echo esc_html( $item->count ); ?>)</sup></span>
 			</label>
 		<?php endforeach; ?>
 		<?php
@@ -169,13 +179,13 @@ class AJAX {
 			source.id AS value,
 			source.title AS title,
 			COUNT(sermon.id) AS count
-		FROM 
+		FROM
 			%1$s AS source
-		LEFT JOIN 
+		LEFT JOIN
 			%2$s AS meta ON meta.source_id = source.id
 		INNER JOIN
 			%3$s AS type ON meta.source_type_id = type.id AND type.title = "%4$s"
-		LEFT JOIN 
+		LEFT JOIN
 			%5$s AS sermon ON meta.item_id = sermon.id AND %6$s
 		GROUP BY
 			source.id
@@ -219,7 +229,7 @@ class AJAX {
 		$args = wp_parse_args(
 			$args,
 			array(
-				'order_by'   => 'count',
+				'order_by'   => 'sermon_count',
 				'threshold'  => 3,
 				'facet_type' => '',
 				'post__in'   => array(),
@@ -240,7 +250,7 @@ class AJAX {
 
 		global $wpdb;
 
-		$query = "SELECT 
+		$query = "SELECT
 			t.name AS title,
 			t.term_id AS id,
 			t.slug AS value,
@@ -277,14 +287,40 @@ class AJAX {
 
 		$output = $wpdb->get_results( $query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
+		if ( $args['facet_type'] === 'cpl_scripture' && 'name' === $args['order_by'] ) {
+			usort( $output, 'CP_Library\API\Ajax::sort_scripture' );
+		}
+
 		return $output ? $output : array();
 	}
 
+	/**
+	 * Sort terms by scripture order
+	 *
+	 * @since  1.3.0
+	 *
+	 * @param $a
+	 * @param $b
+	 *
+	 * @return int|string
+	 * @author Tanner Moushey, 10/20/23
+	 */
+	public static function sort_scripture( $a, $b ) {
+		$book_order = array_values( cp_library()->setup->taxonomies->scripture->get_terms() );
+		$index_a = array_search( $a->title, $book_order );
+		$index_b = array_search( $b->title, $book_order );
+
+		if ( $index_a === false || $index_b === false ) {
+			return 0;
+		}
+
+		return $index_a - $index_b;
+	}
 
 
 }
 
-// SELECT 
+// SELECT
 // 	t.name AS title,
 // 	t.term_id AS id,
 // 	t.slug AS value,

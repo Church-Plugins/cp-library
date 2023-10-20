@@ -54,82 +54,67 @@ module.exports = {
 		// },
 		// If has more length, then multi-compiler
 		// We need to punt app compiling to `app/package.json`
-		{
-			name: 'app',
-			entry: {
-				main: ['./app/src/index.jsx'],
-				analytics: ['./app/analytics/index.jsx']
-			},
-//			webpackConfig: {
-//				module: {
-//					rules: [
-//						{
-//							test: /\.rt$/,
-//							use: [
-//								{
-//									loader: 'react-templates-loader?modules=amd',
-//								}
-//							]
-//						}
-//
-//					]
-//				}
+//		{
+//			name: 'app',
+//			entry: {
+//				main: ['./app/src/index.jsx'],
+//				analytics: ['./app/analytics/index.jsx']
 //			},
-			webpackConfig: (config, merge, appDir, isDev) => {
-				const customRules = {
-					module: {
-						rules: [
-							// Config for SVGR in javascript/typescript files
-							{
-								test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-								issuer: issuerForJsTsFiles,
-								use: [
-									{
-										loader: 'babel-loader',
-										options: {
-											presets: getBabelPresets(
-												getDefaultBabelPresetOptions(true, isDev),
-												undefined
-											),
-										},
-									},
-									{
-										loader: '@svgr/webpack',
-										options: { babel: false },
-									},
-									{
-										loader: 'file-loader',
-										options: getFileLoaderOptions(
-											appDir,
-											isDev,
-											false
-										),
-									},
-								],
-							},
-							// For everything else, we use file-loader only
-							{
-								test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-								issuer: issuerForNonJsTsFiles,
-								use: [
-									{
-										loader: 'file-loader',
-										options: getFileLoaderOptions(
-											appDir,
-											isDev,
-											true
-										),
-									},
-								],
-							},
-						],
-					},
-				};
-
-				// merge and return
-				return merge(config, customRules);
-			},
-		},
+//			webpackConfig: (config, merge, appDir, isDev) => {
+//				const customRules = {
+//					module: {
+//						rules: [
+//							// Config for SVGR in javascript/typescript files
+//							{
+//								test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
+//								issuer: issuerForJsTsFiles,
+//								use: [
+//									{
+//										loader: 'babel-loader',
+//										options: {
+//											presets: getBabelPresets(
+//												getDefaultBabelPresetOptions(true, isDev),
+//												undefined
+//											),
+//										},
+//									},
+//									{
+//										loader: '@svgr/webpack',
+//										options: { babel: false },
+//									},
+//									{
+//										loader: 'file-loader',
+//										options: getFileLoaderOptions(
+//											appDir,
+//											isDev,
+//											false
+//										),
+//									},
+//								],
+//							},
+//							// For everything else, we use file-loader only
+//							{
+//								test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
+//								issuer: issuerForNonJsTsFiles,
+//								use: [
+//									{
+//										loader: 'file-loader',
+//										options: getFileLoaderOptions(
+//											appDir,
+//											isDev,
+//											true
+//										),
+//									},
+//								],
+//							},
+//						],
+//					},
+//				};
+//
+//				// merge and return
+//				return merge(config, customRules);
+//			},
+//		},
 		{
 			name         : 'styles',
 			entry        : {
@@ -158,53 +143,53 @@ module.exports = {
 				return merge(config, customRules);
 			},
 		},
-		{
-			name : 'scripts',
-			entry: {
-				main: ['./assets/js/main.js'],
-				admin: ['./assets/js/admin.js'],
-				block_editor: ['./assets/js/block_editor.js'],
-			},
-		},
-		{
-			name: 'modules',
-			entry: {
-				divi: ['./includes/Modules/Divi/client/index.js']
-			},
-			// apply scss loader
-			webpackConfig: (config, merge, appDir, isDev) => {
-				const customRules = {
-					module: {
-						rules: [
-							{
-								test: /\.scss/,
-								issuer: issuerForStyleFiles,
-								use: [
-									{
-										loader: 'style-loader',
-									},
-									{
-										loader: 'css-loader',
-										options: {
-											sourceMap: isDev,
-										},
-									},
-									{
-										loader: 'sass-loader',
-										options: {
-											sourceMap: isDev,
-										},
-									},
-								],
-							}
-						]
-					}
-				}
-
-				return merge(config, customRules);
-			}
-
-		}
+//		{
+//			name : 'scripts',
+//			entry: {
+//				main: ['./assets/js/main.js'],
+//				admin: ['./assets/js/admin.js'],
+//				block_editor: ['./assets/js/block_editor.js'],
+//			},
+//		},
+//		{
+//			name: 'modules',
+//			entry: {
+//				divi: ['./includes/Modules/Divi/client/index.js']
+//			},
+//			// apply scss loader
+//			webpackConfig: (config, merge, appDir, isDev) => {
+//				const customRules = {
+//					module: {
+//						rules: [
+//							{
+//								test: /\.scss/,
+//								issuer: issuerForStyleFiles,
+//								use: [
+//									{
+//										loader: 'style-loader',
+//									},
+//									{
+//										loader: 'css-loader',
+//										options: {
+//											sourceMap: isDev,
+//										},
+//									},
+//									{
+//										loader: 'sass-loader',
+//										options: {
+//											sourceMap: isDev,
+//										},
+//									},
+//								],
+//							}
+//						]
+//					}
+//				}
+//
+//				return merge(config, customRules);
+//			}
+//
+//		}
 	],
 
 	// Output path relative to the context directory
