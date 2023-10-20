@@ -6,14 +6,8 @@
 		flex-flow: row wrap;
 		border-bottom: 1px solid;
 		margin-bottom: var(--cp-gap--sm);
-
-		> * {
-			margin-bottom: var(--cp-gap--sm);
-
-			&:not(:last-child) {
-				margin-right: var(--cp-gap--sm);
-			}
-		}
+		padding-bottom: var(--cp-gap--sm);
+		gap: var(--cp-gap--sm);
 
 		.filter__button {
 			button {
@@ -29,6 +23,11 @@
 			.cpl-filter--dropdown {
 				display: block;
 			}
+		}
+
+		&.disabled {
+			opacity: 0.5;
+			pointer-events: none;
 		}
 	}
 
@@ -50,40 +49,45 @@
 	&--dropdown {
 		display: none;
 		background: white;
-		padding: var(--cp-gap--sm) var(--cp-gap--md);
+		padding: var(--cp-gap-base) 0;
 		box-shadow: var(--cp-box-shadow);
-		border-radius: .5em;
+		border-radius: var(--cp-border-radius-sm);
 		margin-top: .25em;
 		position: absolute;
 		top: 100%;
 		left: 0;
 		min-width: 100%;
 		z-index: 5555;
-		width: calc( 100% + var(--cp-gap--md) * 2 );
-		margin-left: calc(var(--cp-gap--md) * -1);
 		max-height: 50vh;
 		overflow: auto;
 
-		@media(min-width: 768px) {
-			width: calc( 100% + var(--cp-gap--lg) * 2);
-			margin-left: calc( var(--cp-gap--lg) * -1);
-			padding-left: var(--cp-gap--lg);
-			padding-right: var(--cp-gap--lg);
-		}
-
 		label {
-			display: block;
+			display: flex;
 			cursor: pointer;
 			white-space: nowrap;
+			padding: 0 var(--cp-gap--sm);
+			font-size: var(--cp-font-size--sm);
+			flex-direction: row;
+			align-items: center;
+			gap: 1em;
+
+			&:hover {
+				background: var(--cp-color-ui-inverted-light);
+			}
 		}
 	}
 
 	&--search {
 		margin-right: 0;
 		margin-left: auto !important;
+		flex-shrink: 1;
+		flex-grow: 1;
+		flex-basis: 8rem;
+		overflow: hidden;
+		max-width: 12rem;
 
 		@include media-breakpoint-down(md) {
-			flex-grow: 1;
+			max-width: 100%;
 		}
 
 		&--box {
@@ -138,4 +142,51 @@
 			}
 		}
 	}
+}
+
+.cp-has-checkmark {
+	display: block;
+	position: relative;
+	cursor: pointer;
+	font-size: 1.5em;
+	user-select: none;
+
+	input {
+		position: absolute;
+		opacity: 0;
+		cursor: pointer;
+		height: 0;
+		width: 0;
+	}
+
+	.cp-checkmark {
+		height: 1.5em;
+    width: 1.5em;
+    background-color: rgba(0,0,0,.1);
+		position: relative;
+
+		&:after {
+			content: "";
+			position: absolute;
+			display: none;
+			left: 0.5em;
+			top: 0.25em;
+			width: 0.5em;
+			height: 0.85em;
+			border: solid #fff;
+			border-width: 0 0.25em 0.25em 0;
+			transform: rotate(45deg);
+		}
+	}
+
+	input:checked {
+		+ .cp-checkmark {
+			background-color: var(--cp-color-ui-primary);
+
+			&:after {
+				display: block;
+			}
+		}
+	}
+
 }

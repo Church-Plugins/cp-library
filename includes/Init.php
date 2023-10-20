@@ -220,9 +220,36 @@ class Init {
 	 * @author costmo
 	 */
 	public function app_enqueue() {
-		$this->enqueue->enqueue( 'styles', 'main', [] );
-		$this->enqueue->enqueue( 'scripts', 'main', [ 'js_dep' => ['jquery'] ] );
-		$scripts = $this->enqueue->enqueue( 'app', 'main', [ 'js_dep' => ['jquery'] ] );
+		$this->enqueue->enqueue( 'styles', 'main', array() );
+		$this->enqueue->enqueue( 'scripts', 'main', array( 'js_dep' => array( 'jquery' ) ) );
+
+		wp_register_script( 'cpl_facets', CP_LIBRARY_PLUGIN_URL . '/assets/js/facets.js', array( 'jquery' ), CP_LIBRARY_PLUGIN_VERSION, true );
+
+		$scripts = $this->enqueue->enqueue( 'app', 'main', array( 'js_dep' => array( 'jquery', 'cpl_facets' ) ) );
+
+		global $wp_query;
+
+		$cpl_vars = apply_filters(
+			'cpl_app_vars',
+			array(
+				'site' => array(
+					'title' => get_bloginfo( 'name', 'display' ),
+					'thumb' => Settings::get( 'default_thumbnail', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
+					'logo'  => Settings::get( 'logo', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
+					'url'   => get_site_url(),
+					'path'  => '',
+				),
+				'components' => array(
+					'mobileTop' => '',
+				),
+				'i18n' => array(
+					'playAudio' => Settings::get( 'label_play_audio', __( 'Listen', 'cp-library' ) ),
+					'playVideo' => Settings::get( 'label_play_video', __( 'Watch', 'cp-library' ) ),
+				),
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'query_vars' => $wp_query->query_vars,
+			)
+		);
 
 		if ( isset( $scripts['js'], $scripts['js'][0], $scripts['js'][0]['handle'] ) ) {
 			wp_localize_script( $scripts['js'][0]['handle'], 'cplVars', $this->cpl_vars() );
@@ -230,57 +257,6 @@ class Init {
 
 		wp_enqueue_style( 'material-icons' );
 		wp_enqueue_script( 'feather-icons' );
-
-		return;
-
-		$asset_manifest = json_decode( file_get_contents( CP_LIBRARY_ASSET_MANIFEST ), true );
-
-		// TODO: Calls to `str_replace` need to be less specific
-
-		// App CSS
-		if( isset( $asset_manifest['files'][ 'main.css' ] ) ) {
-			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'main.css' ] );
-			wp_enqueue_style( CP_LIBRARY_UPREFIX, $path );
-		}
-
-		// App runtime js
-		if( isset( $asset_manifest['files'][ 'runtime-main.js' ] ) ) {
-			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'runtime-main.js' ] );
-			wp_enqueue_script( CP_LIBRARY_UPREFIX . '-runtime', $path, [] );
-		}
-
-		$cpl_vars = apply_filters( 'cpl_app_vars', [
-			'site' => [
-				'title' => get_bloginfo( 'name', 'display' ),
-				'thumb' => Settings::get( 'default_thumbnail', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
-				'url'   => get_site_url(),
-				'path'  => '',
-			],
-			'components' => [
-				'mobileTop' => ''
-			],
-		] );
-
-		wp_localize_script( CP_LIBRARY_UPREFIX . '-runtime', 'cplVars', $cpl_vars );
-
-		// App main js
-		if( isset( $asset_manifest['files'][ 'main.js' ] ) ) {
-			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'main.js' ] );
-			wp_enqueue_script( CP_LIBRARY_UPREFIX . '-main', $path, [] );
-		}
-
-		// App static js
-		foreach( $asset_manifest['files'] as $key => $value ) {
-			if( preg_match( '@static/js/(.*)\.chunk\.js$@', $key, $matches ) ) {
-
-				if( $matches && is_array( $matches ) && count( $matches ) === 2 ) {
-					$name = CP_LIBRARY_UPREFIX . "-" . preg_replace( '/[^A-Za-z0-9_]/', '-', $matches[1] );
-					$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ $key ] );
-					wp_enqueue_script( $name, $path, array( CP_LIBRARY_UPREFIX . '-main' ), null, true );
-				}
-
-			}
-		}
 
 	}
 
@@ -360,6 +336,8 @@ class Init {
 	 * Returns an array to be set as a global JS object
 	 */
 	public function cpl_vars() {
+		global $wp_query;
+
 		return apply_filters(
 			'cpl_app_vars',
 			array(
@@ -378,6 +356,7 @@ class Init {
 					'playVideo' => Settings::get( 'label_play_video', __( 'Watch', 'cp-library' ) ),
 				),
 				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'query_vars' => $wp_query->query_vars,
 				'postTypes' => $this->setup->post_types->get_post_type_info(),
 			)
 		);
