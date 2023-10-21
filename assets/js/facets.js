@@ -7,6 +7,16 @@ jQuery($ => {
 			return;
 		}
 
+		var $filterDropdowns = $('.cpl-filter--dropdown');
+
+		$filterDropdowns.each(function (index, element) {
+			if ( $(element).hasClass( 'cpl-ajax-facet' ) ) {
+				return;
+			}
+
+			initializeDropdown(element);
+		});
+
 		$('.cpl-filter--toggle--button').on('click', function (e) {
 			e.preventDefault();
 			$('.cpl-filter--has-dropdown').toggle();

@@ -5,6 +5,8 @@ namespace CP_Library\API;
 use ChurchPlugins\Helpers;
 use CP_Library\Admin\Settings;
 use WP_Query;
+use CP_Library\Models\Item;
+use CP_Library\Models\ItemType;
 
 /**
  * CP Library AJAX methods.
@@ -84,44 +86,68 @@ class AJAX {
 		if ( in_array( ( $query_vars['term'] ?? false ), $terms, true ) ) {
 			unset( $query_vars['term'] );
 		}
+
 		unset( $query_vars[ $facet_type ] );
 		unset( $query_vars['paged'] );
-
-		$query = new WP_Query( $query_vars );
-
-		$post_ids = $query->posts;
 
 		// different default for scripture
 		$default_order_by = 'cpl_scripture' === $facet_type ? 'name' : 'sermon_count';
 		$order_by         = Settings::get_advanced( 'sort_' . $facet_type, $default_order_by );
 
 		$args = array(
-			'post__in'   => $post_ids,
+			'post__in'   => [],
 			'order_by'   => $order_by,
 			'threshold'  => (int) Settings::get_advanced( 'filter_count_threshold', 3 ),
 			'facet_type' => $facet_type,
+			'post_type'  => $query_vars['post_type'],
 		);
 
-		if ( 'sermon_count' == $args['order_by'] ) {
-			$args['order_by'] = 'count';
+		$last_updated = false;
+		$cache_group  = false;
+
+		if ( Item::get_prop( 'post_type' ) === $args['post_type'] ) {
+			$last_updated = Item::get_last_changed();
+			$cache_group  = Item::get_prop( 'cache_group' );
+		} elseif ( ItemType::get_prop( 'post_type' ) === $args['post_type'] ) {
+			$last_updated = ItemType::get_last_changed();
+			$cache_group  = ItemType::get_prop( 'cache_group' );
 		}
 
-		wp_reset_postdata();
-
-		switch ( $facet_type ) {
-			case 'speaker':
-			case 'service_type':
-				$items = $this->get_sources( $args );
-				break;
-			case 'cpl_scripture':
-			case 'cpl_topic':
-			case 'cpl_season':
-				$items = $this->get_terms( $args );
-				break;
+		if ( $last_updated && $cache_group ) {
+			$hash_key = md5( serialize( $args ) . $last_updated );
+			$items    = wp_cache_get( $hash_key, $cache_group );
 		}
 
-		if ( empty( $items ) ) {
-			wp_die();
+		if ( false === $items ) {
+			$query = new WP_Query( $query_vars );
+
+			$args['post__in'] = $query->posts;
+
+			if ( 'sermon_count' == $args['order_by'] ) {
+				$args['order_by'] = 'count';
+			}
+
+			wp_reset_postdata();
+
+			switch ( $facet_type ) {
+				case 'speaker':
+				case 'service_type':
+					$items = $this->get_sources( $args );
+					break;
+				case 'cpl_scripture':
+				case 'cpl_topic':
+				case 'cpl_season':
+					$items = $this->get_terms( $args );
+					break;
+			}
+
+			if ( empty( $items ) ) {
+				wp_die();
+			}
+
+			if ( $hash_key ) {
+				wp_cache_set( $hash_key, $items, $cache_group, WEEK_IN_SECONDS );
+			}
 		}
 
 		?>
@@ -151,20 +177,12 @@ class AJAX {
 				'threshold'  => 3,
 				'facet_type' => '',
 				'post__in'   => array(),
+				'post_type' => cp_library()->setup->post_types->item->post_type,
 			)
 		);
 
 		if ( ! in_array( $args['facet_type'], array( 'speaker', 'service_type' ) ) ) {
 			throw new \ChurchPlugins\Exception( 'Invalid facet type' );
-		}
-
-		$last_updated = get_option( 'cpl_item_last_updated' );
-		$hash         = md5( serialize( $args ) );
-
-		$cache = wp_cache_get( $hash . $last_updated );
-
-		if ( false !== $cache ) {
-			return $cache;
 		}
 
 		$order_by = ( 'count' === $args['order_by'] ) ? 'count DESC' : 'title ASC';
@@ -186,7 +204,7 @@ class AJAX {
 		INNER JOIN
 			%3$s AS type ON meta.source_type_id = type.id AND type.title = "%4$s"
 		LEFT JOIN
-			%5$s AS sermon ON meta.item_id = sermon.id AND %6$s
+			%5$s AS sermon ON meta.item_id = sermon.id AND ' . $args['post__in'] . '
 		GROUP BY
 			source.id
 		HAVING
@@ -196,14 +214,13 @@ class AJAX {
 
 		global $wpdb;
 
-		// TODO: Table names should not be hardcoded.
-		$sql = sprintf(
+		$sql = $wpdb->prepare(
 			$sql,
-			'wp_cp_source',
-			'wp_cp_source_meta',
-			'wp_cp_source_type',
+			$wpdb->prefix . 'cp_source',
+			$wpdb->prefix . 'cp_source_meta',
+			$wpdb->prefix . 'cp_source_type',
 			$args['facet_type'],
-			'wp_cpl_item',
+			$wpdb->prefix . 'cpl_item',
 			$args['post__in'],
 			$args['threshold'],
 			$order_by
@@ -233,6 +250,7 @@ class AJAX {
 				'threshold'  => 3,
 				'facet_type' => '',
 				'post__in'   => array(),
+				'post_type' => cp_library()->setup->post_types->item->post_type,
 			)
 		);
 
@@ -262,7 +280,7 @@ class AJAX {
 		LEFT JOIN
 			{$wpdb->term_relationships} AS tr ON tt.term_taxonomy_id = tr.term_taxonomy_id
 		LEFT JOIN
-			{$wpdb->posts} AS p ON tr.object_id = p.ID AND %s
+			{$wpdb->posts} AS p ON tr.object_id = p.ID AND {$args['post__in']}
 		WHERE
 			tt.taxonomy = '%s'
 		AND
@@ -277,11 +295,10 @@ class AJAX {
 			{$order_by}
 		";
 
-		$query = sprintf(
+		$query = $wpdb->prepare(
 			$query,
-			$args['post__in'],
 			$args['facet_type'],
-			cp_library()->setup->post_types->item->post_type,
+			$args['post_type'],
 			$args['threshold']
 		);
 
