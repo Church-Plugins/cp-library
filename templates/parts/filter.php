@@ -30,7 +30,7 @@ $disabled_filters = Settings::get_advanced( 'disable_filters', array() );
 				continue;
 			} ?>
 			<div class="cpl-filter--<?php echo esc_attr( $tax->taxonomy ); ?> cpl-filter--has-dropdown" <?php echo $display; // phpcs:ignore ?>>
-				<a href="#" class="cpl-filter--dropdown-button cpl-button is-light"><?php echo esc_html( $tax->plural_label ); ?></a>
+				<a href="#" class="cpl-filter--dropdown-button cpl-button is-light"><?php echo esc_html( $tax->single_label ); ?></a>
 				<div class="<?php echo $dropdown_class; ?>" data-facet-type="<?php echo esc_attr( $tax->taxonomy ); ?>">
 				</div>
 			</div>
@@ -39,7 +39,7 @@ $disabled_filters = Settings::get_advanced( 'disable_filters', array() );
 		<?php
 		if ( $is_item_archive && cp_library()->setup->post_types->speaker_enabled() && ! in_array( 'speaker', $disabled_filters ) ) : ?>
 			<div class="cpl-filter--speaker cpl-filter--has-dropdown" <?php echo $display; // phpcs:ignore ?>>
-				<a href="#" class="cpl-filter--dropdown-button cpl-button is-light"><?php echo esc_html( cp_library()->setup->post_types->speaker->plural_label ); ?></a>
+				<a href="#" class="cpl-filter--dropdown-button cpl-button is-light"><?php echo esc_html( cp_library()->setup->post_types->speaker->single_label ); ?></a>
 				<div class="<?php echo $dropdown_class; ?>" data-facet-type="speaker">
 				</div>
 			</div>
@@ -47,7 +47,7 @@ $disabled_filters = Settings::get_advanced( 'disable_filters', array() );
 
 		<?php if ( $is_item_archive && cp_library()->setup->post_types->service_type_enabled() && ! in_array( 'service_type', $disabled_filters ) ) : ?>
 			<div class="cpl-filter--service_type cpl-filter--has-dropdown" <?php echo $display; // phpcs:ignore ?>>
-				<a href="#" class="cpl-filter--dropdown-button cpl-button is-light"><?php echo esc_html( cp_library()->setup->post_types->service_type->plural_label ); ?></a>
+				<a href="#" class="cpl-filter--dropdown-button cpl-button is-light"><?php echo esc_html( cp_library()->setup->post_types->service_type->single_label ); ?></a>
 				<div class="<?php echo $dropdown_class; ?>" data-facet-type="service_type">
 				</div>
 			</div>

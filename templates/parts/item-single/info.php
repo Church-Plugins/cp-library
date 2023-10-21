@@ -49,8 +49,8 @@ $fields = \CP_Library\Admin\Settings::get_item( 'info_items', [ 'speakers', 'loc
 		<?php elseif ( 'speakers' == $field ) : ?>
 			<?php if ( ! empty( $item['speakers'] ) ) : ?>
 				<div class="cpl-info--speakers">
-					<?php 
-					$speakers = array_map( function( $item ) { 
+					<?php
+					$speakers = array_map( function( $item ) {
 						if( Settings::get_speaker( 'enable_permalinks', false ) === false ) {
 							return $item['title'];
 						}
@@ -59,14 +59,14 @@ $fields = \CP_Library\Admin\Settings::get_item( 'info_items', [ 'speakers', 'loc
 					}, $item['speakers'] );
 					?>
 					<?php echo Helpers::get_icon( 'speaker' ); ?>
-					<?php echo implode( ', ', $speakers ); ?>
+					<span><?php echo implode( ', ', $speakers ); ?></span>
 				</div>
 			<?php endif; ?>
 		<?php elseif ( 'locations' == $field ) : ?>
 			<?php if ( ! empty( $item['locations'] ) ) : ?>
 				<div class="cpl-info--locations">
 					<?php echo Helpers::get_icon( 'location' ); ?>
-					<?php echo implode( ', ', wp_list_pluck( $item['locations'], 'title' ) ); ?>
+					<span><?php echo implode( ', ', wp_list_pluck( $item['locations'], 'title' ) ); ?></span>
 				</div>
 			<?php endif; ?>
 		<?php elseif ( 'types' == $field ) : ?>
@@ -83,7 +83,7 @@ $fields = \CP_Library\Admin\Settings::get_item( 'info_items', [ 'speakers', 'loc
 			<?php if ( ! empty( $item['service_types'] ) ) : ?>
 				<div class="cpl-info--service-types">
 					<?php echo Helpers::get_icon( 'location' ); ?>
-					<?php echo implode( ', ', wp_list_pluck( $item['service_types'], 'title' ) ); ?>
+					<span><?php echo implode( ', ', wp_list_pluck( $item['service_types'], 'title' ) ); ?></span>
 				</div>
 			<?php endif; ?>
 		<?php else : ?>
