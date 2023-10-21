@@ -236,6 +236,7 @@ module.exports = {
 	// @link <https://github.com/isaacs/minimatch#usage>
 	packageFiles: [
 		'assets/images/**',
+		'assets/js/**',
 		'includes/**',
 		'vendor/**',
 		'dist/**',
@@ -246,7 +247,7 @@ module.exports = {
 		'layouts/**',
 		'templates/**',
 		'blocks/**',
-		'blocks-patterns/**',
+		'block-patterns/**',
 		'LICENSE',
 		'*.css',
 	],
