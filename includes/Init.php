@@ -164,6 +164,9 @@ class Init {
 	}
 
 	public function admin_scripts() {
+
+		$this->enqueue->enqueue( 'styles', 'admin', [] );
+
 		if ( ! $this->is_admin_page() ) {
 			 return;
 		}
@@ -172,8 +175,6 @@ class Init {
 		wp_enqueue_style( 'material-icons' );
 		wp_enqueue_script( 'inline-edit-post' );
 		$scripts = $this->enqueue->enqueue( 'scripts', 'admin', ['jquery', 'select2'] );
-
-		$this->enqueue->enqueue( 'styles', 'admin', [] );
 
 		// Expose variables to JS.
 		$entry_point = array_pop( $scripts['js'] );
@@ -209,7 +210,11 @@ class Init {
 			$post_type = $_GET['post_type'];
 		}
 
-		return in_array( $post_type, $this->setup->post_types->get_post_types() );
+		if ( in_array( $post_type, $this->setup->post_types->get_post_types() ) ) {
+			return true;
+		}
+
+		return false;
 	}
 
 
