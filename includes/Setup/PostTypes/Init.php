@@ -169,19 +169,19 @@ class Init {
 	public function register_post_types() {
 
 		$this->item         = Item::get_instance();
-		$this->speaker      = Speaker::get_instance();
 		$this->item_type    = ItemType::get_instance();
+		$this->speaker      = Speaker::get_instance();
 		$this->service_type = ServiceType::get_instance();
 		$this->template     = Template::get_instance();
 
 		$this->item->add_actions();
 
-		if ( $this->speaker_enabled() ) {
-			$this->speaker->add_actions();
-		}
-
 		if ( $this->item_type_enabled() ) {
 			$this->item_type->add_actions();
+		}
+
+		if ( $this->speaker_enabled() ) {
+			$this->speaker->add_actions();
 		}
 
 		if ( $this->service_type_enabled() ) {

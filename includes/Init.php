@@ -389,6 +389,18 @@ class Init {
 	}
 
 	/**
+	 * Get the admin menu slug
+	 *
+	 * @since  1.3.0
+	 *
+	 * @return string|null
+	 * @author Tanner Moushey, 10/21/23
+	 */
+	public function get_admin_menu_slug() {
+		return Settings::get_advanced( 'default_menu_item', 'item_type' ) === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
+	}
+
+	/**
 	 * Make sure required plugins are active
 	 *
 	 * @return bool
