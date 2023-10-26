@@ -443,7 +443,7 @@ class Settings {
 		) );
 
 		$options->add_field( [
-			'name'    => __( 'Image Ratio', 'cp-library' ),
+			'name'    => __( 'Image Aspect Ratio', 'cp-library' ),
 			'desc'    => __( 'Enforce a consistent image ratio in the Grid view.', 'cp-library' ),
 			'id'      => 'image_ratio',
 			'type'    => 'radio_inline',
