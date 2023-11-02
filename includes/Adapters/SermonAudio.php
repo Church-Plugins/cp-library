@@ -148,7 +148,7 @@ class SermonAudio extends Adapter {
 	protected function fetch_all_since_date() {
 		$sermons = [];
 
-		$date = new \DateTime( $this->get_setting( 'ignore_before', '0' ) );
+		$date = new \DateTime( $this->get_setting( 'ignore_before', '@0' ) );
 
 		$current_year = (int) date( 'Y' );
 		$min_year     = (int) $date->format( 'Y' );
