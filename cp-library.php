@@ -73,7 +73,7 @@ add_action( 'init', 'cp_library_load_textdomain' );
  * @return void
  */
 function cpl_activation() {
-	add_option( 'cp_library_activated', true );
+	add_option( 'cp_library_activated', 1 );
 }
 
 /**
@@ -82,7 +82,7 @@ function cpl_activation() {
  * @return void
  */
 function cpl_after_activation() {
-	if ( is_admin() && get_option( 'cp_library_activated' ) === true ) {
+	if ( is_admin() && ! wp_doing_ajax() && get_option( 'cp_library_activated' ) == 1 ) {
 		update_option( 'cp_library_activated', time() );
 		do_action( 'cpl_after_activation' );
 	}
