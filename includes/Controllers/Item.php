@@ -653,7 +653,11 @@ class Item extends Controller{
 	 * @author Tanner Moushey, 4/10/23
 	 */
 	public function get_podcast_content() {
+		get_the_content( null, false, $this->post );
 		$content = $this->get_content();
+
+		$content = str_replace( ']]>', ']]&gt;', $content );
+		$content = apply_filters( 'the_content_feed', $content, get_default_feed() );
 
 		// Allow some HTML per iTunes spec:
 		// "You can use rich text formatting and some HTML (<p>, <ol>, <ul>, <a>) in the <content:encoded> tag."
@@ -661,7 +665,7 @@ class Item extends Controller{
 
 		$content = strip_shortcodes( $content );
 
-		$content = trim( $content );
+		$content = apply_filters( 'cpl_podcast_content', trim( $content ) );
 
 		return $this->filter( $content, __FUNCTION__ );
 	}
@@ -705,6 +709,8 @@ class Item extends Controller{
 			array( '', '', '', '', '', '', '', '' ),
 			$excerpt
 		);
+
+		$excerpt = apply_filters( 'cpl_podcast_content', trim( $excerpt ) );
 
 		if ( $max_chars ) {
 			$excerpt = Helpers::str_truncate( $this->get_podcast_excerpt(), $max_chars );
@@ -757,7 +763,8 @@ class Item extends Controller{
 		}
 
 		$speakers = implode( ', ', $speakers );
-		$speakers = htmlspecialchars( trim( $speakers ) );
+
+		$speakers = apply_filters( 'cpl_podcast_text', trim( $speakers ) );
 
 		// iTunes limits to 4000 characers
 		return $this->filter( $speakers, __FUNCTION__ );

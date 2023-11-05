@@ -3,7 +3,7 @@
 	width: var( --cp-content-width );
 	padding: var(--cp-content-padding);
 	color: var(--cpl--text-color);
-	margin: auto;
+	margin: var(--cp-gap--md) auto;
 
 	.cpl-pagination {
 		ul {
