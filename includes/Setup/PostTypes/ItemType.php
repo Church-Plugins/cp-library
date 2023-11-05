@@ -88,10 +88,12 @@ class ItemType extends PostType  {
 		if ( $this->show_in_menu() && 'item_type' === Settings::get_advanced( 'default_menu_item', 'item_type' ) ) {
 			$source_type  = Speaker::get_instance()->post_type;
 			$service_type = ServiceType::get_instance()->post_type;
+			$template = Template::get_instance()->post_type;
 
 			add_filter( "{$item}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 			add_filter( "{$source_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 			add_filter( "{$service_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
+			add_filter( "{$template}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 		}
 	}
 
@@ -251,6 +253,10 @@ class ItemType extends PostType  {
 			return;
 		}
 
+		if ( $query->get( 'posts_per_page' ) ) {
+			return;
+		}
+
 		$query->set( 'posts_per_page', 12 );
 	}
 
@@ -274,6 +280,7 @@ class ItemType extends PostType  {
 	public function get_args() {
 		$args                    = parent::get_args();
 		$args['menu_icon']       = apply_filters( "{$this->post_type}_icon", 'dashicons-list-view' );
+		$args['supports'][] = 'excerpt';
 
 		// show in Item menu if default item type is item
 		if ( 'item' === Settings::get_advanced( 'default_menu_item', 'item_type' ) ) {
@@ -286,8 +293,9 @@ class ItemType extends PostType  {
 	protected function sermon_series_metabox() {
 		$id = Helpers::get_param( $_GET, 'post', Helpers::get_request( 'post_ID' ) );
 
-		// don't include series metabox on variants
-		if ( $id && get_post( $id )->post_parent ) {
+		// don't include series metabox on variants.
+		$post_exists = get_post( $id );
+		if ( $id && $post_exists && $post_exists->post_parent ) {
 			return;
 		}
 
@@ -620,7 +628,12 @@ class ItemType extends PostType  {
 			return;
 		}
 
-		if ( 'auto-draft' == get_post_status( $object_id ) || wp_is_post_autosave( $object_id ) ) {
+		if ( 'auto-draft' === get_post_status( $object_id ) || wp_is_post_autosave( $object_id ) ) {
+			return;
+		}
+
+		// don't update dates when trashing.
+		if ( isset( $_GET['action'] ) && 'trash' === $_GET['action'] ) {
 			return;
 		}
 

@@ -78,7 +78,7 @@ if ( $item->has_variations() ) {
 
 				<div class="cpl-list-item--details">
 
-					<?php if ( ! empty( $item_data['types'] ) ) : // for mobile ?>
+					<?php if ( 0 && ! empty( $item_data['types'] ) ) : // for mobile ?>
 						<div class="cpl-info">
 							<div class="cpl-item--types">
 								<?php echo Helpers::get_icon( 'type' ); ?>

@@ -6,7 +6,7 @@
     'aliases' => 
     array (
     ),
-    'reference' => '4afbc5f174287311faf2ddeb79c671d649dc581a',
+    'reference' => '5bdfd00784796206118fdf4fda6572ad5aa7568f',
     'name' => 'churchplugins/cp-library',
   ),
   'versions' => 
@@ -18,7 +18,7 @@
       'aliases' => 
       array (
       ),
-      'reference' => '4afbc5f174287311faf2ddeb79c671d649dc581a',
+      'reference' => '5bdfd00784796206118fdf4fda6572ad5aa7568f',
     ),
     'composer/installers' => 
     array (

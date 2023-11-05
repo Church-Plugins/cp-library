@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @param array<string> $classes An (unindexed) array of classes to apply.
  */
-$classes = apply_filters( 'cpl_default_template_classes', [ 'cpl-pg-template' ] );
+$classes = apply_filters( 'cpl_default_template_classes', [ 'cpl-pg-template', 'cp-pg-template' ] );
 
 get_header();
 

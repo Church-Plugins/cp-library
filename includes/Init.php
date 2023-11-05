@@ -47,6 +47,13 @@ class Init {
 	public $enqueue;
 
 	/**
+	 * CP Library modules for page builders
+	 *
+	 * @var Modules\Init
+	 */
+	public $modules;
+
+	/**
 	 * Only make one instance of Init
 	 *
 	 * @return Init
@@ -125,6 +132,7 @@ class Init {
 		add_filter( 'script_loader_tag', [ $this, 'app_load_scripts' ], 10, 3 );
 		add_action( 'wp_enqueue_scripts', [ $this, 'app_enqueue' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'admin_scripts' ] );
+		add_action( 'enqueue_block_editor_assets', [ $this, 'block_editor_assets' ] );
 		add_action( 'init', [ $this, 'rewrite_rules' ], 100 );
 	}
 
@@ -191,10 +199,25 @@ class Init {
 		wp_localize_script(
 			$entry_point['handle'],
 			'cplAdmin',
-			array(
-				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-				'_n'      => wp_create_nonce( 'cpl-admin' ),
-			)
+			$this->cpl_vars(),
+		);
+	}
+
+	/**
+	 * Enqueue block editor assets.
+	 */
+	public function block_editor_assets() {
+		$this->enqueue->enqueue( 'styles', 'main', array() );
+		wp_enqueue_style( 'material-icons' );
+		wp_enqueue_script( 'feather-icons' );
+
+		$scripts     = $this->enqueue->enqueue( 'scripts', 'block_editor', array( 'js_dep' => array( 'jquery' ) ) );
+		$entry_point = array_pop( $scripts['js'] );
+
+		wp_localize_script(
+			$entry_point['handle'],
+			'cplAdmin',
+			$this->cpl_vars(),
 		);
 	}
 
@@ -225,84 +248,19 @@ class Init {
 	 * @author costmo
 	 */
 	public function app_enqueue() {
-		$this->enqueue->enqueue( 'styles', 'main', [] );
+		$this->enqueue->enqueue( 'styles', 'main', array() );
 		$this->enqueue->enqueue( 'scripts', 'main', array( 'js_dep' => array( 'jquery' ) ) );
-		$scripts = $this->enqueue->enqueue( 'app', 'main', array( 'js_dep' => array( 'jquery' ) ) );
 
-		$cpl_vars = apply_filters(
-			'cpl_app_vars',
-			array(
-				'site' => array(
-					'title' => get_bloginfo( 'name', 'display' ),
-					'thumb' => Settings::get( 'default_thumbnail', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
-					'logo'  => Settings::get( 'logo', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
-					'url'   => get_site_url(),
-					'path'  => '',
-				),
-				'components' => array(
-					'mobileTop' => '',
-				),
-				'i18n' => array(
-					'playAudio' => Settings::get( 'label_play_audio', __( 'Listen', 'cp-library' ) ),
-					'playVideo' => Settings::get( 'label_play_video', __( 'Watch', 'cp-library' ) ),
-				),
-			)
-		);
+		wp_register_script( 'cpl_facets', CP_LIBRARY_PLUGIN_URL . '/assets/js/facets.js', array( 'jquery' ), CP_LIBRARY_PLUGIN_VERSION, true );
+
+		$scripts = $this->enqueue->enqueue( 'app', 'main', array( 'js_dep' => array( 'jquery', 'cpl_facets' ) ) );
 
 		if ( isset( $scripts['js'], $scripts['js'][0], $scripts['js'][0]['handle'] ) ) {
-			wp_localize_script( $scripts['js'][0]['handle'], 'cplVars', $cpl_vars );
+			wp_localize_script( $scripts['js'][0]['handle'], 'cplVars', $this->cpl_vars() );
 		}
 
-		return;
-
-		$asset_manifest = json_decode( file_get_contents( CP_LIBRARY_ASSET_MANIFEST ), true );
-
-		// TODO: Calls to `str_replace` need to be less specific
-
-		// App CSS
-		if( isset( $asset_manifest['files'][ 'main.css' ] ) ) {
-			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'main.css' ] );
-			wp_enqueue_style( CP_LIBRARY_UPREFIX, $path );
-		}
-
-		// App runtime js
-		if( isset( $asset_manifest['files'][ 'runtime-main.js' ] ) ) {
-			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'runtime-main.js' ] );
-			wp_enqueue_script( CP_LIBRARY_UPREFIX . '-runtime', $path, [] );
-		}
-
-		$cpl_vars = apply_filters( 'cpl_app_vars', [
-			'site' => [
-				'title' => get_bloginfo( 'name', 'display' ),
-				'thumb' => Settings::get( 'default_thumbnail', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
-				'url'   => get_site_url(),
-				'path'  => '',
-			],
-			'components' => [
-				'mobileTop' => ''
-			],
-		] );
-
-		wp_localize_script( CP_LIBRARY_UPREFIX . '-runtime', 'cplVars', $cpl_vars );
-
-		// App main js
-		if( isset( $asset_manifest['files'][ 'main.js' ] ) ) {
-			$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ 'main.js' ] );
-			wp_enqueue_script( CP_LIBRARY_UPREFIX . '-main', $path, [] );
-		}
-
-		// App static js
-		foreach( $asset_manifest['files'] as $key => $value ) {
-			if( preg_match( '@static/js/(.*)\.chunk\.js$@', $key, $matches ) ) {
-
-				if( $matches && is_array( $matches ) && count( $matches ) === 2 ) {
-					$name = CP_LIBRARY_UPREFIX . "-" . preg_replace( '/[^A-Za-z0-9_]/', '-', $matches[1] );
-					$path = CP_LIBRARY_PLUGIN_URL . str_replace( "/wp-content/plugins/cp-library/", "", $asset_manifest['files'][ $key ] );
-					wp_enqueue_script( $name, $path, array( CP_LIBRARY_UPREFIX . '-main' ), null, true );
-				}
-
-			}
-		}
+		wp_enqueue_style( 'material-icons' );
+		wp_enqueue_script( 'feather-icons' );
 
 	}
 
@@ -323,6 +281,8 @@ class Init {
 		if ( defined( 'TRIBE_EVENTS_FILE' ) ) {
 			Integrations\EventsCalendar::get_instance();
 		}
+
+		$this->modules = Modules\Init::get_instance();
 	}
 
 	/**
@@ -380,6 +340,37 @@ class Init {
 	}
 
 	/**
+	 * Returns an array to be set as a global JS object
+	 */
+	public function cpl_vars() {
+		global $wp_query;
+
+		return apply_filters(
+			'cpl_app_vars',
+			array(
+				'site' => array(
+					'title' => get_bloginfo( 'name', 'display' ),
+					'thumb' => Settings::get( 'default_thumbnail', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
+					'logo'  => Settings::get( 'logo', CP_LIBRARY_PLUGIN_URL . 'assets/images/cpl-logo.jpg' ),
+					'url'   => get_site_url(),
+					'path'  => '',
+				),
+				'components' => array(
+					'mobileTop' => '',
+				),
+				'i18n' => array(
+					'playAudio' => Settings::get( 'label_play_audio', __( 'Listen', 'cp-library' ) ),
+					'playVideo' => Settings::get( 'label_play_video', __( 'Watch', 'cp-library' ) ),
+				),
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'_n'      => wp_create_nonce( 'cpl-admin' ),
+				'query_vars' => $wp_query->query_vars,
+				'postTypes' => $this->setup->post_types->get_post_type_info(),
+			)
+		);
+	}
+
+	/**
 	 * Add custom query vars to the allowed list
 	 *
 	 * @param array $vars The current list of allowed query vars.
@@ -408,6 +399,18 @@ class Init {
 	 */
 	public function get_default_thumb() {
 		return CP_LIBRARY_PLUGIN_URL . '/app/public/logo512.png';
+	}
+
+	/**
+	 * Get the admin menu slug
+	 *
+	 * @since  1.3.0
+	 *
+	 * @return string|null
+	 * @author Tanner Moushey, 10/21/23
+	 */
+	public function get_admin_menu_slug() {
+		return Settings::get_advanced( 'default_menu_item', 'item_type' ) === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
 	}
 
 	/**
@@ -448,7 +451,7 @@ class Init {
 	 * @return string the plugin name
 	 */
 	public function get_plugin_name() {
-		return __( 'Church Plugins - Library', 'cp-library' );
+		return __( 'CP Sermons', 'cp-library' );
 	}
 
 	/**
