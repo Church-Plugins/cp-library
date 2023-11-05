@@ -73,7 +73,7 @@ add_action( 'init', 'cp_library_load_textdomain' );
  * @return void
  */
 function cpl_activation() {
-	add_option( 'Activated_Plugin', 'cp-library' );
+	add_option( 'cp_library_activated', true );
 }
 
 /**
@@ -82,8 +82,8 @@ function cpl_activation() {
  * @return void
  */
 function cpl_after_activation() {
-	if ( is_admin() && get_option( 'Activated_Plugin', false ) === 'cp-library' ) {
-		delete_option( 'Activated_Plugin' );
+	if ( is_admin() && get_option( 'cp_library_activated' ) === true ) {
+		update_option( 'cp_library_activated', time() );
 		do_action( 'cpl_after_activation' );
 	}
 }
