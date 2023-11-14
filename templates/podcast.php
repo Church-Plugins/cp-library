@@ -27,7 +27,7 @@ $settings = array(
 	'link'         => trailingslashit( home_url() ),
 	'email'        => '',
 	'category'     => '',
-	'not_explicit' => '',
+	'not_explicit' => 1,
 	'language'     => 'en-US',
 	'new_url'      => '',
 );
@@ -38,8 +38,14 @@ foreach ($settings as $setting => $default) {
 	// Get setting value.
 	$value = Podcast::get( $setting, $default );
 
+
 	// Make XML-safe and trim.
-	$value = htmlspecialchars( $value );
+	if ( in_array( $setting, [ 'subtitle', 'summary' ] ) ) {
+		$value = apply_filters( 'cpl_podcast_content', $value );
+	} else if ( in_array( $settings, [ 'title', 'author' ] ) ) {
+		$value = apply_filters( 'cpl_podcast_text', $value );
+	}
+
 	$value = trim( $value );
 
 	// Create variable with same name as key ($title, $summary, etc.).
@@ -55,7 +61,7 @@ if ($category && 'none' !== $category) {
 
 // Other podcast settings.
 $owner_name = htmlspecialchars( get_bloginfo( 'name' ) ); // Owner name as site name.
-$explicit = $not_explicit ? 'no' : 'yes'; // Explicit or not.
+$explicit = $not_explicit ? 'false' : 'true'; // Explicit or not.
 
 // Character set from WordPress settings.
 $charset = get_option( 'blog_charset' );
@@ -93,14 +99,14 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 
 		<copyright><?php echo esc_html( $copyright ); ?></copyright>
 
-		<itunes:subtitle><?php echo esc_html( $subtitle ); ?></itunes:subtitle>
+		<itunes:subtitle><![CDATA[<?php echo $subtitle; ?>]]></itunes:subtitle>
 
 		<itunes:author><?php echo esc_html( $author ); ?></itunes:author>
 		<googleplay:author><?php echo esc_html( $author ); ?></googleplay:author>
 
 		<?php if ($summary) : ?>
-			<description><?php echo esc_html( $summary ); ?></description>
-			<googleplay:description><?php echo esc_html( $summary ); ?></googleplay:description>
+			<description><![CDATA[<?php echo $summary; ?>]]></description>
+			<googleplay:description><![CDATA[<?php echo $summary; ?>]]></googleplay:description>
 		<?php endif; ?>
 
 		<?php if ($email) : ?>
