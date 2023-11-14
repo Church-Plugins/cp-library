@@ -128,7 +128,8 @@ class SermonManager extends Migration {
 
 		$meta     = get_post_meta( $post->ID );
 		$series   = $this->get_terms( 'wpfc_sermon_series', $post->ID );
-		$speakers = $this->get_terms( 'wpfc_sermon_series', $post->ID );
+		$speakers = $this->get_terms( 'wpfc_preacher', $post->ID );
+		$topics   = $this->get_terms( 'wpfc_sermon_topics', $post->ID );
 
 		try {
 			$item = Item::get_instance_from_origin( $new_post_id );
@@ -157,6 +158,10 @@ class SermonManager extends Migration {
 
 			if ( $speakers ) {
 				$this->add_speakers_from_terms( $item, $speakers );
+			}
+
+			if ( $topics ) {
+				$this->add_topics_to_item( $item, $topics );
 			}
 		} catch ( Exception $e ) {
 			error_log( $e->getMessage() );

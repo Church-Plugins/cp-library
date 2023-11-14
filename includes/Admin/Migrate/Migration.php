@@ -8,6 +8,7 @@
 
 namespace CP_Library\Admin\Migrate;
 
+use CP_Library\Models\Item;
 use CP_Library\Models\ItemType;
 use CP_Library\Models\Speaker;
 use ChurchPlugins\Exception;
@@ -223,6 +224,49 @@ abstract class Migration extends \WP_Background_Process {
 		} catch ( \Exception $e ) {
 			return;
 		}
+	}
+
+	/**
+	 * Manages migrating topics from another plugin
+	 * 
+	 * @param Item  $item The item being processed.
+	 * @param array $topics The topics to migrate.
+	 */
+	public function add_topics_to_item( $item, $topics ) {
+		foreach ( $topics as $topic ) {
+			$this->add_topic_to_item( $item, $topic );
+		}
+	}
+
+	/**
+	 * Manages migrating a topic from another plugin
+	 * 
+	 * @param Item   $item The item being processed.
+	 * @param object $topic The topic to migrate.
+	 */
+	public function add_topic_to_item( $item, $topic ) {
+		$existing_topic = get_term_by( 'slug', $topic->slug, 'cpl_topic' );
+
+		if ( $existing_topic ) {
+			$topic_id = $existing_topic->term_id;
+		} else {
+			$args = array(
+				'name'        => $topic->name,
+				'slug'        => $topic->slug,
+				'description' => $topic->description,
+			);
+
+			$topic_id = wp_insert_term( $topic->name, 'cpl_topic', $args );
+
+			if ( is_wp_error( $topic_id ) ) {
+				error_log( 'Error creating topic: ' . $topic_id->get_error_message() );
+				return false;
+			}
+
+			$topic_id = $topic_id['term_id'];
+		}
+
+		wp_set_post_terms( $item->origin_id, array( $topic_id ), 'cpl_topic', true );
 	}
 
 	/**
