@@ -5,8 +5,9 @@
 @import "variables";
 @import "mixins/breakpoints";
 
+@import '../../includes/ChurchPlugins/assets/scss/main';
+
 @import "mui";
-@import "base";
 @import "utilities";
 
 @import "elements/button";

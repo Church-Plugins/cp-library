@@ -448,6 +448,13 @@ class Settings {
 			'default' => cp_library()->setup->post_types->speaker->plural_label,
 		) );
 
+		$options->add_field( array(
+			'name' => sprintf( __( 'Enable %s permalinks', 'cp-library' ), cp_library()->setup->post_types->speaker->single_label ),
+			'desc' => sprintf( __( 'Will make a %s\'s name clickable', 'cp-library' ), cp_library()->setup->post_types->speaker->single_label ),
+			'id'   => 'enable_permalinks',
+			'type' => 'checkbox'
+		) );
+
 	}
 
 	protected function service_type_options() {
@@ -598,6 +605,88 @@ class Settings {
 			] );
 		}
 
+		$advanced_options->add_field(
+			array(
+				'name' => __( 'Filters', 'cp-library' ),
+				'id'   => 'filters',
+				'type' => 'title',
+			)
+		);
+
+		$advanced_options->add_field(
+			array(
+				'name'    => __( 'Count Threshold', 'cp-library' ),
+				'id'      => 'filter_count_threshold',
+				/* translators: %s is the plural label for the item post type */
+				'desc'    => sprintf( __( 'The minimum number of %s to show a filter field for.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+				'type'    => 'text_small',
+				'default' => 3,
+			)
+		);
+
+		$taxonomies = cp_library()->setup->taxonomies->get_objects();
+
+		$filters = wp_list_pluck( $taxonomies, 'plural_label', 'taxonomy' );
+		$sources = array();
+
+		if ( cp_library()->setup->post_types->speaker_enabled() ) {
+			$sources['speaker'] = $filters['speaker'] = cp_library()->setup->post_types->speaker->plural_label;
+		}
+
+		if ( cp_library()->setup->post_types->service_type_enabled() ) {
+			$sources['service_type'] = $filters['service_type'] = cp_library()->setup->post_types->service_type->plural_label;
+		}
+
+		$advanced_options->add_field(
+			array(
+				'name'    => __( 'Disable Filters', 'cp-library' ),
+				'id'      => 'disable_filters',
+				/* translators: %s is the plural label for the item post type */
+				'desc'    => sprintf( __( 'Choose to disable any of the filters on the %s archive page.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+				'type'    => 'multicheck_inline',
+				'options' => $filters,
+			)
+		);
+
+		foreach ( $taxonomies as $taxonomy ) {
+			$default_value = 'sermon_count';
+			$options       = array(
+				'sermon_count' => sprintf( __( 'By %s Count', 'cp-library' ), cp_library()->setup->post_types->item->single_label ),
+				'name'         => __( 'Alphabetically', 'cp-library' ),
+			);
+
+			if ( 'cpl_scripture' === $taxonomy->taxonomy ) {
+				$default_value   = 'name';
+				$options['name'] = __( 'By Scripture Order', 'cp-library' );
+			}
+
+			$advanced_options->add_field(
+				array(
+					/* translators: %s is the single label for the taxonomy */
+					'name'    => sprintf( __( 'Sort %s', 'cp-library' ), $taxonomy->plural_label ),
+					'id'      => 'sort_' . $taxonomy->taxonomy,
+					'type'    => 'radio',
+					'default' => $default_value,
+					'options' => $options,
+				)
+			);
+		}
+		foreach ( $sources as $key => $source ) {
+			$advanced_options->add_field(
+				array(
+					/* translators: %s is the single label for the source post type */
+					'name'    => sprintf( __( 'Sort %s', 'cp-library' ), $source ),
+					'id'      => "sort_{$key}",
+					'type'    => 'radio',
+					'default' => 'sermon_count',
+					'options' => array(
+						/* translators: %s is the plural label for the item post type */
+						'sermon_count' => sprintf( __( 'By %s Count', 'cp-library' ), cp_library()->setup->post_types->item->single_label ),
+						'name'  => __( 'Alphabetically', 'cp-library' ),
+					),
+				)
+			);
+		}
 	}
 
 	/**

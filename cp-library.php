@@ -3,7 +3,7 @@
  * Plugin Name: CP Sermon Library
  * Plugin URL: https://churchplugins.com
  * Description: Church library plugin for sermons, talks, and other media
- * Version: 1.2.1
+ * Version: 1.3.0-beta3
  * Author: Church Plugins
  * Author URI: https://churchplugins.com
  * Text Domain: cp-library
@@ -12,7 +12,7 @@
 
 if( !defined( 'CP_LIBRARY_PLUGIN_VERSION' ) ) {
 	 define ( 'CP_LIBRARY_PLUGIN_VERSION',
-	 	'1.2.1'
+	 	'1.3.0-beta4'
 	);
 }
 
@@ -73,7 +73,7 @@ add_action( 'init', 'cp_library_load_textdomain' );
  * @return void
  */
 function cpl_activation() {
-	add_option( 'Activated_Plugin', 'cp-library' );
+	add_option( 'cp_library_activated', 1 );
 }
 
 /**
@@ -82,8 +82,8 @@ function cpl_activation() {
  * @return void
  */
 function cpl_after_activation() {
-	if ( is_admin() && get_option( 'Activated_Plugin', false ) === 'cp-library' ) {
-		delete_option( 'Activated_Plugin' );
+	if ( is_admin() && ! wp_doing_ajax() && get_option( 'cp_library_activated' ) == 1 ) {
+		update_option( 'cp_library_activated', time() );
 		do_action( 'cpl_after_activation' );
 	}
 }

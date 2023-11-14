@@ -24,6 +24,27 @@ npm run build
 
 ### Change Log
 
+#### 1.3.0
+* Enhancement: new Template builder to generate shortcodes
+* Enhancement: updates to Filters and additional settings
+* Enhancement: Allow modifying Season and Topic terms
+* Update: Do not automatically set Series to draft when no sermons are published
+
+#### 1.2.5
+* Fix javascript error by enclosing filter js in enclosure
+
+#### 1.2.4
+* Fix alignment issue on archive page
+
+#### 1.2.3
+* Fix deprecation error
+* Allow beta updates
+* Fix player issues
+
+#### 1.2.2
+* Fix bug that was preventing the thumbnail from showing in the media player
+* Fix error handling on single series template
+
 #### 1.2.1
 * Fix bug with series sermon rewrite rules
 * Fix html in podcast feed

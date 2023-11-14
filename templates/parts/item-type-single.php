@@ -17,7 +17,7 @@ try {
 		}
 	}
 
-} catch ( \CP_Library\Exception $e ) {
+} catch ( \CP_Library\Exception | \ChurchPlugins\Exception $e ) {
 	error_log( $e );
 	return;
 }

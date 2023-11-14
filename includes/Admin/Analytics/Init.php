@@ -23,7 +23,7 @@ class Init {
 	protected static $_instance;
 
   /**
-   * The date format as it is stored in wp_cp_log table
+   * The date format as it is stored in cp_log table
    */
   public static $date_format = 'Y-m-d H:i:s';
 
@@ -274,7 +274,7 @@ class Init {
   }
 
   /**
-   * Gets any date formatted for use in the wp_cp_item table
+   * Gets any date formatted for use in the cp_item table
    * @param time mixed
    * @return string|false
    */

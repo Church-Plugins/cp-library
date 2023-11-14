@@ -2,12 +2,16 @@
 
 namespace CP_Library\Setup\Taxonomies;
 
+use \ChurchPlugins\Taxonomy;
+
 /**
  * Setup plugin initialization for Taxonomies
  */
 class Init {
 
 	/**
+	 * Class instance
+	 *
 	 * @var Init
 	 */
 	protected static $_instance;
@@ -76,13 +80,13 @@ class Init {
 	/**
 	 * Return array of taxonomy objects
 	 *
-	 * @return array
+	 * @return Taxonomy[]
 	 * @since  1.0.0
 	 *
 	 * @author Tanner Moushey
 	 */
 	public function get_objects() {
-		return [ $this->scripture, $this->topic, $this->season ];
+		return array( $this->scripture, $this->topic, $this->season );
 	}
 
 	/**

@@ -49,7 +49,6 @@ class Templates {
 
 		add_action( 'wp_head', [ __CLASS__, 'wpHeadFinished' ], 999 );
 		add_action( 'cpl_after_archive', 'the_posts_pagination' );
-		add_action( 'cpl_before_archive', [ __CLASS__, 'type_switcher' ] );
 
 		// add the theme name to the body class when needed
 		if ( self::needs_compatibility_fix() ) {

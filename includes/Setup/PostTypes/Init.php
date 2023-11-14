@@ -46,6 +46,12 @@ class Init {
 	public $service_type;
 
 	/**
+	 * Setup Template CPT
+	 * @var Template
+	 */
+	public $template;
+
+	/**
 	 * Only make one instance of Init
 	 *
 	 * @return Init
@@ -80,8 +86,50 @@ class Init {
 		return in_array( $type, $this->get_post_types() );
 	}
 
+	/**
+	 * Returns an array of post types.
+	 *
+	 * @return array
+	 */
 	public function get_post_types() {
-		return [ $this->item->post_type, $this->speaker->post_type, $this->item_type->post_type, $this->service_type->post_type ];
+		return wp_list_pluck( $this->get_models(), 'post_type' );
+	}
+
+	/**
+	 * Returns metadata for the various post types, used on the frontend.
+	 *
+	 * @return array {
+	 *   The metadata for the post types.
+	 *
+	 *   @type string $postType    The post type slug.
+	 *   @type string $singleLabel The singular label for the post type.
+	 *   @type string $pluralLabel The plural label for the post type.
+	 * }
+	 * @since  1.3.0
+	 */
+	public function get_post_type_info() {
+		$models = $this->get_models();
+		$output = array();
+
+		foreach ( $models as $model ) {
+			$output[ $model->post_type ] = array(
+				'postType'    => $model->post_type,
+				'singleLabel' => $model->single_label,
+				'pluralLabel' => $model->plural_label,
+			);
+		}
+
+		return $output;
+	}
+
+	/**
+	 * Returns CP Library models
+	 *
+	 * @return array
+	 * @since  1.3.0
+	 */
+	public function get_models() {
+		return array( $this->item, $this->speaker, $this->item_type, $this->service_type );
 	}
 
 	/**
@@ -121,23 +169,26 @@ class Init {
 	public function register_post_types() {
 
 		$this->item         = Item::get_instance();
-		$this->speaker      = Speaker::get_instance();
 		$this->item_type    = ItemType::get_instance();
+		$this->speaker      = Speaker::get_instance();
 		$this->service_type = ServiceType::get_instance();
+		$this->template     = Template::get_instance();
 
 		$this->item->add_actions();
-
-		if ( $this->speaker_enabled() ) {
-			$this->speaker->add_actions();
-		}
 
 		if ( $this->item_type_enabled() ) {
 			$this->item_type->add_actions();
 		}
 
+		if ( $this->speaker_enabled() ) {
+			$this->speaker->add_actions();
+		}
+
 		if ( $this->service_type_enabled() ) {
 			$this->service_type->add_actions();
 		}
+
+		$this->template->add_actions();
 
 		do_action( 'cp_register_post_types' );
 	}
