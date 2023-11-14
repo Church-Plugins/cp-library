@@ -52,6 +52,14 @@
 	&:hover {
 		box-shadow: 0 0 10px rgba(0,0,0,0.2);
 	}
+
+	&--action {
+		margin-top: 0.5rem;
+		font-weight: bold;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
 }
 
 .cpl-modal-wrapper {
@@ -65,7 +73,7 @@
 	display: flex;
 	justify-content: center;
 	align-items: start;
-	padding-top: 8rem;
+	padding: 8rem 2rem 2rem;
 	opacity: 0;
 	transition: opacity 0.3s ease-in-out;
 
@@ -76,7 +84,8 @@
 		background: #fff;
 		transform: translateY(-200px);
 		transition: transform 0.3s ease-in-out;
-		width: min(calc(100vw - 6rem), 800px);
+		width: 800px;
+		max-width: calc(100vw - 4rem);
 	}
 
 	&.open {
