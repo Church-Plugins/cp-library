@@ -68,12 +68,34 @@
 			height: auto;
 			display: block;
 		}
+
+		button {
+			svg {
+				color: var(--cp-button--bg);
+			}
+		}
 	}
 
 	&__duration {
 		font-size: .75em;
 		margin-top: -.5em;
 		opacity: .5;
+	}
+
+	&__info {
+		span {
+			&.MuiSlider-markLabel {
+				z-index: 1;
+				background-color: white;
+				border: 1px solid black;
+				margin-top: -12px;
+				font-size: 0.5rem;
+				padding: 2px 6px;
+				border-radius: 3px;
+				text-transform: uppercase;
+			    font-weight: bolder;
+			}
+		}
 	}
 
 }

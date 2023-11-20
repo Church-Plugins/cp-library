@@ -3,7 +3,6 @@ namespace CP_Library;
 
 use CP_Library\Admin\Settings;
 use CP_Library\Controllers\Shortcode as Shortcode_Controller;
-use ChurchPlugins\Setup\Init as CP_Setup;
 
 /**
  * Provides the global $cp_library object
@@ -27,6 +26,11 @@ class Init {
 	 */
 	public $api;
 
+	/**
+	 * @var Admin\Init
+	 */
+	public $admin;
+
 	public $enqueue;
 
 	/**
@@ -48,7 +52,7 @@ class Init {
 	 */
 	protected function __construct() {
 		$this->enqueue = new \WPackio\Enqueue( 'cpLibrary', 'dist', $this->get_version(), 'plugin', CP_LIBRARY_PLUGIN_FILE );
-		add_action( 'plugins_loaded', [ $this, 'maybe_setup' ], - 9999 );
+		add_action( 'cp_core_loaded', [ $this, 'maybe_setup' ], - 9999 );
 		add_action( 'init', [ $this, 'maybe_init' ] );
 	}
 
@@ -62,7 +66,9 @@ class Init {
 			return;
 		}
 
-		$cp = CP_Setup::get_instance();
+		$cp = \ChurchPlugins\Setup\Init::get_instance();
+
+		Setup\Tables\Init::get_instance();
 
 		// make sure needed tables are installed
 		if ( ! $cp->is_installed() ) {
@@ -76,10 +82,11 @@ class Init {
 		$this->setup = Setup\Init::get_instance();
 		$this->api   = API\Init::get_instance();
 
+		$this->admin = Admin\Init::get_instance();
 		Download::get_instance();
 		Templates::init();
 
-		include_once( CP_LIBRARY_INCLUDES . '/CLI/RE_Migrate.php' );
+		include_once( CP_LIBRARY_INCLUDES . '/CLI/CP_Migrate.php' );
 	}
 
 	/**
@@ -107,9 +114,13 @@ class Init {
 		add_action( 'wp_enqueue_scripts', [ $this, 'app_enqueue' ] );
 		add_action( 'admin_enqueue_scripts', [ $this, 'admin_scripts' ] );
 		add_action( 'init', [ $this, 'rewrite_rules' ], 100 );
+	}
 
-		$shortcode = Shortcode_Controller::get_instance();
-		$shortcode->add_shortcodes();
+	/**
+	 * Entry point for initializing the Analytics dashboard React component
+	 */
+	public function analytics_init( $page_hook ) {
+		add_action( "load-$page_hook", [ $this, 'enqueue_analytics_scripts' ] );
 	}
 
 	public function rewrite_rules() {
@@ -117,15 +128,9 @@ class Init {
 		if ( $this->setup->post_types->item_type_enabled() ) {
 			$type = get_post_type_object( $this->setup->post_types->item_type->post_type )->rewrite['slug'];
 			add_rewrite_tag( '%type-item%', '([^&]+)' );
-			add_rewrite_rule("^$type/([^/]*)/([^/]*)?",'index.php?cpl_item_type=$matches[1]&type-item=$matches[2]','top');
+			add_rewrite_rule("^$type/([^/]*)/(?!feed)([^/]+)?",'index.php?cpl_item_type=$matches[1]&type-item=$matches[2]','top');
 		}
 
-		$flush = '1';
-
-		if ( get_option( '_cpl_needs_flush' ) != $flush ) {
-			flush_rewrite_rules(true);
-			update_option( '_cpl_needs_flush', $flush );
-		}
 	}
 
 	/**
@@ -146,10 +151,43 @@ class Init {
 		return str_replace( ' src', ' async defer src', $tag );
 	}
 
-	public function admin_scripts() {
-		$this->enqueue->enqueue( 'styles', 'admin', [] );
-		$this->enqueue->enqueue( 'scripts', 'admin', [] );
+	public function enqueue_analytics_scripts() {
+		$this->enqueue->enqueue( 'app', 'analytics', [ 'js_dep' => [ 'jquery' ] ] );
 	}
+
+	public function admin_scripts() {
+		if ( ! $this->is_admin_page() ) {
+			 return;
+		}
+
+		$this->enqueue->enqueue( 'styles', 'admin', [] );
+		wp_enqueue_style( 'material-icons' );
+		wp_enqueue_script( 'inline-edit-post' );
+		$scripts = $this->enqueue->enqueue( 'scripts', 'admin', ['jquery', 'select2'] );
+
+		$this->enqueue->enqueue( 'styles', 'admin', [] );
+
+		// Expose variables to JS
+		$entry_point = array_pop( $scripts['js'] );
+		wp_localize_script(
+			$entry_point['handle'],
+			'cplAdmin', [
+				'ajaxUrl'		=> admin_url( 'admin-ajax.php' ),
+				'_n' 			=> wp_create_nonce( 'cpl-admin' )
+			]
+		);
+	}
+
+	public function is_admin_page() {
+		$post_type = get_post_type();
+
+		if ( ! $post_type && isset( $_GET['post_type'] ) ) {
+			$post_type = $_GET['post_type'];
+		}
+
+		return in_array( $post_type, $this->setup->post_types->get_post_types() );
+	}
+
 
 	/**
 	 * `wp_enqueue_scripts` actions for the app's compiled sources
@@ -158,9 +196,8 @@ class Init {
 	 * @author costmo
 	 */
 	public function app_enqueue() {
-		wp_enqueue_script( 'cpl_persistent_player', CP_LIBRARY_PLUGIN_URL . '/assets/js/main.js', ['jquery'] );
-
 		$this->enqueue->enqueue( 'styles', 'main', [] );
+		$this->enqueue->enqueue( 'scripts', 'main', [ 'js_dep' => ['jquery'] ] );
 		$scripts = $this->enqueue->enqueue( 'app', 'main', [ 'js_dep' => ['jquery'] ] );
 
 		$cpl_vars = apply_filters( 'cpl_app_vars', [
@@ -175,8 +212,8 @@ class Init {
 				'mobileTop' => ''
 			],
 			'i18n' => [
-				'playAudio' => __( 'Play Audio', 'cp-library' ),
-				'playVideo' => __( 'Play Video', 'cp-library' ),
+				'playAudio' => Settings::get( 'label_play_audio', __( 'Listen', 'cp-library' ) ),
+				'playVideo' => Settings::get( 'label_play_video', __( 'Watch', 'cp-library' ) ),
 			],
 		] );
 
@@ -243,7 +280,17 @@ class Init {
 	 * @return void
 	 */
 	protected function includes() {
-		Admin\Init::get_instance();
+		if ( function_exists( 'cp_locations' ) ) {
+			Integrations\Locations::get_instance();
+		}
+
+		if ( function_exists( 'cp_resources' ) ) {
+			Integrations\Resources::get_instance();
+		}
+
+		if ( defined( 'TRIBE_EVENTS_FILE' ) ) {
+			Integrations\EventsCalendar::get_instance();
+		}
 	}
 
 	/**
@@ -252,10 +299,40 @@ class Init {
 	 * @return void
 	 */
 	protected function actions() {
+		add_action( 'init', [ $this, 'maybe_migrate' ] );
+		add_filter( 'query_vars', [ $this, 'query_vars' ] );
 		add_action( 'wp_head', [ $this, 'global_css_vars' ] );
+		add_action( 'cpl-load-analytics-page', [ $this, 'analytics_init' ] );
 	}
 
 	/** Actions **************************************/
+
+
+	/**
+	 * Handle migrations from previous versions
+	 *
+	 * @since  1.2.0
+	 *
+	 * @param $version
+	 *
+	 * @author Tanner Moushey, 9/6/23
+	 */
+	public function maybe_migrate( $version = false ) {
+		$current_version = get_option( 'cpl_version', false );
+
+		if ( $current_version === $this->get_version() ) {
+			return;
+		}
+
+		if ( ! $version ) {
+			$version = $this->get_version();
+		}
+
+		flush_rewrite_rules();
+		update_option( 'cpl_version', $this->get_version() );
+
+		do_action( 'cpl_migrate', $current_version, $version );
+	}
 
 	public function global_css_vars() {
 		?>
@@ -265,6 +342,17 @@ class Init {
 			}
 		</style>
 		<?php
+	}
+
+	/**
+	 * Add custom query vars to the allowed list
+	 *
+	 * @param array $vars
+	 * @return array
+	 */
+	public function query_vars( $vars ) {
+		$vars[] = 'cpl_page';
+		return $vars;
 	}
 
 	/**
@@ -348,7 +436,7 @@ class Init {
 	 * @return string
 	 */
 	public function get_version() {
-		return '0.0.2';
+		return CP_LIBRARY_PLUGIN_VERSION;
 	}
 
 	/**

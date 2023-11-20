@@ -26,12 +26,10 @@ class ItemType extends Table  {
 	 * @since  1.0.0
 	*/
 	public function __construct() {
-		global $wpdb;
-
-		$this->table_name = $wpdb->prefix . 'cpl_item_type';
-		$this->version    = 1;
-
 		parent::__construct();
+
+		$this->table_name = $this->prefix . 'cpl_item_type';
+		$this->version    = 1;
 	}
 
 	/**

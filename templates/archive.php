@@ -10,7 +10,10 @@ $description = get_the_archive_description();
 	<?php do_action( 'cpl_before_archive' ); ?>
 	<?php do_action( 'cpl_before_archive_'  . $type ); ?>
 
-	<h1 class="page-title"><?php echo post_type_archive_title(); ?></h1>
+	<div class="cpl-archive--header">
+		<h1 class="page-title"><?php echo apply_filters( 'cpl-archive-title', post_type_archive_title(), $type ); ?></h1>
+		<?php Templates::type_switcher(); ?>
+	</div>
 
 	<div class="cpl-archive--container">
 
@@ -22,15 +25,15 @@ $description = get_the_archive_description();
 			<?php Templates::get_template_part( "parts/filter-selected" ); ?>
 
 			<div class="cpl-archive--list">
-				<?php if ( have_posts() ) : ?>
+				<?php if ( have_posts() ) { ?>
 					<?php while( have_posts() ) : the_post();  ?>
 						<div class="cpl-archive--list--item">
 							<?php Templates::get_template_part( "parts/" . Templates::get_type() . "-list" ); ?>
 						</div>
 					<?php endwhile; ?>
-				<?php else : ?>
+				<?php } else if( !empty( $type ) && is_object( $type ) && !empty( $type->plural_label ) ) { ?>
 						<p><?php printf( __( "No %s found.", 'cp-library' ), $type->plural_label ); ?></p>
-				<?php endif; ?>
+				<?php }; ?>
 			</div>
 		</div>
 

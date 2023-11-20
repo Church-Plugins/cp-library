@@ -1,23 +1,22 @@
 .cpl-single {
 
 	&--header {
-		padding-bottom: 1rem;
+		padding-bottom: var(--cp-gap--sm);
 		border-bottom: 1px solid;
-		margin-bottom: 2rem;
+		margin-bottom: var(--cp-gap--md);
 
 		&--title {
-			font-size: 2.25rem;
+			font-size: calc(var(--cp-font-size--lg) * 2);
 		}
 
 	}
 
 	&--back {
-		margin-bottom: 1rem;
+		margin-bottom: var(--cp-gap--md);
 		display: inline-block;
 
 		&:before {
-			content: '←';
-			margin-right: .5em;
+			content: '← ';
 		}
 	}
 }

@@ -7,11 +7,16 @@ $term = get_queried_object();
 $types = [];
 
 if ( cp_library()->setup->post_types->item_type_enabled() ) {
-	$types[] = cp_library()->setup->post_types->item_type;
+	$types[ cp_library()->setup->post_types->item_type->post_type ] = cp_library()->setup->post_types->item_type;
 }
 
-$types[] = cp_library()->setup->post_types->item;
+$types[ cp_library()->setup->post_types->item->post_type ] = cp_library()->setup->post_types->item;
 
+// if the post_type is defined in the query, only include that type
+$queried_post_type = get_query_var( 'post_type' );
+if ( isset( $types[ $queried_post_type ] ) ) {
+	$types = [ $types[ $queried_post_type ] ];
+}
 ?>
 
 <div class="cpl-archive cpl-archive--<?php echo esc_attr( $term->slug ); ?>">

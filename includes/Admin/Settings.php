@@ -2,6 +2,9 @@
 
 namespace CP_Library\Admin;
 
+use CP_Library\Admin\Settings\Podcast;
+use CP_Library\Models\ServiceType;
+
 /**
  * Plugin settings
  *
@@ -58,10 +61,18 @@ class Settings {
 	 *
 	 * @return mixed|void
 	 * @since  1.0.0
+	 * @updated 1.2.0 - handle default_menu_item
 	 *
 	 * @author Tanner Moushey
 	 */
 	public static function get_advanced( $key, $default = '' ) {
+		// force item as the default menu item if item type is not enabled
+		if ( 'default_menu_item' == $key ) {
+			if ( ! cp_library()->setup->post_types->item_type_enabled() ) {
+				return 'item';
+			}
+		}
+
 		return self::get( $key, $default, 'cpl_advanced_options' );
 	}
 
@@ -77,6 +88,10 @@ class Settings {
 		return self::get( $key, $default, 'cpl_speaker_options' );
 	}
 
+	public static function get_service_type( $key, $default = '' ) {
+		return self::get( $key, $default, 'cpl_service_type_options' );
+	}
+
 	/**
 	 * Class constructor. Add admin hooks and actions
 	 *
@@ -88,7 +103,8 @@ class Settings {
 
 	public function register_main_options_metabox() {
 
-		$post_type = cp_library()->setup->post_types->item_type_enabled() ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
+		$post_type = Settings::get_advanced( 'default_menu_item', 'item_type' ) === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
+
 		/**
 		 * Registers main options page menu item and form.
 		 */
@@ -152,6 +168,28 @@ class Settings {
 			'preview_size' => 'medium', // Image size to use when previewing in the admin
 		) );
 
+		$main_options->add_field( array(
+			'name'         => __( 'Labels', 'cp-library' ),
+			'id'           => 'label_title',
+			'type'         => 'title',
+		) );
+
+		$main_options->add_field( array(
+			'name'         => __( 'Play Video Button', 'cp-library' ),
+			'desc'         => sprintf( __( 'The text to use on the play button.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'id'           => 'label_play_video',
+			'type'         => 'text',
+			'default'      => __( 'Watch', 'cp-library' ),
+		) );
+
+		$main_options->add_field( array(
+			'name'         => __( 'Play Audio Button', 'cp-library' ),
+			'desc'         => sprintf( __( 'The text to use on the play button.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'id'           => 'label_play_audio',
+			'type'         => 'text',
+			'default'      => __( 'Listen', 'cp-library' ),
+		) );
+
 		$this->item_options();
 
 		if ( cp_library()->setup->post_types->item_type_enabled() ) {
@@ -162,14 +200,28 @@ class Settings {
 			$this->speaker_options();
 		}
 
+		if ( cp_library()->setup->post_types->service_type_enabled() ) {
+			$this->service_type_options();
+		}
+
+		if ( cp_library()->setup->podcast->is_enabled() ) {
+			Podcast::fields();
+		}
+
 		$this->advanced_options();
+		$this->license_fields();
+
+	}
+
+	protected function license_fields() {
+		$license = new \ChurchPlugins\Setup\Admin\License( 'cpl_license', 436, CP_LIBRARY_STORE_URL, CP_LIBRARY_PLUGIN_FILE, get_admin_url( null, 'admin.php?page=cpl_license' ) );
 
 		/**
-		 * Registers tertiary options page, and set main item as parent.
+		 * Registers settings page, and set main item as parent.
 		 */
 		$args = array(
-			'id'           => 'cpl_license_options_page',
-			'title'        => 'Settings',
+			'id'           => 'cpl_options_page',
+			'title'        => 'CP Library Settings',
 			'object_types' => array( 'options-page' ),
 			'option_key'   => 'cpl_license',
 			'parent_slug'  => 'cpl_main_options',
@@ -178,14 +230,10 @@ class Settings {
 			'display_cb'   => [ $this, 'options_display_with_tabs' ]
 		);
 
-		$tertiary_options = new_cmb2_box( $args );
-
-		$tertiary_options->add_field( array(
-			'name' => 'License Key',
-			'id'   => 'license',
-			'type' => 'text',
-		) );
+		$options = new_cmb2_box( $args );
+		$license->license_field( $options );
 	}
+
 
 	protected function item_options() {
 		/**
@@ -220,9 +268,97 @@ class Settings {
 		$options->add_field( array(
 			'name'    => __( 'Plural Label', 'cp-library' ),
 			'id'      => 'plural_label',
-			'desc'    => __( 'Caution: changing this value will also adjust the url structure and may affect your SEO.', 'cp-library' ),
 			'type'    => 'text',
 			'default' => cp_library()->setup->post_types->item->plural_label,
+		) );
+
+		$options->add_field( array(
+			'name'    => __( 'Slug', 'cp-library' ),
+			'id'      => 'slug',
+			'desc'    => __( 'Caution: changing this value will also adjust the url structure and may affect your SEO.', 'cp-library' ),
+			'type'    => 'text',
+			'default' => strtolower( sanitize_title( cp_library()->setup->post_types->item->plural_label ) ),
+		) );
+
+		$options->add_field( array(
+			'name' => __( 'Template Options', 'cp-library' ),
+			'id'   => 'template_title',
+			'type' => 'title',
+		) );
+
+		$template_items = [
+			'date'      => __( 'Publish Date', 'cp-library' ),
+			'topics'    => __( 'Topics', 'cp-library' ),
+			'scripture' => __( 'Scripture', 'cp-library' ),
+		];
+
+		if ( cp_library()->setup->post_types->speaker_enabled() ) {
+			$template_items['speakers'] = cp_library()->setup->post_types->speaker->plural_label;
+		}
+
+		if ( cp_library()->setup->post_types->item_type_enabled() ) {
+			$template_items['types'] = cp_library()->setup->post_types->item_type->plural_label;
+		}
+
+		if ( cp_library()->setup->post_types->service_type_enabled() ) {
+			$template_items['service_type'] = cp_library()->setup->post_types->service_type->plural_label;
+		}
+
+		$template_items = apply_filters( 'cp_library_template_items', $template_items );
+
+		$options->add_field( [
+			'name' => __( 'Info Items', 'cp-library' ),
+			'desc' => __( 'The items to show under the title on the single view and list view.', 'cp-library' ),
+			'id'   => 'info_items',
+			'type' => 'pw_multiselect',
+			'options' => $template_items,
+			'default' => [ 'speakers', 'locations', 'types' ]
+		] );
+
+		$options->add_field( [
+			'name' => __( 'Meta Items', 'cp-library' ),
+			'desc' => __( 'The items to show above the title on the single view and at the bottom of the card in the list view.', 'cp-library' ),
+			'id'   => 'meta_items',
+			'type' => 'pw_multiselect',
+			'options' => $template_items,
+			'default' => [ 'date', 'topics', 'scripture' ]
+		] );
+
+		$variation_sources = cp_library()->setup->variations->get_sources();
+		$desc              = __( 'Use this section to control the sermon variation functionality. Variations allows you to create multiple versions of a sermon with different speakers, media, etc. This is ideal for churches that deliver the same message from multiple locations each Sunday.', 'cp-library' );
+
+		if ( empty( $variation_sources ) ) {
+			$desc .= '<br /><br />' . __( 'To enable Variations, activate Service Types or a supported add-on.', 'cp-library' );
+		}
+
+		$options->add_field( array(
+			'name' => __( 'Variations', 'cp-library' ),
+			'id'   => 'variations_title',
+			'desc' => $desc,
+			'type' => 'title',
+		) );
+
+		if ( empty( $variation_sources ) ) {
+			return;
+		}
+
+		$options->add_field( array(
+			'name'    => __( 'Enable Variations (beta)', 'cp-library' ),
+			'id'      => 'variations_enabled',
+			'type'    => 'radio_inline',
+			'default' => 0,
+			'options' => [
+				1 => __( 'Enable', 'cp-library' ),
+				0 => __( 'Disable', 'cp-library' ),
+			]
+		) );
+
+		$options->add_field( array(
+			'name' => __( 'Variation Source', 'cp-library' ),
+			'id'   => 'variation_source',
+			'type' => 'select',
+			'desc' => __( 'The Variation Source is used to define the different sermons variations.', 'cp-library' ),
+			'options' => $variation_sources,
 		) );
 
 	}
@@ -260,9 +396,16 @@ class Settings {
 		$options->add_field( array(
 			'name'    => __( 'Plural Label', 'cp-library' ),
 			'id'      => 'plural_label',
-			'desc'    => __( 'Caution: changing this value will also adjust the url structure and may affect your SEO.', 'cp-library' ),
 			'type'    => 'text',
 			'default' => cp_library()->setup->post_types->item_type->plural_label,
+		) );
+
+		$options->add_field( array(
+			'name'    => __( 'Slug', 'cp-library' ),
+			'id'      => 'slug',
+			'desc'    => __( 'Caution: changing this value will also adjust the url structure and may affect your SEO.', 'cp-library' ),
+			'type'    => 'text',
+			'default' => strtolower( sanitize_title( cp_library()->setup->post_types->item_type->plural_label ) ),
 		) );
 
 	}
@@ -304,6 +447,65 @@ class Settings {
 			'type'    => 'text',
 			'default' => cp_library()->setup->post_types->speaker->plural_label,
 		) );
+
+	}
+
+	protected function service_type_options() {
+		/**
+		 * Registers secondary options page, and set main item as parent.
+		 */
+		$args = array(
+			'id'           => 'cpl_service_type_options_page',
+			'title'        => 'Settings',
+			'object_types' => array( 'options-page' ),
+			'option_key'   => 'cpl_service_type_options',
+			'parent_slug'  => 'cpl_main_options',
+			'tab_group'    => 'cpl_main_options',
+			'tab_title'    => cp_library()->setup->post_types->service_type->plural_label,
+			'display_cb'   => [ $this, 'options_display_with_tabs' ],
+		);
+
+		$options = new_cmb2_box( $args );
+
+		$options->add_field( array(
+			'name' => __( 'Labels' ),
+			'id'   => 'labels',
+			'type' => 'title',
+		) );
+
+		$options->add_field( array(
+			'name'    => __( 'Singular Label', 'cp-library' ),
+			'id'      => 'singular_label',
+			'type'    => 'text',
+			'default' => cp_library()->setup->post_types->service_type->single_label,
+		) );
+
+		$options->add_field( array(
+			'name'    => __( 'Plural Label', 'cp-library' ),
+			'id'      => 'plural_label',
+			'type'    => 'text',
+			'default' => cp_library()->setup->post_types->service_type->plural_label,
+		) );
+
+		$service_types = ServiceType::get_all_service_types();
+
+		if ( empty( $service_types ) ) {
+			$options->add_field( [
+				'desc' => sprintf( __( 'No %s have been created yet. <a href="%s">Create one here.</a>', 'cp-library' ), cp_library()->setup->post_types->service_type->plural_label, add_query_arg( [ 'post_type' => cp_library()->setup->post_types->service_type->post_type ], admin_url( 'post-new.php' ) )  ),
+				'type' => 'title',
+				'id' => 'cpl_no_service_types',
+			] );
+		} else {
+			$service_types = array_combine( wp_list_pluck( $service_types, 'id' ), wp_list_pluck( $service_types, 'title' ) );
+
+			$options->add_field( array(
+				'name'             => __( 'Default Service Type', 'cp-library' ),
+				'id'               => 'default_service_type',
+				'type'             => 'select',
+				'show_option_none' => true,
+				'options'          => $service_types,
+			) );
+		}
 
 	}
 
@@ -351,6 +553,50 @@ class Settings {
 				0 => __( 'Disable', 'cp-library' ),
 			]
 		) );
+
+		$advanced_options->add_field( array(
+			'name'    => __( 'Enable' ) . ' ' . cp_library()->setup->post_types->service_type->plural_label,
+			'id'      => 'service_type_enabled',
+			'type'    => 'radio_inline',
+			'default' => 0,
+			'options' => [
+				1 => __( 'Enable', 'cp-library' ),
+				0 => __( 'Disable', 'cp-library' ),
+			]
+		) );
+
+		$advanced_options->add_field( array(
+			'name'    => __( 'Enable Podcast Feed' ),
+			'id'      => 'podcast_feed_enable',
+			'type'    => 'radio_inline',
+			'default' => 0,
+			'options' => [
+				1 => __( 'Enable', 'cp-library' ),
+				0 => __( 'Disable', 'cp-library' ),
+			]
+		) );
+
+		if ( cp_library()->setup->post_types->item_type_enabled() ) {
+
+			// @todo move this out of conditional once we add more settings
+			$advanced_options->add_field( array(
+				'name' => __( 'Settings' ),
+				'id'   => 'settings',
+				'type' => 'title',
+			) );
+
+			$advanced_options->add_field( [
+				'name'    => __( 'Set default menu item', 'cp-library' ),
+				'id'      => 'default_menu_item',
+				'type'    => 'select',
+				'options' => [
+					'item'      => cp_library()->setup->post_types->item->plural_label,
+					'item_type' => cp_library()->setup->post_types->item_type->plural_label,
+				],
+				'default' => 'item_type',
+				'desc'    => sprintf( __( 'Select which object to use for the Admin menu item.', 'cp-library' ), cp_library()->setup->post_types->item_type->plural_label, cp_library()->setup->post_types->item->plural_label ),
+			] );
+		}
 
 	}
 

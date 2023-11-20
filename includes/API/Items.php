@@ -4,6 +4,7 @@ namespace CP_Library\API;
 
 use ChurchPlugins\Models\Log;
 use CP_Library\Controllers\Item;
+use CP_Library\Models\Item as ItemModel;
 use CP_Library\Exception;
 use CP_Library\Models\ItemType;
 use WP_REST_Controller;
@@ -125,10 +126,16 @@ class Items extends WP_REST_Controller {
 				throw new Exception( 'No action specified' );
 			}
 
+			if( $action === 'view_duration' ) {
+				$this->handle_view_duration( $request );
+				return;
+			}
+
 			$data = Log::insert( [
 				'object_type' => 'item',
 				'object_id' => $item_id,
 				'action' =>  $action,
+				'data' => $request->get_param( 'payload' )
 			] );
 
 		} catch ( \ChurchPlugins\Exception $e ) {
@@ -219,7 +226,7 @@ class Items extends WP_REST_Controller {
 	 */
 	public function get_search_results( $find ) {
 
-		$find = rawurlencode( rawurldecode( $find ) );
+//		$find = rawurlencode( rawurldecode( $find ) );
 		$return_value = [];
 
 		$request  = new WP_REST_Request( 'GET', "/wp/v2/search", [] );
@@ -284,25 +291,28 @@ class Items extends WP_REST_Controller {
 
 			if( !empty( $formats ) && !in_array( 'format__all', $formats ) && count( $formats ) == 1 ) {
 
-				$format = str_replace( 'filter__', '', $formats[0] );
-				$sql = '';
+				$format     = str_replace( 'filter__', '', $formats[0] );
+				$sql        = '';
+				$table      = ItemModel::get_prop( 'table_name' );
+				$meta_table = ItemModel::get_prop( 'meta_table_name' );
+
 				global $wpdb;
 				if( $format == 'audio' ) {
 					$sql = $wpdb->prepare(
 						"
 						SELECT		origin_id
-						FROM 		" . $wpdb->prefix . "cpl_item, " . $wpdb->prefix . "cpl_item_meta
-						WHERE		wp_cpl_item_meta.`key` IN ( %s ) AND
-									wp_cpl_item.`id` = wp_cpl_item_meta.item_id",
+						FROM 		$table, $meta_table
+						WHERE		$meta_table.`key` IN ( %s ) AND
+									$table.`id` = $meta_table.item_id",
 						'audio_url'
 					);
 				} else {
 					$sql = $wpdb->prepare(
 						"
 						SELECT		origin_id
-						FROM 		" . $wpdb->prefix . "cpl_item, " . $wpdb->prefix . "cpl_item_meta
-						WHERE		wp_cpl_item_meta.`key` IN ( %s, %s ) AND
-									wp_cpl_item.`id` = wp_cpl_item_meta.item_id",
+						FROM 		$table, $meta_table
+						WHERE		$meta_table.`key` IN ( %s, %s ) AND
+									$table.`id` = $meta_table.item_id",
 						'video_id_vimeo', 'video_id_facebook'
 					);
 				}
@@ -448,5 +458,62 @@ class Items extends WP_REST_Controller {
 	 */
 	public function get_rest_base() {
 		return $this->rest_base;
+	}
+
+
+
+
+
+	public function handle_view_duration( WP_REST_Request $request ) {
+
+		$action  = $request->get_param( 'action' );
+		$payload = $request->get_param( 'payload' );
+		$item_id = $request->get_param( 'item_id' );
+		$user_ip = $request->get_header('x-forwarded-for');
+
+		if( ! (
+			is_array( $payload ) && 
+			isset( $payload['watchedSeconds'] ) && 
+			isset( $payload['maxDuration'] ) &&
+			is_int( $payload['watchedSeconds'] ) &&
+			is_int( $payload['maxDuration'] )
+			) ) {
+			throw new Exception( "Invalid payload", 400 );
+		}
+
+		global $wpdb;
+
+		$query = $wpdb->prepare( "SELECT * FROM wp_cp_log WHERE object_id = '$item_id' AND JSON_EXTRACT(data, '$.user_ip') = '$user_ip'" ); 
+
+		$data = $wpdb->get_row( $query );
+
+		if( ! $data ) {
+			Log::insert( [
+				'object_type' => 'item',
+				'object_id' => $item_id,
+				'action' =>  $action,
+				'data' => json_encode(array(
+					'user_ip' => $user_ip,
+					'watch_duration' => absint( $payload['watchedSeconds'] )
+				))
+			] );
+			return;
+		}
+
+		$log = Log::get_instance( $data->id );
+
+		$data = json_decode( $data->data );
+
+		$total_watch_duration = absint( $payload ) + absint( $data->watch_duration );
+		$total_watch_duration = min( $total_watch_duration, $payload['maxDuration'] );
+
+		$log->update([
+			'data' => json_encode(array(
+				'user_ip' => $user_ip,
+				'watch_duration' => $total_watch_duration
+			))
+		]);
+
+		return;
 	}
 }

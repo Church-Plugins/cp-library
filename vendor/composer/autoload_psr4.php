@@ -8,6 +8,5 @@ $baseDir = dirname($vendorDir);
 return array(
     'WPackio\\' => array($vendorDir . '/wpackio/enqueue/inc'),
     'Composer\\Installers\\' => array($vendorDir . '/composer/installers/src/Composer/Installers'),
-    'ChurchPlugins\\' => array($baseDir . '/includes/ChurchPlugins'),
     'CP_Library\\' => array($baseDir . '/includes'),
 );

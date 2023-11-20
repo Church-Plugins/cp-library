@@ -70,7 +70,7 @@ class Init {
 	 * @author costmo
 	 */
 	protected function actions() {
-		add_action( 'init', [ $this, 'register_taxonomies' ], 20 );
+		add_action( 'init', [ $this, 'register_taxonomies' ], 5 );
 	}
 
 	/**

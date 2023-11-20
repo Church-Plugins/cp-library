@@ -2,46 +2,20 @@
 
 namespace CP_Library\Controllers;
 
+use ChurchPlugins\Controllers\Controller;
 use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Models\ItemType as Model;
 use CP_Library\Util\Convenience;
 
-class ItemType {
-
-	/**
-	 * @var bool|Model
-	 */
-	public $model;
-
-	/**
-	 * @var array|\WP_Post|null
-	 */
-	public $post;
-
-	/**
-	 * Item constructor.
-	 *
-	 * @param $id
-	 * @param bool $use_origin whether or not to use the origin id
-	 *
-	 * @throws Exception
-	 */
-	public function __construct( $id, $use_origin = true ) {
-		$this->model = $use_origin ? Model::get_instance_from_origin( $id ) : Model::get_instance( $id );
-		$this->post  = get_post( $this->model->origin_id );
-	}
-
-	protected function filter( $value, $function ) {
-		return apply_filters( 'cpl_item_' . $function, $value, $this );
-	}
+class ItemType extends Controller{
 
 	public function get_content() {
 		return $this->filter( get_the_content( null, false, $this->post ), __FUNCTION__ );
 	}
 
 	public function get_title() {
-		return $this->filter( get_the_title( $this->post->ID ), __FUNCTION__ );
+		return $this->filter( apply_filters( 'the_title', $this->post->post_title, $this->post->ID ), __FUNCTION__ );
 	}
 
 	public function get_permalink() {
@@ -49,7 +23,7 @@ class ItemType {
 	}
 
 	public function get_thumbnail() {
-		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID ) ) {
+		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID, 'large' ) ) {
 			return $this->filter( $thumb, __FUNCTION__ );
 		}
 
@@ -71,6 +45,50 @@ class ItemType {
 	public function get_publish_date() {
 		$date = get_post_datetime( $this->post );
 		return $this->filter( $date->getTimestamp(), __FUNCTION__ );
+	}
+
+	/**
+	 * Get the first date in this series
+	 *
+	 * @param $format
+	 *
+	 * @return false|string
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_date_first( $format = false ) {
+		if ( ! $date = get_post_meta( $this->post->ID, 'first_item_date', true ) ) {
+			$this->model->update_dates();
+			if ( ! $date = get_post_meta( $this->post->ID, 'first_item_date', true ) ) {
+				return '';
+			}
+		}
+
+		$_format = ! empty( $format ) ? $format : get_option( 'date_format' );
+		return date( $_format, $date );
+	}
+
+	/**
+	 * Get the last date in this series
+	 *
+	 * @param $format
+	 *
+	 * @return false|string
+	 * @since  1.0.0
+	 *
+	 * @author Tanner Moushey
+	 */
+	public function get_date_last( $format = false ) {
+		if ( ! $date = get_post_meta( $this->post->ID, 'last_item_date', true ) ) {
+			$this->model->update_dates();
+			if ( ! $date = get_post_meta( $this->post->ID, 'last_item_date', true ) ) {
+				return '';
+			}
+		}
+
+		$_format = ! empty( $format ) ? $format : get_option( 'date_format' );
+		return date( $_format, $date );
 	}
 
 	public function get_scripture() {
@@ -103,7 +121,7 @@ class ItemType {
 		return $this->filter( $return, __FUNCTION__ );
 	}
 
-	public function get_api_data() {
+	public function get_api_data( $include_items = true ) {
 		$data = [
 			'id'        => $this->model->id,
 			'originID'  => $this->post->ID,
@@ -111,18 +129,24 @@ class ItemType {
 			'thumb'     => $this->get_thumbnail(),
 			'title'     => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
 			'desc'      => $this->get_content(),
-			'date'      => [ 'desc' => Convenience::relative_time( $this->get_publish_date() ), 'timestamp' => $this->get_publish_date() ],
+			'date'      => [ 'desc' => Convenience::relative_time( $this->get_publish_date() ), 'timestamp' => $this->get_publish_date(), 'first' => $this->get_date_first(), 'last' => $this->get_date_last() ],
 			'items'     => [],
 			'season'    => $this->get_seasons(),
 			'scripture' => $this->get_scripture(),
 		];
 
-		foreach( $this->model->get_items() as $i ) {
-			try {
-				$item = new Item( $i->origin_id );
-				$data['items'][] = $item->get_api_data();
-			} catch( Exception $e ) {
-				error_log( $e );
+		if ( $include_items ) {
+			foreach ( $this->model->get_items() as $i ) {
+				try {
+					$item      = new Item( $i->id, false );
+					$item_data = $item->get_api_data();
+
+					if ( 'publish' == $item_data['status'] ) {
+						$data['items'][] = $item->get_api_data();
+					}
+				} catch ( Exception $e ) {
+					error_log( $e );
+				}
 			}
 		}
 

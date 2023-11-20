@@ -2,7 +2,7 @@
 
 try {
 	$item_type = new \CP_Library\Controllers\ItemType( get_the_ID() );
-	$item_type = $item_type->get_api_data();
+	$item_type = $item_type->get_api_data( false );
 } catch ( \CP_Library\Exception $e ) {
 	error_log( $e );
 
@@ -43,7 +43,7 @@ try {
 					<span class="material-icons-outlined">menu_book</span>
 
 					<?php foreach ( $item_type['scripture'] as $scripture ) : ?>
-						<a href="<?php echo esc_url( $scripture['url'] ); ?>"><?php echo esc_html( $scripture['name'] ); ?></a><span class="cpl-separator">, </span>
+						<a href="<?php echo esc_url( $scripture['url'] ); ?>"><?php echo esc_html( $scripture['name'] ); ?></a><span class="cpl-separator">,&nbsp;</span>
 					<?php endforeach; ?>
 				</div>
 			<?php endif; ?>

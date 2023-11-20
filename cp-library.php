@@ -1,16 +1,23 @@
 <?php
 /**
- * Plugin Name: Church Plugins - Library
+ * Plugin Name: CP Sermon Library
  * Plugin URL: https://churchplugins.com
  * Description: Church library plugin for sermons, talks, and other media
- * Version: 1.0.0
+ * Version: 1.2.5
  * Author: Church Plugins
  * Author URI: https://churchplugins.com
  * Text Domain: cp-library
  * Domain Path: languages
  */
 
+if( !defined( 'CP_LIBRARY_PLUGIN_VERSION' ) ) {
+	 define ( 'CP_LIBRARY_PLUGIN_VERSION',
+	 	'1.2.5'
+	);
+}
+
 require_once( dirname( __FILE__ ) . "/includes/Constants.php" );
+
 require_once( CP_LIBRARY_PLUGIN_DIR . "/includes/ChurchPlugins/init.php" );
 require_once( CP_LIBRARY_PLUGIN_DIR . 'vendor/autoload.php' );
 

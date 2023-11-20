@@ -3,15 +3,21 @@ global $post;
 $original_post = $post;
 
 try {
-	$item_type = new \CP_Library\Controllers\ItemType( get_the_ID() );
-	$item_type = $item_type->get_api_data();
-	$selected_item = get_query_var( 'type-item' );
+	$item_type          = new \CP_Library\Controllers\ItemType( get_the_ID() );
+	$item_type          = $item_type->get_api_data();
+	$selected_item_slug = get_query_var( 'type-item' );
+	$selected_item      = false;
 
-	if ( $selected_item ) {
-		$selected_item = get_page_by_path( $selected_item, OBJECT, cp_library()->setup->post_types->item->post_type );
+	if ( is_array( $item_type['items'] ) ) {
+		foreach( $item_type['items'] as $item ) {
+			if ( $selected_item_slug === $item['slug'] ) {
+				$selected_item = get_post( $item['originID'] );
+				break;
+			}
+		}
 	}
 
-} catch ( \CP_Library\Exception $e ) {
+} catch ( \CP_Library\Exception | \ChurchPlugins\Exception $e ) {
 	error_log( $e );
 	return;
 }
@@ -71,30 +77,15 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 	<?php else : ?>
 		<div class="cpl-single-type--container">
 			<div class="cpl-single-type--media">
-
-				<div class="itemDetail__rightContent MuiBox-root css-1la7bni">
-					<div class="itemDetail__featureImage MuiBox-root css-iy0loh">
-						<div class="itemPlayer__video MuiBox-root css-122y91a">
-							<div class="itemDetail__video" style="width: 100%; height: 100%;"></div>
-							<div class="itemDetail__audio MuiBox-root css-1aueuth">
-								<img alt="Richard Ellis logo" src="<?php echo $item_type['thumb']; ?>">
-							</div>
-						</div>
-					</div>
-				</div>
-
+				<img alt="site logo" src="<?php echo $item_type['thumb']; ?>">
 			</div>
 
 			<div class="cpl-single-type--content">
-				<div class="cpl-single-type--title">
-					<h1><?php the_title(); ?></h1>
-				</div>
-
 				<div class="cpl-meta">
 					<div class="cpl-meta--date">
 						<span class="material-icons-outlined">calendar_today</span>
 
-						<span class="MuiBox-root css-1isemmb"><?php echo $item_type["date"]["desc"]; ?></span>
+						<span class="MuiBox-root css-1isemmb"><?php echo ( $item_type["date"]["first"] == $item_type["date"]["last"] ) ? $item_type["date"]["first"] : sprintf( "%s - %s", $item_type["date"]["first"], $item_type["date"]["last"] ); ?></span>
 					</div>
 
 					<?php if ( ! empty( $item_type['topics'] ) ) : ?>
@@ -112,10 +103,14 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 							<span class="material-icons-outlined">menu_book</span>
 
 							<?php foreach ( $item_type['scripture'] as $scripture ) : ?>
-								<a href="<?php echo esc_url( $scripture['url'] ); ?>"><?php echo esc_html( $scripture['name'] ); ?></a><span class="cpl-separator">, </span>
+								<a href="<?php echo esc_url( $scripture['url'] ); ?>"><?php echo esc_html( $scripture['name'] ); ?></a><span class="cpl-separator">,&nbsp;</span>
 							<?php endforeach; ?>
 						</div>
 					<?php endif; ?>
+				</div>
+
+				<div class="cpl-single-type--title">
+					<h1><?php the_title(); ?></h1>
 				</div>
 
 				<div class="cpl-single-type--desc">
@@ -123,18 +118,42 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 				</div>
 			</div>
 
-
 		</div>
 	<?php endif; ?>
 
-	<h2 class="cpl-single-type--items-title"><?php printf( __( '%s: %s', 'cp-library' ), cp_library()->setup->post_types->item_type->plural_label, get_the_title() ); ?></h2>
+	<p class="cpl-single-type--items-title" id="cpl-single-type--items-title"><?php printf( '%s: %s', cp_library()->setup->post_types->item->plural_label, count( $item_type['items'] ) ); ?></p>
 
-	<section class="cpl-single-type--items">
-		<?php foreach ( $item_type['items'] as $item ) : $post = get_post( $item['originID'] );setup_postdata( $post ); ?>
+	<section class="cpl-single-type--items" id="cpl-single-type--items">
+		<?php
+		// Items come in ASC order, show in DESC
+		$ids = array_reverse( wp_list_pluck( $item_type['items'], 'originID' ) );
+		$page = get_query_var( 'cpl_page' ) ? get_query_var( 'cpl_page' ) : 1;
+		$item_query = new WP_Query( array(
+			'post_type' => cp_library()->setup->post_types->item->post_type,
+			'post__in' => $ids,
+			'orderby' => 'post__in',
+			'posts_per_page' => 10,
+			'paged' => $page
+		) );
+		?>
+
+		<?php while( $item_query->have_posts() ) : $item_query->the_post() ?>
 			<?php \CP_Library\Templates::get_template_part( "parts/item-list" ); ?>
-		<?php endforeach; $post = $original_post; wp_reset_postdata(); ?>
-	</section>
+		<?php endwhile; ?>
 
+		<?php wp_reset_postdata(); ?>
+
+		<div class="cpl-single-type--items--pagination">
+			<?php
+			echo paginate_links( array(
+				'base' => get_permalink() . '?cpl_page=%#%#cpl-single-type--items-title',
+				'format' => '?cpl_page=%#%',
+				'current' => max( 1, get_query_var( 'cpl_page' ) ),
+				'total' => $item_query->max_num_pages
+			) );
+			?>
+		</div>
+	</section>
 </div>
 
 <?php do_action( 'cpl_single_type_after', $item_type ); ?>

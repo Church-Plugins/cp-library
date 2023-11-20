@@ -1,0 +1,144 @@
+.cpl-widget--single-item, .cpl-widget--single-item-alt {
+
+	.cpl-columns {
+		align-items: center;
+
+		> * {
+			flex-grow: 1;
+			flex-basis: 50%;
+		}
+	}
+
+	.cpl-single-item {
+		&--details {
+			&:not(:first-child) {
+				margin-left: var(--cp-gap--md);
+				//margin-top: var(--cp-gap--md);
+			}
+		}
+
+		&--desc {
+			margin-top: var(--cp-gap--md);
+		}
+	}
+
+}
+
+
+.cpl-widget--single-item {
+	.cpl-item-actions {
+		display: flex;
+		align-items: center;
+		height: 100%;
+		width: 100%;
+		position: absolute;
+		left: 0;
+		top: 0;
+	}
+
+	.cpl-list-item--actions {
+		height: auto;
+		margin: auto;
+
+		.is-outlined {
+
+		}
+	}
+}
+
+.cpl-widget--single-item-alt {
+	.cpl-columns {
+		align-items: flex-start;
+	}
+	.cpl-single-item {
+		a {
+			text-decoration: none;
+			&:hover {
+				text-decoration: underline;
+			}
+		}
+
+		&--title {
+			margin-bottom: 0;
+		}
+
+		.cpl-meta * {
+			color: var(--cp-color-text-tertiary);
+		}
+
+		&--details {
+			background: var(--cp-color-canvas-main);
+			padding: var(--cp-gap--sm);
+			color: var(--cp-color-text-primary);
+			margin-bottom: 0;
+		}
+
+		&--resources {
+			&.resources-hide {
+				.cp-resources-list {
+					display: none;
+				}
+			}
+		}
+
+		&--variations {
+			&--variant {
+				&:not(:last-child) {
+					margin-bottom: var(--cp-gap-base);
+				}
+			}
+		}
+
+		&--variant {
+
+			&--title {
+				font-weight: var(--cp-font-weight--bold);
+			}
+
+			&--info {
+				display: flex;
+				flex-flow: row wrap;
+				align-items: center;
+				font-size: var(--cp-font-size--sm);
+
+				> * {
+					margin-right: var(--cp-gap--sm);
+				}
+			}
+
+		}
+
+		.cpl-list-item--actions--buttons > * {
+			margin-left: 0;
+			margin-right: var(--cp-gap-base);
+		}
+	}
+
+	.cp-resources-widget {
+		margin-left: 0;
+		background: var(--cp-resources-widget-list--item-background);
+		max-width: var(--cp-resources-widget-list--width);
+		margin-bottom: var(--cp-gap--sm);
+
+		.cp-resources-list {
+			&--title {
+				cursor: pointer;
+				padding: var(--cp-gap-base) var(--cp-gap--sm);
+				margin-bottom: 0;
+				font-weight: var(--cp-font-weight--normal);
+				font-size: var(--cp-font-size--sm);
+				position: relative;
+
+				&:after {
+					content: '';
+					position: absolute;
+					background: url('data:image/svg+xml,<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"> <path d="M6.34317 7.75732L4.92896 9.17154L12 16.2426L19.0711 9.17157L17.6569 7.75735L12 13.4142L6.34317 7.75732Z" fill="currentColor" /></svg>');
+					width: 1.5em;
+					height: 1.5em;
+					background-size: contain;
+					right: var(--cp-gap--sm);
+				}
+			}
+		}
+	}
+}

@@ -18,6 +18,16 @@ body {
 		&.button__play {
 			color: var(--cpl-color--primary);
 		}
+
+		&.button__loading {
+			svg {
+				width: auto !important;
+				height: auto !important;
+			}
+		}
 	}
 
+	.MuiSlider-thumb {
+		background-color: var( --cp-color-ui-primary );
+	}
 }

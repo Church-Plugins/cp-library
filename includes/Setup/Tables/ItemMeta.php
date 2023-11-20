@@ -26,12 +26,11 @@ class ItemMeta extends Table  {
 	 * @since  1.0.0
 	*/
 	public function __construct() {
-		global $wpdb;
+		parent::__construct();
 
-		$this->table_name = $wpdb->prefix . 'cpl_item_meta';
+		$this->table_name = $this->prefix . 'cpl_item_meta';
 		$this->version    = 1;
 
-		parent::__construct();
 
 		$enum = get_option( 'cp_library_item_meta_enum' );
 		if ( is_admin() && self::get_keys() != $enum ) {

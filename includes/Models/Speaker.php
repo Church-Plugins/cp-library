@@ -25,9 +25,10 @@ class Speaker extends Source {
 
 	public static $type_key = 'speaker';
 
+	public $title = null;
+
 	public function init() {
 		$this->post_type = 'cpl_speaker';
-		$this->type = 'cpl_source';
 
 		parent::init();
 	}
@@ -48,13 +49,13 @@ class Speaker extends Source {
 		$meta     = SourceMetaTable::get_instance();
 		$instance = new self();
 
-		$sql = 'SELECT %1$s.* FROM %1$s
+		$sql = sprintf( 'SELECT %1$s.* FROM %1$s
 INNER JOIN %2$s
 ON %1$s.id = %2$s.source_id
 WHERE %2$s.key = "source_type" AND %2$s.source_type_id = %3$d
-ORDER BY %2$s.order ASC';
+ORDER BY %2$s.order ASC, %1$s.title ASC', $instance->table_name, $meta->table_name, $type_id );
 
-		$speakers = $wpdb->get_results( $wpdb->prepare( $sql, $instance->table_name, $meta->table_name, $type_id ) );
+		$speakers = $wpdb->get_results( $sql );
 
 		if ( ! $speakers ) {
 			$speakers = [];
@@ -73,6 +74,31 @@ ORDER BY %2$s.order ASC';
 		}
 
 		return $type->id;
+	}
+
+	public function get_all_items( $field = 'origin_id' ) {
+		global $wpdb;
+
+
+		$type_id  = self::get_type_id();
+		$meta     = SourceMetaTable::get_instance();
+		$instance = new Item();
+
+		$sql = sprintf( 'SELECT %1$s.origin_id, %1$s.id FROM %1$s
+INNER JOIN %2$s
+ON %1$s.id = %2$s.item_id
+WHERE ( %2$s.key = "source_item" AND %2$s.source_type_id = %3$d AND %2$s.source_id = %4$d )
+ORDER BY %2$s.order ASC', $instance->table_name, $meta->table_name, $type_id, $this->id );
+
+		$items = $wpdb->get_results( $sql );
+
+		if ( ! $items ) {
+			$items = [];
+		} else {
+			$items = wp_list_pluck( $items, $field );
+		}
+
+		return apply_filters( 'cpl_get_speaker_items', $items );
 	}
 
 	public static function insert( $data ) {
