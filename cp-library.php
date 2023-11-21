@@ -92,6 +92,7 @@ function cpl_after_activation() {
  * Runs on plugin deactivation.
  */
 function cpl_deactivation() {
+	delete_option( 'cp_library_activated' );
 	do_action( 'cpl_deactivation' );
 }
 
