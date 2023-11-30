@@ -616,27 +616,57 @@ abstract class Adapter extends \WP_Background_Process {
 	 * @param int    $post_id The post ID to attach the image to.
 	 */
 	public function maybe_sideload_thumbnail( $url, $post_id ) {
+		global $wpdb;
+
+		$existing_attachment_id = $wpdb->get_var( $wpdb->prepare( "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = 'external_url' AND meta_value = %s", $url ) );
+
+		if ( $existing_attachment_id && get_post( $existing_attachment_id ) ) {
+			set_post_thumbnail( $post_id, $existing_attachment_id );
+			return;
+		}
+
+		$filename    = basename( $url );
+		$wp_filetype = wp_check_filetype( $filename, null );
+
+		if ( strpos( $wp_filetype['type'], 'image/' ) === false ) {
+			return;
+		}
+
 		$upload_dir = wp_upload_dir();
-		$image_data = file_get_contents( $url );
-		$filename = basename( $url );
+		$image_data = wp_remote_get( $url );
+		$image_data = wp_remote_retrieve_body( $image_data );
+
+		if ( empty( $image_data ) ) {
+			return;
+		}
+
 		if ( wp_mkdir_p( $upload_dir['path'] ) ) {
 			$file = $upload_dir['path'] . '/' . $filename;
 		} else {
 			$file = $upload_dir['basedir'] . '/' . $filename;
 		}
-		file_put_contents( $file, $image_data );
 
-		$wp_filetype = wp_check_filetype( $filename, null );
+		file_put_contents( $file, $image_data );
+		
 		$attachment = array(
 			'post_mime_type' => $wp_filetype['type'],
 			'post_title'     => sanitize_file_name( $filename ),
 			'post_content'   => '',
 			'post_status'    => 'inherit'
 		);
-		$attach_id = wp_insert_attachment( $attachment, $file, $post_id );
+
 		require_once( ABSPATH . 'wp-admin/includes/image.php' );
+
+		$attach_id = wp_insert_attachment( $attachment, $file, $post_id );
+
+		if ( is_wp_error( $attach_id ) ) {
+			return;
+		}
+
 		$attach_data = wp_generate_attachment_metadata( $attach_id, $file );
+		
 		wp_update_attachment_metadata( $attach_id, $attach_data );
 		set_post_thumbnail( $post_id, $attach_id );
+		update_post_meta( $attach_id, 'external_url', $url );
 	}
 }
