@@ -295,7 +295,8 @@ abstract class Adapter extends \WP_Background_Process {
 	 * @param bool   $hard_pull Whether to do a full pull or not.
 	 */
 	public function add_items_to_queue( $items, $store_key, $hard_pull = false ) {
-		$store_data = $this->get_store( $store_key );
+		$store_data   = $this->get_store( $store_key );
+		$needs_update = false;
 
 		foreach ( $items as $item ) {
 			$store = $store_data[ $item['external_id'] ] ?? false;
@@ -305,6 +306,7 @@ abstract class Adapter extends \WP_Background_Process {
 				if ( ! empty( $item ) ) {
 					$this->push_to_queue( $item );
 				}
+				$needs_update = true;
 			} 
 
 			unset( $store_data[ $item['external_id'] ] );
@@ -316,7 +318,9 @@ abstract class Adapter extends \WP_Background_Process {
 			}
 		}
 
-		$this->update_store( $items, $store_key );
+		if ( $needs_update ) {
+			$this->update_store( $items, $store_key );
+		}
 	}
 
 	/**
@@ -516,7 +520,7 @@ abstract class Adapter extends \WP_Background_Process {
 				'name' => __( 'Broadcaster ID', 'cp-library' ),
 				'id'   => 'broadcaster_id',
 				'type' => 'text',
-				'desc' => __( 'Enter your broadcaster ID from Sermon Audio here.', 'cp-library' ),
+				'desc' => __( 'Enter your broadcaster ID from Sermon Audio here. Make sure to save changes before starting a pull.', 'cp-library' ),
 			)
 		);
 

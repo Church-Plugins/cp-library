@@ -27,6 +27,10 @@ class SermonAudio extends Adapter {
 	 * @return void
 	 */
 	public function hard_pull() {
+		if ( empty( $this->get_setting( 'broadcaster_id', false ) ) ) {
+			wp_send_json_error( array( 'error' => __( 'Invalid broadcaster ID', 'cp-library' ) ) );
+		}
+
 		$sermons = $this->fetch_all_since_date();
 		$this->format_and_process( $sermons, true );
 	}
@@ -78,12 +82,13 @@ class SermonAudio extends Adapter {
 			'pageSize' => $amount,
 			'page' => $page,
 			'sortBy' => 'updated',
-			'broadcasterID' => $this->get_setting( 'api_key', '' ),
+			'broadcasterID' => $this->get_setting( 'broadcaster_id', '' ),
 		);
 
-		$data = $this->get_results( $query );
+		$data    = $this->get_results( $query );
+		$results = array_filter( $data->results, [ $this, 'is_valid_result' ] );
 
-		$this->format_and_process( $data->results, false );
+		$this->format_and_process( $results, false );
 
 		// whether or not there are more pages
 		return (bool) $data->next;
@@ -158,7 +163,7 @@ class SermonAudio extends Adapter {
 			$query = array(
 				'pageSize' => 100,
 				'broadcasterID' => $this->get_setting( 'broadcaster_id', '' ),
-				'year' => $year,
+				'year' => $year
 			);
 			
 			$results = $this->load_results( $query );
