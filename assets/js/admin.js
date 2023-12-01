@@ -426,7 +426,6 @@ jQuery($ => {
 		})
 		.then(res => res.json())
 		.then(res => {
-			console.log(res)
 			$(this).removeClass('loading');
 			$(this).attr('disabled', false);
 			if(res.success) {
