@@ -25,8 +25,8 @@ npm run build
 ### Change Log
 
 #### 1.3.0
-* Enhancement: new Template builder to generate shortcodes
-* Enhancement: updates to Filters and additional settings
+* Enhancement: New Template builder to generate shortcodes
+* Enhancement: Updates to Filters and additional settings
 * Enhancement: Allow modifying Season and Topic terms
 * Enhancement: Automatic migration from Church Content Plugin and Sermon Manager
 * Bug Fix: Podcast feed now works for sermons
