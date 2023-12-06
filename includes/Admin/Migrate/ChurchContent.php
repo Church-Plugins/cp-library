@@ -127,9 +127,15 @@ class ChurchContent extends Migration {
 		$series   = $this->get_terms( 'ctc_sermon_series', $post->ID );
 		$speakers = $this->get_terms( 'ctc_sermon_speaker', $post->ID );
 		$books    = $this->get_terms( 'ctc_sermon_book', $post->ID );
+		$topics   = $this->get_terms( 'ctc_sermon_topic', $post->ID );
 
 		try {
 			$item = Item::get_instance_from_origin( $new_post_id );
+
+			if ( ! $item ) {
+				error_log( 'Unable to get item from origin: ' . $new_post_id );
+				return;
+			}
 
 			$video_url = $meta['_ctc_sermon_video'][0] ?? false;
 			$audio_url = $meta['_ctc_sermon_audio'][0] ?? false;
@@ -154,6 +160,10 @@ class ChurchContent extends Migration {
 
 			if ( count( $books ) ) {
 				$item->update_scripture( wp_list_pluck( $books, 'name' ) );
+			}
+
+			if ( count( $topics ) ) {
+				$this->add_topics_to_item( $item, $topics );
 			}
 		} catch ( Exception $e ) {
 			error_log( $e->getMessage() );

@@ -29,6 +29,7 @@ npm run build
 * Enhancement: updates to Filters and additional settings
 * Enhancement: Allow modifying Season and Topic terms
 * Bug Fix: Fix bug where tables wouldn't always create on activation
+* Update: Do not automatically set Series to draft when no sermons are published
 
 #### 1.2.5
 * Fix javascript error by enclosing filter js in enclosure
