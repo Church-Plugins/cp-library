@@ -2,9 +2,9 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 2,
 	"name": "cp-library/template",
-	"title": "CP Library Template",
+	"title": "CP Sermons Template",
 	"category": "cp-library",
-	"description": "Displays a CP Library template.",
+	"description": "Displays a CP Sermons template.",
 	"textdomain": "cp-library",
 	"attributes": {
 		"templateId": {

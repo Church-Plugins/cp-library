@@ -13,8 +13,8 @@ import save from './save';
 import queryInspectorControls from './hooks';
 import './editor.scss';
 
-registerBlockType(metadata, { 
-	edit, 
+registerBlockType(metadata, {
+	edit,
 	save,
 	icon: (
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 195.02 156.81">
@@ -29,7 +29,7 @@ registerBlockType(metadata, {
 
 addFilter( 'editor.BlockEdit', 'cp-library/query', queryInspectorControls )
 
-// allows the pagination block to be used with the CP Library query block
+// allows the pagination block to be used with the CP Sermons query block
 addFilter(
 	'blocks.registerBlockType',
 	'cp-library/query-pagination',

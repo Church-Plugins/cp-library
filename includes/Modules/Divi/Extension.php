@@ -1,6 +1,6 @@
 <?php // phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 /**
- * Class for the Divi CP Library Template module.
+ * Class for the Divi CP Sermons Template module.
  *
  * @package CP_Library
  */
@@ -8,7 +8,7 @@
 namespace CP_Library\Modules\Divi;
 
 /**
- * CP Library Divi Extension
+ * CP Sermons Divi Extension
  */
 class Extension extends \DiviExtension {
 

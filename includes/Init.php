@@ -47,7 +47,7 @@ class Init {
 	public $enqueue;
 
 	/**
-	 * CP Library modules for page builders
+	 * CP Sermons modules for page builders
 	 *
 	 * @var Modules\Init
 	 */

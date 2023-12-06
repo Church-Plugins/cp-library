@@ -65,7 +65,7 @@
 			display: flex;
 			cursor: pointer;
 			white-space: nowrap;
-			padding: 0 var(--cp-gap--sm);
+			padding: calc(var(--cp-gap-base)/2) var(--cp-gap--sm);
 			font-size: var(--cp-font-size--sm);
 			flex-direction: row;
 			align-items: center;
@@ -151,7 +151,7 @@
 	font-size: 1.5em;
 	user-select: none;
 
-	input {
+	input[type=checkbox] {
 		position: absolute;
 		opacity: 0;
 		cursor: pointer;

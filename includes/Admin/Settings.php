@@ -221,7 +221,7 @@ class Settings {
 		 */
 		$args = array(
 			'id'           => 'cpl_options_page',
-			'title'        => 'CP Library Settings',
+			'title'        => 'CP Sermons Settings',
 			'object_types' => array( 'options-page' ),
 			'option_key'   => 'cpl_license',
 			'parent_slug'  => 'cpl_main_options',
@@ -450,7 +450,7 @@ class Settings {
 
 		$options->add_field( array(
 			'name' => sprintf( __( 'Enable %s permalinks', 'cp-library' ), cp_library()->setup->post_types->speaker->single_label ),
-			'desc' => sprintf( __( 'Will make a %s\'s name clickable', 'cp-library' ), cp_library()->setup->post_types->speaker->single_label ),
+			'desc' => sprintf( __( 'Link the %s\'s name to the speaker page that shows their %s.', 'cp-library' ), cp_library()->setup->post_types->speaker->single_label, cp_library()->setup->post_types->item->plural_label ),
 			'id'   => 'enable_permalinks',
 			'type' => 'checkbox'
 		) );
