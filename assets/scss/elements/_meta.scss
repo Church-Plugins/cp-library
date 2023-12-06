@@ -7,14 +7,16 @@
 	display: flex;
 	flex-flow: row wrap;
 	align-items: center;
+	gap: var(--cp-gap--sm);
 
-	> * {
-		margin-right: var(--cp-gap--sm);
+	> *:first-child {
+		flex-shrink: 0;
 	}
 
 	svg, .material-icons-outlined {
 		font-size: var(--cp-font-size);
 		margin-right: var(--cp-gap-base);
+		float: left;
 	}
 
 	> * {

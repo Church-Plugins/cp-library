@@ -55,7 +55,7 @@ class Convenience
 
 		$format = ! empty( $format ) ? $format : get_option( 'date_format' );
 
-		if ( ! ctype_digit( $timestamp ) ) {
+		if ( ! is_int( $timestamp ) && ! ctype_digit( $timestamp ) ) {
 			$timestamp = strtotime( $timestamp );
 		}
 
@@ -286,4 +286,12 @@ class Convenience
 
 	}
 
+	/**
+	 * Returns the post type that is used as the main menu item
+	 * 
+	 * @return string
+	 */
+	public static function get_primary_post_type() {
+		return \CP_Library\Admin\Settings::get_advanced( 'default_menu_item', 'item_type' ) === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
+	}
 }

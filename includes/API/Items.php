@@ -33,7 +33,8 @@ class Items extends WP_REST_Controller {
 	public function __construct() {
 		$this->namespace = cp_library()->get_api_namespace();
 		$this->rest_base = 'items';
-		$this->post_type	=  CP_LIBRARY_UPREFIX . "_item";
+		$this->post_type = CP_LIBRARY_UPREFIX . '_item';
+		add_action( 'rest_api_init', array( $this, 'register_custom_query_parameters' ) );
 	}
 
 	/**
@@ -371,6 +372,10 @@ class Items extends WP_REST_Controller {
 			}
 		}
 
+		if( $request->get_param( 'hideUpcoming' ) === 'true' ) {
+			$args['cpl_hide_upcoming'] = true;
+		}
+
 		// $posts = get_posts( $args );
 		if( $page = $request->get_param( 'p' ) ) {
 			$args['paged'] = absint( $page );
@@ -460,7 +465,51 @@ class Items extends WP_REST_Controller {
 		return $this->rest_base;
 	}
 
+	/**
+	 * Registers the custom query parameters for the items collection.
+	 */
+	public function register_custom_query_parameters() {
+		add_filter( "rest_{$this->post_type}_collection_params", array( $this, 'custom_collection_params' ), 10, 2 );
+		add_filter( "rest_{$this->post_type}_query", array( $this, 'rest_query_args' ), 10, 2 );
+	}
 
+	public function custom_collection_params( $params, $post_type ) {
+		$params['cpl_hide_upcoming'] = array(
+			'type'        => 'boolean',
+			'description' => __( 'Whether to hide upcoming items', 'cp-library' ),
+			'default'     => false,
+		);
+
+		$params['cpl_speakers'] = array(
+			'type'        => 'array',
+			'description' => __( 'Filter by speaker', 'cp-library' ),
+			'default'     => array(),
+		);
+
+		$params['cpl_service_types'] = array(
+			'type'        => 'array',
+			'description' => __( 'Filter by service type', 'cp-library' ),
+			'default'     => array(),
+		);
+
+		return $params;
+	}
+
+	public function rest_query_args( $args, $request ) {
+		if ( isset( $_GET['cpl_hide_upcoming'] ) && $_GET['cpl_hide_upcoming'] === 'true' ) {
+			$args['cpl_hide_upcoming'] = true;
+		}
+
+		if ( isset( $_GET['cpl_speakers'] ) && is_array( $_GET['cpl_speakers'] ) ) {
+			$args['cpl_speakers'] = (array) $_GET['cpl_speakers'];
+		}
+
+		if ( isset( $_GET['cpl_service_types'] ) && is_array( $_GET['cpl_service_types'] ) ) {
+			$args['cpl_service_types'] = (array) $_GET['cpl_service_types'];
+		}
+
+		return $args;
+	}
 
 
 
@@ -472,8 +521,8 @@ class Items extends WP_REST_Controller {
 		$user_ip = $request->get_header('x-forwarded-for');
 
 		if( ! (
-			is_array( $payload ) && 
-			isset( $payload['watchedSeconds'] ) && 
+			is_array( $payload ) &&
+			isset( $payload['watchedSeconds'] ) &&
 			isset( $payload['maxDuration'] ) &&
 			is_int( $payload['watchedSeconds'] ) &&
 			is_int( $payload['maxDuration'] )
@@ -483,7 +532,7 @@ class Items extends WP_REST_Controller {
 
 		global $wpdb;
 
-		$query = $wpdb->prepare( "SELECT * FROM wp_cp_log WHERE object_id = '$item_id' AND JSON_EXTRACT(data, '$.user_ip') = '$user_ip'" ); 
+		$query = $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}cp_log WHERE object_id = '$item_id' AND JSON_EXTRACT(data, '$.user_ip') = '$user_ip'" );
 
 		$data = $wpdb->get_row( $query );
 

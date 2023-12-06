@@ -1,0 +1,1 @@
+// scripts for inside the block editor

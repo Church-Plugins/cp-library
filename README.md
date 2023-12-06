@@ -24,6 +24,15 @@ npm run build
 
 ### Change Log
 
+#### 1.3.0
+* Enhancement: New Template builder to generate shortcodes
+* Enhancement: Updates to Filters and additional settings
+* Enhancement: Allow modifying Season and Topic terms
+* Enhancement: Automatic migration from Church Content Plugin and Sermon Manager
+* Bug Fix: Podcast feed now works for sermons
+* Bug Fix: Fix bug where tables wouldn't always create on activation
+* Update: Do not automatically set Series to draft when no sermons are published
+
 #### 1.2.5
 * Fix javascript error by enclosing filter js in enclosure
 

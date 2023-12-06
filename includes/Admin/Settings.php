@@ -221,7 +221,7 @@ class Settings {
 		 */
 		$args = array(
 			'id'           => 'cpl_options_page',
-			'title'        => 'CP Library Settings',
+			'title'        => 'CP Sermons Settings',
 			'object_types' => array( 'options-page' ),
 			'option_key'   => 'cpl_license',
 			'parent_slug'  => 'cpl_main_options',
@@ -448,6 +448,13 @@ class Settings {
 			'default' => cp_library()->setup->post_types->speaker->plural_label,
 		) );
 
+		$options->add_field( array(
+			'name' => sprintf( __( 'Enable %s permalinks', 'cp-library' ), cp_library()->setup->post_types->speaker->single_label ),
+			'desc' => sprintf( __( 'Link the %s\'s name to the speaker page that shows their %s.', 'cp-library' ), cp_library()->setup->post_types->speaker->single_label, cp_library()->setup->post_types->item->plural_label ),
+			'id'   => 'enable_permalinks',
+			'type' => 'checkbox'
+		) );
+
 	}
 
 	protected function service_type_options() {
@@ -598,6 +605,132 @@ class Settings {
 			] );
 		}
 
+		$advanced_options->add_field(
+			array(
+				'name' => __( 'Built-in Terms', 'cp-library' ),
+				'desc' => __( 'We have spent years compiling a robust list of Topics and Seasons built specifically for churches.', 'cp-library' ),
+				'id'   => 'builtin-terms',
+				'type' => 'title',
+			)
+		);
+
+		add_thickbox();
+		$advanced_options->add_field( array(
+			'name'    => __( 'Enable Built-in Seasons' ),
+			'id'      => 'season_terms_enabled',
+			'type'    => 'radio_inline',
+			'default' => 1,
+			'options' => [
+				1 => __( 'Enable', 'cp-library' ),
+				0 => __( 'Disable', 'cp-library' ),
+			],
+			'desc' => __( 'Seasons are a great way to organize your content by time of year. We have a <a href="#TB_inline?width=600&height=550&inlineId=modal-seasons" class="thickbox">built-in list of seasons</a> that you can use to organize your content.', 'cp-library' ),
+			'after_row' => '
+<div id="modal-seasons" style="display:none;">
+    <h3>' . __( 'Built-in Seasons', 'cp-library' ) . '</h3>
+    <p>' . implode( ', ', wp_list_pluck( cp_library()->setup->taxonomies->season->get_term_data(), 'term' ) ) . '</p>
+</div>',
+		) );
+
+		$advanced_options->add_field( array(
+			'name'    => __( 'Enable Built-in Topics' ),
+			'id'      => 'topic_terms_enabled',
+			'type'    => 'radio_inline',
+			'default' => 1,
+			'options' => [
+				1 => __( 'Enable', 'cp-library' ),
+				0 => __( 'Disable', 'cp-library' ),
+			],
+			'desc' => __( 'Topics keep your content organized and easily searchable. We have a <a href="#TB_inline?width=600&height=550&inlineId=modal-topics" class="thickbox">built-in list of topics</a> that you can use to organize your content.', 'cp-library' ),
+			'after_row' => '
+<div id="modal-topics" style="display:none;">
+    <h3>' . __( 'Built-in Topics', 'cp-library' ) . '</h3>
+    <p>' . implode( ', ', wp_list_pluck( cp_library()->setup->taxonomies->topic->get_term_data(), 'term' ) ) . '</p>
+</div>',
+		) );
+
+		$advanced_options->add_field(
+			array(
+				'name' => __( 'Filters', 'cp-library' ),
+				'id'   => 'filters',
+				'type' => 'title',
+			)
+		);
+
+		$advanced_options->add_field(
+			array(
+				'name'    => __( 'Count Threshold', 'cp-library' ),
+				'id'      => 'filter_count_threshold',
+				/* translators: %s is the plural label for the item post type */
+				'desc'    => sprintf( __( 'The minimum number of %s to show a filter field for.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+				'type'    => 'text_small',
+				'default' => 3,
+			)
+		);
+
+		$taxonomies = cp_library()->setup->taxonomies->get_objects();
+
+		$filters = wp_list_pluck( $taxonomies, 'plural_label', 'taxonomy' );
+		$sources = array();
+
+		if ( cp_library()->setup->post_types->speaker_enabled() ) {
+			$sources['speaker'] = $filters['speaker'] = cp_library()->setup->post_types->speaker->plural_label;
+		}
+
+		if ( cp_library()->setup->post_types->service_type_enabled() ) {
+			$sources['service_type'] = $filters['service_type'] = cp_library()->setup->post_types->service_type->plural_label;
+		}
+
+		$advanced_options->add_field(
+			array(
+				'name'    => __( 'Disable Filters', 'cp-library' ),
+				'id'      => 'disable_filters',
+				/* translators: %s is the plural label for the item post type */
+				'desc'    => sprintf( __( 'Choose to disable any of the filters on the %s archive page.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+				'type'    => 'multicheck_inline',
+				'options' => $filters,
+			)
+		);
+
+		foreach ( $taxonomies as $taxonomy ) {
+			$default_value = 'sermon_count';
+			$options       = array(
+				'sermon_count' => sprintf( __( 'By %s Count', 'cp-library' ), cp_library()->setup->post_types->item->single_label ),
+				'name'         => __( 'Alphabetically', 'cp-library' ),
+			);
+
+			if ( 'cpl_scripture' === $taxonomy->taxonomy ) {
+				$default_value   = 'name';
+				$options['name'] = __( 'By Scripture Order', 'cp-library' );
+			}
+
+			$advanced_options->add_field(
+				array(
+					/* translators: %s is the single label for the taxonomy */
+					'name'    => sprintf( __( 'Sort %s', 'cp-library' ), $taxonomy->plural_label ),
+					'id'      => 'sort_' . $taxonomy->taxonomy,
+					'type'    => 'radio',
+					'default' => $default_value,
+					'options' => $options,
+				)
+			);
+		}
+		foreach ( $sources as $key => $source ) {
+			$advanced_options->add_field(
+				array(
+					/* translators: %s is the single label for the source post type */
+					'name'    => sprintf( __( 'Sort %s', 'cp-library' ), $source ),
+					'id'      => "sort_{$key}",
+					'type'    => 'radio',
+					'default' => 'sermon_count',
+					'options' => array(
+						/* translators: %s is the plural label for the item post type */
+						'sermon_count' => sprintf( __( 'By %s Count', 'cp-library' ), cp_library()->setup->post_types->item->single_label ),
+						'name'  => __( 'Alphabetically', 'cp-library' ),
+					),
+				)
+			);
+		}
 	}
 
 	/**

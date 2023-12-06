@@ -23,7 +23,7 @@ class ItemType extends Controller{
 	}
 
 	public function get_thumbnail() {
-		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID, 'large' ) ) {
+		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID, 'full' ) ) {
 			return $this->filter( $thumb, __FUNCTION__ );
 		}
 

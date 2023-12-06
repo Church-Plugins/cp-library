@@ -52,6 +52,11 @@ foreach ($settings as $setting => $default) {
 	extract( array( $setting => $value ) );
 }
 
+// Default image is post thumbnail, otherwise specified image.
+$fallback_image = $image;
+$image          = get_the_post_thumbnail_url( get_the_ID(), array( 600, 600 ) );
+$image          = $image ? $image : $fallback_image;
+
 // Category.
 if ($category && 'none' !== $category) {
 	list( $category, $subcategory ) = explode( '|', $category );
@@ -159,7 +164,9 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 
 		do_action( 'rss2_head' ); // Core: Fires at the end of the RSS2 Feed Header (before items).
 
-		if( is_comment_feed() ) {
+		global $wp_query;
+
+		if ( true === $wp_query->get( 'cpl_relation_feed' ) && get_post_type() !== cp_library()->setup->post_types->item->post_type ) {
 			$items = array();
 
 			if( get_post_type() === cp_library()->setup->post_types->item_type->post_type ) {
@@ -177,34 +184,34 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 				$items = get_posts(
 					array(
 						'post_type'      => cp_library()->setup->post_types->item->post_type,
-						'post__in'       => $items,
+						'post__in'       => array_map( 'absint', $items ),
 						'posts_per_page' => get_option( 'posts_per_rss', 10 ),
 						'orderby'        => 'post__in',
 						'post_status'    => 'publish',
 						'fields'         => 'ids',
 						'meta_query'     => array(
-								'relation' => 'AND',
+							'relation' => 'AND',
+							array(
+								'key'     => 'enclosure',
+								'value'   => '',
+								'compare' => '!=',
+							),
+							array(
+								'relation' => 'OR',
 								array(
-									'key'     => 'enclosure',
+									'key'     => 'podcast_exclude',
 									'value'   => '',
-									'compare' => '!=',
+									'compare' => '=',
 								),
 								array(
-									'relation' => 'OR',
-									array(
-										'key'     => 'podcast_exclude',
-										'value'   => '',
-										'compare' => '=',
-									),
-									array(
-										'key'     => 'podcast_exclude',
-										'value'   => '',
-										// empty required for back compat with WP 3.8 and below (core bug).
-										'compare' => 'NOT EXISTS',
-										// field did not always exist, so don't just check empty; check not exist and include those.
-									),
+									'key'     => 'podcast_exclude',
+									'value'   => '',
+									// empty required for back compat with WP 3.8 and below (core bug).
+									'compare' => 'NOT EXISTS',
+									// field did not always exist, so don't just check empty; check not exist and include those.
 								),
-							)
+							),
+						),
 					)
 				);
 
