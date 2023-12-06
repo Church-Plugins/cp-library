@@ -1,0 +1,37 @@
+.cpl-single-speaker {
+
+	> h3 {
+		font-size: var(--cp-font-size--h5);
+	}
+
+	&--details {
+		// grid display with the image taking up 1/3 of the space with a minimum width of 300px
+		display: flex;
+		flex-flow: row wrap;
+		padding: var(--cp-gap--md) 0;
+		gap: var(--cp-gap--md);
+
+		@include media-breakpoint-up(md) {
+			flex-flow: row;
+		}
+
+		h1 {
+			margin: var(--cp-gap--sm) auto var(--cp-gap--sm);
+			font-size: var(--cp-font-size--h3);
+		}
+	}
+
+	&--image {
+		flex: 1 0 30%;
+		min-width: 30%;
+		margin: 0 auto;
+
+		img {
+			width: 100%;
+		}
+	}
+
+	&--info {
+		flex: 1 0 70%;
+	}
+}

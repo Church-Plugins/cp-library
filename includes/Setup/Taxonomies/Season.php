@@ -1,6 +1,7 @@
 <?php
 namespace CP_Library\Setup\Taxonomies;
 
+use CP_Library\Admin\Settings;
 use CP_Library\Templates;
 use ChurchPlugins\Setup\Taxonomies\Taxonomy;
 
@@ -27,6 +28,30 @@ class Season extends Taxonomy  {
 		$this->plural_label = apply_filters( "{$this->taxonomy}_plural_label", 'Seasons' );
 
 		parent::__construct();
+
+		add_action( $this->taxonomy . '_pre_add_form', [ $this, 'builtin_terms' ] );
+	}
+
+	/**
+	 * Show notice for built-in terms
+	 *
+	 * @since  1.3.0
+	 *
+	 * @author Tanner Moushey, 12/6/23
+	 */
+	public function builtin_terms() {
+		if ( ! Settings::get_advanced( 'season_terms_enabled', 1 ) ) {
+			return;
+		}
+		add_thickbox();
+		?>
+		<h3><?php _e( 'Built-in Seasons', 'cp-library' ); ?></h3>
+		<p><?php _e( 'Before adding a new Season, please make sure that one does not already exist in the <a href="#TB_inline?width=600&height=550&inlineId=modal-seasons" class="thickbox">built-in list of Seasons</a>. When a built-in Season is used, it will show in the Term table.'); ?></p>
+		<div id="modal-seasons" style="display:none;">
+			<h3><?php _e( 'Built-in Seasons', 'cp-library' ); ?></h3>
+			<p><?php echo implode( ', ', wp_list_pluck( cp_library()->setup->taxonomies->season->get_term_data(), 'term' ) ); ?></p>
+		</div>
+		<?php
 	}
 
 	/**
@@ -109,7 +134,7 @@ class Season extends Taxonomy  {
 	public function get_term_data() {
 		$file = Templates::get_template_hierarchy( '__data/seasons.json' );
 
-		if ( ! $file ) {
+		if ( ! $file || ! Settings::get_advanced( 'season_terms_enabled', 1 ) ) {
 			return [];
 		}
 
