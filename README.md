@@ -28,6 +28,7 @@ npm run build
 * Enhancement: new Template builder to generate shortcodes
 * Enhancement: updates to Filters and additional settings
 * Enhancement: Allow modifying Season and Topic terms
+* Bug Fix: Fix bug where tables wouldn't always create on activation
 
 #### 1.2.5
 * Fix javascript error by enclosing filter js in enclosure
