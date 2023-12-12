@@ -514,19 +514,19 @@ class Tools {
 	 */
 	public function get_formatted_item( $data ) {
 
-		$series = $this->get_csv_string( $data['types'], 'title' );
+		$series = $this->get_csv_string( $data['types'] ?? '', 'title' );
 
-		$scripture = $this->get_csv_string( $data['scripture'], 'name' );
+		$scripture = $this->get_csv_string( $data['scripture'] ?? '', 'name' );
 
-		$topics = $this->get_csv_string( $data['topics'], 'name' );
+		$topics = $this->get_csv_string( $data['topics'] ?? '', 'name' );
 
-		$speakers = $this->get_csv_string( $data['speakers'], 'title' );
+		$speakers = $this->get_csv_string( $data['speakers'] ?? '', 'title' );
 
-		$locations = $this->get_csv_string( $data['locations'], 'name' );
+		$locations = $this->get_csv_string( $data['locations'] ?? '', 'name' );
 
-		$service_types = $this->get_csv_string( $data['service_types'], 'title' );
+		$service_types = $this->get_csv_string( $data['service_types'] ?? '', 'title' );
 
-		$seasons = $this->get_csv_string( $data['seasons'], 'name' );
+		$seasons = $this->get_csv_string( $data['seasons'] ?? '', 'name' );
 
 		return array(
 			'Title'        => $data['title'],
