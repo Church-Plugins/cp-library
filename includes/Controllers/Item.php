@@ -802,6 +802,8 @@ class Item extends Controller{
 				'category'   => $this->get_categories(),
 				'speakers'   => $this->get_speakers(),
 				'locations'  => $this->get_locations(),
+				'topics'     => $this->get_topics(),
+				'scripture'  => $this->get_scripture(),
 				'video'      => $this->get_video(),
 				'audio'      => $this->get_audio(),
 				'types'      => $this->get_types(),
