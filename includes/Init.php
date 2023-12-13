@@ -240,6 +240,10 @@ class Init {
 		$screen            = get_current_screen();
 		$primary_post_type = \CP_Library\Util\Convenience::get_primary_post_type();
 
+		if ( isset( $_GET['page'] ) && false !== strpos( $_GET['page'], 'cpl' ) ) {
+			return true;
+		}
+
 		if ( $screen && str_starts_with( $screen->id, $primary_post_type . '_page' ) ) {
 			return true;
 		}
