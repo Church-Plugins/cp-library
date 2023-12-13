@@ -85,7 +85,7 @@ class Item extends Controller{
 	 * @author Tanner Moushey
 	 */
 	public function get_thumbnail() {
-		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID ) ) {
+		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID, 'full' ) ) {
 			return $this->filter( $thumb, __FUNCTION__ );
 		}
 
@@ -230,21 +230,30 @@ class Item extends Controller{
 		return $this->filter( $return, __FUNCTION__ );
 	}
 
+	/**
+	 * Returns the video for this item.
+	 */
 	public function get_video() {
-
 		$timestamp = get_post_meta( $this->model->origin_id, 'message_timestamp', true );
 		$timestamp = ItemModel::duration_to_seconds( $timestamp );
-		$return = [
-			'type'  	=> 'url',
-			'value' 	=> false,
-			'marker'	=> $timestamp
-		];
+		$return    = array(
+			'type'   => 'url',
+			'value'  => false,
+			'marker' => $timestamp,
+		);
 
-		if ( $url = $this->model->get_meta_value( 'video_url' ) ) {
-			$return['value'] = esc_url( $url );
+		$value = $this->model->get_meta_value( 'video_url' );
+
+		if ( $value ) {
+			$return['value'] = self::sanitize_embed( $value );
+
+			// if the value is not a URL, we'll assume it's an embed.
+			if ( ! filter_var( $value, FILTER_VALIDATE_URL ) ) {
+				$return['type'] = 'embed';
+			}
 		}
 
-		if ( ! $url ) {
+		if ( ! $value ) {
 			if ( $id = $this->model->get_meta_value( 'video_id_vimeo' ) ) {
 				$return['type']  = 'vimeo';
 				$return['id']    = $id;
@@ -259,8 +268,11 @@ class Item extends Controller{
 		return $this->filter( $return, __FUNCTION__ );
 	}
 
+	/**
+	 * Returns the audio for this item.
+	 */
 	public function get_audio() {
-		return $this->filter( esc_url ( $this->model->get_meta_value( 'audio_url' ) ), __FUNCTION__ );
+		return $this->filter( self::sanitize_embed( $this->model->get_meta_value( 'audio_url' ) ), __FUNCTION__ );
 	}
 
 	/**
@@ -327,6 +339,28 @@ class Item extends Controller{
 	}
 
 	/**
+	 * Get the seasons for this Item
+	 * @return array|mixed|void
+	 * @since 1.0.4
+	 */
+	public function get_seasons() {
+		$return = [];
+		$terms  = get_the_terms( $this->post->ID, cp_library()->setup->taxonomies->season->taxonomy );
+
+		if ( $terms ) {
+			foreach ( $terms as $term ) {
+				$return[ $term->slug ] = [
+					'name' => $term->name,
+					'slug' => $term->slug,
+					'url'  => get_term_link( $term )
+				];
+			}
+		}
+
+		return $this->filter( $return, __FUNCTION__ );
+	}
+
+	/**
 	 * Get speakers for this Item
 	 *
 	 * @return mixed|void
@@ -383,6 +417,24 @@ class Item extends Controller{
 		}
 
 		return $this->filter( $service_types, __FUNCTION__ );
+	}
+
+	/**
+	 * Get passage for this Item
+	 * @return mixed (get_post_meta)
+	 * @since 1.0.4
+	 */
+	public function get_passage() {
+		return get_post_meta( $this->post->ID, 'passage', true );
+	}
+
+	/**
+	 * Get sermon timestamp for this Item
+	 * @return mixed (get_post_meta)
+	 * @since 1.0.4
+	 */
+	public function get_timestamp() {
+		return get_post_meta( $this->post->ID, 'message_timestamp', true );
 	}
 
 	/*************** Variation Functions ****************/
@@ -601,7 +653,11 @@ class Item extends Controller{
 	 * @author Tanner Moushey, 4/10/23
 	 */
 	public function get_podcast_content() {
+		get_the_content( null, false, $this->post );
 		$content = $this->get_content();
+
+		$content = str_replace( ']]>', ']]&gt;', $content );
+		$content = apply_filters( 'the_content_feed', $content, get_default_feed() );
 
 		// Allow some HTML per iTunes spec:
 		// "You can use rich text formatting and some HTML (<p>, <ol>, <ul>, <a>) in the <content:encoded> tag."
@@ -609,7 +665,7 @@ class Item extends Controller{
 
 		$content = strip_shortcodes( $content );
 
-		$content = trim( $content );
+		$content = apply_filters( 'cpl_podcast_content', trim( $content ) );
 
 		return $this->filter( $content, __FUNCTION__ );
 	}
@@ -653,6 +709,8 @@ class Item extends Controller{
 			array( '', '', '', '', '', '', '', '' ),
 			$excerpt
 		);
+
+		$excerpt = apply_filters( 'cpl_podcast_content', trim( $excerpt ) );
 
 		if ( $max_chars ) {
 			$excerpt = Helpers::str_truncate( $this->get_podcast_excerpt(), $max_chars );
@@ -705,7 +763,8 @@ class Item extends Controller{
 		}
 
 		$speakers = implode( ', ', $speakers );
-		$speakers = htmlspecialchars( trim( $speakers ) );
+
+		$speakers = apply_filters( 'cpl_podcast_text', trim( $speakers ) );
 
 		// iTunes limits to 4000 characers
 		return $this->filter( $speakers, __FUNCTION__ );
@@ -728,15 +787,15 @@ class Item extends Controller{
 
 		try {
 			$data = [
-				'id'         => $this->model->id,
-				'originID'   => $this->post->ID,
-				'permalink'  => $this->get_permalink(),
-				'status'     => get_post_status( $this->post ),
-				'slug'       => $this->post->post_name,
-				'thumb'      => $this->get_thumbnail(),
-				'title'      => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
-				'desc'       => $this->get_content(),
-				'date'       => [
+				'id'            => $this->model->id,
+				'originID'      => $this->post->ID,
+				'permalink'     => $this->get_permalink(),
+				'status'        => get_post_status( $this->post ),
+				'slug'          => $this->post->post_name,
+				'thumb'         => $this->get_thumbnail(),
+				'title'         => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
+				'desc'          => $this->get_content(),
+				'date'          => [
 					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
 					'timestamp' => $this->get_publish_date()
 				],
@@ -747,9 +806,9 @@ class Item extends Controller{
 				'audio'      => $this->get_audio(),
 				'types'      => $this->get_types(),
 				'service_types' => $this->get_service_types(),
-				'topics'     => $this->get_topics(),
-				'scripture'  => $this->get_scripture(),
-				'variations' => null,
+				'passage'       => $this->get_passage(),
+				'timestamp'     => $this->get_timestamp(),
+				'variations'    => null,
 			];
 
 			if ( $include_variations ) {
@@ -815,4 +874,48 @@ class Item extends Controller{
 		do_enclose( $audio, $this->post->ID );
 	}
 
+	/**
+	 * Returns the sanitized HTML for an embed.
+	 *
+	 * @param string $embed_html The HTML to sanitize.
+	 * @return string The sanitized HTML.
+	 */
+	public static function sanitize_embed( $embed_html ) {
+		$allowed_html = array(
+			'iframe' => array(
+				'src'             => true,
+				'width'           => true,
+				'height'          => true,
+				'frameborder'     => true,
+				'allowfullscreen' => true,
+				'scrolling'       => true,
+				'style'           => true,
+				'tabindex'        => true,
+				'class'           => true,
+				'title'           => true,
+				'name'            => true,
+				'id'              => true,
+				'aria-*'          => true,
+				'data-*'          => true,
+			),
+			'script' => array(
+				'src'  => true,
+				'type' => true,
+			),
+			'div'    => array(
+				'style'  => true,
+				'class'  => true,
+				'id'     => true,
+				'data'   => true,
+				'data-*' => true,
+			),
+			'p'      => array(
+				'*' => true,
+			),
+		);
+
+		$sanitized = wp_kses( $embed_html, $allowed_html );
+
+		return $sanitized;
+	}
 }

@@ -33,7 +33,8 @@ class Items extends WP_REST_Controller {
 	public function __construct() {
 		$this->namespace = cp_library()->get_api_namespace();
 		$this->rest_base = 'items';
-		$this->post_type	=  CP_LIBRARY_UPREFIX . "_item";
+		$this->post_type = CP_LIBRARY_UPREFIX . '_item';
+		add_action( 'rest_api_init', array( $this, 'register_custom_query_parameters' ) );
 	}
 
 	/**
@@ -126,10 +127,16 @@ class Items extends WP_REST_Controller {
 				throw new Exception( 'No action specified' );
 			}
 
+			if( $action === 'view_duration' ) {
+				$this->handle_view_duration( $request );
+				return;
+			}
+
 			$data = Log::insert( [
 				'object_type' => 'item',
 				'object_id' => $item_id,
 				'action' =>  $action,
+				'data' => $request->get_param( 'payload' )
 			] );
 
 		} catch ( \ChurchPlugins\Exception $e ) {
@@ -365,6 +372,10 @@ class Items extends WP_REST_Controller {
 			}
 		}
 
+		if( $request->get_param( 'hideUpcoming' ) === 'true' ) {
+			$args['cpl_hide_upcoming'] = true;
+		}
+
 		// $posts = get_posts( $args );
 		if( $page = $request->get_param( 'p' ) ) {
 			$args['paged'] = absint( $page );
@@ -452,5 +463,106 @@ class Items extends WP_REST_Controller {
 	 */
 	public function get_rest_base() {
 		return $this->rest_base;
+	}
+
+	/**
+	 * Registers the custom query parameters for the items collection.
+	 */
+	public function register_custom_query_parameters() {
+		add_filter( "rest_{$this->post_type}_collection_params", array( $this, 'custom_collection_params' ), 10, 2 );
+		add_filter( "rest_{$this->post_type}_query", array( $this, 'rest_query_args' ), 10, 2 );
+	}
+
+	public function custom_collection_params( $params, $post_type ) {
+		$params['cpl_hide_upcoming'] = array(
+			'type'        => 'boolean',
+			'description' => __( 'Whether to hide upcoming items', 'cp-library' ),
+			'default'     => false,
+		);
+
+		$params['cpl_speakers'] = array(
+			'type'        => 'array',
+			'description' => __( 'Filter by speaker', 'cp-library' ),
+			'default'     => array(),
+		);
+
+		$params['cpl_service_types'] = array(
+			'type'        => 'array',
+			'description' => __( 'Filter by service type', 'cp-library' ),
+			'default'     => array(),
+		);
+
+		return $params;
+	}
+
+	public function rest_query_args( $args, $request ) {
+		if ( isset( $_GET['cpl_hide_upcoming'] ) && $_GET['cpl_hide_upcoming'] === 'true' ) {
+			$args['cpl_hide_upcoming'] = true;
+		}
+
+		if ( isset( $_GET['cpl_speakers'] ) && is_array( $_GET['cpl_speakers'] ) ) {
+			$args['cpl_speakers'] = (array) $_GET['cpl_speakers'];
+		}
+
+		if ( isset( $_GET['cpl_service_types'] ) && is_array( $_GET['cpl_service_types'] ) ) {
+			$args['cpl_service_types'] = (array) $_GET['cpl_service_types'];
+		}
+
+		return $args;
+	}
+
+
+
+	public function handle_view_duration( WP_REST_Request $request ) {
+
+		$action  = $request->get_param( 'action' );
+		$payload = $request->get_param( 'payload' );
+		$item_id = $request->get_param( 'item_id' );
+		$user_ip = $request->get_header('x-forwarded-for');
+
+		if( ! (
+			is_array( $payload ) &&
+			isset( $payload['watchedSeconds'] ) &&
+			isset( $payload['maxDuration'] ) &&
+			is_int( $payload['watchedSeconds'] ) &&
+			is_int( $payload['maxDuration'] )
+			) ) {
+			throw new Exception( "Invalid payload", 400 );
+		}
+
+		global $wpdb;
+
+		$query = $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}cp_log WHERE object_id = '$item_id' AND JSON_EXTRACT(data, '$.user_ip') = '$user_ip'" );
+
+		$data = $wpdb->get_row( $query );
+
+		if( ! $data ) {
+			Log::insert( [
+				'object_type' => 'item',
+				'object_id' => $item_id,
+				'action' =>  $action,
+				'data' => json_encode(array(
+					'user_ip' => $user_ip,
+					'watch_duration' => absint( $payload['watchedSeconds'] )
+				))
+			] );
+			return;
+		}
+
+		$log = Log::get_instance( $data->id );
+
+		$data = json_decode( $data->data );
+
+		$total_watch_duration = absint( $payload ) + absint( $data->watch_duration );
+		$total_watch_duration = min( $total_watch_duration, $payload['maxDuration'] );
+
+		$log->update([
+			'data' => json_encode(array(
+				'user_ip' => $user_ip,
+				'watch_duration' => $total_watch_duration
+			))
+		]);
+
+		return;
 	}
 }

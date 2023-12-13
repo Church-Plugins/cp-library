@@ -13,12 +13,13 @@ if (! defined( 'ABSPATH' )) {
 }
 
 use CP_Library\Admin\Settings\Podcast;
+use CP_Library\Templates;
 
 // Podcast settings array.
 // Key is setting ID without podcast_ prefix, value is default when setting value empty.
 $settings = array(
 	'image'        => '',
-	'title'        => get_bloginfo( 'name' ),
+	'title'        => get_the_title_rss(),
 	'subtitle'     => get_bloginfo( 'description' ),
 	'summary'      => Podcast::get( 'subtitle', get_bloginfo( 'description' ) ),
 	'author'       => get_bloginfo( 'name' ),
@@ -26,7 +27,7 @@ $settings = array(
 	'link'         => trailingslashit( home_url() ),
 	'email'        => '',
 	'category'     => '',
-	'not_explicit' => '',
+	'not_explicit' => 1,
 	'language'     => 'en-US',
 	'new_url'      => '',
 );
@@ -37,14 +38,24 @@ foreach ($settings as $setting => $default) {
 	// Get setting value.
 	$value = Podcast::get( $setting, $default );
 
+
 	// Make XML-safe and trim.
-	$value = htmlspecialchars( $value );
+	if ( in_array( $setting, [ 'subtitle', 'summary' ] ) ) {
+		$value = apply_filters( 'cpl_podcast_content', $value );
+	} else if ( in_array( $settings, [ 'title', 'author' ] ) ) {
+		$value = apply_filters( 'cpl_podcast_text', $value );
+	}
+
 	$value = trim( $value );
 
 	// Create variable with same name as key ($title, $summary, etc.).
 	extract( array( $setting => $value ) );
-
 }
+
+// Default image is post thumbnail, otherwise specified image.
+$fallback_image = $image;
+$image          = get_the_post_thumbnail_url( get_the_ID(), array( 600, 600 ) );
+$image          = $image ? $image : $fallback_image;
 
 // Category.
 if ($category && 'none' !== $category) {
@@ -55,7 +66,7 @@ if ($category && 'none' !== $category) {
 
 // Other podcast settings.
 $owner_name = htmlspecialchars( get_bloginfo( 'name' ) ); // Owner name as site name.
-$explicit = $not_explicit ? 'no' : 'yes'; // Explicit or not.
+$explicit = $not_explicit ? 'false' : 'true'; // Explicit or not.
 
 // Character set from WordPress settings.
 $charset = get_option( 'blog_charset' );
@@ -93,14 +104,14 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 
 		<copyright><?php echo esc_html( $copyright ); ?></copyright>
 
-		<itunes:subtitle><?php echo esc_html( $subtitle ); ?></itunes:subtitle>
+		<itunes:subtitle><![CDATA[<?php echo $subtitle; ?>]]></itunes:subtitle>
 
 		<itunes:author><?php echo esc_html( $author ); ?></itunes:author>
 		<googleplay:author><?php echo esc_html( $author ); ?></googleplay:author>
 
 		<?php if ($summary) : ?>
-			<description><?php echo esc_html( $summary ); ?></description>
-			<googleplay:description><?php echo esc_html( $summary ); ?></googleplay:description>
+			<description><![CDATA[<?php echo $summary; ?>]]></description>
+			<googleplay:description><![CDATA[<?php echo $summary; ?>]]></googleplay:description>
 		<?php endif; ?>
 
 		<?php if ($email) : ?>
@@ -153,11 +164,72 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 
 		do_action( 'rss2_head' ); // Core: Fires at the end of the RSS2 Feed Header (before items).
 
-		while ( have_posts() ) {
-			the_post();
-			\CP_Library\Templates::get_template_part( "parts/podcast-item" );
-		}
+		global $wp_query;
 
+		if ( true === $wp_query->get( 'cpl_relation_feed' ) && get_post_type() !== cp_library()->setup->post_types->item->post_type ) {
+			$items = array();
+
+			if( get_post_type() === cp_library()->setup->post_types->item_type->post_type ) {
+				$items = \CP_Library\Models\ItemType::get_instance_from_origin( get_the_ID() )->get_items();
+				$items = wp_list_pluck( $items, 'origin_id' );
+			}
+			else if( get_post_type() === cp_library()->setup->post_types->speaker->post_type ) {
+				$items = \CP_Library\Models\Speaker::get_instance_from_origin( get_the_ID() )->get_all_items();
+			}
+			else if( get_post_type() === cp_library()->setup->post_types->service_type->post_type ) {
+				$items = \CP_Library\Models\ServiceType::get_instance_from_origin( get_the_ID() )->get_all_items();
+			}
+
+			if ( ! empty( $items ) ) {
+				$items = get_posts(
+					array(
+						'post_type'      => cp_library()->setup->post_types->item->post_type,
+						'post__in'       => array_map( 'absint', $items ),
+						'posts_per_page' => get_option( 'posts_per_rss', 10 ),
+						'orderby'        => 'post__in',
+						'post_status'    => 'publish',
+						'fields'         => 'ids',
+						'meta_query'     => array(
+							'relation' => 'AND',
+							array(
+								'key'     => 'enclosure',
+								'value'   => '',
+								'compare' => '!=',
+							),
+							array(
+								'relation' => 'OR',
+								array(
+									'key'     => 'podcast_exclude',
+									'value'   => '',
+									'compare' => '=',
+								),
+								array(
+									'key'     => 'podcast_exclude',
+									'value'   => '',
+									// empty required for back compat with WP 3.8 and below (core bug).
+									'compare' => 'NOT EXISTS',
+									// field did not always exist, so don't just check empty; check not exist and include those.
+								),
+							),
+						),
+					)
+				);
+
+				foreach ( $items as $item_id ) {
+					global $post;
+					$post = get_post( $item_id );
+					setup_postdata( $post );
+
+					Templates::get_template_part( 'parts/podcast-item' );
+				}
+				wp_reset_postdata();
+			}
+		} else {
+			while ( have_posts() ) {
+				the_post();
+				Templates::get_template_part( "parts/podcast-item" );
+			}
+		}
 		?>
 
 	</channel>

@@ -31,13 +31,7 @@ if ( isset( $types[ $queried_post_type ] ) ) {
 
 	<div class="cpl-archive--container">
 
-		<div class="cpl-archive--container--filter">
-			<?php Templates::get_template_part( "parts/filter" ); ?>
-		</div>
-
 		<div class="cpl-archive--container--list">
-			<?php Templates::get_template_part( "parts/filter-selected" ); ?>
-
 			<?php foreach( $types as $type ) : $found = 0; ?>
 				<div class="cpl-archive--<?php echo esc_attr( Templates::get_type( $type->post_type ) ); ?>">
 					<h2><?php echo esc_html( $type->plural_label ); ?></h2>

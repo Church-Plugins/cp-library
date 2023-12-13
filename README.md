@@ -24,6 +24,42 @@ npm run build
 
 ### Change Log
 
+#### 1.3.0
+* Enhancement: New Template builder to generate shortcodes
+* Enhancement: Updates to Filters and additional settings
+* Enhancement: Allow modifying Season and Topic terms
+* Enhancement: Automatic migration from Church Content Plugin and Sermon Manager
+* Bug Fix: Podcast feed now works for sermons
+* Bug Fix: Fix bug where tables wouldn't always create on activation
+* Update: Do not automatically set Series to draft when no sermons are published
+
+#### 1.2.5
+* Fix javascript error by enclosing filter js in enclosure
+
+#### 1.2.4
+* Fix alignment issue on archive page
+
+#### 1.2.3
+* Fix deprecation error
+* Allow beta updates
+* Fix player issues
+
+#### 1.2.2
+* Fix bug that was preventing the thumbnail from showing in the media player
+* Fix error handling on single series template
+
+#### 1.2.1
+* Fix bug with series sermon rewrite rules
+* Fix html in podcast feed
+
+#### 1.2.0
+* Add sermon export
+* Add pagination for series with more than 10 sermons
+* Add Analytics panel for sermon views
+* Update podcast feed to work with series and taxonomies
+* Add setting to control the admin default menu for sermons
+* Add support for embeds in sermon audio and video
+
 #### 1.1.1
 * Updates to importer
 

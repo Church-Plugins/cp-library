@@ -1,6 +1,19 @@
+@import 'admin/analytics';
+@import 'admin/migrate';
+
 #cpl_series_items_data {
 
 }
+
+.menu-icon-cpl_item, .menu-icon-cpl_item_type {
+	li:nth-child(4),
+	a[href="edit.php?post_type=cpl_template"],
+	a[href="edit-tags.php?taxonomy=cpl_season&post_type=cpl_item"],
+	a[href="edit-tags.php?taxonomy=cpl_season&post_type=cpl_item_type"] {
+		border-top: 1px solid rgba(255, 255, 255, .25);
+	}
+}
+
 
 .file-status {
 	text-overflow: ellipsis;

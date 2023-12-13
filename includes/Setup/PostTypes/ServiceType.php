@@ -77,7 +77,6 @@ class ServiceType extends PostType {
 	public function get_args() {
 		$args                       = parent::get_args();
 		$args['menu_icon']          = apply_filters( "{$this->post_type}_icon", 'dashicons-format-gallery' );
-		$args['publicly_queryable'] = false;
 		$args['show_in_menu']       = 'edit.php?post_type=' . cp_library()->setup->post_types->item->post_type;
 
 		return $args;
@@ -229,19 +228,19 @@ class ServiceType extends PostType {
 
 	public function service_type_query( $query ) {
 
-		if ( empty( $_GET['service-type'] ) ) {
+		// If the query is neither a main query or a query with a service type filter, exit.
+		if ( ! $query->is_main_query() && ! $query->get( 'cpl_service_types' ) ) {
 			return;
 		}
 
-		if ( ! $query->is_main_query() ) {
+		$types = $_GET['service-type'] ?? $query->get( 'cpl_service_types' ); // phpcs:ignore
+
+		if ( empty( $types ) ) {
 			return;
 		}
-
 		if ( ! in_array( $query->get('post_type'), [ Item::get_instance()->post_type ] ) ) {
 			return;
 		}
-
-		$types = $_GET['service-type'];
 
 		if ( ! is_array( $types ) ) {
 			$types = [ $types ];
@@ -254,7 +253,7 @@ class ServiceType extends PostType {
 			$type = absint( $type );
 
 			try {
-				$type = ServiceType_Model::get_instance( $type );
+				$type = $query->get( 'cpl_service_types' ) ? ServiceType_Model::get_instance_from_origin( $type ) : ServiceType_Model::get_instance( $type );
 				$post_in = array_merge( $post_in, $type->get_all_items() );
 			} catch ( Exception $e ) {
 				error_log( $e );
