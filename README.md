@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.4.0
+* Add integration for SermonAudio
+
 #### 1.3.0
 * Enhancement: New Template builder to generate shortcodes
 * Enhancement: Updates to Filters and additional settings
