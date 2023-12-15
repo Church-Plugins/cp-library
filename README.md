@@ -27,6 +27,12 @@ npm run build
 #### 1.4.0
 * Add integration for SermonAudio
 
+#### 1.3.2
+* Bug Fix: Resolve Fatal error on activation
+
+#### 1.3.1
+* Enhancement: Allow page to share the same slug as the Podcast Feed
+
 #### 1.3.0
 * Enhancement: New Template builder to generate shortcodes
 * Enhancement: Updates to Filters and additional settings

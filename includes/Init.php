@@ -96,6 +96,11 @@ class Init {
 
 		Setup\Tables\Init::get_instance();
 
+		if ( get_option( 'cp_library_install_tables' ) ) {
+			$cp->update_install( true );
+			delete_option( 'cp_library_install_tables' );
+		}
+
 		// make sure needed tables are installed.
 		if ( ! $cp->is_installed() ) {
 			return;
