@@ -78,12 +78,44 @@ class Podcast
 		return apply_filters( 'cpl_enable_podcast', $enabled );
 	}
 
+	/**
+	 * Get the podcast feed name and allow for pages to use this feed name
+	 *
+	 * @since  1.2.5
+	 * @updated 1.3.1 - allow for pages to use this feed name
+	 *
+	 * @author Tanner Moushey, 12/14/23
+	 */
 	public function add_feed() {
 		add_feed( $this->get_feed_name(), [ $this, 'output_feed' ] );
 		add_action( 'pre_get_posts', [ $this, 'feed_query' ] );
 
 		// allow the feed name to also be a page
 		add_rewrite_rule( '^' . $this->get_feed_name() . '/?$', 'index.php?pagename=' . $this->get_feed_name(), 'top' );
+		add_filter( 'wp_unique_post_slug', [ $this, 'unique_post_slug' ], 10, 6 );
+	}
+
+	/**
+	 * Allow page to use same slug as feed
+	 *
+	 * @since  1.3.1
+	 *
+	 * @param $slug
+	 * @param $post_ID
+	 * @param $post_status
+	 * @param $post_type
+	 * @param $post_parent
+	 * @param $original_slug
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 12/14/23
+	 */
+	public function unique_post_slug( $slug, $post_ID, $post_status, $post_type, $post_parent, $original_slug ) {
+		if ( $this->get_feed_name() === $original_slug && $original_slug . '-2' == $slug ) {
+			$slug = $original_slug;
+		}
+
+		return $slug;
 	}
 
 	public function output_feed() {
