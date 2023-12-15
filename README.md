@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.3.1
+* Enhancement: Allow page to share the same slug as the Podcast Feed
+
 #### 1.3.0
 * Enhancement: New Template builder to generate shortcodes
 * Enhancement: Updates to Filters and additional settings

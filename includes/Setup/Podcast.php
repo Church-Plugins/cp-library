@@ -81,6 +81,9 @@ class Podcast
 	public function add_feed() {
 		add_feed( $this->get_feed_name(), [ $this, 'output_feed' ] );
 		add_action( 'pre_get_posts', [ $this, 'feed_query' ] );
+
+		// allow the feed name to also be a page
+		add_rewrite_rule( '^' . $this->get_feed_name() . '/?$', 'index.php?pagename=' . $this->get_feed_name(), 'top' );
 	}
 
 	public function output_feed() {
