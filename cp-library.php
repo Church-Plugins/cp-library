@@ -34,7 +34,6 @@ $cp_library = cp_library();
  */
 function cp_library() {
 	return CP_Init::get_instance();
-	wp_insert_post( $post, $wp_error );
 }
 
 /**
