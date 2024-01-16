@@ -98,6 +98,23 @@
 			order: 10;
 		}
 	}
+
+	&--attachments {
+		margin-bottom: var(--cp-gap--sm);
+		display: flex;
+		align-items: center;
+		align-items: flex-end;
+	}
+
+	&--notes, &--bulletins {
+		display: flex;
+		align-items: center;
+
+		.material-icons, .material-icons-outlined {
+			font-size: var(--cp-font-size);
+			margin-right: var(--cp-gap-base);
+		}
+	}
 }
 
 .cpl-layout-vertical .cpl-single-item {
@@ -126,7 +143,7 @@
 		text-align: center;
 	}
 
-	.cpl-meta, .cpl-info {
+	.cpl-meta, .cpl-info, .cpl-single-item--attachments {
 		justify-content: center;
 	}
 
