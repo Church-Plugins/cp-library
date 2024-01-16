@@ -99,3 +99,59 @@
 		}
 	}
 }
+
+.cpl-layout-vertical .cpl-single-item {
+	&--hero {
+		position: relative;
+		padding: var(--cp-gap--lg);
+		background-color: var(--cpl-color--primary);
+		background-size: cover;
+		background-position: center center;
+		background-repeat: no-repeat;
+	}
+
+	&--hero-overlay {
+		position: absolute;
+		inset: 0;
+		background-color: rgba(0,0,0,.5);
+	}
+
+	&--details {
+		max-width: var(--cp-content-width);
+		padding: var(--cp-content-padding);
+		margin: 0 auto;
+	}
+
+	&--details > *:not(&--desc) {
+		text-align: center;
+	}
+
+	.cpl-meta, .cpl-info {
+		justify-content: center;
+	}
+
+	.cpl-item--info {
+		margin-top: var(--cp-gap--sm);
+	}
+
+	&--back {
+		width: 100%;
+	}
+
+	@include media-breakpoint-up(md) {
+		.cpl-columns {
+			width: min(60%, var(--cp-content-width));
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+		&--media {
+			flex-basis: 100%;
+		}
+	}
+	
+	.itemDetail__actions {
+		justify-content: center;
+		position: relative;
+	}
+}
