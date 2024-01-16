@@ -490,6 +490,46 @@ class Item extends PostType  {
 				'type' => 'text_medium',
 			] );
 		}
+
+		$notes_field_id = $cmb->add_field( [
+			'id'   => 'notes',
+			'type' => 'group',
+			'desc' => sprintf( __( 'Add notes to this %s.', 'cp-library' ), $this->single_label ),
+			'options' => array(
+				'add_button' => sprintf( __( 'Add %s notes', 'cp-library' ), strtolower( $this->single_label ) ),
+				'closed'     => true,
+				'sortable'   => true,
+			),
+		] );
+
+		$cmb->add_group_field( $notes_field_id, [
+			'name'       => __( 'Sermon Notes', 'cp-library' ),
+			'id'         => 'notes_file',
+			'type'       => 'file',
+			'query_args' => array(
+				'type' => 'application/pdf',
+			)
+		] );
+
+		$bulletin_field_id = $cmb->add_field( [
+			'id'      => 'bulletins',
+			'type'    => 'group',
+			'desc'    => sprintf( __( 'Add bulletin(s) to this %s.', 'cp-library' ), cp_library()->setup->post_types->item->single_label ),
+			'options' => array(
+				'add_button' => __( 'Add bulletin file', 'cp-library' ),
+				'closed'     => true,
+				'sortable'   => true,
+			)
+		] );
+
+		$cmb->add_group_field( $bulletin_field_id, [
+			'name'       => __( 'Bulletin', 'cp-library' ),
+			'id'         => 'bulletin_file',
+			'type'       => 'file',
+			'query_args' => array(
+				'type' => 'application/pdf',
+			),
+		] );
 	}
 
 	protected function analytics() {

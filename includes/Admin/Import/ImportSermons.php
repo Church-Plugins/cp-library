@@ -70,6 +70,8 @@ class ImportSermons extends BatchImport {
 			'video'        => '',
 			'audio'        => '',
 			'variation'    => '',
+			'notes'        => '',
+			'bulletin'     => '',
 		);
 	}
 
@@ -86,8 +88,10 @@ class ImportSermons extends BatchImport {
 		global $wpdb;
 
 		$default_options = array(
-			'sideload_audio' => false,
-			'stop_on_error'  => true,
+			'sideload_audio'     => false,
+			'stop_on_error'      => true,
+			'sideload_notes'     => false,
+			'sideload_bulletins' => false,
 		);
 
 		$options = apply_filters( 'cp_library_import_sermons_process_options', array_merge( $default_options, $options ), $step, $default_options, $this );
@@ -156,6 +160,8 @@ class ImportSermons extends BatchImport {
 				$video        = trim( $this->get_field_value( 'video' ) );
 				$audio        = trim( $this->get_field_value( 'audio' ) );
 				$variation    = trim( $this->get_field_value( 'variation' ) );
+				$notes        = trim( $this->get_field_value( 'notes' ) );
+				$bulletins    = trim( $this->get_field_value( 'bulletin' ) );
 
 				if ( empty( $variation_options ) ) {
 					$variation = false;
@@ -359,6 +365,54 @@ class ImportSermons extends BatchImport {
 						}
 						update_post_meta( $message_id, 'audio_url', $audio_url );
 						$item->update_meta_value( 'audio_url', $audio_url );
+					}
+
+					if ( ! empty( $notes ) ) {
+						$notes_urls = explode( ',', $notes );
+						$notes      = [];
+
+						if ( $options['sideload_notes'] ) {
+							foreach ( $notes_urls as $notes_url ) {
+								$sideloaded_media_url = $this->sideload_media_and_get_url( $message_id, $notes_url );
+								if ( $sideloaded_media_url ) {
+									$note = array(
+										'notes_file'    => $sideloaded_media_url,
+									);
+									if ( $attachment_id = attachment_url_to_postid( $sideloaded_media_url ) ) {
+										$note['notes_file_id'] = $attachment_id;
+									}
+									$notes[] = $note;
+								}
+							}
+						} else {
+							$notes = array_map( fn( $url ) => array( 'notes_file' => $url ), $notes_urls );
+						}
+
+						update_post_meta( $message_id, 'notes', $notes );
+					}
+
+					if ( ! empty( $bulletin ) ) {
+						$bulletin_urls = explode( ',', $bulletins );
+						$bulletins     = [];
+
+						if ( $options['sideload_bulletins'] ) {
+							foreach ( $bulletin_urls as $bulletin_url ) {
+								$sideloaded_media_url = $this->sideload_media_and_get_url( $message_id, $bulletin_url );
+								if ( $sideloaded_media_url ) {
+									$bulletin = array(
+										'bulletin_file'    => $sideloaded_media_url,
+									);
+									if ( $attachment_id = attachment_url_to_postid( $sideloaded_media_url ) ) {
+										$bulletin['bulletin_file_id'] = $attachment_id;
+									}
+									$bulletins[] = $bulletin;
+								}
+							}
+						} else {
+							$notes = array_map( fn( $url ) => array( 'bulletin_file' => $url ), $notes_urls );
+						}
+
+						update_post_meta( $message_id, 'bulletins', $notes );
 					}
 
 					// Handle message speakers
