@@ -54,6 +54,8 @@ class ImportSermons extends BatchImport {
 	 */
 	public function init() {
 
+		add_filter( 'cp_do_ajax_import_options', [ $this, 'sermon_import_options' ], 10, 4 );
+
 		// Set up default field map values
 		$this->field_mapping = array(
 			'title'        => '',
@@ -781,6 +783,22 @@ class ImportSermons extends BatchImport {
 	 */
 	public function get_import_type_label() {
 		return strtolower( cp_library()->setup->post_types->item->plural_label );
+	}
+
+	/**
+	 * Add flags for attempting to import other media
+	 *
+	 * @since 1.4.3
+	 */
+	public function sermon_import_options( $options, $map, $step, $class ) {
+		if ( trim( $class, '\\' ) !== self::class ) {
+			return $options;
+		}
+
+		$options['sideload_notes'] = isset( $map['sideload-note-urls'] ) && $map['sideload-note-urls'] == 'on';
+		$options['sideload_bulletins'] = isset( $map['sideload-bulletin-urls'] ) && $map['sideload-bulletin-urls'] == 'on';
+
+		return $options;
 	}
 
 }
