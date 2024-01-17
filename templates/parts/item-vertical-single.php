@@ -4,6 +4,7 @@ use ChurchPlugins\Helpers;
 try {
 	$item = new \CP_Library\Controllers\Item( get_the_ID() );
 	$item = $item->get_api_data( true );
+	$item['layout'] = 'vertical';
 } catch ( \CP_Library\Exception $e ) {
 	error_log( $e );
 	return;

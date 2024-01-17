@@ -103,12 +103,6 @@
 		margin-bottom: var(--cp-gap--sm);
 		display: flex;
 		align-items: center;
-		align-items: flex-end;
-	}
-
-	&--downloads {
-		display: flex;
-		align-items: center;
 		flex-wrap: wrap;
 
 		.material-icons, .material-icons-outlined {
@@ -121,7 +115,7 @@
 .cpl-layout-vertical .cpl-single-item {
 	&--hero {
 		position: relative;
-		padding: var(--cp-gap--lg);
+		padding: var(--cp-content-padding);
 		background-color: var(--cpl-color--primary);
 		background-size: cover;
 		background-position: center center;
@@ -161,12 +155,16 @@
 			width: min(60%, var(--cp-content-width));
 			margin-left: auto;
 			margin-right: auto;
+			padding-left: var(--cp-content-padding);
+			padding-right: var(--cp-content-padding);
 		}
 
 		&--media {
 			flex-basis: 100%;
 		}
 	}
+
+
 	
 	.itemDetail__actions {
 		justify-content: center;
