@@ -106,9 +106,10 @@
 		align-items: flex-end;
 	}
 
-	&--notes, &--bulletins {
+	&--downloads {
 		display: flex;
 		align-items: center;
+		flex-wrap: wrap;
 
 		.material-icons, .material-icons-outlined {
 			font-size: var(--cp-font-size);

@@ -6,51 +6,16 @@
  * @package cp-library
  */
 
-$notes     = get_post_meta( get_the_ID(), 'notes', true );
-$bulletins = get_post_meta( get_the_ID(), 'bulletins', true );
-$display   = ! empty( $notes ) || ! empty( $bulletins );
+$downloads = get_post_meta( get_the_ID(), 'downloads', true );
+?>
 
-if ( ! empty( $notes ) ) {
-	$notes = array_map(
-		function ( $note ) {
-			return sprintf( '<a href="%s">%s</a>', esc_url( $note['notes_file'] ), esc_html__( 'Download Sermon Notes' ) );
-		},
-		$notes
-	);
-}
-
-if ( ! empty( $bulletins ) ) {
-	$bulletins = array_map(
-		function ( $bulletin ) {
-			return sprintf( '<a href="%s">%s</a>', esc_url( $bulletin['bulletin_url'] ), esc_html__( 'Download Bulletin' ) );
-		},
-		$bulletins
-	);
-}
-
-if ( ! $display ) {
-	return;
-}
-
-echo '<div class="cpl-single-item--attachments">';
-
-if ( ! empty( $notes ) ) {
-	?>
-	<div class="cpl-single-item--notes">
-		<span class="material-icons-outlined">note</span>
-		<?php echo implode( ', ', $notes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+<?php if ( ! empty( $downloads ) ) : ?>
+	<div class="cpl-single-item--attachments">
+		<span class="material-icons-outlined">attach_file</span>
+		<?php foreach ( $downloads as $download ) : ?>
+			<a href="<?php echo esc_url( $download['file'] ); ?>" target="_blank" rel="noopener noreferrer">
+				<?php echo esc_html( empty( $download['name'] ) ? $download['file'] : $download['name'] ); ?>
+			</a>
+		<?php endforeach; ?>
 	</div>
-	<?php
-}
-
-
-if ( ! empty( $bulletins ) ) {
-	?>
-	<div class="cpl-single-item--bulletin">
-		<span class="material-icons-outlined">link</span>
-		<?php echo implode( ', ', $bulletins ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-	</div>
-	<?php
-}
-
-echo '</div>';
+<?php endif; ?>
