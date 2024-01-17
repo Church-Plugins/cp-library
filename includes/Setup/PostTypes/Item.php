@@ -491,42 +491,35 @@ class Item extends PostType  {
 			] );
 		}
 
-		$notes_field_id = $cmb->add_field( [
-			'id'   => 'notes',
+		$downloads_field_id = $cmb->add_field( [
+			'id'   => 'downloads',
 			'type' => 'group',
-			'desc' => sprintf( __( 'Add notes to this %s.', 'cp-library' ), $this->single_label ),
+			/* translators: %s is the singular label for the post type */
+			'desc' => sprintf( __( 'Add downloadable files to this %s.', 'cp-library' ), $this->single_label ),
 			'options' => array(
-				'add_button' => sprintf( __( 'Add %s notes', 'cp-library' ), strtolower( $this->single_label ) ),
-				'closed'     => true,
-				'sortable'   => true,
+				'add_button'    => sprintf( __( 'Add file', 'cp-library' ), strtolower( $this->single_label ) ),
+				'remove_button' => sprintf( __( 'Remove file', 'cp-library' ), strtolower( $this->single_label ) ),
+				'sortable'      => true,
 			),
 		] );
 
-		$cmb->add_group_field( $notes_field_id, [
-			'name'       => __( 'Sermon Notes', 'cp-library' ),
-			'id'         => 'notes_file',
-			'type'       => 'file',
-			'query_args' => array(
-				'type' => 'application/pdf',
-			)
+		$cmb->add_group_field( $downloads_field_id, [
+			'name'       => __( 'Name' ),
+			'id'         => 'name',
+			'type'       => 'text',
+			'attributes' => [
+				'placeholder' => __( 'Bulletin', 'cp-library' ),
+			],
 		] );
 
-		$bulletin_field_id = $cmb->add_field( [
-			'id'      => 'bulletins',
-			'type'    => 'group',
-			'desc'    => sprintf( __( 'Add bulletin(s) to this %s.', 'cp-library' ), cp_library()->setup->post_types->item->single_label ),
-			'options' => array(
-				'add_button' => __( 'Add bulletin file', 'cp-library' ),
-				'closed'     => true,
-				'sortable'   => true,
-			)
-		] );
-
-		$cmb->add_group_field( $bulletin_field_id, [
-			'name'       => __( 'Bulletin', 'cp-library' ),
-			'id'         => 'bulletin_file',
-			'type'       => 'file',
-			'query_args' => array(
+		$cmb->add_group_field( $downloads_field_id, [
+			'name'        => __( 'File' ),
+			'id'          => 'file',
+			'type'        => 'file',
+			'attributes'  => [
+				'placeholder' => 'https://example.com/bulletin.pdf'
+			],
+			'query_args'  => array(
 				'type' => 'application/pdf',
 			),
 		] );

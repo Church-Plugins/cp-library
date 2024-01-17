@@ -72,8 +72,7 @@ class ImportSermons extends BatchImport {
 			'video'        => '',
 			'audio'        => '',
 			'variation'    => '',
-			'notes'        => '',
-			'bulletin'     => '',
+			'downloads'    => '',
 		);
 	}
 
@@ -92,8 +91,7 @@ class ImportSermons extends BatchImport {
 		$default_options = array(
 			'sideload_audio'     => false,
 			'stop_on_error'      => true,
-			'sideload_notes'     => false,
-			'sideload_bulletins' => false,
+			'sideload_downloads' => false,
 		);
 
 		$options = apply_filters( 'cp_library_import_sermons_process_options', array_merge( $default_options, $options ), $step, $default_options, $this );
@@ -162,8 +160,7 @@ class ImportSermons extends BatchImport {
 				$video        = trim( $this->get_field_value( 'video' ) );
 				$audio        = trim( $this->get_field_value( 'audio' ) );
 				$variation    = trim( $this->get_field_value( 'variation' ) );
-				$notes        = trim( $this->get_field_value( 'notes' ) );
-				$bulletins    = trim( $this->get_field_value( 'bulletin' ) );
+				$downloads    = trim( $this->get_field_value( 'downloads' ) );
 
 				if ( empty( $variation_options ) ) {
 					$variation = false;
@@ -369,52 +366,29 @@ class ImportSermons extends BatchImport {
 						$item->update_meta_value( 'audio_url', $audio_url );
 					}
 
-					if ( ! empty( $notes ) ) {
-						$notes_urls = explode( ',', $notes );
-						$notes      = [];
+					if ( ! empty( $downloads ) ) {
+						$download_urls = explode( ',', $downloads );
+						$downloads     = [];
 
-						if ( $options['sideload_notes'] ) {
-							foreach ( $notes_urls as $notes_url ) {
-								$sideloaded_media_url = $this->sideload_media_and_get_url( $message_id, $notes_url );
+						if ( $options['sideload_downloads'] ) {
+							foreach ( $download_urls as $download_url ) {
+								$sideloaded_media_url = $this->sideload_media_and_get_url( $message_id, $download_url );
 								if ( $sideloaded_media_url ) {
-									$note = array(
-										'notes_file'    => $sideloaded_media_url,
+									$download = array(
+										'file' => $sideloaded_media_url,
+										'name' => '' 
 									);
 									if ( $attachment_id = attachment_url_to_postid( $sideloaded_media_url ) ) {
-										$note['notes_file_id'] = $attachment_id;
+										$download['file_id'] = $attachment_id;
 									}
-									$notes[] = $note;
+									$downloads[] = $download;
 								}
 							}
 						} else {
-							$notes = array_map( fn( $url ) => array( 'notes_file' => $url ), $notes_urls );
+							$downloads = array_map( fn( $url ) => array( 'file' => $url, 'name' => '' ), $download_urls );
 						}
 
-						update_post_meta( $message_id, 'notes', $notes );
-					}
-
-					if ( ! empty( $bulletin ) ) {
-						$bulletin_urls = explode( ',', $bulletins );
-						$bulletins     = [];
-
-						if ( $options['sideload_bulletins'] ) {
-							foreach ( $bulletin_urls as $bulletin_url ) {
-								$sideloaded_media_url = $this->sideload_media_and_get_url( $message_id, $bulletin_url );
-								if ( $sideloaded_media_url ) {
-									$bulletin = array(
-										'bulletin_file'    => $sideloaded_media_url,
-									);
-									if ( $attachment_id = attachment_url_to_postid( $sideloaded_media_url ) ) {
-										$bulletin['bulletin_file_id'] = $attachment_id;
-									}
-									$bulletins[] = $bulletin;
-								}
-							}
-						} else {
-							$notes = array_map( fn( $url ) => array( 'bulletin_file' => $url ), $notes_urls );
-						}
-
-						update_post_meta( $message_id, 'bulletins', $notes );
+						update_post_meta( $message_id, 'downloads', $downloads );
 					}
 
 					// Handle message speakers
@@ -795,8 +769,7 @@ class ImportSermons extends BatchImport {
 			return $options;
 		}
 
-		$options['sideload_notes'] = isset( $map['sideload-note-urls'] ) && $map['sideload-note-urls'] == 'on';
-		$options['sideload_bulletins'] = isset( $map['sideload-bulletin-urls'] ) && $map['sideload-bulletin-urls'] == 'on';
+		$options['sideload_downloads'] = isset( $map['sideload-downloads'] ) && $map['sideload-downloads'] == 'on';
 
 		return $options;
 	}

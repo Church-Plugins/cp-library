@@ -336,21 +336,10 @@ class Tools {
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
 							</tr>
 							<tr>
-								<td><?php _e( 'Notes', 'cp-library' ); ?></td>
+								<td><?php _e( 'Downloads', 'cp-library' ); ?></td>
 								<td>
-									<select name="cp-import-field[notes]" class="cp-import-csv-column"
-											data-field="Notes">
-										<option
-											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
-									</select>
-								</td>
-								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
-							</tr>
-							<tr>
-								<td><?php _e( 'Bulletin', 'cp-library' ); ?></td>
-								<td>
-									<select name="cp-import-field[bulletin]" class="cp-import-csv-column"
-											data-field="Bulletin">
+									<select name="cp-import-field[downloads]" class="cp-import-csv-column"
+											data-field="Downloads">
 										<option
 											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
 									</select>
@@ -380,13 +369,8 @@ class Tools {
 						</p>
 
 						<p>
-							<input type='checkbox' id='sideload-note-urls' name='sideload-note-urls'>
-							<label for='sideload-note-urls'><?php esc_html_e( 'Attempt to import notes files to the Media Library', 'cp-library' ); ?></label>
-						</p>
-
-						<p>
-							<input type='checkbox' id='sideload-bulletin-urls' name='sideload-note-urls'>
-							<label for='sideload-bulletin-urls'><?php esc_html_e( 'Attempt to import bulletin files to the Media Library', 'cp-library' ); ?></label>
+							<input type='checkbox' id='sideload-downloads' name='sideload-downloads'>
+							<label for='sideload-downloads'><?php esc_html_e( 'Attempt to import downloadable files to the Media Library', 'cp-library' ); ?></label>
 						</p>
 
 						<p>
