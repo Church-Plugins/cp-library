@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.4.0
+* Add integration for SermonAudio
+
 #### 1.3.2
 * Bug Fix: Resolve Fatal error on activation
 

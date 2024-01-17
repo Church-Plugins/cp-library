@@ -2,6 +2,7 @@
 
 namespace CP_Library\Admin;
 
+use CMB2_Field;
 use CP_Library\Admin\Settings\Podcast;
 use CP_Library\Models\ServiceType;
 
@@ -99,6 +100,7 @@ class Settings {
 	protected function __construct() {
 		add_action( 'cmb2_admin_init', [ $this, 'register_main_options_metabox' ] );
 		add_action( 'cmb2_save_options_page_fields', 'flush_rewrite_rules' );
+		add_action( 'cmb2_render_cpl_submit_button', [ $this, 'custom_button_form_field' ], 10, 5);
 	}
 
 	public function register_main_options_metabox() {
@@ -206,6 +208,14 @@ class Settings {
 
 		if ( cp_library()->setup->podcast->is_enabled() ) {
 			Podcast::fields();
+		}
+
+		$adapters = cp_library()->adapters->get_adapters();
+
+		foreach( $adapters as $adapter ) {
+			if( $adapter->is_enabled() ) {
+				$adapter->options_page();
+			}
 		}
 
 		$this->advanced_options();
@@ -583,6 +593,21 @@ class Settings {
 			]
 		) );
 
+		$adapters = cp_library()->adapters->get_adapters();
+
+		foreach( $adapters as $adapter ) {
+			$advanced_options->add_field( array(
+				'name'    => sprintf( __( 'Enable %s Integration', 'cp-library' ), $adapter->display_name ),
+				'id'      => "cpl_{$adapter->type}_adapter_enabled",
+				'type'    => 'radio_inline',
+				'default' => 0,
+				'options' => [
+					1 => __( 'Enable', 'cp-library' ),
+					0 => __( 'Disable', 'cp-library' ),
+				]
+			) );
+		}
+
 		if ( cp_library()->setup->post_types->item_type_enabled() ) {
 
 			// @todo move this out of conditional once we add more settings
@@ -730,6 +755,7 @@ class Settings {
 					),
 				)
 			);
+
 		}
 	}
 
@@ -786,5 +812,19 @@ class Settings {
 		return $tabs;
 	}
 
-
+	/**
+	 * Render a custom CMB2 field, a button that submits an API request to admin-post.php with specified query args
+	 *
+	 * @param CMB2_Field $field
+	 * @param mixed $escaped_value
+	 * @param int $object_id
+	 * @param string $object_type
+	 * @param CMB2_Types $field_type_object
+	 * @since 1.3.0
+	 * @return void
+	 */
+	public function custom_button_form_field( $field, $escaped_value, $object_id, $object_type, $field_type_object ) {
+		$url = add_query_arg( isset( $field->args['query_args'] ) ? $field->args['query_args'] : array(), admin_url( 'admin-post.php' ) );
+		echo sprintf( '<button type="button" class="button cpl_admin_submit_button" data-url="%s">%s</button>', esc_url( $url ), $field->args['desc'] );
+	}
 }
