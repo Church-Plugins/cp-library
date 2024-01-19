@@ -104,10 +104,23 @@
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
+		gap: var(--cp-gap-base);
 
 		.material-icons, .material-icons-outlined {
 			font-size: var(--cp-font-size);
 			margin-right: var(--cp-gap-base);
+		}
+	}
+
+	&--attachment {
+		padding: 2px var(--cp-gap-base);
+		background-color: var(--cp-color-ui-inverted-light);
+		color: var(--cp-color-text-primary);
+		display: inline-flex;
+		align-items: center;
+
+		.material-icons-outlined {
+			font-size: var(--cp-font-size--sm);
 		}
 	}
 }
