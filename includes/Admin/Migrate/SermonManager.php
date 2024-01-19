@@ -131,6 +131,30 @@ class SermonManager extends Migration {
 		$speakers = $this->get_terms( 'wpfc_preacher', $post->ID );
 		$topics   = $this->get_terms( 'wpfc_sermon_topics', $post->ID );
 
+		$notes = (array) get_post_meta( $post->ID, 'sermon_notes', true );
+		$notes = array_merge( $notes, (array) get_post_meta( $post->ID, 'sermon_notes_multiple', true ) );
+		$notes = array_unique( array_filter( $notes ) );
+
+		$bulletins = (array) get_post_meta( $post->ID, 'sermon_bulletin', true );
+		$bulletins = array_merge( $bulletins, (array) get_post_meta( $post->ID, 'sermon_bulletin_multiple', true ) );
+		$bulletins = array_unique( array_filter( $bulletins ) );
+
+		$downloads = array();
+
+		foreach ( $notes as $note ) {
+			$downloads[] = array(
+				'file' => $note,
+				'name' => 'Notes',
+			);
+		}
+
+		foreach ( $bulletins as $bulletin ) {
+			$downloads[] = array(
+				'file' => $bulletin,
+				'name' => 'Bulletin',
+			);
+		}
+
 		try {
 			$item = Item::get_instance_from_origin( $new_post_id );
 
@@ -150,6 +174,10 @@ class SermonManager extends Migration {
 			if ( $audio_url ) {
 				update_post_meta( $new_post_id, 'audio_url', $audio_url );
 				$item->update_meta_value( 'audio_url', $audio_url );
+			}
+
+			if ( ! empty( $downloads ) ) {
+				update_post_meta( $new_post_id, 'downloads', $downloads );
 			}
 
 			if ( $series ) {
