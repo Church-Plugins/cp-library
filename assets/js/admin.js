@@ -446,3 +446,34 @@ jQuery($ => {
 		})
 	})
 })
+
+/**
+ * Series deletion detection
+ */
+jQuery($ => {
+	const { __, sprintf } = wp.i18n;
+
+	const message = sprintf(
+		/* translators: %1$s is the plural label for cpl_item, %2$s is the single label for cpl_item_type */
+		__('Click confirm to delete all %1$s associated with this %2$s only. WARNING: This action cannot be undone.', 'cp-library'),
+		cplAdmin.postTypes.cpl_item.pluralLabel,
+		cplAdmin.postTypes.cpl_item_type.singleLabel
+	)
+
+	console.log("Setting up event listeners")
+
+	$('body.post-type-cpl_item_type a.submitdelete').on('click', (e) => {
+		if(!confirm(message)) {
+			e.preventDefault();
+			return false;
+		}
+	})
+	$('body.post-type-cpl_item_type .bulkactions #doaction').on('click', (e) => {
+		if($('#bulk-action-selector-top').val() === 'trash') {
+			if(!confirm(message)) {
+				e.preventDefault();
+				return false;
+			}
+		}
+	})
+})

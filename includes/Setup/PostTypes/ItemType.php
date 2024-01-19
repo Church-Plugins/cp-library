@@ -77,6 +77,7 @@ class ItemType extends PostType  {
 
 		add_filter( "manage_{$item}_posts_columns", [ $this, 'item_data_column' ] );
 		add_action( "manage_{$item}_posts_custom_column", [ $this, 'item_data_column_cb' ], 10, 2 );
+		add_filter( 'pre_trash_post', [ $this, 'pre_trash' ], 10, 3 );
 
 		add_filter( "manage_{$this->post_type}_posts_columns", [ $this, 'item_type_data_column' ], 20 );
 		add_action( "manage_{$this->post_type}_posts_custom_column", [ $this, 'item_type_data_column_cb' ], 10, 2 );
@@ -719,4 +720,37 @@ class ItemType extends PostType  {
 
 		return $messages;
 	}
+
+	/**
+	 * Trashes associated messages when trashing a series
+	 *
+	 * @param bool    $trash Whether to go forward with trashing.
+	 * @param WP_Post $post Post object.
+	 * @param string  $prev_status Previous status.
+	 * @return bool
+	 * @since 1.4.3
+	 */
+	public function pre_trash( $trash, $post, $prev_status ) {
+		if ( $this->post_type !== $post->post_type || false === $trash ) {
+			return $trash;
+		}
+
+		$items = Model::get_instance_from_origin( $post->ID )->get_items();
+
+		foreach ( $items as $item ) {
+			$item_model = new ItemModel( $item );
+			$types      = $item_model->get_types();
+
+			// If item belongs to multiple series, remove the series from the item.
+			// If this is the only series the item belongs to, trash the item.
+			if ( count( $types ) > 1 ) {
+				$item_model->update_types( array_diff( $types, [ $post->ID ] ) );
+			} else {
+				wp_trash_post( $item->origin_id );
+			}
+		}
+
+		return $trash;
+	}
+
 }
