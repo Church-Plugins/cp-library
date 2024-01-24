@@ -130,6 +130,7 @@ class SermonManager extends Migration {
 		$series   = $this->get_terms( 'wpfc_sermon_series', $post->ID );
 		$speakers = $this->get_terms( 'wpfc_preacher', $post->ID );
 		$topics   = $this->get_terms( 'wpfc_sermon_topics', $post->ID );
+		$thumb    = get_post_thumbnail_id( $post->ID );
 
 		$notes = (array) get_post_meta( $post->ID, 'sermon_notes', true );
 		$notes = array_merge( $notes, (array) get_post_meta( $post->ID, 'sermon_notes_multiple', true ) );
@@ -161,6 +162,10 @@ class SermonManager extends Migration {
 			$scripture = $meta['bible_passage'][0] ?? false;
 			$video_url = $meta['sermon_video_link'][0] ?? false;
 			$audio_url = $meta['sermon_audio'][0] ?? false;
+
+			if ( $thumb ) {
+				set_post_thumbnail( $new_post_id, $thumb );
+			}
 
 			if ( $scripture ) {
 				$item->update_scripture( $scripture );
