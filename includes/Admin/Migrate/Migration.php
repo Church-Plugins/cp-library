@@ -191,7 +191,7 @@ abstract class Migration extends \WP_Background_Process {
 	protected function add_series_from_term( $item, $term ) {
 		$series_posts = get_posts(
 			array(
-				'name'           => $term->slug,
+				'title'          => $term->name,
 				'post_type'      => cp_library()->setup->post_types->item_type->post_type,
 				'posts_per_page' => 1,
 				'post_status'    => 'any',
@@ -339,7 +339,7 @@ abstract class Migration extends \WP_Background_Process {
 	protected function add_speaker_from_term( $item, $term ) {
 		$speaker_posts = get_posts(
 			array(
-				'name'           => $term->slug,
+				'title'          => $term->name,
 				'post_type'      => cp_library()->setup->post_types->speaker->post_type,
 				'posts_per_page' => 1,
 				'post_status'    => 'any',
