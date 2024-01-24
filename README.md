@@ -25,6 +25,7 @@ npm run build
 ### Change Log
 
 #### 1.4.0
+* Improve migration wizard to better handle processing and avoid duplicate items
 * Add integration for SermonAudio
 
 #### 1.3.2
