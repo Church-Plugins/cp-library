@@ -128,6 +128,7 @@ class ChurchContent extends Migration {
 		$speakers = $this->get_terms( 'ctc_sermon_speaker', $post->ID );
 		$books    = $this->get_terms( 'ctc_sermon_book', $post->ID );
 		$topics   = $this->get_terms( 'ctc_sermon_topic', $post->ID );
+		$thumb    = get_post_thumbnail_id( $post->ID );
 
 		try {
 			$item = Item::get_instance_from_origin( $new_post_id );
@@ -158,6 +159,10 @@ class ChurchContent extends Migration {
 						'name' => __( 'PDF', 'cp-library' ),
 					],
 				] );
+			}
+
+			if ( $thumb ) {
+				set_post_thumbnail( $new_post_id, $thumb );
 			}
 
 			if ( count( $series ) ) {
