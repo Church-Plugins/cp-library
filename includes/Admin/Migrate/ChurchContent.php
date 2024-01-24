@@ -139,6 +139,7 @@ class ChurchContent extends Migration {
 
 			$video_url = $meta['_ctc_sermon_video'][0] ?? false;
 			$audio_url = $meta['_ctc_sermon_audio'][0] ?? false;
+			$pdf       = $meta['_ctc_event_pdf'][0] ?? false;
 
 			if ( $video_url ) {
 				update_post_meta( $new_post_id, 'video_url', $video_url );
@@ -148,6 +149,15 @@ class ChurchContent extends Migration {
 			if ( $audio_url ) {
 				update_post_meta( $new_post_id, 'audio_url', $audio_url );
 				$item->update_meta_value( 'audio_url', $audio_url );
+			}
+
+			if ( $pdf ) {
+				update_post_meta( $new_post_id, 'downloads', [
+					[
+						'file' => $pdf,
+						'name' => __( 'PDF', 'cp-library' ),
+					],
+				] );
 			}
 
 			if ( count( $series ) ) {
