@@ -202,7 +202,7 @@ class ImportSermons extends BatchImport {
 					'post_title'   => $title,
 					'post_status'  => 'publish',
 					'post_date'    => date( 'Y-m-d 9:00:00', $date ),
-					'post_content' => wp_kses_post( $desc ),
+					'post_content' => wp_kses_post( str_replace( '\n', "\n", $desc ) ),
 				];
 
 
