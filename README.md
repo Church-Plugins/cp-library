@@ -24,9 +24,24 @@ npm run build
 
 ### Change Log
 
+#### 1.4.0
+* Improve migration wizard to better handle processing and avoid duplicate items
+* Add integration for SermonAudio
+
+#### 1.3.2
+* Bug Fix: Resolve Fatal error on activation
+
+#### 1.3.1
+* Enhancement: Allow page to share the same slug as the Podcast Feed
+
 #### 1.3.0
-* Enhancement: new Template builder to generate shortcodes
-* Enhancement: updates to Filters and additional settings
+* Enhancement: New Template builder to generate shortcodes
+* Enhancement: Updates to Filters and additional settings
+* Enhancement: Allow modifying Season and Topic terms
+* Enhancement: Automatic migration from Church Content Plugin and Sermon Manager
+* Bug Fix: Podcast feed now works for sermons
+* Bug Fix: Fix bug where tables wouldn't always create on activation
+* Update: Do not automatically set Series to draft when no sermons are published
 
 #### 1.2.5
 * Fix javascript error by enclosing filter js in enclosure

@@ -54,6 +54,8 @@ class ImportSermons extends BatchImport {
 	 */
 	public function init() {
 
+		add_filter( 'cp_do_ajax_import_options', [ $this, 'sermon_import_options' ], 10, 4 );
+
 		// Set up default field map values
 		$this->field_mapping = array(
 			'title'        => '',
@@ -70,6 +72,7 @@ class ImportSermons extends BatchImport {
 			'video'        => '',
 			'audio'        => '',
 			'variation'    => '',
+			'downloads'    => '',
 		);
 	}
 
@@ -86,8 +89,9 @@ class ImportSermons extends BatchImport {
 		global $wpdb;
 
 		$default_options = array(
-			'sideload_audio' => false,
-			'stop_on_error'  => true,
+			'sideload_audio'     => false,
+			'stop_on_error'      => true,
+			'sideload_downloads' => false,
 		);
 
 		$options = apply_filters( 'cp_library_import_sermons_process_options', array_merge( $default_options, $options ), $step, $default_options, $this );
@@ -156,6 +160,7 @@ class ImportSermons extends BatchImport {
 				$video        = trim( $this->get_field_value( 'video' ) );
 				$audio        = trim( $this->get_field_value( 'audio' ) );
 				$variation    = trim( $this->get_field_value( 'variation' ) );
+				$downloads    = trim( $this->get_field_value( 'downloads' ) );
 
 				if ( empty( $variation_options ) ) {
 					$variation = false;
@@ -359,6 +364,31 @@ class ImportSermons extends BatchImport {
 						}
 						update_post_meta( $message_id, 'audio_url', $audio_url );
 						$item->update_meta_value( 'audio_url', $audio_url );
+					}
+
+					if ( ! empty( $downloads ) ) {
+						$download_urls = explode( ',', $downloads );
+						$downloads     = [];
+
+						if ( $options['sideload_downloads'] ) {
+							foreach ( $download_urls as $download_url ) {
+								$sideloaded_media_url = $this->sideload_media_and_get_url( $message_id, $download_url );
+								if ( $sideloaded_media_url ) {
+									$download = array(
+										'file' => $sideloaded_media_url,
+										'name' => '' 
+									);
+									if ( $attachment_id = attachment_url_to_postid( $sideloaded_media_url ) ) {
+										$download['file_id'] = $attachment_id;
+									}
+									$downloads[] = $download;
+								}
+							}
+						} else {
+							$downloads = array_map( fn( $url ) => array( 'file' => $url, 'name' => '' ), $download_urls );
+						}
+
+						update_post_meta( $message_id, 'downloads', $downloads );
 					}
 
 					// Handle message speakers
@@ -727,6 +757,21 @@ class ImportSermons extends BatchImport {
 	 */
 	public function get_import_type_label() {
 		return strtolower( cp_library()->setup->post_types->item->plural_label );
+	}
+
+	/**
+	 * Add flags for attempting to import other media
+	 *
+	 * @since 1.4.3
+	 */
+	public function sermon_import_options( $options, $map, $step, $class ) {
+		if ( trim( $class, '\\' ) !== self::class ) {
+			return $options;
+		}
+
+		$options['sideload_downloads'] = isset( $map['sideload-downloads'] ) && $map['sideload-downloads'] == 'on';
+
+		return $options;
 	}
 
 }

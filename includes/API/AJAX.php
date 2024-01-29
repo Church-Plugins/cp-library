@@ -9,7 +9,7 @@ use CP_Library\Models\Item;
 use CP_Library\Models\ItemType;
 
 /**
- * CP Library AJAX methods.
+ * CP Sermons AJAX methods.
  */
 class AJAX {
 

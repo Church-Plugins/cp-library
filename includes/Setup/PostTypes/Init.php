@@ -123,7 +123,7 @@ class Init {
 	}
 
 	/**
-	 * Returns CP Library models
+	 * Returns CP Sermons models
 	 *
 	 * @return array
 	 * @since  1.3.0

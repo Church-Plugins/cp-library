@@ -56,6 +56,12 @@ class Templates {
 		}
 	}
 
+	public static function posts_per_page( $post_type = 'post' ) {
+		$posts_per_page = get_option( 'posts_per_page', 10 );
+
+		return apply_filters( 'cpl_posts_per_page', $posts_per_page, $post_type );
+	}
+
 	/**
 	 * @return \WP_Query|null
 	 * @since  1.0.0
