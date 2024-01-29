@@ -490,6 +490,39 @@ class Item extends PostType  {
 				'type' => 'text_medium',
 			] );
 		}
+
+		$downloads_field_id = $cmb->add_field( [
+			'id'   => 'downloads',
+			'type' => 'group',
+			/* translators: %s is the singular label for the post type */
+			'desc' => sprintf( __( 'Add downloadable files to this %s.', 'cp-library' ), $this->single_label ),
+			'options' => array(
+				'add_button'    => sprintf( __( 'Add file', 'cp-library' ), strtolower( $this->single_label ) ),
+				'remove_button' => sprintf( __( 'Remove file', 'cp-library' ), strtolower( $this->single_label ) ),
+				'sortable'      => true,
+			),
+		] );
+
+		$cmb->add_group_field( $downloads_field_id, [
+			'name'       => __( 'Name' ),
+			'id'         => 'name',
+			'type'       => 'text',
+			'attributes' => [
+				'placeholder' => __( 'Bulletin', 'cp-library' ),
+			],
+		] );
+
+		$cmb->add_group_field( $downloads_field_id, [
+			'name'        => __( 'File' ),
+			'id'          => 'file',
+			'type'        => 'file',
+			'attributes'  => [
+				'placeholder' => 'https://example.com/bulletin.pdf'
+			],
+			'query_args'  => array(
+				'type' => 'application/pdf',
+			),
+		] );
 	}
 
 	protected function analytics() {
