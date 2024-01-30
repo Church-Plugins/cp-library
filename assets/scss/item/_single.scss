@@ -113,12 +113,6 @@
 	}
 
 	&--attachment {
-		padding: 2px var(--cp-gap-base);
-		background-color: var(--cp-color-ui-inverted-light);
-		color: var(--cp-color-text-primary);
-		display: inline-flex;
-		align-items: center;
-
 		.material-icons-outlined {
 			font-size: var(--cp-font-size--sm);
 		}
@@ -151,6 +145,11 @@
 		text-align: center;
 	}
 
+	&--desc {
+		max-width: 50em;
+		margin: auto;
+	}
+
 	.cpl-meta, .cpl-info, .cpl-single-item--attachments {
 		justify-content: center;
 	}
@@ -176,10 +175,14 @@
 			flex-basis: 100%;
 		}
 	}
-	
+
 	.itemDetail__actions {
 		justify-content: center;
 		position: relative;
+	}
+
+	&--title {
+		margin: var(--cp-gap--sm) auto;
 	}
 
 	&--title::after {

@@ -347,18 +347,18 @@ class Settings {
 			'classes' => 'cp-radio-image',
 		] );
 
-		$options->add_field( [
-			'name'    => __( 'Archive Page Template', 'cp-library' ),
-			'desc'    => '',
-			'id'      => 'archive_template',
-			'type'    => 'radio_inline',
-			'default' => '',
-			'options' => [
-				''      => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-list-template.png" />' . __( 'List View', 'cp-library' ),
-				'-grid' => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-grid-template.png" />' . __( 'Grid (3 column)', 'cp-library' ),
-			],
-			'classes' => 'cp-radio-image',
-		] );
+//		$options->add_field( [
+//			'name'    => __( 'Archive Page Template', 'cp-library' ),
+//			'desc'    => '',
+//			'id'      => 'archive_template',
+//			'type'    => 'radio_inline',
+//			'default' => '',
+//			'options' => [
+//				''      => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-list-template.png" />' . __( 'List View', 'cp-library' ),
+//				'-grid' => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-grid-template.png" />' . __( 'Grid (3 column)', 'cp-library' ),
+//			],
+//			'classes' => 'cp-radio-image',
+//		] );
 
 
 		$variation_sources = cp_library()->setup->variations->get_sources();

@@ -1,11 +1,20 @@
 <?php
+use CP_Library\Admin\Settings;
 use CP_Library\Templates;
 
 $type = Templates::get_type();
 $description = get_the_archive_description();
+
+$classes = [ 'cpl-archive', 'cpl-archive--' . $type ];
+
+if ( 'item-type' == $type && $ratio = Settings::get_item_type( 'image_ratio' ) ) {
+	$classes[] = 'cpl-archive--ratio-' . $ratio;
+}
+
+$classes = apply_filters( 'cpl_archive_classes', $classes, $type );
 ?>
 
-<div class="cpl-archive cpl-archive--<?php echo esc_attr( $type ); ?>">
+<div class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">
 
 	<?php do_action( 'cpl_before_archive' ); ?>
 	<?php do_action( 'cpl_before_archive_'  . $type ); ?>

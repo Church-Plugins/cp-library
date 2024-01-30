@@ -508,7 +508,7 @@ class Item extends PostType  {
 			'id'         => 'name',
 			'type'       => 'text',
 			'attributes' => [
-				'placeholder' => __( 'Bulletin', 'cp-library' ),
+				'placeholder' => __( 'Notes', 'cp-library' ),
 			],
 		] );
 
@@ -517,7 +517,7 @@ class Item extends PostType  {
 			'id'          => 'file',
 			'type'        => 'file',
 			'attributes'  => [
-				'placeholder' => 'https://example.com/bulletin.pdf'
+				'placeholder' => 'https://example.com/notes.pdf'
 			],
 			'query_args'  => array(
 				'type' => 'application/pdf',
