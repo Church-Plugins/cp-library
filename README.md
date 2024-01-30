@@ -32,6 +32,7 @@ npm run build
 * Update: Accessibility enhancements for sermon player
 * Update: Improve migration wizard to better handle processing and avoid duplicate items
 * Bug Fix: better handling for new lines in import CSV
+* Security Fix: Resolve XSS vulnerability during search (props Kevin Wilgenbusch)
 
 #### 1.3.2
 * Bug Fix: Resolve Fatal error on activation

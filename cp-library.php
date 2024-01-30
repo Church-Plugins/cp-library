@@ -3,7 +3,7 @@
  * Plugin Name: CP Sermon Library
  * Plugin URL: https://churchplugins.com
  * Description: Church library plugin for sermons, talks, and other media
- * Version: 1.4.0-beta3
+ * Version: 1.4.0
  * Author: Church Plugins
  * Author URI: https://churchplugins.com
  * Text Domain: cp-library
@@ -12,7 +12,7 @@
 
 if( !defined( 'CP_LIBRARY_PLUGIN_VERSION' ) ) {
 	 define ( 'CP_LIBRARY_PLUGIN_VERSION',
-	 	'1.4.0-beta3'
+	 	'1.4.0'
 	);
 }
 
