@@ -36,6 +36,8 @@ add_action( 'cpl_single_item_before', 'cpl_item_back' );
 
 			<?php \CP_Library\Templates::get_template_part( 'parts/item-single/info' ); ?>
 
+			<?php \CP_Library\Templates::get_template_part( 'parts/item-single/attachments' ); ?>
+
 			<div class="cpl-single-item--desc">
 				<?php the_content(); ?>
 			</div>

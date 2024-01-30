@@ -137,7 +137,7 @@ class Tools {
 		<div class="postbox cp-import-payment-history">
 			<h3><span><?php echo sprintf( esc_html__( 'Import %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label); ?></span></h3>
 			<div class="inside">
-				<p><?php echo sprintf( esc_html__( 'Import a CSV file of %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label); ?></p>
+				<p><?php echo sprintf( __( 'Import a CSV file of %s. <a href="%s">Download a sample csv file.</a>', 'cp-library' ), cp_library()->setup->post_types->item->plural_label, CP_LIBRARY_PLUGIN_URL . '/templates/__sample/import-sermons.csv'); ?></p>
 				<form id="cp-import-sermons" class="cp-import-form cp-import-export-form"
 					  action="<?php echo esc_url( add_query_arg( 'cp_action', 'cp_upload_import_file', admin_url() ) ); ?>"
 					  method="post" enctype="multipart/form-data">
@@ -336,6 +336,17 @@ class Tools {
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
 							</tr>
 							<tr>
+								<td><?php _e( 'Downloads', 'cp-library' ); ?></td>
+								<td>
+									<select name="cp-import-field[downloads]" class="cp-import-csv-column"
+											data-field="Downloads">
+										<option
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+									</select>
+								</td>
+								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
+							</tr>
+							<tr>
 								<td><?php _e( 'Variation', 'cp-library' ); ?></td>
 								<td>
 									<select name="cp-import-field[variation]" class="cp-import-csv-column"
@@ -346,13 +357,20 @@ class Tools {
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
 							</tr>
+
+
 							</tbody>
 						</table>
 
 						<h4><span><?php esc_html_e( 'Additional Options', 'cp-library' ); ?></span></h4>
 						<p>
-							<input type='checkbox' id='sideload-audio-urls' name='sideload-audio-urls'>
+							<input type='checkbox' id='sideload-audio-urls' name='sideload-audio-urls' checked>
 							<label for='sideload-audio-urls'><?php esc_html_e( 'Attempt to import mp3 files to the Media Library', 'cp-library' ); ?></label>
+						</p>
+
+						<p>
+							<input type='checkbox' id='sideload-downloads' name='sideload-downloads' checked>
+							<label for='sideload-downloads'><?php esc_html_e( 'Attempt to import downloadable files to the Media Library', 'cp-library' ); ?></label>
 						</p>
 
 						<p>
@@ -493,7 +511,7 @@ class Tools {
 
 		fclose($file_handle);
 
-		header("Content-Type: text/csv");
+		header("Content-Type: text/csv; charset=utf-8");
 		header( "Content-disposition: attachment; filename=\"" . $filename . "\"" );
 
 		if ( isset( $headers['content-length'] ) ) {
@@ -514,24 +532,47 @@ class Tools {
 	 */
 	public function get_formatted_item( $data ) {
 
-		$series = $this->get_csv_string( $data['types'], 'title' );
+		$strings = array(
+			'types'        => 'title',
+			'scripture'     => 'name',
+			'topics'        => 'name',
+			'speakers'      => 'title',
+			'locations'     => 'title',
+			'service_types' => 'title',
+			'seasons'       => 'name',
+		);
 
-		$scripture = $this->get_csv_string( $data['scripture'], 'name' );
+		$values = [];
 
-		$topics = $this->get_csv_string( $data['topics'], 'name' );
+		foreach ( $strings as $string => $type ) {
+			$values[ $string ] = '';
 
-		$speakers = $this->get_csv_string( $data['speakers'], 'title' );
+			if ( ! empty( $data[ $string ] ) ) {
+				$values[ $string ] = $this->get_csv_string( $data[ $string ], $type );
+			}
+		}
 
-		$locations = $this->get_csv_string( $data['locations'], 'name' );
+		$downloads = '';
 
-		$service_types = $this->get_csv_string( $data['service_types'], 'title' );
+		if ( ! empty( $data['downloads'] ) ) {
+			$downloads = [];
+			foreach ( $data['downloads'] as $download ) {
+				if ( empty( $download['name'] ) ) {
+					$download['name'] = '';
+				}
 
-		$seasons = $this->get_csv_string( $data['seasons'], 'name' );
+				$downloads[] = $download['name'] . '|' . $download['file'];
+			}
+
+			$downloads = implode( ',', $downloads );
+		}
+
+		extract( $values );
 
 		return array(
 			'Title'        => $data['title'],
-			'Description'  => preg_replace("/\n/", "\\n", $data['desc']),
-			'Series'       => $series,
+			'Description'  => $data['desc'],
+			'Series'       => $types,
 			'Date'         => $data['date']['timestamp'],
 			'Passage'      => $data['passage'],
 			'Location'     => $locations,
@@ -543,6 +584,7 @@ class Tools {
 			'Thumbnail'    => $data['thumb'],
 			'Video'        => $data['video']['value'],
 			'Audio'        => $data['audio'],
+			'Downloads'    => $downloads,
 		);
 	}
 
@@ -558,6 +600,6 @@ class Tools {
 			$data = empty( $data ) ? array() : array( $data );
 		}
 
-		return implode( ',', wp_list_pluck( $data, $key ) );
+		return html_entity_decode( implode( ',', wp_list_pluck( $data, $key ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 	}
 }

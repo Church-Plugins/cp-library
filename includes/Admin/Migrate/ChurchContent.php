@@ -128,6 +128,7 @@ class ChurchContent extends Migration {
 		$speakers = $this->get_terms( 'ctc_sermon_speaker', $post->ID );
 		$books    = $this->get_terms( 'ctc_sermon_book', $post->ID );
 		$topics   = $this->get_terms( 'ctc_sermon_topic', $post->ID );
+		$thumb    = get_post_thumbnail_id( $post->ID );
 
 		try {
 			$item = Item::get_instance_from_origin( $new_post_id );
@@ -139,6 +140,7 @@ class ChurchContent extends Migration {
 
 			$video_url = $meta['_ctc_sermon_video'][0] ?? false;
 			$audio_url = $meta['_ctc_sermon_audio'][0] ?? false;
+			$pdf       = $meta['_ctc_event_pdf'][0] ?? false;
 
 			if ( $video_url ) {
 				update_post_meta( $new_post_id, 'video_url', $video_url );
@@ -148,6 +150,19 @@ class ChurchContent extends Migration {
 			if ( $audio_url ) {
 				update_post_meta( $new_post_id, 'audio_url', $audio_url );
 				$item->update_meta_value( 'audio_url', $audio_url );
+			}
+
+			if ( $pdf ) {
+				update_post_meta( $new_post_id, 'downloads', [
+					[
+						'file' => $pdf,
+						'name' => __( 'PDF', 'cp-library' ),
+					],
+				] );
+			}
+
+			if ( $thumb ) {
+				set_post_thumbnail( $new_post_id, $thumb );
 			}
 
 			if ( count( $series ) ) {

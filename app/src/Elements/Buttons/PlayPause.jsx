@@ -15,24 +15,29 @@ export default function PlayPause({
 	isPlaying,
 	size = 36,
 	playedSeconds = 1,
+	...props
 }) {
 
   return isPlaying && !playedSeconds ? (
 		  <IconButton
+				{...props}
 			  className={`roundButton__root roundButton__${variant} button__play button__loading`}
 			  variant={variant}
 			  onClick={onClick}
 			  sx={{padding: circleIcon ? size * .25 + 'px' : 0}}
+				aria-label='Loading playback'
 		  >
 			  <CircularProgress size={size * .5}/>
 		  </IconButton>
 	  ) : (
 		  <IconButton
+				{...props}
 			  className={`roundButton__root roundButton__${variant} button__play`}
 			  variant={variant}
 			  onClick={onClick}
 			  disabled={disabled}
 			  sx={{padding: 0}}
+				aria-label='Play/pause playback'
 		  >
 			  {circleIcon ? (
 				  <>

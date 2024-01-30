@@ -40,6 +40,13 @@ class Init {
 	public $admin;
 
 	/**
+	 * @var Adapters\Init
+	 *
+	 * @since 1.3.0
+	 */
+	public $adapters;
+
+	/**
 	 * The Enqueue class instance
 	 *
 	 * @var \WPackio\Enqueue
@@ -107,6 +114,8 @@ class Init {
 		$this->api   = API\Init::get_instance();
 
 		$this->admin = Admin\Init::get_instance();
+		$this->adapters = Adapters\Init::get_instance();
+
 		Download::get_instance();
 		Templates::init();
 
@@ -187,17 +196,18 @@ class Init {
 	 * Enqueue scripts on our admin pages
 	 */
 	public function admin_scripts() {
+
+		$this->enqueue->enqueue( 'styles', 'admin', [] );
+		wp_enqueue_style( 'material-icons' );
+
 		if ( ! $this->is_admin_page() ) {
 			 return;
 		}
 
 		$this->enqueue->enqueue( 'styles', 'admin', [] );
-		wp_enqueue_style( 'material-icons' );
 		wp_enqueue_script( 'inline-edit-post' );
 
 		$scripts = $this->enqueue->enqueue( 'scripts', 'admin', array( 'jquery', 'select2' ) );
-
-		$this->enqueue->enqueue( 'styles', 'admin', [] );
 
 		// Expose variables to JS.
 		$entry_point = array_pop( $scripts['js'] );
@@ -234,6 +244,10 @@ class Init {
 		$screen            = get_current_screen();
 		$primary_post_type = \CP_Library\Util\Convenience::get_primary_post_type();
 
+		if ( isset( $_GET['page'] ) && false !== strpos( $_GET['page'], 'cpl' ) ) {
+			return true;
+		}
+
 		if ( $screen && str_starts_with( $screen->id, $primary_post_type . '_page' ) ) {
 			return true;
 		}
@@ -242,7 +256,11 @@ class Init {
 			$post_type = $_GET['post_type']; // phpcs:ignore
 		}
 
-		return in_array( $post_type, $this->setup->post_types->get_post_types() );
+		if ( in_array( $post_type, $this->setup->post_types->get_post_types() ) ) {
+			return true;
+		}
+
+		return false;
 	}
 
 

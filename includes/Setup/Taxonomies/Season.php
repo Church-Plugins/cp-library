@@ -86,7 +86,7 @@ class Season extends Taxonomy  {
 			$types[] = cp_library()->setup->post_types->item_type->post_type;
 		}
 
-		return $types;
+		return apply_filters( 'cpl_season_object_types', $types, $this );
 	}
 
 	/**

@@ -5,6 +5,13 @@
 	color: var(--cpl--text-color);
 	margin: var(--cp-gap--md) auto;
 
+	&.cpl-layout-vertical {
+		padding-top: 0;
+		padding-left: 0;
+		padding-right: 0;
+		margin-top: 0;
+	}
+	
 	.cpl-pagination {
 		ul {
 			display: flex;
