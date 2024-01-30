@@ -166,7 +166,7 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 
 		global $wp_query;
 
-		if ( true === $wp_query->get( 'cpl_relation_feed' ) ) {
+		if ( true === $wp_query->get( 'cpl_relation_feed' ) && get_post_type() !== cp_library()->setup->post_types->item->post_type ) {
 			$items = array();
 
 			if( get_post_type() === cp_library()->setup->post_types->item_type->post_type ) {

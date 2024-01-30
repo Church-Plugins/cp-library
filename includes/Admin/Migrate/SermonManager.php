@@ -1,7 +1,7 @@
 <?php // phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 
 /**
- * Migrate Sermon Manager content to CP Library
+ * Migrate Sermon Manager content to CP Sermons
  *
  * @package CP_Library
  * @since 1.3.0

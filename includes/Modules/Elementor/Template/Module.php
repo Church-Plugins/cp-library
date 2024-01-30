@@ -1,6 +1,6 @@
 <?php // phpcs:ignore
 /**
- * Class for the Elementor CP Library Template widget.
+ * Class for the Elementor CP Sermons Template widget.
  *
  * @package CP_Library
  */
@@ -10,7 +10,7 @@ namespace CP_Library\Modules\Elementor\Template;
 use \CP_Library\Setup\PostTypes\Template as Template_Post_Type;
 
 /**
- * Class for the Elementor CP Library Template widget.
+ * Class for the Elementor CP Sermons Template widget.
  */
 class Module extends \Elementor\Widget_Base {
 
@@ -25,7 +25,7 @@ class Module extends \Elementor\Widget_Base {
 	 * Widget title
 	 */
 	public function get_title() {
-		return esc_html__( 'CP Library Template', 'elementor-addon' );
+		return esc_html__( 'CP Sermons Template', 'elementor-addon' );
 	}
 
 	/**

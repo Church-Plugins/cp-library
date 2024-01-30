@@ -51,7 +51,8 @@ class Init {
 	 *
 	 * @return void
 	 */
-	protected function actions() {}
+	protected function actions() {
+	}
 
 	/** Actions ***************************************************/
 
