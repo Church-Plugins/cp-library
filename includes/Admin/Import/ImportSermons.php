@@ -370,22 +370,38 @@ class ImportSermons extends BatchImport {
 						$download_urls = explode( ',', $downloads );
 						$downloads     = [];
 
-						if ( $options['sideload_downloads'] ) {
-							foreach ( $download_urls as $download_url ) {
+						foreach ( $download_urls as $download_url ) {
+							$download_url = explode( '|', $download_url );
+							$download_name = '';
+
+							if ( count( $download_url ) > 1 ) {
+								$download_name = $download_url[0];
+								$download_url = $download_url[1];
+							} else {
+								$download_url = $download_url[0];
+							}
+
+							if ( $options['sideload_downloads'] ) {
 								$sideloaded_media_url = $this->sideload_media_and_get_url( $message_id, $download_url );
+
 								if ( $sideloaded_media_url ) {
 									$download = array(
 										'file' => $sideloaded_media_url,
-										'name' => '' 
+										'name' => $download_name,
 									);
+
 									if ( $attachment_id = attachment_url_to_postid( $sideloaded_media_url ) ) {
 										$download['file_id'] = $attachment_id;
 									}
+
 									$downloads[] = $download;
 								}
+							} else {
+								$downloads[] = array(
+									'file' => $download_url,
+									'name' => $download_name,
+								);
 							}
-						} else {
-							$downloads = array_map( fn( $url ) => array( 'file' => $url, 'name' => '' ), $download_urls );
 						}
 
 						update_post_meta( $message_id, 'downloads', $downloads );

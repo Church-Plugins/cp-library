@@ -25,8 +25,13 @@ npm run build
 ### Change Log
 
 #### 1.4.0
-* Improve migration wizard to better handle processing and avoid duplicate items
-* Add integration for SermonAudio
+* Enhancement: Add integration for SermonAudio
+* Enhancement: Add vertical layout for Single Sermon Template
+* Enhancement: Add downloads for sermons
+* Enhancement: Add aspect-ratio control for Series grid view
+* Update: Accessibility enhancements for sermon player
+* Update: Improve migration wizard to better handle processing and avoid duplicate items
+* Bug Fix: better handling for new lines in import CSV
 
 #### 1.3.2
 * Bug Fix: Resolve Fatal error on activation

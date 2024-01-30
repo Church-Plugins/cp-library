@@ -137,7 +137,7 @@ class Tools {
 		<div class="postbox cp-import-payment-history">
 			<h3><span><?php echo sprintf( esc_html__( 'Import %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label); ?></span></h3>
 			<div class="inside">
-				<p><?php echo sprintf( esc_html__( 'Import a CSV file of %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label); ?></p>
+				<p><?php echo sprintf( __( 'Import a CSV file of %s. <a href="%s">Download a sample csv file.</a>', 'cp-library' ), cp_library()->setup->post_types->item->plural_label, CP_LIBRARY_PLUGIN_URL . '/templates/__sample/import-sermons.csv'); ?></p>
 				<form id="cp-import-sermons" class="cp-import-form cp-import-export-form"
 					  action="<?php echo esc_url( add_query_arg( 'cp_action', 'cp_upload_import_file', admin_url() ) ); ?>"
 					  method="post" enctype="multipart/form-data">
@@ -357,7 +357,7 @@ class Tools {
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
 							</tr>
-							
+
 
 							</tbody>
 						</table>
@@ -511,7 +511,7 @@ class Tools {
 
 		fclose($file_handle);
 
-		header("Content-Type: text/csv");
+		header("Content-Type: text/csv; charset=utf-8");
 		header( "Content-disposition: attachment; filename=\"" . $filename . "\"" );
 
 		if ( isset( $headers['content-length'] ) ) {
@@ -532,24 +532,47 @@ class Tools {
 	 */
 	public function get_formatted_item( $data ) {
 
-		$series = $this->get_csv_string( $data['types'], 'title' );
+		$strings = array(
+			'types'        => 'title',
+			'scripture'     => 'name',
+			'topics'        => 'name',
+			'speakers'      => 'title',
+			'locations'     => 'title',
+			'service_types' => 'title',
+			'seasons'       => 'name',
+		);
 
-		$scripture = $this->get_csv_string( $data['scripture'], 'name' );
+		$values = [];
 
-		$topics = $this->get_csv_string( $data['topics'], 'name' );
+		foreach ( $strings as $string => $type ) {
+			$values[ $string ] = '';
 
-		$speakers = $this->get_csv_string( $data['speakers'], 'title' );
+			if ( ! empty( $data[ $string ] ) ) {
+				$values[ $string ] = $this->get_csv_string( $data[ $string ], $type );
+			}
+		}
 
-		$locations = $this->get_csv_string( $data['locations'], 'name' );
+		$downloads = '';
 
-		$service_types = $this->get_csv_string( $data['service_types'], 'title' );
+		if ( ! empty( $data['downloads'] ) ) {
+			$downloads = [];
+			foreach ( $data['downloads'] as $download ) {
+				if ( empty( $download['name'] ) ) {
+					$download['name'] = '';
+				}
 
-		$seasons = $this->get_csv_string( $data['seasons'], 'name' );
+				$downloads[] = $download['name'] . '|' . $download['file'];
+			}
+
+			$downloads = implode( ',', $downloads );
+		}
+
+		extract( $values );
 
 		return array(
 			'Title'        => $data['title'],
-			'Description'  => preg_replace("/\n/", "\\n", $data['desc']),
-			'Series'       => $series,
+			'Description'  => $data['desc'],
+			'Series'       => $types,
 			'Date'         => $data['date']['timestamp'],
 			'Passage'      => $data['passage'],
 			'Location'     => $locations,
@@ -561,6 +584,7 @@ class Tools {
 			'Thumbnail'    => $data['thumb'],
 			'Video'        => $data['video']['value'],
 			'Audio'        => $data['audio'],
+			'Downloads'    => $downloads,
 		);
 	}
 
@@ -576,6 +600,6 @@ class Tools {
 			$data = empty( $data ) ? array() : array( $data );
 		}
 
-		return implode( ',', wp_list_pluck( $data, $key ) );
+		return html_entity_decode( implode( ',', wp_list_pluck( $data, $key ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 	}
 }
