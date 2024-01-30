@@ -24,6 +24,10 @@
 
 	}
 
+	&__controlsWrapper:focus-within {
+		display: flex !important;
+	}
+
 	&__controls {
 		padding: 1rem .5rem 0;
 

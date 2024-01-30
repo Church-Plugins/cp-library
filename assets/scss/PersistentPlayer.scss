@@ -10,7 +10,7 @@
 			.persistentPlayer__video__controls {
 				opacity: 0;
 
-				&:hover {
+				&:hover, &:focus-within {
 					opacity: 1;
 				}
 			}
