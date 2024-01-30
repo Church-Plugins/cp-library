@@ -364,12 +364,12 @@ class Tools {
 
 						<h4><span><?php esc_html_e( 'Additional Options', 'cp-library' ); ?></span></h4>
 						<p>
-							<input type='checkbox' id='sideload-audio-urls' name='sideload-audio-urls'>
+							<input type='checkbox' id='sideload-audio-urls' name='sideload-audio-urls' checked>
 							<label for='sideload-audio-urls'><?php esc_html_e( 'Attempt to import mp3 files to the Media Library', 'cp-library' ); ?></label>
 						</p>
 
 						<p>
-							<input type='checkbox' id='sideload-downloads' name='sideload-downloads'>
+							<input type='checkbox' id='sideload-downloads' name='sideload-downloads' checked>
 							<label for='sideload-downloads'><?php esc_html_e( 'Attempt to import downloadable files to the Media Library', 'cp-library' ); ?></label>
 						</p>
 
