@@ -2,22 +2,30 @@
 use ChurchPlugins\Helpers;
 use CP_Library\Admin\Settings;
 
+global $wp_query;
 
+$query_vars = isset( $args['query_vars'] ) ? $args['query_vars'] : $wp_query->query_vars;
+$facet_id   = isset( $args['facet_id'] ) ? $args['facet_id'] : md5( serialize( $query_vars ) );
 $taxonomies = cp_library()->setup->taxonomies->get_objects();
 
-$uri = explode( '?', $_SERVER['REQUEST_URI'] ?? '?' )[0];
-$get = $_GET;
+$uri     = explode( '?', $_SERVER['REQUEST_URI'] ?? '?' )[0];
+$get     = $_GET;
 $display = '';
 
 if ( empty( $get ) ) {
 	$display = 'style="display: none;"';
 }
-$dropdown_class = 'cpl-filter--dropdown cpl-ajax-facet';
-$is_item_archive = is_post_type_archive( cp_library()->setup->post_types->item->post_type );
-$display = apply_filters( 'cpl_filters_display', $display );
+
+$dropdown_class   = 'cpl-filter--dropdown cpl-ajax-facet';
+$is_item_archive  = is_post_type_archive( cp_library()->setup->post_types->item->post_type );
+$display          = apply_filters( 'cpl_filters_display', $display );
 $disabled_filters = Settings::get_advanced( 'disable_filters', array() );
 ?>
-<div class="cpl-filter">
+<script>
+	window.cplFacets = window.cplFacets || {};
+	window.cplFacets['<?php echo esc_js( $facet_id ); ?>'] = <?php echo wp_json_encode( $query_vars ); ?>;
+</script>
+<div class="cpl-filter" data-facet-id="<?php echo esc_attr( $facet_id ); ?>">
 
 	<form method="get" class="cpl-filter--form">
 

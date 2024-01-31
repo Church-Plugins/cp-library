@@ -334,7 +334,7 @@ class Init {
 		$output = $wpdb->get_results( $query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 		if ( 'cpl_scripture' === $args['facet_type'] && 'name' === $args['order_by'] ) {
-			usort( $output, 'CP_Library\API\Ajax::sort_scripture' );
+			usort( $output, [ self::class, 'sort_scripture' ] );
 		}
 
 		return $output ? $output : array();
