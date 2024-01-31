@@ -1,6 +1,6 @@
 <?php // phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 /**
- * Class for the Divi CP Library Template module.
+ * Class for the Divi CP Sermons Template module.
  *
  * @package CP_Library
  */
@@ -8,7 +8,7 @@
 namespace CP_Library\Modules\Divi\Template;
 
 /**
- * CP Library Template module
+ * CP Sermons Template module
  */
 class Module extends \ET_Builder_Module {
 
@@ -25,7 +25,7 @@ class Module extends \ET_Builder_Module {
 	 * @return void
 	 */
 	public function init() {
-		$this->name = esc_html__( 'CP Library Template', 'cp-library' );
+		$this->name = esc_html__( 'CP Sermons Template', 'cp-library' );
 		$this->slug = 'cpl_template';
 	}
 

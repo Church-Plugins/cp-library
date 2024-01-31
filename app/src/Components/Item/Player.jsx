@@ -275,91 +275,93 @@ export default function Player({
 										<Box className="itemPlayer__video__playWrap" onClick={() => setIsPlaying(!isPlaying)}></Box>
 									)}
 
-									{!showFSControls ? null : (
-										<Box className="itemPlayer__controlsWrapper cpl-touch-hide">
+									<Box className="itemPlayer__controlsWrapper cpl-touch-hide" style={{ display: showFSControls ? undefined : 'none' }}>
 
-											<Box className="itemPlayer__controls" display="flex" flexDirection="row"
-													justifyContent="space-around" margin="auto">
+										<Box className="itemPlayer__controls" display="flex" flexDirection="row"
+												justifyContent="space-around" margin="auto">
 
-												<Box display="flex" alignItems="center">
-													<PlayPause playedSeconds={playedSeconds} flex={0} padding={2} isPlaying={isPlaying} circleIcon={false} onClick={() => setIsPlaying(!isPlaying)}/>
-												</Box>
-
-												<IconButton
-																		onClick={() => playerInstance.current.seekTo(playedSeconds - 10, 'seconds')}>
-													<Replay10 fontSize="inherit"/>
-												</IconButton>
-
-												<IconButton
-																		onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')}>
-													<Forward30 fontSize="inherit"/>
-												</IconButton>
-
-												<Box className="itemPlayer__controls__rate" display="flex" alignItems="center"
-														onClick={updatePlaybackRate}>
-													<span>{playbackRate}x</span>
-												</Box>
-
+											<Box display="flex" alignItems="center">
+												<PlayPause autoFocus playedSeconds={playedSeconds} flex={0} padding={2} isPlaying={isPlaying} circleIcon={false} onClick={() => setIsPlaying(!isPlaying)}/>
 											</Box>
 
-											<Box className="itemPlayer__progress" flex={1} display="flex" flexDirection="column">
-												<Box display="flex" flexDirection="row" alignItems="center">
+											<IconButton
+												onClick={() => playerInstance.current.seekTo(playedSeconds - 10, 'seconds')}
+												aria-label='Back 10 seconds'
+											>
+												<Replay10 fontSize="inherit"/>
+											</IconButton>
 
-													<Slider
-														min={0}
-														defaultValue={0}
-														max={duration}
-														step={.01}
-														size="medium"
-														value={playedSeconds}
-														sx={{padding: '10px 0 !important'}}
-														marks={videoMarks}
-														onChange={(_, value) => {
-															setIsPlaying(false);
+											<IconButton
+												onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')}
+												aria-label='Skip 30 seconds'
+											>
+												<Forward30 fontSize="inherit"/>
+											</IconButton>
 
-															if (_ && _.type && 'mousedown' === _.type) {
-																setPlayedSeconds(value);
-																playerInstance.current.seekTo(playedSeconds);
-															} else {
-																throttleScroll(value);
-															}
-
-														}}
-														onChangeCommitted={(_, value) => {
-															setIsPlaying(false);
-															setTimeout(
-																() => {
-																	setPlayedSeconds(value);
-																	playerInstance.current.seekTo(playedSeconds);
-																	setIsPlaying(true);
-																}
-															);
-														}}
-													/>
-
-													<Box
-														display="flex"
-														className="itemPlayer__remaining"
-													>
-														{formatDuration(duration - playedSeconds)}
-													</Box>
-												</Box>
-
+											<Box className="itemPlayer__controls__rate" display="flex" alignItems="center"
+													onClick={updatePlaybackRate}>
+												<span>{playbackRate}x</span>
 											</Box>
-
-											{!screenfull.isFullscreen && (
-												<Box className="itemPlayer__controls" display="flex" flexDirection="row"
-													justifyContent="space-around" margin="auto">
-													{mode === 'video' && (
-															<IconButton onClick={handleClickFullscreen}><OpenInFull/></IconButton>
-													)}
-
-													<IconButton sx={{ transform: 'scaley(-1)'}} onClick={handleClickPersistent}><PictureInPicture fontSize="inherit"/></IconButton>
-												</Box>
-											)}
 
 										</Box>
-									)}
+
+										<Box className="itemPlayer__progress" flex={1} display="flex" flexDirection="column">
+											<Box display="flex" flexDirection="row" alignItems="center">
+
+												<Slider
+													min={0}
+													defaultValue={0}
+													max={duration}
+													step={.01}
+													size="medium"
+													value={playedSeconds}
+													sx={{padding: '10px 0 !important'}}
+													marks={videoMarks}
+													onChange={(_, value) => {
+														setIsPlaying(false);
+
+														if (_ && _.type && 'mousedown' === _.type) {
+															setPlayedSeconds(value);
+															playerInstance.current.seekTo(playedSeconds);
+														} else {
+															throttleScroll(value);
+														}
+
+													}}
+													onChangeCommitted={(_, value) => {
+														setIsPlaying(false);
+														setTimeout(
+															() => {
+																setPlayedSeconds(value);
+																playerInstance.current.seekTo(playedSeconds);
+																setIsPlaying(true);
+															}
+														);
+													}}
+												/>
+
+												<Box
+													display="flex"
+													className="itemPlayer__remaining"
+												>
+													{formatDuration(duration - playedSeconds)}
+												</Box>
+											</Box>
+
+										</Box>
+
+										{!screenfull.isFullscreen && (
+											<Box className="itemPlayer__controls" display="flex" flexDirection="row"
+												justifyContent="space-around" margin="auto">
+												{mode === 'video' && (
+														<IconButton onClick={handleClickFullscreen} aria-label="Open in fullscreen"><OpenInFull/></IconButton>
+												)}
+
+												<IconButton sx={{ transform: 'scaley(-1)'}} onClick={handleClickPersistent} aria-label="Open in persistent player"><PictureInPicture fontSize="inherit"/></IconButton>
+											</Box>
+										)}
+
+									</Box>
 								</Box>
 								</> :
 								<Box 
@@ -496,14 +498,14 @@ export default function Player({
 				         <span>{playbackRate}x</span>
 			         </Box>
 
-			         <IconButton size="large" onClick={() => playerInstance.current.seekTo(playedSeconds - 10, 'seconds')}>
+			         <IconButton size="large" onClick={() => playerInstance.current.seekTo(playedSeconds - 10, 'seconds')} aria-label='Back 10 seconds'>
 				         <Replay10 fontSize="inherit"/>
 			         </IconButton>
 
 			         <Box display="flex" alignItems="center">
-				         <PlayPause playedSeconds={playedSeconds} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
+				         <PlayPause autoFocus playedSeconds={playedSeconds} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
 			         </Box>
-			         <IconButton size='large' onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')}>
+			         <IconButton size='large' onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')} aria-label='Skip 30 seconds'>
 				         <Forward30 fontSize="inherit"/>
 			         </IconButton>
 			         <IconButton size="large" sx={{transform: 'scaley(-1)'}}

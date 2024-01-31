@@ -687,7 +687,7 @@ class ItemType extends PostType  {
 		}
 
 		// if we have just one updated post and it was set to draft or publish, handle the redirect.
-		if ( count( self::$_updated_dates ) === 1 && apply_filters( 'cpl_save_post_date_redirect', current_user_can( 'edit_post' ) ) ) {
+		if ( count( self::$_updated_dates ) === 1 && apply_filters( 'cpl_save_post_date_redirect', current_user_can( 'edit_posts' ) ) ) {
 			$update = reset( self::$_updated_dates );
 			$origin_id = key( self::$_updated_dates );
 

@@ -7,7 +7,7 @@ import Rectangular from "../../Elements/Buttons/Rectangular";
 import { Share2 } from "react-feather";
 import { Facebook, Twitter, Download, Link as LinkIcon } from '@mui/icons-material';
 
-export default function ShareButton({ item }) {
+export default function ShareButton({ item, variant = "outlined" }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 	const copyLinkRef = useRef(null);
@@ -76,7 +76,7 @@ export default function ShareButton({ item }) {
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
         onClick={handleClick}
-        variant="outlined">
+        variant={variant}>
         <Share2 />
       </Rectangular>
       <Menu

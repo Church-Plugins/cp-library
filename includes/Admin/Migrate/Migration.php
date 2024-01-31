@@ -189,16 +189,19 @@ abstract class Migration extends \WP_Background_Process {
 	 * @param object $term The series taxonomy term.
 	 */
 	protected function add_series_from_term( $item, $term ) {
-		$series_posts = get_posts(
-			array(
-				'name'           => $term->slug,
-				'post_type'      => cp_library()->setup->post_types->item_type->post_type,
-				'posts_per_page' => 1,
-				'post_status'    => 'any',
-			)
+		$args = array(
+			'post_type'      => cp_library()->setup->post_types->item_type->post_type,
+			'posts_per_page' => 1,
+			'post_status'    => 'any',
 		);
 
-		$post = current( $series_posts );
+		$series_posts = get_posts( array_merge( $args, array( 'name' => $term->slug ) ) );
+		$post         = current( $series_posts );
+
+		if ( ! $post ) {
+			$series_posts = get_posts( array_merge( $args, array( 'title' => $term->name ) ) );
+			$post         = current( $series_posts );
+		}
 
 		if ( ! $post ) {
 			$args = array(
@@ -337,16 +340,19 @@ abstract class Migration extends \WP_Background_Process {
 	 * @param object $term The speaker taxonomy term.
 	 */
 	protected function add_speaker_from_term( $item, $term ) {
-		$speaker_posts = get_posts(
-			array(
-				'name'           => $term->slug,
-				'post_type'      => cp_library()->setup->post_types->speaker->post_type,
-				'posts_per_page' => 1,
-				'post_status'    => 'any',
-			)
+		$args = array(
+			'post_type'      => cp_library()->setup->post_types->speaker->post_type,
+			'posts_per_page' => 1,
+			'post_status'    => 'any',
 		);
 
-		$post = current( $speaker_posts );
+		$speaker_posts = get_posts( array_merge( $args, array( 'name' => $term->slug ) ) );
+		$post          = current( $speaker_posts );
+
+		if ( ! $post ) {
+			$speaker_posts = get_posts( array_merge( $args, array( 'title' => $term->name ) ) );
+			$post          = current( $speaker_posts );
+		}
 
 		if ( ! $post ) {
 			$args = array(

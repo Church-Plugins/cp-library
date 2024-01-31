@@ -17,9 +17,9 @@ class Module extends \FLBuilderModule {
 	public function __construct() {
 		parent::__construct(
 			array(
-				'name'            => __( 'CP Library Template', 'cp-library' ),
-				'description'     => __( 'Displays a Template created with the CP Library template builder.', 'cp-library' ),
-				'group'           => __( 'CP Library', 'cp-library' ),
+				'name'            => __( 'CP Sermons Template', 'cp-library' ),
+				'description'     => __( 'Displays a Template created with the CP Sermons template builder.', 'cp-library' ),
+				'group'           => __( 'CP Sermons', 'cp-library' ),
 				'category'        => __( 'Content', 'cp-library' ),
 				'dir'             => CP_LIBRARY_FL_MODULES_DIR . 'Template/',
 				'url'             => CP_LIBRARY_FL_MODULES_URL . 'Template/',

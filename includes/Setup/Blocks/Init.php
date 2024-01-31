@@ -1,6 +1,6 @@
 <?php // phpcs:ignore WordPress.Files.FileName.InvalidClassFileName
 /**
- * CP Library block initialization class
+ * CP Sermons block initialization class
  *
  * @package CP_Library/Setup/Blocks
  */

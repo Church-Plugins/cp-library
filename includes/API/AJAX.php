@@ -3,7 +3,7 @@
 namespace CP_Library\API;
 
 /**
- * CP Library AJAX methods.
+ * CP Sermons AJAX methods.
  */
 class AJAX {
 

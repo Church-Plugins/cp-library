@@ -2,7 +2,7 @@
 /**
  * Shortcode Template block
  *
- * Displays a Template createed with the CP Library template builder.
+ * Displays a Template createed with the CP Sermons template builder.
  *
  * @package CP_Library
  */

@@ -67,7 +67,7 @@ class Init {
 		$elements_manager->add_category(
 			'cp-library',
 			array(
-				'title' => __( 'CP Library', 'cp-library' ),
+				'title' => __( 'CP Sermons', 'cp-library' ),
 				'icon'  => 'fa fa-plug',
 			)
 		);

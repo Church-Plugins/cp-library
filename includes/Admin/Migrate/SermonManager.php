@@ -1,7 +1,7 @@
 <?php // phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 
 /**
- * Migrate Sermon Manager content to CP Library
+ * Migrate Sermon Manager content to CP Sermons
  *
  * @package CP_Library
  * @since 1.3.0
@@ -130,6 +130,31 @@ class SermonManager extends Migration {
 		$series   = $this->get_terms( 'wpfc_sermon_series', $post->ID );
 		$speakers = $this->get_terms( 'wpfc_preacher', $post->ID );
 		$topics   = $this->get_terms( 'wpfc_sermon_topics', $post->ID );
+		$thumb    = get_post_thumbnail_id( $post->ID );
+
+		$notes = (array) get_post_meta( $post->ID, 'sermon_notes', true );
+		$notes = array_merge( $notes, (array) get_post_meta( $post->ID, 'sermon_notes_multiple', true ) );
+		$notes = array_unique( array_filter( $notes ) );
+
+		$bulletins = (array) get_post_meta( $post->ID, 'sermon_bulletin', true );
+		$bulletins = array_merge( $bulletins, (array) get_post_meta( $post->ID, 'sermon_bulletin_multiple', true ) );
+		$bulletins = array_unique( array_filter( $bulletins ) );
+
+		$downloads = array();
+
+		foreach ( $notes as $note ) {
+			$downloads[] = array(
+				'file' => $note,
+				'name' => 'Notes',
+			);
+		}
+
+		foreach ( $bulletins as $bulletin ) {
+			$downloads[] = array(
+				'file' => $bulletin,
+				'name' => 'Bulletin',
+			);
+		}
 
 		try {
 			$item = Item::get_instance_from_origin( $new_post_id );
@@ -137,6 +162,10 @@ class SermonManager extends Migration {
 			$scripture = $meta['bible_passage'][0] ?? false;
 			$video_url = $meta['sermon_video_link'][0] ?? false;
 			$audio_url = $meta['sermon_audio'][0] ?? false;
+
+			if ( $thumb ) {
+				set_post_thumbnail( $new_post_id, $thumb );
+			}
 
 			if ( $scripture ) {
 				$item->update_scripture( $scripture );
@@ -150,6 +179,10 @@ class SermonManager extends Migration {
 			if ( $audio_url ) {
 				update_post_meta( $new_post_id, 'audio_url', $audio_url );
 				$item->update_meta_value( 'audio_url', $audio_url );
+			}
+
+			if ( ! empty( $downloads ) ) {
+				update_post_meta( $new_post_id, 'downloads', $downloads );
 			}
 
 			if ( $series ) {

@@ -28,20 +28,20 @@ export default function Dashboard({ data: plugins }) {
 				</> :
 				<div className="cpl-migration-dashboard">
 					<h1>Migration Wizard</h1>
-					<p>CP Library has detected {plugins.length} supported {pluralize(plugins.length, 'plugin')} that can be migrated from. Choose a plugin to start the migration process with</p>
+					<p>CP Sermons has detected {plugins.length} supported {pluralize(plugins.length, 'plugin')} that can be migrated from. Choose a plugin to start the migration process with</p>
 					<div className="cpl-migration-cards">
-						{	
+						{
 							plugins.map(plugin => (
-							<PluginCard 
-								key={plugin.type} 
+							<PluginCard
+								key={plugin.type}
 								plugin={plugin}
-								onClick={() => setEditState(plugin)} 
-							/>)) 
+								onClick={() => setEditState(plugin)}
+							/>))
 						}
 					</div>
 				</div>
 			}
 		</Modal>
-		</>	
+		</>
 	)
 }

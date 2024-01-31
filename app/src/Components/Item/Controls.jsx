@@ -54,12 +54,13 @@ export default function Controls({
                 playedSeconds: 0.0,
               })
             }}
+            variant={ item.layout === 'vertical' ? 'light' : 'outlined' }
           />
 
         </Box>
       )}
 
-      <ShareButton item={item} />
+      <ShareButton item={item} variant={ item.layout === 'vertical' ? 'light' : 'outlined' } />
     </Box>
   )
 }
