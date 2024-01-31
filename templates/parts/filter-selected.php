@@ -10,6 +10,10 @@ $get = $_GET;
 		<a href="<?php echo esc_url( add_query_arg( $get, $uri ) ); ?>" class="cpl-filter--filters--filter"><?php echo __( 'Search:' ) . ' ' . Helpers::get_request('s' ); ?></a>
 	<?php endif; ?>
 
+	<?php if ( ! empty( $_GET['search'] ) ) : unset( $get[ 'search' ] ); ?>
+		<a href="<?php echo esc_url( add_query_arg( $get, $uri ) ); ?>" class="cpl-filter--filters--filter"><?php echo __( 'Search:' ) . ' ' . Helpers::get_request('search' ); ?></a>
+	<?php endif; ?>
+
 	<?php foreach ( $taxonomies as $tax ) : if ( empty( $_GET[ $tax->taxonomy ] ) ) continue; ?>
 		<?php foreach( $_GET[ $tax->taxonomy ] as $slug ) :
 			if ( ! $term = get_term_by( 'slug', $slug, $tax->taxonomy ) ) {

@@ -16,10 +16,13 @@ if ( empty( $get ) ) {
 	$display = 'style="display: none;"';
 }
 
-$dropdown_class   = 'cpl-filter--dropdown cpl-ajax-facet';
-$is_item_archive  = is_post_type_archive( cp_library()->setup->post_types->item->post_type );
-$display          = apply_filters( 'cpl_filters_display', $display );
-$disabled_filters = Settings::get_advanced( 'disable_filters', array() );
+$dropdown_class    = 'cpl-filter--dropdown cpl-ajax-facet';
+$is_item_archive   = $query_vars['post_type'] === cp_library()->setup->post_types->item->post_type;
+$display           = apply_filters( 'cpl_filters_display', $display );
+$disabled_filters  = Settings::get_advanced( 'disable_filters', array() );
+$excluded_filters  = $args['exclude_filters'] ?? array();
+$disabled_filters  = array_merge( $disabled_filters, $excluded_filters );
+$search_input_name = isset( $args['query_vars'] ) ? 'search' : 's'; // if using a custom query, don't use the default query var
 ?>
 <script>
 	window.cplFacets = window.cplFacets || {};
@@ -64,7 +67,7 @@ $disabled_filters = Settings::get_advanced( 'disable_filters', array() );
 		<div class="cpl-filter--search">
 			<div class="cpl-filter--search--box">
 				<button type="submit"><span class="material-icons-outlined">search</span></button>
-				<input type="text" name="s" value="<?php echo esc_attr( Helpers::get_param( $_GET, 's' ) ); ?>" placeholder="<?php esc_html_e( 'Search', 'cp-library' ); ?>"/>
+				<input type="text" name="<?php echo esc_attr( $search_input_name ); ?>" value="<?php echo esc_attr( Helpers::get_param( $_GET, $search_input_name ) ); ?>" placeholder="<?php esc_attr_e( 'Search', 'cp-library' ); ?>"/>
 			</div>
 		</div>
 
