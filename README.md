@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.4.1
+Enhancement: Add sermon filtering to single service type page
+
 #### 1.4.0
 * Enhancement: Add integration for SermonAudio
 * Enhancement: Add vertical layout for Single Sermon Template
