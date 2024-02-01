@@ -75,6 +75,7 @@ class SermonManager extends Migration {
 	 * @return void
 	 */
 	protected function actions() {
+		add_action( 'cpl_migration_series_created', array( $this, 'set_series_image' ), 10, 2 );
 	}
 
 	/**
@@ -117,9 +118,6 @@ class SermonManager extends Migration {
 	 * @param mixed $post The post to migrate.
 	 */
 	public function migrate_item( $post ) {
-		$series_taxonomy  = 'wpfc_sermon_series';
-		$speaker_taxonomy = 'wpfc_preacher';
-
 		$new_post_id = $this->maybe_insert_post( $post );
 
 		if ( ! $new_post_id ) {
@@ -198,6 +196,33 @@ class SermonManager extends Migration {
 			}
 		} catch ( Exception $e ) {
 			error_log( $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Migrates a series image
+	 *
+	 * @param ItemType  $series The series item.
+	 * @param \stdClass $term The term.
+	 * @return void
+	 * @since 1.4.1
+	 */
+	public function set_series_image( $series, $term ) {
+		$associations = get_option( 'sermon_image_plugin' );
+		$sanitized    = array();
+		foreach ( $associations as $key => $value ) {
+			$key   = absint( $key );
+			$value = absint( $value );
+			
+			if ( $key && $value ) {
+				$sanitized[ $key ] = $value;
+			}
+		}
+
+		$attachment_id = $sanitized[ $term->term_id ] ?? false;
+
+		if ( $attachment_id ) {
+			set_post_thumbnail( $series->origin_id, $attachment_id );
 		}
 	}
 }

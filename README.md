@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.4.1
+* Bug Fix: Import series images from sermon manager when migrating
+
 #### 1.4.0
 * Enhancement: Add integration for SermonAudio
 * Enhancement: Add vertical layout for Single Sermon Template
