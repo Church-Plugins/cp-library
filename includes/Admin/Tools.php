@@ -628,10 +628,7 @@ class Tools {
 			wp_send_json_error( array( 'message' => esc_html__( 'Invalid nonce.', 'cp-library' ) ) );
 		}
 
-		// if ( ! wp_verify_nonce(  ) )
-
 		// get speakers with duplicate names
-
 		$sql = $wpdb->prepare(
 			"SELECT post_title, COUNT({$wpdb->posts}.ID) AS speaker_count
 			FROM {$wpdb->posts}
