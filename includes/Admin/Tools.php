@@ -402,9 +402,9 @@ class Tools {
 		</div>
 
 		<div class="postbox">
-			<h3><span><?php esc_html_e( 'Merge Speakers', 'cp-library' ); ?></span></h3>
+			<h3><span><?php esc_html_e( 'Merge Duplicate Speakers', 'cp-library' ); ?></span></h3>
 			<div class="inside">
-				<p><?php esc_html_e( 'Has your data gotten messy? Clean up your speakers, merging any duplicates by clicking this button.', 'cp-library' ); ?></p>
+				<p><?php esc_html_e( 'Remove duplicate speakers, transferring sermons to a single speaker.', 'cp-library' ); ?></p>
 				<div>
 					<?php $ajaxurl = esc_url( admin_url( 'admin-ajax.php' ) ); ?>
 					<?php $nonce = wp_create_nonce( 'cpl_merge_speakers' ); ?>
@@ -655,13 +655,14 @@ class Tools {
 	 * @since 1.4.1
 	 */
 	public function merge_speaker( $name ) {
-		$posts = get_posts(
-			array(
-				'post_type'      => 'cpl_speaker',
-				'posts_per_page' => -1,
-				'post_title'     => $name,
-				'orderby'        => 'ID',
-				'order'          => 'ASC',
+		global $wpdb;
+		$posts = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT ID
+				FROM {$wpdb->posts}
+				WHERE post_type='cpl_speaker'
+				AND post_title=%s",
+				$name
 			)
 		);
 
@@ -675,7 +676,10 @@ class Tools {
 			foreach ( $messages as $message ) {
 				try {
 					$message = \CP_Library\Models\Item::get_instance_from_origin( absint( $message ) );
-					$message->update_speakers( [ $first_speaker->id ] );
+					$message_speakers   = $message->get_speakers();
+					$message_speakers   = array_diff( $message_speakers, array( $speaker->id ) );
+					$message_speakers[] = $first_speaker->id;
+					$message->update_speakers( array_unique( $message_speakers ) );
 				} catch ( \ChurchPlugins\Exception $e ) {
 					continue;
 				}

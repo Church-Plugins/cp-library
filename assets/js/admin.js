@@ -468,7 +468,5 @@ jQuery($ => {
 		})
 	}
 
-	console.log('no build necessary')
-
 	$('#cpl_merge_speakers').on('click', mergeSpeakers)
 })
