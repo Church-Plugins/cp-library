@@ -26,6 +26,7 @@ npm run build
 
 #### 1.4.1
 * Bug Fix: Import series images from sermon manager when migrating
+* Feature: Add tool to merge duplicate speakers.
 
 #### 1.4.0
 * Enhancement: Add integration for SermonAudio

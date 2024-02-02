@@ -243,6 +243,10 @@ class Podcast
 			$query->set( 'cpl_relation_feed', true );
 			$query->is_comment_feed = false;
 			$query->set( 'is_comment_feed', false );
+
+			if ( isset( $_GET['show-all'] ) ) {
+				$query->set( 'posts_per_rss', 9999 );
+			}
 		}
 	}
 }

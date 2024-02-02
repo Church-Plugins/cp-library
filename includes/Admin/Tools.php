@@ -39,6 +39,7 @@ class Tools {
 		add_filter( 'cp_importer_is_class_allowed', [ $this, 'importer_class' ] );
 		add_filter( 'upload_mimes', [ $this, 'import_mime_type' ] );
 		add_action( 'cp_export_items', [ $this, 'export_data' ] );
+		add_action( 'wp_ajax_cpl_merge_speakers', [ $this, 'merge_speakers' ] );
 	}
 
 	public function import_mime_type( $existing_mimes ) {
@@ -400,6 +401,18 @@ class Tools {
 			</div>
 		</div>
 
+		<div class="postbox">
+			<h3><span><?php esc_html_e( 'Merge Duplicate Speakers', 'cp-library' ); ?></span></h3>
+			<div class="inside">
+				<p><?php esc_html_e( 'Remove duplicate speakers, transferring sermons to a single speaker.', 'cp-library' ); ?></p>
+				<div>
+					<?php $ajaxurl = esc_url( admin_url( 'admin-ajax.php' ) ); ?>
+					<?php $nonce = wp_create_nonce( 'cpl_merge_speakers' ); ?>
+					<button data-nonce="<?php echo esc_attr( $nonce ); ?>" data-ajaxurl="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" class="button button-primary" id="cpl_merge_speakers"><?php esc_html_e( 'Merge Speakers', 'cp-library' ); ?></button>
+				</div>
+			</div>
+		</div>
+
 		<?php
 		do_action( 'cp_library_tools_import_export_after' );
 	}
@@ -601,5 +614,78 @@ class Tools {
 		}
 
 		return html_entity_decode( implode( ',', wp_list_pluck( $data, $key ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	}
+
+	/**
+	 * Merge speakers
+	 *
+	 * @since 1.4.1
+	 */
+	public function merge_speakers() {
+		global $wpdb;
+
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'cpl_merge_speakers' ) ) {
+			wp_send_json_error( array( 'message' => esc_html__( 'Invalid nonce.', 'cp-library' ) ) );
+		}
+
+		// get speakers with duplicate names
+		$sql = $wpdb->prepare(
+			"SELECT post_title, COUNT({$wpdb->posts}.ID) AS speaker_count
+			FROM {$wpdb->posts}
+			WHERE post_type='cpl_speaker'
+			GROUP BY post_title
+			HAVING speaker_count > 1"
+		);
+
+		$speakers = $wpdb->get_results( $sql );
+
+		foreach ( $speakers as $speaker ) {
+			$this->merge_speaker( $speaker->post_title );
+		}
+
+		$html = '<div>' . esc_html__( 'Speakers merged successfully.', 'cp-library' ) . '</div>';
+
+		wp_send_json_success( array( 'html' => $html ) );
+	}
+
+	/**
+	 * Merge a single speaker by name
+	 *
+	 * @param string $name The name of the speaker to merge.
+	 * @since 1.4.1
+	 */
+	public function merge_speaker( $name ) {
+		global $wpdb;
+		$posts = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT ID
+				FROM {$wpdb->posts}
+				WHERE post_type='cpl_speaker'
+				AND post_title=%s",
+				$name
+			)
+		);
+
+		$first_speaker = array_shift( $posts );
+		$first_speaker = \CP_Library\Models\Speaker::get_instance_from_origin( $first_speaker->ID );
+
+		foreach ( $posts as $speaker ) {
+			$speaker  = \CP_Library\Models\Speaker::get_instance_from_origin( $speaker->ID );
+			$messages = $speaker->get_all_items();
+
+			foreach ( $messages as $message ) {
+				try {
+					$message = \CP_Library\Models\Item::get_instance_from_origin( absint( $message ) );
+					$message_speakers   = $message->get_speakers();
+					$message_speakers   = array_diff( $message_speakers, array( $speaker->id ) );
+					$message_speakers[] = $first_speaker->id;
+					$message->update_speakers( array_unique( $message_speakers ) );
+				} catch ( \ChurchPlugins\Exception $e ) {
+					continue;
+				}
+			}
+
+			wp_delete_post( $speaker->origin_id, true );
+		}
 	}
 }

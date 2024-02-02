@@ -179,6 +179,11 @@ class Item extends Controller{
 		return $this->filter( $return, __FUNCTION__ );
 	}
 
+	/**
+	 * Get array of sermon scriptures.
+	 *
+	 * @return false|array<array{name:string,slug:string,url:string}>
+	 */
 	public function get_scripture() {
 
 		// scripture is top level, get parent scripture if applicable
@@ -192,24 +197,31 @@ class Item extends Controller{
 		$passages = cp_library()->setup->taxonomies->scripture->get_object_passages( $this->post->ID );
 		$terms    = cp_library()->setup->taxonomies->scripture->get_object_scripture( $this->post->ID );
 
+		if ( empty( $terms ) && empty( $passages[0] ) ) {
+			return $return;
+		}
+
+		$term = false;
+
 		if ( empty( $passages[0] ) ) {
-			return false;
+			$term = $terms[0];
+		} else {
+			$book = cp_library()->setup->taxonomies->scripture->get_book( $passages[0] );
+			$term = get_term_by( 'name', $book, cp_library()->setup->taxonomies->scripture->taxonomy );
 		}
 
-		$book = cp_library()->setup->taxonomies->scripture->get_book( $passages[0] );
-		if ( ! $term = get_term_by( 'name', $book, cp_library()->setup->taxonomies->scripture->taxonomy ) ) {
+		if ( ! $term || is_wp_error( $term ) ) {
 			return false;
 		}
-
 
 		$terms  = [ $term ];
 
 		if ( $terms ) {
 			foreach ( $terms as $term ) {
 				$return[ $term->slug ] = [
-					'name' => $passages[0],
+					'name' => empty( $passages[0] ) ? $term->name : $passages[0],
 					'slug' => $term->slug,
-					'url'  => get_term_link( $term )
+					'url'  => get_term_link( $term ),
 				];
 			}
 		}
