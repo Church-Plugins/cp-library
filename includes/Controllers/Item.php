@@ -198,7 +198,7 @@ class Item extends Controller{
 		$terms    = cp_library()->setup->taxonomies->scripture->get_object_scripture( $this->post->ID );
 
 		if ( empty( $terms ) && empty( $passages[0] ) ) {
-			return;
+			return $return;
 		}
 
 		$term = false;
