@@ -226,9 +226,7 @@ class Speaker extends PostType {
 	 * @param \WP_Query $query the query object.
 	 */
 	public function speaker_query( $query ) {
-
-		// If the query is neither a main query or a query with a speaker filter, exit.
-		if ( ! $query->is_main_query() && ! $query->get( 'cpl_speakers' ) ) {
+		if ( ! cp_library()->facets->is_facetable( $query ) ) {
 			return;
 		}
 

@@ -61,6 +61,13 @@ class Init {
 	public $modules;
 
 	/**
+	 * CP Library facets
+	 *
+	 * @var Facets\Init
+	 */
+	public $facets;
+
+	/**
 	 * Only make one instance of Init
 	 *
 	 * @return Init
@@ -306,6 +313,7 @@ class Init {
 		}
 
 		$this->modules = Modules\Init::get_instance();
+		$this->facets  = Facets\Init::get_instance();
 	}
 
 	/**
