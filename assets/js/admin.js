@@ -448,6 +448,30 @@ jQuery($ => {
 })
 
 /**
+ * Merge speakers
+ */
+jQuery($ => {
+	const mergeSpeakers = (e) => {
+		$.ajax({
+			url: e.target.dataset.ajaxurl,
+			method: 'POST',
+			data: {
+				action: 'cpl_merge_speakers',
+				nonce: e.target.dataset.nonce
+			},
+			success: res => {
+				e.target.parentElement.innerHTML = '<div class="success">' + res.data.html + '</div>'
+			},
+			error: err => {
+				$(e.target.parentElement).append('<div class="error">' + err.message + '</div>');
+			}
+		})
+	}
+
+	$('#cpl_merge_speakers').on('click', mergeSpeakers)
+})
+
+/**
  * Series deletion detection
  */
 jQuery($ => {

@@ -11,12 +11,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 	die( '-1' );
 }
 
+
+$classes = [ 'cpl-pg-template', 'cp-pg-template' ];
+
+if ( is_single() && get_post_type() === cp_library()->setup->post_types->item->post_type ) {
+	$layout    = \CP_Library\Admin\Settings::get_item( 'single_template' );
+	$layout    = $layout ? $layout : '-default';
+	$classes[] = 'cpl-layout' . $layout;
+}
+
 /**
  * Allows filtering the classes for the main element.
  *
  * @param array<string> $classes An (unindexed) array of classes to apply.
  */
-$classes = apply_filters( 'cpl_default_template_classes', [ 'cpl-pg-template', 'cp-pg-template' ] );
+$classes = apply_filters( 'cpl_default_template_classes', $classes );
 
 get_header();
 

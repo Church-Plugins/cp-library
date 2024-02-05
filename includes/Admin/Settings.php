@@ -318,7 +318,7 @@ class Settings {
 
 		$options->add_field( [
 			'name' => __( 'Info Items', 'cp-library' ),
-			'desc' => __( 'The items to show under the title on the single view and list view.', 'cp-library' ),
+			'desc' => __( 'The items to show under the title on the single view, grid view, and list view.', 'cp-library' ),
 			'id'   => 'info_items',
 			'type' => 'pw_multiselect',
 			'options' => $template_items,
@@ -334,6 +334,33 @@ class Settings {
 			'default' => [ 'date', 'topics', 'scripture' ]
 		] );
 
+		$options->add_field( [
+			'name'    => __( 'Single Page Template', 'cp-library' ),
+			'desc'    => '',
+			'id'      => 'single_template',
+			'type'    => 'radio_inline',
+			'default' => '',
+			'options' => [
+				''          => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-default-template.png" />' . __( 'Default (2 column)', 'cp-library' ),
+				'-vertical' => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-vertical-template.png" />' . __( 'Vertical (1 column)', 'cp-library' ),
+			],
+			'classes' => 'cp-radio-image',
+		] );
+
+//		$options->add_field( [
+//			'name'    => __( 'Archive Page Template', 'cp-library' ),
+//			'desc'    => '',
+//			'id'      => 'archive_template',
+//			'type'    => 'radio_inline',
+//			'default' => '',
+//			'options' => [
+//				''      => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-list-template.png" />' . __( 'List View', 'cp-library' ),
+//				'-grid' => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-grid-template.png" />' . __( 'Grid (3 column)', 'cp-library' ),
+//			],
+//			'classes' => 'cp-radio-image',
+//		] );
+
+
 		$variation_sources = cp_library()->setup->variations->get_sources();
 		$desc              = __( 'Use this section to control the sermon variation functionality. Variations allows you to create multiple versions of a sermon with different speakers, media, etc. This is ideal for churches that deliver the same message from multiple locations each Sunday.', 'cp-library' );
 
@@ -347,6 +374,7 @@ class Settings {
 			'desc' => $desc,
 			'type' => 'title',
 		) );
+
 
 		if ( empty( $variation_sources ) ) {
 			return;
@@ -417,6 +445,28 @@ class Settings {
 			'type'    => 'text',
 			'default' => strtolower( sanitize_title( cp_library()->setup->post_types->item_type->plural_label ) ),
 		) );
+
+		$options->add_field( array(
+			'name' => __( 'Template Options', 'cp-library' ),
+			'id'   => 'template_title',
+			'type' => 'title',
+		) );
+
+		$options->add_field( [
+			'name'    => __( 'Image Aspect Ratio', 'cp-library' ),
+			'desc'    => __( 'Enforce a consistent image ratio in the Grid view.', 'cp-library' ),
+			'id'      => 'image_ratio',
+			'type'    => 'radio_inline',
+			'default' => '',
+			'options' => [
+				''     => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-none.png" />' . __( 'Default (No Aspect Ratio)', 'cp-library' ),
+				'1x1'  => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-1x1.png" />' . __( 'Square (1:1)', 'cp-library' ),
+				'4x3'  => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-4x3.png" />' . __( 'Standard (4:3)', 'cp-library' ),
+				'16x9' => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-16x9.png" />' . __( 'Landscape (16:9)', 'cp-library' ),
+			],
+			'classes' => 'cp-radio-image',
+		] );
+
 
 	}
 
