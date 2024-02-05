@@ -188,8 +188,9 @@ abstract class Migration extends \WP_Background_Process {
 	 *
 	 * @param Item      $item The item being processed.
 	 * @param \stdClass $term The series taxonomy term.
-	 * 
+	 *
 	 * @updated 1.4.1 added a filter for the post type arguments + an action hook for the newly created post
+	 * @todo Make more DRY by merging with add_speaker_from_term.
 	 */
 	protected function add_series_from_term( $item, $term ) {
 		$args = array(
@@ -223,7 +224,7 @@ abstract class Migration extends \WP_Background_Process {
 			 * @return array
 			 * @since 1.4.1
 			 */
-			$args = apply_filters( "cpl_migration_series_from_term_args", $args, $term );
+			$args = apply_filters( 'cpl_migration_series_from_term_args', $args, $term );
 
 			$post_id = wp_insert_post( $args );
 
@@ -239,7 +240,7 @@ abstract class Migration extends \WP_Background_Process {
 			$item->add_type( $item_type->id );
 
 			/**
-			 * Fires when a series has been successfully created from a term
+			 * Fires when a series has been successfully migrated from a term
 			 *
 			 * @param ItemType  $item_type The item type that was created.
 			 * @param \stdClass $term      The term that was used to create the series.
@@ -254,7 +255,7 @@ abstract class Migration extends \WP_Background_Process {
 
 	/**
 	 * Manages migrating topics from another plugin
-	 * 
+	 *
 	 * @param Item  $item The item being processed.
 	 * @param array $topics The topics to migrate.
 	 */
@@ -266,7 +267,7 @@ abstract class Migration extends \WP_Background_Process {
 
 	/**
 	 * Manages migrating a topic from another plugin
-	 * 
+	 *
 	 * @param Item   $item The item being processed.
 	 * @param object $topic The topic to migrate.
 	 */
@@ -361,6 +362,8 @@ abstract class Migration extends \WP_Background_Process {
 	 *
 	 * @param Item   $item The item being processed.
 	 * @param object $term The speaker taxonomy term.
+	 *
+	 * @updated 1.4.1 added a filter for the post type arguments + an action hook for the newly created post
 	 */
 	protected function add_speaker_from_term( $item, $term ) {
 		$args = array(
@@ -386,6 +389,16 @@ abstract class Migration extends \WP_Background_Process {
 				'post_status'  => 'publish',
 			);
 
+			/**
+			 * Creates a speaker from a term
+			 *
+			 * @param array     $args The arguments for creating the speaker.
+			 * @param \stdClass $term The term to create the series from.
+			 * @return array
+			 * @since 1.4.1
+			 */
+			$args = apply_filters( 'cpl_migration_speaker_from_term_args', $args, $term );
+
 			$post = wp_insert_post( $args );
 
 			if ( ! $post ) {
@@ -398,6 +411,16 @@ abstract class Migration extends \WP_Background_Process {
 		try {
 			$speaker = Speaker::get_instance_from_origin( $post );
 			$item->update_speakers( array( $speaker->id ) );
+
+			/**
+			 * Fires when a speaker has been successfully migrated from a term
+			 *
+			 * @param Speaker   $speker The item type that was created.
+			 * @param \stdClass $term   The term that was used to create the speaker.
+			 * @param Item      $item   The item that was created.
+			 * @since 1.4.1
+			 */
+			do_action( 'cpl_migration_speaker_created', $speaker, $term, $item );
 		} catch ( Exception $e ) {
 			return;
 		}
