@@ -127,6 +127,7 @@ class Scripture extends Taxonomy  {
 		<input type="hidden" name="cpl_scripture_current_selection" id="cpl-scripture-current-selection" data-value="" />
 		<input type="hidden" name="cpl_scripture_selection_level" id="cpl-scripture-selection-level" data-value="" />
 		<input type="hidden" name="cpl_scripture_current_selection_book" id="cpl-scripture-current-selection-book" data-value="" />
+		<input type="hidden" name="cpl-scripture-tag-selections[]" />
 		<script>
 			// Add available scriptures to JavaScript
 			var availableScriptures = ' . json_encode( $scriptures ) . ';
@@ -159,7 +160,7 @@ class Scripture extends Taxonomy  {
 			return;
 		}
 
-		$this->update_object_scripture( $post_id, $_POST['cpl-scripture-tag-selections'] );
+		$this->update_object_scripture( $post_id, array_filter( (array) $_POST['cpl-scripture-tag-selections'] ) );
 	}
 
 	/**
