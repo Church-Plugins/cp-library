@@ -42,7 +42,7 @@ class Locations {
 	protected function actions() {
 
 		// break early if the taxonomy is not enabled
-		if ( ! cp_locations()->setup->taxonomies->enabled() ) {
+		if ( ! cp_locations()->taxonomy_enabled() ) {
 			return;
 		}
 
