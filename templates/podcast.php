@@ -69,7 +69,12 @@ $owner_name = htmlspecialchars( get_bloginfo( 'name' ) ); // Owner name as site 
 $explicit = $not_explicit ? 'false' : 'true'; // Explicit or not.
 
 // Character set from WordPress settings.
-$charset = get_option( 'blog_charset' );
+$charset  = get_option( 'blog_charset' );
+$per_page = get_option( 'posts_per_rss', 10 );
+
+if ( isset( $_GET['show-all'] ) ) {
+	$per_page = 9999;
+}
 
 // Set content type and charset.
 header( 'Content-Type: ' . feed_content_type( 'rss2' ) . '; charset=' . $charset, true );
@@ -185,7 +190,7 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 					array(
 						'post_type'      => cp_library()->setup->post_types->item->post_type,
 						'post__in'       => array_map( 'absint', $items ),
-						'posts_per_page' => get_option( 'posts_per_rss', 10 ),
+						'posts_per_page' => $per_page,
 						'orderby'        => 'post__in',
 						'post_status'    => 'publish',
 						'fields'         => 'ids',
