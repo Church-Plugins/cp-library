@@ -1,29 +1,50 @@
 <?php
+/**
+ * SermonAudio adapter functionality.
+ *
+ * @package CP_Library
+ */
 
 namespace CP_Library\Adapters;
 
-use CP_Library\Admin\Settings;
+// phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
 
+/**
+ * SermonAudio adapter subclass
+ *
+ * @since 1.3.0
+ */
 class SermonAudio extends Adapter {
+
+	/**
+	 * The base url for the Sermon Audio API
+	 *
+	 * @var string
+	 */
 	public $base_url;
 
 	/**
 	 * Gets all sermons since sermon audio doesn't provide a good way to only get sermons since a certain date
+	 *
+	 * @var \stdClass[]
 	 */
 	protected $pulled_sermons = [];
 
+	/**
+	 * Class constructor
+	 */
 	public function __construct() {
 		$this->base_url = 'https://api.sermonaudio.com/v2/node/sermons';
 
-		$this->type = 'sermon_audio';
+		$this->type         = 'sermon_audio';
 		$this->display_name = __( 'Sermon Audio', 'cp-library' );
-		
+
 		parent::__construct();
 	}
 
 	/**
 	 * Performs a hard pull
-	 * 
+	 *
 	 * @return void
 	 */
 	public function hard_pull() {
@@ -37,51 +58,57 @@ class SermonAudio extends Adapter {
 
 	/**
 	 * Formats and enqueues items to be processed
-	 * 
+	 *
+	 * @param \stdClass[] $sermons The sermons to format and enqueue.
+	 * @param bool        $hard_pull Whether or not this is a hard pull.
 	 * @return void
 	 */
 	public function format_and_process( $sermons, $hard_pull = false ) {
-		$items = array();
-		$speakers = array();
+		$items      = array();
+		$speakers   = array();
 		$item_types = array();
 
-		foreach( $sermons as $sermon ) {
+		foreach ( $sermons as $sermon ) {
 			$item = $this->format_item( $sermon );
 
 			$item['attachments'] = array();
 
-			if( (boolean) $sermon->speaker && cp_library()->setup->post_types->speaker_enabled() ) {
+			if ( (bool) $sermon->speaker && cp_library()->setup->post_types->speaker_enabled() ) {
 				$speaker = $this->format_speaker( $sermon->speaker );
-				$speakers[$sermon->speaker->speakerID] = $speaker;
+				$speakers[ $sermon->speaker->speakerID ] = $speaker;
 				$item['attachments']['cpl_speaker'] = [ $sermon->speaker->speakerID ];
 			}
 
-			if( (boolean) $sermon->series && cp_library()->setup->post_types->item_type_enabled() ) {
+			if ( (bool) $sermon->series && cp_library()->setup->post_types->item_type_enabled() ) {
 				$item_type = $this->format_item_type( $sermon->series );
-				$item_types[$sermon->series->seriesID] = $item_type;
+				$item_types[ $sermon->series->seriesID ] = $item_type;
 				$item['attachments']['cpl_item_type'] = [ $sermon->series->seriesID ];
 			}
 
-			$items[$sermon->sermonID] = $item;
+			$items[ $sermon->sermonID ] = $item;
 		}
 
 		// enqueues items to be processed
 		$this->enqueue( $items );
 
 		// enqueues attachments to be processed with the items
-		$this->add_attachments( $speakers,   'cpl_speaker' );
+		$this->add_attachments( $speakers, 'cpl_speaker' );
 		$this->add_attachments( $item_types, 'cpl_item_type' );
 		$this->process( $hard_pull );
 	}
 
 	/**
 	 * Implements the pulling functionality used by the parent
+	 *
+	 * @param int $amount The amount of items to pull.
+	 * @param int $page The page to pull from.
+	 * @return bool Whether or not there are more pages.
 	 */
 	public function pull( int $amount, int $page ) {
 		$query = array(
-			'pageSize' => $amount,
-			'page' => $page,
-			'sortBy' => 'updated',
+			'pageSize'      => $amount,
+			'page'          => $page,
+			'sortBy'        => 'updated',
 			'broadcasterID' => $this->get_setting( 'broadcaster_id', '' ),
 		);
 
@@ -96,25 +123,37 @@ class SermonAudio extends Adapter {
 
 	/**
 	 * Gets results from sermon audio based on a query
-	 * 
-	 * @param array $query The url query array 
+	 *
+	 * @param array $query The url query array.
+	 * @return \stdClass The results from Sermon Audio.
+	 * @throws \ChurchPlugins\Exception If there is an error with the request.
 	 */
 	protected function get_results( $query ) {
 		$url = add_query_arg( $query, $this->base_url );
 
-		$response = wp_remote_get($url);
+		$api_key = $this->get_setting( 'api_key', '' );
 
-		if( is_wp_error( $response ) ) {
-			throw new \ChurchPlugins\Exception( $response->get_error_message() );
+		if ( empty( $api_key ) ) {
+			throw new \ChurchPlugins\Exception( esc_html__( 'Invalid API key', 'cp-library' ) );
+		}
+
+		$headers = array(
+			'X-Api-Key' => $api_key,
+		);
+
+		$response = wp_remote_get( $url, [ 'headers' => $headers ] );
+
+		if ( is_wp_error( $response ) ) {
+			throw new \ChurchPlugins\Exception( esc_html( $response->get_error_message() ) );
 		}
 
 		$data = json_decode( $response['body'] );
 
-		if( isset( $data->errors ) ) {
+		if ( isset( $data->errors ) ) {
 			$errors = (array) $data->errors;
-			$key = array_keys( $errors )[0];
-			$value = $errors[$key];
-			throw new \ChurchPlugins\Exception( "$key: $value" );
+			$key    = array_keys( $errors )[0];
+			$value  = $errors[ $key ];
+			throw new \ChurchPlugins\Exception( esc_html( $key ) . ': ' . esc_html( $value ) );
 		}
 
 		return $data;
@@ -122,8 +161,9 @@ class SermonAudio extends Adapter {
 
 	/**
 	 * Loads all results from sermon audio, looping through pages and accumulating data
-	 * 
+	 *
 	 * @param array $query The url query array
+	 * @return \stdClass[] The results from Sermon Audio
 	 */
 	protected function load_results( $query ) {
 		unset( $query['page'] );
@@ -136,13 +176,13 @@ class SermonAudio extends Adapter {
 			$query['page'] = $page;
 			try {
 				$data = $this->get_results( $query );
-			} catch( \ChurchPlugins\Exception $e ) {
+			} catch ( \ChurchPlugins\Exception $e ) {
 				error_log( $e->getMessage() );
 				break;
 			}
 			$results = array_merge( $results, $data->results );
 			$page++;
-		} while( $data->next );
+		} while ( $data->next );
 
 		return $results;
 	}
@@ -155,17 +195,17 @@ class SermonAudio extends Adapter {
 
 		$date = new \DateTime( $this->get_setting( 'ignore_before', '@0' ) );
 
-		$current_year = (int) date( 'Y' );
+		$current_year = (int) gmdate( 'Y' );
 		$min_year     = (int) $date->format( 'Y' );
 
 		// loop through years up to the current date
 		for ( $year = $min_year; $year <= $current_year; $year++ ) {
 			$query = array(
-				'pageSize' => 100,
+				'pageSize'      => 100,
 				'broadcasterID' => $this->get_setting( 'broadcaster_id', '' ),
-				'year' => $year
+				'year'          => $year,
 			);
-			
+
 			$results = $this->load_results( $query );
 			$results = array_filter( $results, [ $this, 'is_valid_result' ] );
 			$sermons = array_merge( $sermons, $results );
@@ -176,37 +216,43 @@ class SermonAudio extends Adapter {
 
 	/**
 	 * Checks if a sermon is valid, meaning it is after the specified cutoff date
+	 *
+	 * @param \stdClass $sermon The sermon to check
+	 * @return bool Whether or not the sermon is valid
 	 */
 	protected function is_valid_result( $sermon ) {
-		$min_date = strtotime( $this->get_setting( 'ignore_before', '0' ) );
+		$min_date    = strtotime( $this->get_setting( 'ignore_before', '0' ) );
 		$sermon_date = strtotime( $sermon->preachDate );
 		return $sermon_date >= $min_date;
 	}
-	
+
 	/**
 	 * Formats a Sermon
+	 *
+	 * @param \stdClass $item The sermon to format.
+	 * @return array The formatted sermon.
 	 */
 	public function format_item( $item ) {
 		$args = array(
-			'external_id' => $item->sermonID,
-			'post_title' => $item->displayTitle,
-			'post_date' => gmdate( 'Y-m-d H:i:s', $item->publishTimestamp ),
-			'post_status' => 'publish',
-			'post_type' => cp_library()->setup->post_types->item->post_type,
+			'external_id'  => $item->sermonID,
+			'post_title'   => $item->displayTitle,
+			'post_date'    => gmdate( 'Y-m-d H:i:s', $item->publishTimestamp ),
+			'post_status'  => 'publish',
+			'post_type'    => cp_library()->setup->post_types->item->post_type,
 			'post_content' => wp_kses_post( $item->moreInfoText ),
-			'meta_input' => array(),
-			'cpl_data' => array()
+			'meta_input'   => array(),
+			'cpl_data'     => array(),
 		);
 
-		if( $item->hasAudio ) {
+		if ( $item->hasAudio ) {
 			$args['meta_input']['audio_url'] = $item->media->audio[0]->downloadURL;
 		}
 
-		if( $item->hasVideo ) {
+		if ( $item->hasVideo ) {
 			$args['meta_input']['video_url'] = $item->media->video[0]->streamURL;
 		}
 
-		if( $item->bibleText ) {
+		if ( $item->bibleText ) {
 			$args['cpl_data']['scripture'] = $item->bibleText;
 		}
 
@@ -215,21 +261,23 @@ class SermonAudio extends Adapter {
 
 	/**
 	 * Formats a Series
+	 *
+	 * @param \stdClass $item_type The series to format.
+	 * @return array The formatted series.
 	 */
 	public function format_item_type( $item_type ) {
-	 	$args = array(
+		$args = array(
 			'external_id'  => $item_type->seriesID,
 			'post_title'   => $item_type->title,
 			'post_status'  => 'publish',
 			'post_type'    => cp_library()->setup->post_types->item_type->post_type,
 			'post_content' => wp_kses_post( $item_type->description ),
-			'cpl_data'     => array()
+			'cpl_data'     => array(),
 		);
 
-		if( $item_type->image ) {
+		if ( $item_type->image ) {
 			$args['cpl_data']['featured_image'] = $item_type->image;
-		}
-		else if( $item_type->broadcaster->imageURL ) {
+		} elseif ( $item_type->broadcaster->imageURL ) {
 			$args['cpl_data']['featured_image'] = $item_type->broadcaster->imageURL;
 		}
 
@@ -238,6 +286,9 @@ class SermonAudio extends Adapter {
 
 	/**
 	 * Formats a Speaker
+	 *
+	 * @param \stdClass $speaker The speaker to format.
+	 * @return array The formatted speaker.
 	 */
 	public function format_speaker( $speaker ) {
 		$args = array(
@@ -246,10 +297,10 @@ class SermonAudio extends Adapter {
 			'post_status'  => 'publish',
 			'post_type'    => cp_library()->setup->post_types->speaker->post_type,
 			'post_content' => wp_kses_post( $speaker->bio ),
-			'cpl_data'     => array()
+			'cpl_data'     => array(),
 		);
 
-		if( $speaker->portraitURL ) {
+		if ( $speaker->portraitURL ) {
 			$args['cpl_data']['featured_image'] = $speaker->portraitURL;
 		}
 
@@ -258,11 +309,12 @@ class SermonAudio extends Adapter {
 
 	/**
 	 * Gets a model class based on a key
-	 * 
+	 *
+	 * @param string $key The key to get the model for.
 	 * @return string|\ChurchPlugins\Models\Table|false
 	 */
-	public function get_model_from_key($key) {
-		switch( $key ) {
+	public function get_model_from_key( $key ) {
+		switch ( $key ) {
 			case 'cpl_speaker':
 				return \CP_Library\Models\Speaker::class;
 			case 'cpl_item_type':
@@ -276,36 +328,31 @@ class SermonAudio extends Adapter {
 
 	/**
 	 * Adds an attachment to a sermon
-	 * 
-	 * @param \CP_Library\Models\Item $item
-	 * @param mixed $attachment
-	 * @param string $attachment_key
+	 *
+	 * @param \CP_Library\Models\Item $item The item to add the attachment to.
+	 * @param mixed                   $attachment The attachment to add.
+	 * @param string                  $attachment_key The key of the attachment.
 	 */
 	public function add_attachment( $item, $attachment, $attachment_key ) {
-		if( $attachment_key === 'cpl_speaker' ) {
+		if ( 'cpl_speaker' === $attachment_key ) {
 			$item->update_speakers( [ $attachment->id ] );
-		}
-		else if( $attachment_key === 'cpl_item_type' ) {
+		} elseif ( 'cpl_item_type' === $attachment_key ) {
 			$item->add_type( $attachment->id );
 		}
 	}
 
 	/**
 	 * Handle processing custom data
-	 * 
-	 * @param \CP_Library\Models\Item $item
-	 * @param array $data
-	 * @param string $post_type
+	 *
+	 * @param \CP_Library\Models\Item $item The item to process.
+	 * @param array                   $cpl_data The custom data to process.
+	 * @param string                  $post_type The item's post type.
 	 */
 	public function process_cpl_data( $item, $cpl_data, $post_type ) {
-		if( $post_type === 'cpl_item' ) {
-			if( isset( $cpl_data['scripture'] ) ) {
+		if ( 'cpl_item' === $post_type ) {
+			if ( isset( $cpl_data['scripture'] ) ) {
 				$item->update_scripture( $cpl_data['scripture'] );
 			}
 		}
 	}
-} 
-
-
-
-
+}

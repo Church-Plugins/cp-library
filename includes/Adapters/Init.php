@@ -2,20 +2,29 @@
 /**
  * Initialize adapters
  *
- * @since 1.1.0
+ * @since 1.3.0
  * @package CP_Library
  */
 
 namespace CP_Library\Adapters;
 
+/**
+ * Initialize adapters
+ *
+ * @since 1.3.0
+ */
 class Init {
-	
+
 	/**
+	 * Class instance
+	 *
 	 * @var Init
 	 */
 	protected static $_instance;
 
 	/**
+	 * Stores all adapters.
+	 *
 	 * @var Adapter[]
 	 */
 	protected static $adapters = [];
@@ -35,7 +44,6 @@ class Init {
 
 	/**
 	 * Class constructor
-	 *
 	 */
 	protected function __construct() {
 		$this->includes();
@@ -62,11 +70,11 @@ class Init {
 
 	/**
 	 * Get all adapters
-	 * 
+	 *
 	 * @return Adapter[]
 	 * @since 1.1.0
 	 */
 	public function get_adapters() {
 		return self::$adapters;
-	}	
+	}
 }
