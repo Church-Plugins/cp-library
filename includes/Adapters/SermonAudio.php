@@ -17,18 +17,22 @@ class SermonAudio extends Adapter {
 
 		$this->type = 'sermon_audio';
 		$this->display_name = __( 'Sermon Audio', 'cp-library' );
-		
+
 		parent::__construct();
 	}
 
 	/**
 	 * Performs a hard pull
-	 * 
+	 *
 	 * @return void
 	 */
 	public function hard_pull() {
 		if ( empty( $this->get_setting( 'broadcaster_id', false ) ) ) {
 			wp_send_json_error( array( 'error' => __( 'Invalid broadcaster ID', 'cp-library' ) ) );
+		}
+
+		if ( empty( $this->get_setting( 'api_key', false ) ) ) {
+			wp_send_json_error( array( 'error' => __( 'Invalid API Key', 'cp-library' ) ) );
 		}
 
 		$sermons = $this->fetch_all_since_date();
@@ -37,7 +41,7 @@ class SermonAudio extends Adapter {
 
 	/**
 	 * Formats and enqueues items to be processed
-	 * 
+	 *
 	 * @return void
 	 */
 	public function format_and_process( $sermons, $hard_pull = false ) {
@@ -96,13 +100,22 @@ class SermonAudio extends Adapter {
 
 	/**
 	 * Gets results from sermon audio based on a query
-	 * 
-	 * @param array $query The url query array 
+	 *
+	 * @param array $query The url query array
 	 */
 	protected function get_results( $query ) {
 		$url = add_query_arg( $query, $this->base_url );
 
-		$response = wp_remote_get($url);
+		if ( ! $api_key = $this->get_setting( 'api_key', false ) ) {
+			throw new \ChurchPlugins\Exception( __( 'No API key provided', 'cp-library' ) );
+		}
+
+		$response = wp_remote_get($url, array(
+			'timeout' => 10,
+			'headers' => array(
+				'X-Api-Key' => $api_key
+			),
+		) );
 
 		if( is_wp_error( $response ) ) {
 			throw new \ChurchPlugins\Exception( $response->get_error_message() );
@@ -122,7 +135,7 @@ class SermonAudio extends Adapter {
 
 	/**
 	 * Loads all results from sermon audio, looping through pages and accumulating data
-	 * 
+	 *
 	 * @param array $query The url query array
 	 */
 	protected function load_results( $query ) {
@@ -165,7 +178,7 @@ class SermonAudio extends Adapter {
 				'broadcasterID' => $this->get_setting( 'broadcaster_id', '' ),
 				'year' => $year
 			);
-			
+
 			$results = $this->load_results( $query );
 			$results = array_filter( $results, [ $this, 'is_valid_result' ] );
 			$sermons = array_merge( $sermons, $results );
@@ -182,7 +195,7 @@ class SermonAudio extends Adapter {
 		$sermon_date = strtotime( $sermon->preachDate );
 		return $sermon_date >= $min_date;
 	}
-	
+
 	/**
 	 * Formats a Sermon
 	 */
@@ -258,7 +271,7 @@ class SermonAudio extends Adapter {
 
 	/**
 	 * Gets a model class based on a key
-	 * 
+	 *
 	 * @return string|\ChurchPlugins\Models\Table|false
 	 */
 	public function get_model_from_key($key) {
@@ -276,7 +289,7 @@ class SermonAudio extends Adapter {
 
 	/**
 	 * Adds an attachment to a sermon
-	 * 
+	 *
 	 * @param \CP_Library\Models\Item $item
 	 * @param mixed $attachment
 	 * @param string $attachment_key
@@ -292,7 +305,7 @@ class SermonAudio extends Adapter {
 
 	/**
 	 * Handle processing custom data
-	 * 
+	 *
 	 * @param \CP_Library\Models\Item $item
 	 * @param array $data
 	 * @param string $post_type
@@ -304,7 +317,7 @@ class SermonAudio extends Adapter {
 			}
 		}
 	}
-} 
+}
 
 
 

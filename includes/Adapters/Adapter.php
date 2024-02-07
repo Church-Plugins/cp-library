@@ -307,7 +307,7 @@ abstract class Adapter extends \WP_Background_Process {
 					$this->push_to_queue( $item );
 				}
 				$needs_update = true;
-			} 
+			}
 
 			unset( $store_data[ $item['external_id'] ] );
 		}
@@ -517,6 +517,15 @@ abstract class Adapter extends \WP_Background_Process {
 	public function register_settings( $cmb ) {
 		$cmb->add_field(
 			array(
+				'name' => __( 'API Key', 'cp-library' ),
+				'id'   => 'api_key',
+				'type' => 'text',
+				'desc' => __( 'Enter your API Key here. You can find this at <a href="http://www.sermonaudio.com/members">sermonaudio.com/members</a>.', 'cp-library' ),
+			)
+		);
+
+		$cmb->add_field(
+			array(
 				'name' => __( 'Broadcaster ID', 'cp-library' ),
 				'id'   => 'broadcaster_id',
 				'type' => 'text',
@@ -553,7 +562,7 @@ abstract class Adapter extends \WP_Background_Process {
 			$schedule_options[ $key ] = $schedule['display'];
 		}
 
-		$cmb->add_field( 
+		$cmb->add_field(
 			array(
 				'name'    => __( 'Update Check', 'cp-library' ),
 				'desc'    => sprintf( __( 'The interval at which to check for updated %s.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
@@ -651,7 +660,7 @@ abstract class Adapter extends \WP_Background_Process {
 		}
 
 		file_put_contents( $file, $image_data );
-		
+
 		$attachment = array(
 			'post_mime_type' => $wp_filetype['type'],
 			'post_title'     => sanitize_file_name( $filename ),
@@ -668,7 +677,7 @@ abstract class Adapter extends \WP_Background_Process {
 		}
 
 		$attach_data = wp_generate_attachment_metadata( $attach_id, $file );
-		
+
 		wp_update_attachment_metadata( $attach_id, $attach_data );
 		set_post_thumbnail( $post_id, $attach_id );
 		update_post_meta( $attach_id, 'external_url', $url );
