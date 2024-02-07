@@ -30,6 +30,7 @@ npm run build
 * Feature: Add tool to merge duplicate speakers.
 * Enhancement: Better handling for multisite
 * Enhancement: Add API Key support for SermonAudio
+* Enhancement: Add show-all parameter to podcast feed to show all sermons
 
 #### 1.4.0
 * Enhancement: Add integration for SermonAudio
