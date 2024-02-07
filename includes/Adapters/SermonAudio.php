@@ -52,7 +52,12 @@ class SermonAudio extends Adapter {
 			wp_send_json_error( array( 'error' => __( 'Invalid broadcaster ID', 'cp-library' ) ) );
 		}
 
-		$sermons = $this->fetch_all_since_date();
+		try {
+			$sermons = $this->fetch_all_since_date();
+		} catch ( \ChurchPlugins\Exception $e ) {
+			wp_send_json_error( array( 'error' => $e->getMessage() ) );
+		}
+
 		$this->format_and_process( $sermons, true );
 	}
 
@@ -127,6 +132,7 @@ class SermonAudio extends Adapter {
 	 * @param array $query The url query array.
 	 * @return \stdClass The results from Sermon Audio.
 	 * @throws \ChurchPlugins\Exception If there is an error with the request.
+	 * @updated 1.4.1 Sermon Audio API now requires an API key as part of the request.
 	 */
 	protected function get_results( $query ) {
 		$url = add_query_arg( $query, $this->base_url );
@@ -153,7 +159,7 @@ class SermonAudio extends Adapter {
 			$errors = (array) $data->errors;
 			$key    = array_keys( $errors )[0];
 			$value  = $errors[ $key ];
-			throw new \ChurchPlugins\Exception( esc_html( $key ) . ': ' . esc_html( $value ) );
+			throw new \ChurchPlugins\Exception( esc_html( $value ) );
 		}
 
 		return $data;
@@ -174,12 +180,7 @@ class SermonAudio extends Adapter {
 		// loop through all pages
 		do {
 			$query['page'] = $page;
-			try {
-				$data = $this->get_results( $query );
-			} catch ( \ChurchPlugins\Exception $e ) {
-				error_log( $e->getMessage() );
-				break;
-			}
+			$data    = $this->get_results( $query );
 			$results = array_merge( $results, $data->results );
 			$page++;
 		} while ( $data->next );
@@ -351,7 +352,7 @@ class SermonAudio extends Adapter {
 	public function process_cpl_data( $item, $cpl_data, $post_type ) {
 		if ( 'cpl_item' === $post_type ) {
 			if ( isset( $cpl_data['scripture'] ) ) {
-				$item->update_scripture( $cpl_data['scripture'] );
+				$item->update_scripture( explode( ';', $cpl_data['scripture'] ) );
 			}
 		}
 	}
