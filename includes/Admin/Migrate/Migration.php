@@ -375,6 +375,7 @@ abstract class Migration extends \WP_Background_Process {
 		$speaker_posts = get_posts( array_merge( $args, array( 'name' => $term->slug ) ) );
 		$post          = current( $speaker_posts );
 
+		// fallback to searching by title
 		if ( ! $post ) {
 			$speaker_posts = get_posts( array_merge( $args, array( 'title' => $term->name ) ) );
 			$post          = current( $speaker_posts );
