@@ -272,7 +272,15 @@ class Init {
 	 */
 	public function app_enqueue() {
 		$this->enqueue->enqueue( 'styles', 'main', array() );
-		$this->enqueue->enqueue( 'scripts', 'main', array( 'js_dep' => array( 'jquery' ) ) );
+		$main_script = $this->enqueue->enqueue( 'scripts', 'main', array( 'js_dep' => array( 'jquery' ) ) );
+
+		if ( isset( $main_script['js'], $main_script['js'][0], $main_script['js'][0]['handle'] ) ) {
+			wp_add_inline_script(
+				$main_script['js'][0]['handle'],
+				'jQuery(document).ready(function() {jQuery("body").append(\'<div id="cpl_persistent_player"></div>\');});',
+				'after'
+			);
+		}
 
 		wp_register_script( 'cpl_facets', CP_LIBRARY_PLUGIN_URL . '/assets/js/facets.js', array( 'jquery' ), CP_LIBRARY_PLUGIN_VERSION, true );
 
