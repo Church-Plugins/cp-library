@@ -24,6 +24,10 @@ npm run build
 
 ### Change Log
 
+#### 1.4.2
+* Bug Fix: Speaker single page had incorrect sermon count displayed.
+* Bug Fix: Speakers with no sermons assigned would display all sermons on the single page.
+
 #### 1.4.1
 * Bug Fix: Import series images from sermon manager when migrating
 * Bug Fix: Fix scripture save bug
