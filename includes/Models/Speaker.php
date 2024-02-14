@@ -84,10 +84,10 @@ ORDER BY %2$s.order ASC, %1$s.title ASC', $instance->table_name, $meta->table_na
 		$meta     = SourceMetaTable::get_instance();
 		$instance = new Item();
 
-		$sql = sprintf( 'SELECT %1$s.origin_id, %1$s.id FROM %1$s
-INNER JOIN %2$s
-ON %1$s.id = %2$s.item_id
-WHERE ( %2$s.key = "source_item" AND %2$s.source_type_id = %3$d AND %2$s.source_id = %4$d )
+		$sql = sprintf( 'SELECT %1$s.origin_id, %1$s.id FROM %1$s 
+INNER JOIN %2$s 
+ON %1$s.id = %2$s.item_id 
+WHERE ( %2$s.key = "source_item" AND %2$s.source_type_id = %3$d AND %2$s.source_id = %4$d ) 
 ORDER BY %2$s.order ASC', $instance->table_name, $meta->table_name, $type_id, $this->id );
 
 		$items = $wpdb->get_results( $sql );
