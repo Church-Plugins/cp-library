@@ -364,6 +364,8 @@ class ImportSermons extends BatchImport {
 						}
 						update_post_meta( $message_id, 'audio_url', $audio_url );
 						$item->update_meta_value( 'audio_url', $audio_url );
+						$controller = new \CP_Library\Controllers\Item( $item->origin_id );
+						$controller->do_enclosure();
 					}
 
 					if ( ! empty( $downloads ) ) {
