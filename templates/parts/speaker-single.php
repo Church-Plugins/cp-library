@@ -14,7 +14,7 @@ $item_ids = $speaker->get_all_items();
 $page       = get_query_var( 'cpl_page' ) ? get_query_var( 'cpl_page' ) : 1;
 $item_query = new WP_Query( array(
 	'post_type'      => cp_library()->setup->post_types->item->post_type,
-	'post__in'       => $item_ids,
+	'post__in'       => empty( $item_ids ) ? [ 0 ] : $item_ids,
 	'orderby'        => 'post__in',
 	'posts_per_page' => \CP_Library\Templates::posts_per_page( cp_library()->setup->post_types->item->post_type ),
 	'paged'          => $page
@@ -52,7 +52,9 @@ add_action( 'cpl_single_speaker_before', 'cpl_item_back' );
 
 	<hr>
 
-	<h3><?php echo sprintf( esc_html__( '%s %s by %s', 'cp-library' ), $item_query->post_count, cp_library()->setup->post_types->item->plural_label, get_the_title() ) ?></h3>
+	<?php $item_post_type = cp_library()->setup->post_types->item; ?>
+	<?php $label = $item_query->found_posts === 1 ? $item_post_type->single_label : $item_post_type->plural_label; ?>
+	<h3><?php echo sprintf( esc_html__( '%d %s by %s', 'cp-library' ), $item_query->found_posts, $label, get_the_title() ) ?></h3>
 
 	<?php while ( $item_query->have_posts() ) : $item_query->the_post() ?>
 		<?php \CP_Library\Templates::get_template_part( "parts/item-list" ); ?>

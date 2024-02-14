@@ -715,6 +715,13 @@ class Tools {
 				}
 			}
 
+			// move terms to first speaker
+			$terms = wp_get_object_terms( $speaker->origin_id, cp_library()->setup->taxonomies->speaker->taxonomy );
+			if ( ! empty( $terms ) ) {
+				wp_set_object_terms( $first_speaker->origin_id, wp_list_pluck( $terms, 'term_id' ), cp_library()->setup->taxonomies->speaker->taxonomy, true );
+			}
+
+			// delete the speaker
 			wp_delete_post( $speaker->origin_id, true );
 		}
 	}
