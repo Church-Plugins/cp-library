@@ -23,16 +23,16 @@ try {
 	<?php endif; ?>
 
 	<?php if ( $item->get_podcast_subtitle() ) : ?>
-		<itunes:subtitle><![CDATA[<?php echo $item->get_podcast_subtitle(); ?>]]></itunes:subtitle>
-	<?php endif; ?>
-
-	<?php if ( $item->get_podcast_summary() ) : ?>
-		<itunes:summary><![CDATA[<?php echo $item->get_podcast_summary(); ?>]]></itunes:summary>
-		<googleplay:description><![CDATA[<?php echo $item->get_podcast_summary(); ?>]]></googleplay:description>
+		<itunes:subtitle><?php echo $item->get_podcast_subtitle(); ?></itunes:subtitle>
 	<?php endif; ?>
 
 	<?php if ( $item->get_podcast_description() ) : ?>
 		<description><![CDATA[<?php echo $item->get_podcast_description(); ?>]]></description>
+		<itunes:summary><?php echo $item->get_podcast_description(); ?></itunes:summary>
+	<?php endif; ?>
+
+	<?php if ( $item->get_podcast_summary() ) : ?>
+		<googleplay:description><![CDATA[<?php echo $item->get_podcast_summary(); ?>]]></googleplay:description>
 	<?php endif; ?>
 
 	<?php if ( $item->get_podcast_content() ) : ?>
