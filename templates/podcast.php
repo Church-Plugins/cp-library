@@ -117,8 +117,8 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 
 		<?php $description = empty( $summary ) ? $subtitle : $summary; ?>
 
-		<description><![CDATA[<?php echo esc_html( $summary ); ?>]]></description>
-		<googleplay:description><![CDATA[<?php echo esc_html( $summary ); ?>]]></googleplay:description>
+		<description><![CDATA[<?php echo esc_html( $description ); ?>]]></description>
+		<googleplay:description><![CDATA[<?php echo esc_html( $description ); ?>]]></googleplay:description>
 
 		<?php if ( $email ) : ?>
 
