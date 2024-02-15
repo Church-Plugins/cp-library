@@ -21,10 +21,7 @@ try {
 
 <?php if ( $item->get_podcast_description() ) : ?>
 	<itunes:summary><?php echo esc_html( $item->get_podcast_description() ); ?></itunes:summary>
-<?php endif; ?>
-
-<?php if ( $item->get_podcast_summary() ) : ?>
-	<googleplay:description><![CDATA[<?php echo $item->get_podcast_summary(); ?>]]></googleplay:description>
+	<googleplay:description><?php echo esc_html( $item->get_podcast_description() ); ?></googleplay:description>
 <?php endif; ?>
 
 <?php rss_enclosure(); // we run do_enclosure() when a sermon (Item) is saved. ?>
