@@ -7,7 +7,7 @@ try {
 }
 
 ?>
-<itunes:title><?php the_title_rss() ?></itunes:title>
+<itunes:title><?php the_title_rss(); ?></itunes:title>
 
 <?php if ( $item->get_podcast_speakers() ) : ?>
 	<dc:creator><?php echo esc_html( $item->get_podcast_speakers() ); ?></dc:creator>
@@ -16,11 +16,14 @@ try {
 <?php endif; ?>
 
 <?php if ( $item->get_podcast_subtitle() ) : ?>
-	<itunes:subtitle><![CDATA[<?php echo $item->get_podcast_subtitle(); ?>]]></itunes:subtitle>
+	<itunes:subtitle><?php echo esc_html( $item->get_podcast_subtitle() ); ?></itunes:subtitle>
+<?php endif; ?>
+
+<?php if ( $item->get_podcast_description() ) : ?>
+	<itunes:summary><?php echo esc_html( $item->get_podcast_description() ); ?></itunes:summary>
 <?php endif; ?>
 
 <?php if ( $item->get_podcast_summary() ) : ?>
-	<itunes:summary><![CDATA[<?php echo $item->get_podcast_summary(); ?>]]></itunes:summary>
 	<googleplay:description><![CDATA[<?php echo $item->get_podcast_summary(); ?>]]></googleplay:description>
 <?php endif; ?>
 

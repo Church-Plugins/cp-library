@@ -110,7 +110,7 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 
 		<copyright><?php echo esc_html( $copyright ); ?></copyright>
 
-		<itunes:subtitle><![CDATA[<?php echo esc_html( $subtitle ); ?>]]></itunes:subtitle>
+		<itunes:subtitle><?php echo esc_html( $subtitle ); ?></itunes:subtitle>
 
 		<itunes:author><?php echo esc_html( $author ); ?></itunes:author>
 		<googleplay:author><?php echo esc_html( $author ); ?></googleplay:author>
