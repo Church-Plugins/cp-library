@@ -427,15 +427,11 @@ jQuery($ => {
 		.then(res => res.json())
 		.then(res => {
 			$(this).removeClass('loading');
-			$(this).attr('disabled', false);
 			if(res.success) {
-				$(this).addClass('success');
-				setTimeout(() => {
-					$(this).removeClass('success');
-				}, 2000);
-			}
-			else {
+				$(this).addClass('success')
+			} else {
 				$(this).parent().append('<div class="error">' + res.data.error + '</div>');
+				$(this).attr('disabled', false);
 			}
 		})
 		.catch(err => {
