@@ -36,8 +36,8 @@ class ItemType extends Table  {
 
 		parent::init();
 
-		$this->table_name  = $wpdb->base_prefix . 'cpl_' . $this->type;
-		$this->meta_table_name  = $wpdb->base_prefix . 'cpl_' . $this->type . "_meta";
+		$this->table_name  = $wpdb->prefix . 'cpl_' . $this->type;
+		$this->meta_table_name  = $wpdb->prefix . 'cpl_' . $this->type . "_meta";
 	}
 
 	/**

@@ -30,6 +30,13 @@ class SetupWizard {
 	public $church_content;
 
 	/**
+	 * Series Engine
+	 *
+	 * @var SeriesEngine
+	 */
+	public $series_engine;
+
+	/**
 	 * The page name
 	 *
 	 * @var string
@@ -86,6 +93,7 @@ class SetupWizard {
 	protected function includes() {
 		$this->sermon_manager = SermonManager::get_instance();
 		$this->church_content = ChurchContent::get_instance();
+		$this->series_engine  = SeriesEngine::get_instance();
 	}
 
 	/**
@@ -169,6 +177,7 @@ class SetupWizard {
 		return array(
 			$this->sermon_manager,
 			$this->church_content,
+			$this->series_engine,
 		);
 	}
 

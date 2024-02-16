@@ -527,6 +527,15 @@ abstract class Adapter extends \WP_Background_Process {
 
 		$cmb->add_field(
 			array(
+				'name' => __( 'API Key', 'cp-library' ),
+				'id'   => 'api_key',
+				'type' => 'text',
+				'desc' => __( 'Enter your API Key here. You can find this at <a href="http://www.sermonaudio.com/members">sermonaudio.com/members</a>.', 'cp-library' ),
+			)
+		);
+
+		$cmb->add_field(
+			array(
 				'name' => __( 'Broadcaster ID', 'cp-library' ),
 				'id'   => 'broadcaster_id',
 				'type' => 'text',

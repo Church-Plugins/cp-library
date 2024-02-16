@@ -147,7 +147,7 @@ class SermonAudio extends Adapter {
 			'X-Api-Key' => $api_key,
 		);
 
-		$response = wp_remote_get( $url, [ 'headers' => $headers ] );
+		$response = wp_remote_get( $url, [ 'timeout' => 10, 'headers' => $headers ] );
 
 		if ( is_wp_error( $response ) ) {
 			throw new \ChurchPlugins\Exception( esc_html( $response->get_error_message() ) );
