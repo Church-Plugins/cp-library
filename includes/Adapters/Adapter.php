@@ -518,15 +518,6 @@ abstract class Adapter extends \WP_Background_Process {
 
 		$cmb->add_field(
 			array(
-				'name' => __( 'API key', 'cp-library' ),
-				'id'   => 'api_key',
-				'type' => 'text',
-				'desc' => __( 'Enter your API key from sermon audio here. Make sure to save changes before starting a pull.', 'cp-library' ),
-			)
-		);
-
-		$cmb->add_field(
-			array(
 				'name' => __( 'API Key', 'cp-library' ),
 				'id'   => 'api_key',
 				'type' => 'text',
