@@ -33,7 +33,7 @@ $settings = array(
 );
 
 // Loop settings to prepare values.
-foreach ($settings as $setting => $default) {
+foreach ( $settings as $setting => $default ) {
 
 	// Get setting value.
 	$value = Podcast::get( $setting, $default );
@@ -48,7 +48,7 @@ foreach ($settings as $setting => $default) {
 }
 
 // Category.
-if ($category && 'none' !== $category) {
+if ( $category && 'none' !== $category ) {
 	list( $category, $subcategory ) = explode( '|', $category );
 } else {
 	$category = '';
@@ -56,7 +56,7 @@ if ($category && 'none' !== $category) {
 
 // Other podcast settings.
 $owner_name = htmlspecialchars( get_bloginfo( 'name' ) ); // Owner name as site name.
-$explicit = $not_explicit ? 'no' : 'yes'; // Explicit or not.
+$explicit   = $not_explicit ? 'no' : 'yes'; // Explicit or not.
 
 // Character set from WordPress settings.
 $charset = get_option( 'blog_charset' );
@@ -71,12 +71,12 @@ $charset = get_option( 'blog_charset' );
 <itunes:author><?php echo esc_html( $author ); ?></itunes:author>
 <googleplay:author><?php echo esc_html( $author ); ?></googleplay:author>
 
-<?php if ($summary) : ?>
+<?php if ( $summary ) : ?>
 	<description><?php echo esc_html( $summary ); ?></description>
 	<googleplay:description><?php echo esc_html( $summary ); ?></googleplay:description>
 <?php endif; ?>
 
-<?php if ($email) : ?>
+<?php if ( $email ) : ?>
 
 	<itunes:owner>
 		<itunes:name><?php echo esc_html( $owner_name ); ?></itunes:name>
@@ -88,28 +88,28 @@ $charset = get_option( 'blog_charset' );
 
 <?php endif; ?>
 
-<?php if ($image) : ?>
+<?php if ( $image ) : ?>
 	<itunes:image href="<?php echo esc_url( $image ); ?>"></itunes:image>
 	<googleplay:image href="<?php echo esc_url( $image ); ?>"></googleplay:image>
 <?php endif; ?>
 
-<?php if ($category) : ?>
+<?php if ( $category ) : ?>
 
-	<itunes:category text="<?php echo esc_html( $category ); ?>">
+	<itunes:category text="<?php echo esc_attr( $category ); ?>">
 
-		<?php if ($subcategory) : ?>
-			<itunes:category text="<?php echo esc_html( $subcategory ); ?>"/>
+		<?php if ( $subcategory ) : ?>
+			<itunes:category text="<?php echo esc_attr( $subcategory ); ?>"/>
 		<?php endif; ?>
 
 	</itunes:category>
 
-	<googleplay:category text="<?php echo esc_html( $category ); ?>"></googleplay:category>
+	<googleplay:category text="<?php echo esc_attr( $category ); ?>"></googleplay:category>
 
 <?php endif; ?>
 
 <itunes:explicit><?php echo esc_html( $explicit ); ?></itunes:explicit>
 <googleplay:explicit><?php echo esc_html( $explicit ); ?></googleplay:explicit>
 
-<?php if ($new_url) : ?>
+<?php if ( $new_url ) : ?>
 	<itunes:new-feed-url><?php echo esc_url( $new_url ); ?></itunes:new-feed-url>
 <?php endif; ?>
