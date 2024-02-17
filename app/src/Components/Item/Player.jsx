@@ -419,7 +419,11 @@ export default function Player({
 						</Box>
 					{
 						hasVariations ?
-						item.variations.map((variation) => {
+						item.variations
+						.filter(variation => (
+							!!variation.audio || !!variation.video?.value || variation.speakers?.length
+						))
+						.map((variation) => {
 							return (
 								<Controls 
 									item={ variation } 
