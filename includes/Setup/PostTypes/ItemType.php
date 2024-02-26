@@ -722,9 +722,9 @@ class ItemType extends PostType  {
 	}
 
 	/**
-	 * Trashes associated messages when trashing a series
+	 * Detaches associated items when an item type is trashed
 	 *
-	 * @param bool    $trash Whether to go forward with trashing.
+	 * @param bool    $trash Whether to proceed with trashing.
 	 * @param WP_Post $post Post object.
 	 * @param string  $prev_status Previous status.
 	 * @return bool
@@ -735,19 +735,13 @@ class ItemType extends PostType  {
 			return $trash;
 		}
 
-		$items = Model::get_instance_from_origin( $post->ID )->get_items();
+		$item_type = Model::get_instance_from_origin( $post->ID );
+		$items     = $item_type->get_items();
 
 		foreach ( $items as $item ) {
 			$item_model = new ItemModel( $item );
 			$types      = $item_model->get_types();
-
-			// If item belongs to multiple series, remove the series from the item.
-			// If this is the only series the item belongs to, trash the item.
-			if ( count( $types ) > 1 ) {
-				$item_model->update_types( array_diff( $types, [ $post->ID ] ) );
-			} else {
-				wp_trash_post( $item->origin_id );
-			}
+			$item_model->update_types( array_diff( $types, [ $item_type->id ] ) );
 		}
 
 		return $trash;
