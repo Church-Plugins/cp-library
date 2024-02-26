@@ -153,12 +153,16 @@ class ChurchContent extends Migration {
 			}
 
 			if ( $pdf ) {
-				update_post_meta( $new_post_id, 'downloads', [
+				update_post_meta(
+					$new_post_id,
+					'downloads',
 					[
-						'file' => $pdf,
-						'name' => __( 'PDF', 'cp-library' ),
-					],
-				] );
+						[
+							'file' => $pdf,
+							'name' => __( 'PDF', 'cp-library' ),
+						],
+					]
+				);
 			}
 
 			if ( $thumb ) {

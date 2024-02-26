@@ -61,7 +61,7 @@ abstract class Adapter extends \WP_Background_Process {
 	 * Class constructor
 	 */
 	public function __construct() {
-		$this->action = "cpl_{$this->type}_adapter";
+		$this->action     = "cpl_{$this->type}_adapter";
 		$this->_cron_hook = "cpl_adapter_cron_{$this->type}";
 
 		parent::__construct();
@@ -121,7 +121,7 @@ abstract class Adapter extends \WP_Background_Process {
 	 * @return void
 	 */
 	public function update_check() {
-		$is_json_request = isset( $_SERVER['CONTENT_TYPE'] ) && strpos( $_SERVER['CONTENT_TYPE'], 'application/json' ) === 0;
+		$is_json_request = isset( $_SERVER['CONTENT_TYPE'] ) && strpos( $_SERVER['CONTENT_TYPE'], 'application/json' ) === 0; // phpcs:ignore
 
 		$amount = absint( $this->get_setting( 'check_count', 50 ) );
 
@@ -146,7 +146,7 @@ abstract class Adapter extends \WP_Background_Process {
 	public function hard_pull() {
 		// keep pulling until all items are saved.
 		try {
-			$page = 1;
+			$page    = 1;
 			$is_more = true;
 			while ( $is_more ) {
 				$is_more = $this->pull( 100, $page );
@@ -154,7 +154,7 @@ abstract class Adapter extends \WP_Background_Process {
 					wp_send_json_error( array( 'error' => 'Sermon count too large. ' . ( ( $page - 1 ) * 100 ) . ' Sermons have been processed' ) );
 					break;
 				}
-				$page++;
+				++$page;
 			}
 			wp_send_json_success( array( 'message' => 'Update process started' ) );
 		} catch ( Exception $e ) {
@@ -221,7 +221,7 @@ abstract class Adapter extends \WP_Background_Process {
 	 * @since 1.3.0
 	 */
 	public function load_item( $item, $model ) {
-		$external_id = $item['external_id'];
+		$external_id      = $item['external_id'];
 		$existing_item_id = $this->get_item_id_from_external( $external_id );
 
 		if ( null !== $existing_item_id ) {
@@ -236,7 +236,7 @@ abstract class Adapter extends \WP_Background_Process {
 		$post_id = wp_insert_post( $item, true );
 
 		if ( is_wp_error( $post_id ) ) {
-			throw new Exception( $post_id->get_error_message() );
+			throw new Exception( esc_html( $post_id->get_error_message() ) );
 		}
 
 		update_post_meta( $post_id, 'external_id', $external_id );
@@ -307,7 +307,7 @@ abstract class Adapter extends \WP_Background_Process {
 					$this->push_to_queue( $item );
 				}
 				$needs_update = true;
-			} 
+			}
 
 			unset( $store_data[ $item['external_id'] ] );
 		}
@@ -409,7 +409,7 @@ abstract class Adapter extends \WP_Background_Process {
 			}
 			return;
 		}
-		$model = $this->get_model_from_key( $attachment_key );
+		$model     = $this->get_model_from_key( $attachment_key );
 		$origin_id = $this->get_item_id_from_external( $attachment );
 
 		if ( ! $origin_id ) {
@@ -515,12 +515,22 @@ abstract class Adapter extends \WP_Background_Process {
 	 * @since 1.3.0
 	 */
 	public function register_settings( $cmb ) {
+
+		$cmb->add_field(
+			array(
+				'name' => __( 'API Key', 'cp-library' ),
+				'id'   => 'api_key',
+				'type' => 'text',
+				'desc' => __( 'Enter your API Key here. You can find this at <a href="http://www.sermonaudio.com/members">sermonaudio.com/members</a>.', 'cp-library' ),
+			)
+		);
+
 		$cmb->add_field(
 			array(
 				'name' => __( 'Broadcaster ID', 'cp-library' ),
 				'id'   => 'broadcaster_id',
 				'type' => 'text',
-				'desc' => __( 'Enter your broadcaster ID from Sermon Audio here. Make sure to save changes before starting a pull.', 'cp-library' ),
+				'desc' => __( 'Enter your broadcaster ID from Sermon Audio here.', 'cp-library' ),
 			)
 		);
 
@@ -547,13 +557,13 @@ abstract class Adapter extends \WP_Background_Process {
 			);
 		}
 
-		$cron_schedules = wp_get_schedules();
+		$cron_schedules   = wp_get_schedules();
 		$schedule_options = array();
 		foreach ( $cron_schedules as $key => $schedule ) {
 			$schedule_options[ $key ] = $schedule['display'];
 		}
 
-		$cmb->add_field( 
+		$cmb->add_field(
 			array(
 				'name'    => __( 'Update Check', 'cp-library' ),
 				'desc'    => sprintf( __( 'The interval at which to check for updated %s.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
@@ -571,7 +581,7 @@ abstract class Adapter extends \WP_Background_Process {
 				'type'       => 'cpl_submit_button',
 				'desc'       => sprintf( __( 'Check for new %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
 				'query_args' => array(
-					'cp_action' => "cpl_adapter_pull_{$this->type}"
+					'cp_action' => "cpl_adapter_pull_{$this->type}",
 				),
 			)
 		);
@@ -584,8 +594,8 @@ abstract class Adapter extends \WP_Background_Process {
 				'type'       => 'text_small',
 				'default'    => 50,
 				'attributes' => array(
-					'min' => 1,
-					'max' => 100,
+					'min'  => 1,
+					'max'  => 100,
 					'step' => 1,
 					'type' => 'number',
 				),
@@ -651,15 +661,15 @@ abstract class Adapter extends \WP_Background_Process {
 		}
 
 		file_put_contents( $file, $image_data );
-		
+
 		$attachment = array(
 			'post_mime_type' => $wp_filetype['type'],
 			'post_title'     => sanitize_file_name( $filename ),
 			'post_content'   => '',
-			'post_status'    => 'inherit'
+			'post_status'    => 'inherit',
 		);
 
-		require_once( ABSPATH . 'wp-admin/includes/image.php' );
+		require_once ABSPATH . 'wp-admin/includes/image.php';
 
 		$attach_id = wp_insert_attachment( $attachment, $file, $post_id );
 
@@ -668,7 +678,7 @@ abstract class Adapter extends \WP_Background_Process {
 		}
 
 		$attach_data = wp_generate_attachment_metadata( $attach_id, $file );
-		
+
 		wp_update_attachment_metadata( $attach_id, $attach_data );
 		set_post_thumbnail( $post_id, $attach_id );
 		update_post_meta( $attach_id, 'external_url', $url );

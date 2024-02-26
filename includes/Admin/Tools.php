@@ -658,7 +658,7 @@ class Tools {
 		global $wpdb;
 		$posts = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT ID
+				"SELECT ID, post_name
 				FROM {$wpdb->posts}
 				WHERE post_type='cpl_speaker'
 				AND post_title=%s",
@@ -666,12 +666,42 @@ class Tools {
 			)
 		);
 
+		$callback = fn( $a, $b ) => $this->get_post_name_value( $a->post_name ) - $this->get_post_name_value( $b->post_name );
+
+		usort( $posts, $callback );
+
 		$first_speaker = array_shift( $posts );
 		$first_speaker = \CP_Library\Models\Speaker::get_instance_from_origin( $first_speaker->ID );
+		$first_post    = get_post( $first_speaker->origin_id );
 
 		foreach ( $posts as $speaker ) {
+			$post     = get_post( $speaker->ID );
 			$speaker  = \CP_Library\Models\Speaker::get_instance_from_origin( $speaker->ID );
 			$messages = $speaker->get_all_items();
+
+			if ( empty( $first_post->post_content ) && ! empty( $post->post_content ) ) {
+				$first_post->post_content = $post->post_content;
+				wp_update_post( $first_post );
+			}
+
+			// copy over taxonomies
+			$taxonomies = get_object_taxonomies( cp_library()->setup->post_types->speaker->post_type );
+			foreach ( $taxonomies as $taxonomy ) {
+				$terms = wp_get_object_terms( $post->ID, $taxonomy );
+
+				if ( ! empty( $terms ) ) {
+					wp_set_object_terms( $first_post->ID, wp_list_pluck( $terms, 'term_id' ), $taxonomy, true );
+				}
+			}
+
+			// copy over thumbnail if first speaker doesn't have one
+			if ( ! get_post_thumbnail_id( $first_post ) ) {
+				$thumbnail_id = get_post_thumbnail_id( $post->ID );
+
+				if ( $thumbnail_id ) {
+					set_post_thumbnail( $first_post, $thumbnail_id );
+				}
+			}
 
 			foreach ( $messages as $message ) {
 				try {
@@ -685,7 +715,32 @@ class Tools {
 				}
 			}
 
+			// move terms to first speaker
+			$terms = wp_get_object_terms( $speaker->origin_id, cp_library()->setup->taxonomies->speaker->taxonomy );
+			if ( ! empty( $terms ) ) {
+				wp_set_object_terms( $first_speaker->origin_id, wp_list_pluck( $terms, 'term_id' ), cp_library()->setup->taxonomies->speaker->taxonomy, true );
+			}
+
+			// delete the speaker
 			wp_delete_post( $speaker->origin_id, true );
 		}
+	}
+
+	/**
+	 * Returns an integer sort value for a post name.
+	 * If the post name does not end with '-#', the sort value is -1.
+	 * Otherwise, the sort value is the number after the dash.
+	 *
+	 * @param string $name The post name to sort.
+	 * @return int
+	 */
+	public function get_post_name_value( $name ) {
+		$match = preg_match( '/-(\d+)$/', $name, $matches );
+
+		if ( $match ) {
+			return intval( $matches[1] );
+		}
+
+		return -1;
 	}
 }

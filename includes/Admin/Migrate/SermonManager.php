@@ -33,7 +33,7 @@ class SermonManager extends Migration {
 	 *
 	 * @var string
 	 */
-	public $name = 'Sermons Pro';
+	public $name = 'Sermon Manager';
 
 	/**
 	 * The migration type identifier
@@ -76,6 +76,7 @@ class SermonManager extends Migration {
 	 */
 	protected function actions() {
 		add_action( 'cpl_migration_series_created', array( $this, 'set_series_image' ), 10, 2 );
+		add_action( 'cpl_migration_speaker_created', array( $this, 'set_speaker_image' ), 10, 2 );
 	}
 
 	/**
@@ -206,6 +207,7 @@ class SermonManager extends Migration {
 	 * @param \stdClass $term The term.
 	 * @return void
 	 * @since 1.4.1
+	 * @todo Make more DRY by merging with set_speaker_image.
 	 */
 	public function set_series_image( $series, $term ) {
 		$associations = get_option( 'sermon_image_plugin' );
@@ -213,7 +215,7 @@ class SermonManager extends Migration {
 		foreach ( $associations as $key => $value ) {
 			$key   = absint( $key );
 			$value = absint( $value );
-			
+
 			if ( $key && $value ) {
 				$sanitized[ $key ] = $value;
 			}
@@ -223,6 +225,33 @@ class SermonManager extends Migration {
 
 		if ( $attachment_id ) {
 			set_post_thumbnail( $series->origin_id, $attachment_id );
+		}
+	}
+
+	/**
+	 * Migrates a speaker image
+	 *
+	 * @param Speaker   $speaker The speaker item.
+	 * @param \stdClass $term The term.
+	 * @return void
+	 * @since 1.4.1
+	 */
+	public function set_speaker_image( $speaker, $term ) {
+		$associations = get_option( 'sermon_image_plugin' );
+		$sanitized    = array();
+		foreach ( $associations as $key => $value ) {
+			$key   = absint( $key );
+			$value = absint( $value );
+
+			if ( $key && $value ) {
+				$sanitized[ $key ] = $value;
+			}
+		}
+
+		$attachment_id = $sanitized[ $term->term_id ] ?? false;
+
+		if ( $attachment_id ) {
+			set_post_thumbnail( $speaker->origin_id, $attachment_id );
 		}
 	}
 }

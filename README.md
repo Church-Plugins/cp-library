@@ -24,9 +24,23 @@ npm run build
 
 ### Change Log
 
+#### 1.4.2
+* Bug Fix: Speaker single page had incorrect sermon count displayed.
+* Bug Fix: Speakers with no sermons assigned would display all sermons on the single page.
+* Bug Fix: Hide variations without necessary metadata.
+* Bug Fix: Make sure jQuery is loaded before scripts
+* Enhancement: Add enclosures when importing sermons
+* Enhancement: Update podcast feed for better compatibility
+* Enhancement: Improve support for SermonAudio
+* Enhancement: Add migration support for SeriesEngine
+
 #### 1.4.1
 * Bug Fix: Import series images from sermon manager when migrating
+* Bug Fix: Fix scripture save bug
 * Feature: Add tool to merge duplicate speakers.
+* Enhancement: Better handling for multisite
+* Enhancement: Add API Key support for SermonAudio
+* Enhancement: Add show-all parameter to podcast feed to show all sermons
 
 #### 1.4.0
 * Enhancement: Add integration for SermonAudio

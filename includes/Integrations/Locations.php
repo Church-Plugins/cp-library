@@ -40,6 +40,12 @@ class Locations {
 	protected function includes() {}
 
 	protected function actions() {
+
+		// break early if the taxonomy is not enabled
+		if ( ! cp_locations()->taxonomy_enabled() ) {
+			return;
+		}
+
 		if ( cp_locations()->enabled() ) {
 			add_filter( 'cpl_item_type_sources', [ $this, 'item_type_sources' ] );
 			add_filter( 'cpl_item_type_get_items_use_item', [ $this, 'check_item_source' ], 10, 3 );

@@ -71,8 +71,6 @@ class Shortcode
 		foreach( $codes as $shortcode => $handler ) {
 			add_shortcode( $shortcode, [ $this, $handler ] );
 		}
-
-		add_action( 'wp_footer', [ $this, 'render_persistent_player' ] );
 	}
 
 
@@ -224,6 +222,7 @@ class Shortcode
 	 *
 	 * @since  1.0.0
 	 * @updated 1.1.0
+	 * @deprecated 1.4.2
 	 *
 	 * @author Tanner Moushey
 	 */

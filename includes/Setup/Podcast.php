@@ -88,6 +88,7 @@ class Podcast
 	 */
 	public function add_feed() {
 		add_feed( $this->get_feed_name(), [ $this, 'output_feed' ] );
+		add_filter( 'feed_content_type', [ $this, 'feed_content_type' ], 10, 2 );
 		add_action( 'pre_get_posts', [ $this, 'feed_query' ] );
 
 		// allow the feed name to also be a page
@@ -118,8 +119,28 @@ class Podcast
 		return $slug;
 	}
 
+	/**
+	 * Outputs the RSS feed.
+	 */
 	public function output_feed() {
+		header( 'Content-Type: application/rss+xml; charset=' . get_option( 'blog_charset' ), true );
 		Templates::get_template_part( 'podcast' );
+	}
+
+	/**
+	 * Set the content type for the podcast feed
+	 *
+	 * @param string $content_type The content type.
+	 * @param string $type The feed identifier.
+	 * @since  1.4.2
+	 * @return string The content type.
+	 */
+	public function feed_content_type( $content_type, $type ) {
+		if ( $this->get_feed_name() === $type ) {
+			return feed_content_type( 'rss2' );
+		}
+
+		return $content_type;
 	}
 
 	/**

@@ -53,7 +53,9 @@ if ( $item->has_variations() ) {
 			</div>
 
 			<div class="cpl-list-item--variations">
-				<?php foreach( $item->get_variations() as $variation_id ) :
+				<?php
+				$variations = $item->get_variations();
+				foreach ( $variations as $variation_id ) :
 					$post = get_post( $variation_id );
 					try {
 						$variant = new \CP_Library\Controllers\Item( get_the_ID() );
@@ -61,7 +63,17 @@ if ( $item->has_variations() ) {
 					} catch ( \CP_Library\Exception $e ) {
 						error_log( $e );
 						continue;
-					} ?>
+					}
+
+					if (
+						empty( $variant_data['audio'] ) &&
+						empty( $variant_data['video']['value'] ) &&
+						empty( $variant_data['speakers'] )
+					) {
+						continue;
+					}
+					?>
+
 					<div class="cpl-list-item--columns">
 						<div class="cpl-list-item--details">
 							<h6 class="cpl-list-item--variations--title"><?php echo $variant->get_variation_source_label(); ?></h6>
