@@ -36,6 +36,11 @@
 				return;
 			}
 
+			// don't include admin links
+			if (SELF.url.includes('/wp-admin/')) {
+				return;
+			}
+
 			return SELF.isIframe ? SELF.handleIframeClick() : SELF.handleClick();
 		};
 
