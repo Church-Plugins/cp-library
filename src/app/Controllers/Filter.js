@@ -1,6 +1,6 @@
 import { Component } from 'react';
 import $ from 'jquery';
-import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
+import Controllers_WP_REST_Request from './WP_REST_Request';
 import async from 'async';
 
 let mutating = false;

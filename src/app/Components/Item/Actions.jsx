@@ -1,7 +1,7 @@
 import React from 'react';
 import IconButton from '@mui/material/IconButton';
 import { ChevronRight } from "react-feather"
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { cplVar, isURL } from '../../utils/helpers';
 import Box from '@mui/material/Box';
 import useBreakpoints from '../../Hooks/useBreakpoints';
@@ -15,20 +15,18 @@ import jQuery from 'jquery';
 
 export default function Actions({
   item,
+	callback,
 }) {
 
+	const navigate = useNavigate();
   const { passToPersistentPlayer } = usePersistentPlayer();
   const { isDesktop } = useBreakpoints();
 
 	const viewItem = (e) => {
 		e.stopPropagation();
-
-		if ( undefined !== history ) {
-			history.push(`${cplVar('path', 'site')}/${cplVar('slug', 'item')}/${item.slug}`);
-		} else {
-			window.location = item.permalink;
-		}
+		navigate(`${cplVar('path', 'site')}/${cplVar('slug', 'item')}/${item.slug}`);
 	};
+
 
 	const playVideo = (e) => {
 		e.stopPropagation();
@@ -59,13 +57,12 @@ export default function Actions({
     });
 	};
 
-  const history = useHistory();
 
 	const isVideoURL = item.video.value && isURL(item.video.value);
 	const isAudioURL = item.audio       && isURL(item.audio);
 
 	return (
-		<Box className="cpl-list-item--actions">
+		<Box className="cpl-list-item--actions" ref={callback}>
 				<Box className="cpl-list-item--actions--buttons cpl-touch-hide">
 					{isVideoURL && (
 						<PlayVideo onClick={playVideo}/>

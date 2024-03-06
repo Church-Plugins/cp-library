@@ -1,5 +1,5 @@
 
-import { MemoryRouter, Switch, Route, BrowserRouter } from "react-router-dom";
+import { MemoryRouter, Switch, Route, BrowserRouter, Routes } from "react-router-dom";
 import React, { useState, useEffect } from 'react';
 import { hot } from 'react-hot-loader';
 
@@ -43,29 +43,31 @@ const App = ({
 
   return (
     <Providers>
-      <BrowserRouter initialEntries={[initialPath]}>
+      <BrowserRouter basename="/">
 
 	      <div className="cpl-touch-only" dangerouslySetInnerHTML={{__html: cplVar( 'mobileTop', 'components' ) }} />
 
-        <Switch>
+        <Routes>
           <Route
-            path={cplVar( 'path', 'site' ) + "/" + cplVar( 'slug', 'item' ) + "/:itemId"}
-            render={({ match, location, history}) => <ItemDetail itemId={match.params.itemId} />}
-          />
+            path="/talks/:itemId"
+            element={<ItemDetail />}
+         />
           <Route
             path={cplVar( 'path', 'site' ) + "/" + cplVar( 'slug', 'item_type' ) + "/:typeId"}
             render={({ match, location, history}) => <TypeDetail typeId={match.params.typeId} />}
           />
-          <Route path={cplVar( 'path', 'site' ) + "/" + cplVar( 'slug', 'item' )}>
-            <Items />
-          </Route>
-          <Route path={cplVar( 'path', 'site' ) + "/" + cplVar( 'slug', 'item_type' )}>
-            <Types />
-          </Route>
-        </Switch>
+          <Route
+            path={cplVar( 'path', 'site' ) + "/" + cplVar( 'slug', 'item' )}
+            element={<Items />} 
+          />
+          <Route
+            path={cplVar( 'path', 'site' ) + "/" + cplVar( 'slug', 'item_type' )}
+            element={<Types />}
+          />
+        </Routes>
       </BrowserRouter>
     </Providers>
   );
 };
 
-export default hot(module)(App);
+export default App;

@@ -3,11 +3,9 @@ import Box from '@mui/material/Box';
 import { cplVar } from '../utils/helpers';
 import debounce from '@mui/utils/debounce';
 
-import { Link, useLocation } from 'react-router-dom';
-import { useHistory } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
-
 import LoadingIndicator from '../Elements/LoadingIndicator';
 import ErrorDisplay from '../Elements/ErrorDisplay';
 import ItemMeta from './ItemMeta';
@@ -15,14 +13,14 @@ import SearchInput from '../Elements/SearchInput';
 
 import Player from '../Components/Item/Player';
 
-export default function ItemDetail({
-  itemId,
-}) {
+export default function ItemDetail() {
+	const { itemId }   = useParams();
+
   const [item, setItem] = useState();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState();
 	const itemContainer = useRef(false);
-  const history      = useHistory();
+  const navigate     = useNavigate();
 	const location     = useLocation();
 
 	const handleSearchInputChange = debounce((value) => {
@@ -34,14 +32,14 @@ export default function ItemDetail({
 			return;
 		}
 
-		history.push(`${cplVar( 'path', 'site' )}/${cplVar( 'slug', 'item' )}?s=${value}`);
+		navigate(`${cplVar( 'path', 'site' )}/${cplVar( 'slug', 'item' )}?s=${value}`);
 	}, 1000);
 
   // Fetch the individual item when mounted.
   useEffect(() => {
 
 		// allow for an item passed by state
-		if ( undefined !== location.state && location.state.item ) {
+		if ( location.state?.item ) {
 			setItem(location.state.item);
 			setLoading(false);
 			itemContainer.current.scrollIntoView({behavior: 'smooth'});

@@ -18,7 +18,7 @@ import ErrorDisplay from '../Elements/ErrorDisplay';
 import PlayPause from '../Elements/Buttons/PlayPause';
 import Logo from '../Elements/Logo';
 import { ThemeProvider } from '@mui/material/styles';
-import theme from "../Templates/Theme";
+import theme from "./Theme";
 import throttle from 'lodash.throttle';
 import { usePersistentPlayer } from '../Contexts/PersistentPlayerContext';
 

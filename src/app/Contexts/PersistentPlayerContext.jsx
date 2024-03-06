@@ -1,4 +1,4 @@
-import { createContext, useReducer, useContext, useEffect, useCallback } from "react";
+import { createContext, useReducer, useContext, useEffect, useCallback, useRef } from "react";
 import ReactDOM from 'react-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { cplLog } from '../utils/helpers';
@@ -7,6 +7,7 @@ import PersistentPlayer from "../Templates/PersistentPlayer";
 import theme from "../Templates/Theme";
 // TODO: Refactor to avoid circular dependency
 import Providers from "./Providers";
+import { createRoot } from "react-dom/client";
 
 const PersistentPlayerContext = createContext()
 
@@ -42,6 +43,7 @@ function reducer(state, action) {
 
 function PersistentPlayerProvider({children}) {
   const [state, dispatch] = useReducer(reducer, defaultState);
+  const root = useRef(null);
 
   useEffect(() => {
     const alreadyActive = window.top.document.body.classList.contains("cpl-persistent-player");
@@ -74,11 +76,14 @@ function PersistentPlayerProvider({children}) {
   const passToPersistentPlayer = useCallback(({ item, mode, isPlaying, playedSeconds }) => {
     if (!state.isActive) {
       const player = window.top.document.getElementById('cpl_persistent_player');
-      ReactDOM.render(
+
+      root.current = createRoot(player)
+
+      root.current.render(
         <Providers>
           <PersistentPlayer />
-        </Providers>, 
-      player);
+        </Providers>
+      )
     }
 
  	  setTimeout(() => {
@@ -102,7 +107,9 @@ function PersistentPlayerProvider({children}) {
 
   const closePersistentPlayer = () => {
     const player = window.top.document.getElementById('cpl_persistent_player');
-    ReactDOM.unmountComponentAtNode(player);
+
+    root.current?.unmount()
+
     window.top.document.body.classList.remove('cpl-persistent-player');
     window.top.postMessage({
       action: "CPL_PERSISTENT_PLAYER_CLOSED",

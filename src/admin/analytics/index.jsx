@@ -1,13 +1,9 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
+import { createRoot } from 'react-dom/client'
 import Analytics from './Analytics'
 
 const analyticsElem = document.getElementById('cpl-analytics')
 
-
 if(analyticsElem) {
-  ReactDOM.render(<Analytics />, analyticsElem)
+  createRoot(analyticsElem).render(<Analytics />)
 }
-
-
-

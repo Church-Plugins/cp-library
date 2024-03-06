@@ -1,5 +1,5 @@
 import React 		from 'react';
-import ReactDOM 	from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 import App from "./Templates/App";
 import ItemDetail from "./Templates/ItemDetail";
@@ -32,24 +32,23 @@ if (root) {
 	}
 
 	if ( 0 < itemId ) {
-		ReactDOM.render(<App itemId={itemId} />, root );
+		createRoot(root).render( <App itemId={itemId} /> );
 	} else {
-
-		ReactDOM.render(<App />, root );
+		createRoot(root).render(<App />);
 	}
 }
 
 if (itemList) {
-	ReactDOM.render(<ItemList/>, itemList);
+	createRoot(itemList).render(<ItemList/>);
 }
 
 if (itemWidget) {
 	let item = JSON.parse(itemWidget.getAttribute('data-item'));
 
 	if (item) {
-		ReactDOM.render(<ItemWidget item={item}/>, itemWidget);
+		createRoot(itemWidget).render(<ItemWidget item={item}/>);
 	} else {
-		ReactDOM.render(<ItemWidget/>, itemWidget);
+		createRoot(itemWidget).render(<ItemWidget/>);
 	}
 }
 
@@ -57,34 +56,40 @@ if (videoWidget) {
 	let item = JSON.parse(videoWidget.getAttribute('data-item'));
 
 	if ( item ) {
-		ReactDOM.render(<VideoWidget item={item}/>, videoWidget);
+		createRoot(videoWidget).render(<VideoWidget item={item}/>);
 	} else {
-		ReactDOM.render(<VideoWidget />, videoWidget);
+		createRoot(videoWidget).render(<VideoWidget />);
 	}
 }
 
 if( item ) {
-	ReactDOM.render( <ItemDetail />, root );
+	createRoot(root).render( <ItemDetail /> );
 }
 
 if ( itemActions.length ) {
 	for ( let i = 0; i < itemActions.length; i++ ) {
 		let item = JSON.parse(itemActions[i].getAttribute('data-item'));
-		ReactDOM.render(<ItemActions item={item}/>, itemActions[i], () => itemActions[i].dispatchEvent(renderEvent));
+
+		createRoot(itemActions[i]).render(
+			<ItemActions
+				callback={() => itemActions[i].dispatchEvent(renderEvent)}
+				item={item}
+			/>
+		);
 	}
 }
 
 if ( itemPlayers.length ) {
 	for ( let i = 0; i < itemPlayers.length; i++ ) {
 		let item = JSON.parse(itemPlayers[i].getAttribute('data-item'));
-		ReactDOM.render(<ItemPlayer item={item}/>, itemPlayers[i]);
+		createRoot(itemPlayers[i]).render(<ItemPlayer item={item}/>);
 	}
 }
 
 if ( playBtnOverlays.length ) {
 	for ( const overlay of playBtnOverlays ) {
 		const item = JSON.parse(overlay.getAttribute('data-item'));
-		ReactDOM.render(<PlayOverlay item={item} />, overlay)
+		createRoot(overlay).render(<PlayOverlay item={item} />);
 	}
 }
 
@@ -94,7 +99,7 @@ window.addEventListener( 'cp-render-item-actions', function(e) {
 	if ( actions.length ) {
 		for ( let i = 0; i < actions.length; i++ ) {
 			let item = JSON.parse(actions[i].getAttribute('data-item'));
-			ReactDOM.render(<ItemActions item={item}/>, actions[i]);
+			createRoot(actions[i]).render(<ItemActions item={item}/>);
 		}
 	}
 }, false );

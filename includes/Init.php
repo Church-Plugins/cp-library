@@ -1,8 +1,10 @@
 <?php
 namespace CP_Library;
 
+use Automattic\Jetpack\Search\Helper;
 use CP_Library\Admin\Settings;
 use CP_Library\Controllers\Shortcode as Shortcode_Controller;
+use ChurchPlugins\Helpers;
 
 /**
  * Provides the global $cp_library object
@@ -189,7 +191,8 @@ class Init {
 	 * Enqueue scripts for analytics dashboard
 	 */
 	public function enqueue_analytics_scripts() {
-		$this->enqueue->enqueue( 'app', 'analytics', array( 'js_dep' => array( 'jquery' ) ) );
+		Helpers::enqueue_asset( 'admin-analytics', [ 'jquery' ] );
+		// $this->enqueue->enqueue( 'app', 'analytics', array( 'js_dep' => array( 'jquery' ) ) );
 	}
 
 	/**
@@ -284,15 +287,16 @@ class Init {
 
 		wp_register_script( 'cpl_facets', CP_LIBRARY_PLUGIN_URL . '/assets/js/facets.js', array( 'jquery' ), CP_LIBRARY_PLUGIN_VERSION, true );
 
-		$scripts = $this->enqueue->enqueue( 'app', 'main', array( 'js_dep' => array( 'jquery', 'cpl_facets' ) ) );
+		// $scripts = $this->enqueue->enqueue( 'app', 'main', array( 'js_dep' => array( 'jquery', 'cpl_facets' ) ) );
 
-		if ( isset( $scripts['js'], $scripts['js'][0], $scripts['js'][0]['handle'] ) ) {
-			wp_localize_script( $scripts['js'][0]['handle'], 'cplVars', $this->cpl_vars() );
+		$script  = Helpers::enqueue_asset( 'app', [ 'jquery', 'cpl_facets' ], false, false, true );
+
+		if ( ! empty( $script ) ) {
+			wp_localize_script( $script['handle'], 'cplVars', $this->cpl_vars() );
 		}
 
 		wp_enqueue_style( 'material-icons' );
 		wp_enqueue_script( 'feather-icons' );
-
 	}
 
 	/**
@@ -376,6 +380,8 @@ class Init {
 	public function cpl_vars() {
 		global $wp_query;
 
+		$stuff = Settings::get( 'cpl_item_options', 'cheezy' );
+
 		return apply_filters(
 			'cpl_app_vars',
 			array(
@@ -397,6 +403,16 @@ class Init {
 				'_n'      => wp_create_nonce( 'cpl-admin' ),
 				'query_vars' => $wp_query->query_vars,
 				'postTypes' => $this->setup->post_types->get_post_type_info(),
+				'item' => array(
+					'labelSingular' => cp_library()->setup->post_types->item->single_label,
+					'labelPlural'   => cp_library()->setup->post_types->item->plural_label,
+					'slug'          => Settings::get( 'slug', 'sermons', 'cpl_item_options' )
+				),
+				'item_type' => array(
+					'labelSingular' => cp_library()->setup->post_types->item_type->single_label,
+					'labelPlural'   => cp_library()->setup->post_types->item_type->plural_label,
+					'slug'          => Settings::get( 'slug', 'series', 'cpl_item_type_options' )
+				),
 			)
 		);
 	}

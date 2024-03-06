@@ -1,17 +1,17 @@
 import Box from '@mui/material/Box';
 import { cplVar } from '../utils/helpers';
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function ItemMeta({
   date,
   category = [],
 	setActiveFilters
 }) {
-  const history      = useHistory();
+  const navigate = useNavigate();
 
 	const metaClick = (slug, type) => {
 		if ( undefined === setActiveFilters ) {
-			history.push(`${cplVar( 'path', 'site' )}/${cplVar( 'slug', 'item' )}?${type}=${slug}`);
+			navigate(`${cplVar( 'path', 'site' )}/${cplVar( 'slug', 'item' )}?${type}=${slug}`);
 			return false;
 		}
 

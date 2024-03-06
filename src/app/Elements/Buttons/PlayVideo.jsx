@@ -1,7 +1,7 @@
 import React from 'react';
 import Box from '@mui/material/Box';
 import { PlayArrow } from "@mui/icons-material"
-import Rectangular from '../../Elements/Buttons/Rectangular';
+import Rectangular from './Rectangular';
 import { cplVar } from '../../utils/helpers';
 
 export default function PlayVideo({onClick, disabled = false, variant = "primary"}) {

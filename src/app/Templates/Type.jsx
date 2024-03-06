@@ -5,7 +5,7 @@ import ListItem from '@mui/material/ListItem';
 import IconButton from '@mui/material/IconButton';
 import { ChevronRight, Volume1 } from "react-feather"
 import ReactDOM from 'react-dom';
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { cplVar } from '../utils/helpers';
 
 import useBreakpoints from '../Hooks/useBreakpoints';
@@ -22,7 +22,7 @@ export default function Type({
 
   const displayTitle = item.title.replace( "&#8217;", "'" );
   const displayBg    = item.thumb ? { background: "url(" + item.thumb + ")", backgroundSize: "cover" } : {backgroundColor: "#C4C4C4"};
-  const history      = useHistory();
+  const navigate     = useNavigate();
 
   return (
     <ListItem
@@ -35,7 +35,7 @@ export default function Type({
           background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(196, 196, 196, 0) 109.68%)'
         }
       }}
-      onClick={() => history.push(`/${cplVar( 'slug', 'item_type' )}/${item.originID}`)}
+      onClick={() => navigate(`/${cplVar( 'slug', 'item_type' )}/${item.originID}`)}
     >
       <Box className="cpl-item--content" display="flex" flexDirection="row" width="100%">
         <Box className="cpl-item--thumb" flex={0} display="flex" alignItems="center">
@@ -111,10 +111,10 @@ export function ItemActions({
     });
 	};
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   return (
-    <IconButton className="cplItem__toItem" onClick={() => history.push(`/talks/${item.originID}`)}>
+    <IconButton className="cplItem__toItem" onClick={() => navigate(`/talks/${item.originID}`)}>
       <ChevronRight/>
     </IconButton>
   );

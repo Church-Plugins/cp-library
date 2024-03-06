@@ -8,6 +8,7 @@ import { cplVar } from '../utils/helpers';
 
 import { Play, Volume1, Share2 } from "react-feather"
 import VideoPlayer from "react-player";
+
 import { Link } from 'react-router-dom';
 
 import useBreakpoints from '../Hooks/useBreakpoints';

@@ -1,14 +1,12 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
+import { createRoot } from 'react-dom/client'
 
 import Dashboard from './Dashboard'
 
 const root = document.getElementById('cpl-migration-root')
 
-console.log("Hello, react")
-
 if(root) {
 	const details = JSON.parse(root.dataset.details)
 
-	ReactDOM.render(<Dashboard data={details} />, root)
+	createRoot(root).render(<Dashboard data={details} />)
 }

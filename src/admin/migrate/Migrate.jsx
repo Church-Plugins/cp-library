@@ -48,7 +48,6 @@ export default function Migrate({ plugin, onComplete }) {
 			},
 			success: function (response) {
 				if( ! response.success ) {
-					console.log("Error getting progress", response)
 					setError(response.data.message)
 					setStatus('not_started')
 					return;
@@ -72,7 +71,6 @@ export default function Migrate({ plugin, onComplete }) {
 			await triggerMigrationStart()
 			updateProgress({ status: 'in_progress', progress: 5 })
 		} catch (error) {
-			console.log("Error starting migration", error)
 			setStatus('not_started')
 			setError("Error starting migration: " + error.message)
 			return;

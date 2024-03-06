@@ -1,6 +1,6 @@
 import React from 'react';
 import Box from '@mui/material/Box';
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { cplVar } from '../utils/helpers';
 
 import ItemMeta from "./ItemMeta";
@@ -15,7 +15,7 @@ export default function Item({
 }) {
   const displayTitle = item.title.replace( "&#8217;", "'" );
   const displayBg    = item.thumb ? { background: "url(" + item.thumb + ")", backgroundSize: "cover" } : {backgroundColor: "#C4C4C4"};
-  const history      = useHistory();
+  const navigate     = useNavigate();
 	const getClass = () => {
 		let itemClass = 'cpl-list-item';
 
@@ -36,10 +36,9 @@ export default function Item({
 	const itemClass = getClass();
 
 	const toItem = () => {
-		history.push({
-			pathname: `${cplVar( 'path', 'site' )}/${cplVar( 'slug', 'item' )}/${item.slug}`,
-			state: { item: item }
-		});
+		navigate(`${cplVar( 'path', 'site' )}/${cplVar( 'slug', 'item' )}/${item.slug}`, {
+			state: { item }
+		})
 	}
 
   return (
