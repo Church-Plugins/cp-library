@@ -1,1 +1,1 @@
-module.exports = require('./includes/ChurchPlugins/webpack-default.config');
+module.exports = require('./includes/ChurchPlugins/webpack.config');

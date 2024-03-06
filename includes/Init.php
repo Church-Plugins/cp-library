@@ -198,41 +198,35 @@ class Init {
 	 * Enqueue scripts on our admin pages
 	 */
 	public function admin_scripts() {
-
-		$this->enqueue->enqueue( 'styles', 'admin', [] );
 		wp_enqueue_style( 'material-icons' );
+		\ChurchPlugins\Helpers::enqueue_asset( 'admin-scss', [], false, true );
 
 		if ( ! $this->is_admin_page() ) {
 			 return;
 		}
 
-		$this->enqueue->enqueue( 'styles', 'admin', [] );
-		wp_enqueue_script( 'inline-edit-post' );
-
-		$scripts = $this->enqueue->enqueue( 'scripts', 'admin', array( 'jquery', 'select2' ) );
-
-		// Expose variables to JS.
-		$entry_point = array_pop( $scripts['js'] );
+		$script = \ChurchPlugins\Helpers::enqueue_asset( 'admin-main', [ 'jquery' ], false, false, true );
 		wp_localize_script(
-			$entry_point['handle'],
+			$script['handle'],
 			'cplAdmin',
 			$this->cpl_vars(),
 		);
+
+		wp_enqueue_script( 'inline-edit-post' );
 	}
 
 	/**
 	 * Enqueue block editor assets.
 	 */
 	public function block_editor_assets() {
-		$this->enqueue->enqueue( 'styles', 'main', array() );
+		\ChurchPlugins\Helpers::enqueue_asset( 'scss', [], false, true );
+
 		wp_enqueue_style( 'material-icons' );
 		wp_enqueue_script( 'feather-icons' );
 
-		$scripts     = $this->enqueue->enqueue( 'scripts', 'block_editor', array( 'js_dep' => array( 'jquery' ) ) );
-		$entry_point = array_pop( $scripts['js'] );
-
+		$script = \ChurchPlugins\Helpers::enqueue_asset( 'admin-block-editor', [ 'jquery' ], false, false, true );
 		wp_localize_script(
-			$entry_point['handle'],
+			$script['handle'],
 			'cplAdmin',
 			$this->cpl_vars(),
 		);
@@ -273,12 +267,13 @@ class Init {
 	 * @author costmo
 	 */
 	public function app_enqueue() {
-		$this->enqueue->enqueue( 'styles', 'main', array() );
-		$main_script = $this->enqueue->enqueue( 'scripts', 'main', array( 'js_dep' => array( 'jquery' ) ) );
+		\ChurchPlugins\Helpers::enqueue_asset( 'scss', [], false, true );
 
-		if ( isset( $main_script['js'], $main_script['js'][0], $main_script['js'][0]['handle'] ) ) {
+		$main_script = \ChurchPlugins\Helpers::enqueue_asset( 'main', [ 'jquery' ], false, false, true );
+
+		if ( ! empty( $main_script ) ) {
 			wp_add_inline_script(
-				$main_script['js'][0]['handle'],
+				$main_script['handle'],
 				'jQuery(document).ready(function() {jQuery("body").append(\'<div id="cpl_persistent_player"></div>\');});',
 				'after'
 			);

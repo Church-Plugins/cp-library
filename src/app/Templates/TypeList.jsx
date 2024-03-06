@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Box from '@mui/material/Box';
 import List from '@mui/material/List';
-import { makeStyles } from '@mui/styles';
 import Pagination from '@mui/material/Pagination';
 import async from 'async';
 
@@ -18,21 +17,6 @@ function TypeList({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const { isDesktop } = useBreakpoints();
-
-  const useStyles = makeStyles(() => ({
-	ul: {
-	  "& .MuiPaginationItem-root": {
-		color: "#fff"
-	  },
-	  "& .MuiPaginationItem-root:hover": {
-		backgroundColor: "rgba(255, 255, 255, 0.2)"
-	  },
-	  "& .Mui-selected": {
-		backgroundColor: "rgba(255, 255, 255, 0.4) !important"
-	  }
-	}
-  }));
-  const classes = useStyles();
 
   useEffect(() => {
     (async () => {
@@ -93,7 +77,19 @@ function TypeList({
 		<Box className="talks__paginationContainer" paddingY={1}>
 			{1 < items.pages ? (
 				<Pagination
-					classes={{ul: classes.ul}}
+					sx={[
+						{
+							"& .MuiPaginationItem-root": {
+								color: "#fff"
+							},
+							"& .MuiPaginationItem-root:hover": {
+								backgroundColor: "rgba(255, 255, 255, 0.2)"
+							},
+							"& .Mui-selected": {
+								backgroundColor: "rgba(255, 255, 255, 0.4) !important"
+							}
+						}
+					]}
 					size={isDesktop ? 'large' : 'small'}
 					count={items.pages}
 					defaultPage={items.page}

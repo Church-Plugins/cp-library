@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
-import { makeStyles } from '@mui/styles';
 import Pagination from '@mui/material/Pagination';
 
 import Item from './Item';
@@ -17,20 +16,6 @@ function ItemList ({
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState();
 	const {isDesktop} = useBreakpoints();
-
-	const useStyles = makeStyles(() => (
-		{
-			ul: {
-				'& .MuiPaginationItem-root:hover': {
-					backgroundColor: 'rgba(255, 255, 255, 0.2)'
-				},
-				'& .Mui-selected'                : {
-					backgroundColor: 'rgba(255, 255, 255, 0.4) !important'
-				}
-			}
-		}
-	));
-	const classes = useStyles();
 
 	useEffect(() => {
 		(
@@ -110,7 +95,16 @@ function ItemList ({
 			{1 < items.pages && (
 				<Box className="navigation pagination cpl-pagination">
 					<Pagination
-						classes={{ul: classes.ul}}
+						sx={[
+							{
+								'& .MuiPaginationItem-root:hover': {
+									backgroundColor: 'rgba(255, 255, 255, 0.2)'
+								},
+								'& .Mui-selected': {
+									backgroundColor: 'rgba(255, 255, 255, 0.4) !important'
+								}
+							}
+						]}
 						size={isDesktop ? 'large' : 'small'}
 						count={items.pages}
 						defaultPage={items.page}
