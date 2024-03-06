@@ -1,10 +1,8 @@
 import React from 'react';
 import Box from '@mui/material/Box';
-import { PlayArrow, PlayCircleOutline } from "@mui/icons-material"
 import ListItem from '@mui/material/ListItem';
 import IconButton from '@mui/material/IconButton';
-import { ChevronRight, Volume1 } from "react-feather"
-import ReactDOM from 'react-dom';
+import { ChevronRight } from "react-feather"
 import { useNavigate } from "react-router-dom";
 import { cplVar } from '../utils/helpers';
 

@@ -1,6 +1,8 @@
 import IconButton from '@mui/material/IconButton';
-import { PauseCircle, PlayCircle, Pause, PlayArrow } from "@mui/icons-material"
-import React, { useState, useEffect, useRef } from 'react';
+import PauseCircle from "@mui/icons-material/PauseCircle";
+import PlayCircle from "@mui/icons-material/PlayCircle";
+import Pause from "@mui/icons-material/Pause";
+import PlayArrow from "@mui/icons-material/PlayArrow";
 import CircularProgress from '@mui/material/CircularProgress';
 
 export default function PlayPause({

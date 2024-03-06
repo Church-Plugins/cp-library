@@ -1,46 +1,14 @@
 
-import { MemoryRouter, Switch, Route, BrowserRouter, Routes } from "react-router-dom";
-import React, { useState, useEffect } from 'react';
-import { hot } from 'react-hot-loader';
+import { Route, BrowserRouter, Routes } from "react-router-dom";
 
 import Items from "./Items";
 import Types from "./Types";
 import ItemDetail from "./ItemDetail";
 import TypeDetail from "./TypeDetail";
-import { PersistentPlayerProvider } from "../Contexts/PersistentPlayerContext";
-import BottomNavigation from '@mui/material/BottomNavigation';
-import BottomNavigationAction from '@mui/material/BottomNavigationAction';
-import AddComment from '@mui/icons-material/AddComment';
-import Link from '@mui/icons-material/Link';
-import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
-import useBreakpoints from '../Hooks/useBreakpoints';
 import { cplVar } from '../utils/helpers';
 import Providers from "../Contexts/Providers";
 
-const App = ({
-  itemId, typeId
-}) => {
-  const initialPath = itemId === undefined ? "/" + cplVar( 'slug', 'item' ) : `/${cplVar( 'slug', 'item' )}/${itemId}`;
-  const { isDesktop } = useBreakpoints();
-
-  const navClick = (path, newWindow = false) => {
-    const link = document.createElement('a');
-    link.href = path;
-
-    if ( newWindow ) {
-    	link.setAttribute( 'target', '_blank' );
-    }
-
-    // Append to html link element page
-    document.body.appendChild(link);
-
-    // Start download
-    link.click();
-
-    // Clean up and remove the link
-    link.parentNode.removeChild(link);
-  };
-
+const App = () => {
   return (
     <Providers>
       <BrowserRouter basename="/">

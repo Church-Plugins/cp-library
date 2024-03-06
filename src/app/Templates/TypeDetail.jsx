@@ -22,7 +22,6 @@ import SearchInput from '../Elements/SearchInput';
 import Rectangular from '../Elements/Buttons/Rectangular';
 import Logo from '../Elements/Logo';
 
-import { PictureInPicture, Forward30, Replay10, Fullscreen, PlayCircleOutline, Facebook, Twitter, Download, Link as LinkIcon } from "@mui/icons-material"
 import Slider from '@mui/material/Slider';
 import IconButton from '@mui/material/IconButton';
 import ReactDOM from 'react-dom';

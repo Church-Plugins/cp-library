@@ -1,32 +1,22 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
 import { cplVar, cplLog, cplMarker, isURL } from '../../utils/helpers';
-
-import { Play, Volume1, Share2 } from "react-feather"
 import PlayerWrapper from '../PlayerWrapper';
-
 import useBreakpoints from '../../Hooks/useBreakpoints';
 import { usePersistentPlayer } from '../../Contexts/PersistentPlayerContext';
-
-import Rectangular from '../../Elements/Buttons/Rectangular';
 import Logo from '../../Elements/Logo';
-
-import { PictureInPicture, Forward30, Replay10, OpenInFull, PlayCircleOutline, Facebook, Twitter, Download, Link as LinkIcon } from "@mui/icons-material"
+import PictureInPicture from "@mui/icons-material/PictureInPicture";
+import Forward30 from "@mui/icons-material/Forward30";
+import Replay10 from "@mui/icons-material/Replay10";
+import OpenInFull from "@mui/icons-material/OpenInFull";
+import PlayCircleOutline from "@mui/icons-material/PlayCircleOutline";
 import Slider from '@mui/material/Slider';
 import IconButton from '@mui/material/IconButton';
 import ReactDOM from 'react-dom';
 import screenfull from 'screenfull';
-
 import formatDuration from '../../utils/formatDuration';
 import PlayPause from '../../Elements/Buttons/PlayPause';
-
-import PlayAudio from '../../Elements/Buttons/PlayAudio';
-import PlayVideo from '../../Elements/Buttons/PlayVideo';
-
 import throttle from 'lodash.throttle';
-import jQuery from 'jquery';
 import Controls from './Controls';
 
 

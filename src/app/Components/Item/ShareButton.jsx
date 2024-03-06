@@ -5,7 +5,10 @@ import MenuItem from '@mui/material/MenuItem';
 import Menu from "@mui/material/Menu";
 import Rectangular from "../../Elements/Buttons/Rectangular";
 import { Share2 } from "react-feather";
-import { Facebook, Twitter, Download, Link as LinkIcon } from '@mui/icons-material';
+import Facebook from '@mui/icons-material/Facebook';
+import Twitter from '@mui/icons-material/Twitter';
+import Download from '@mui/icons-material/Download';
+import LinkIcon from '@mui/icons-material/Link';
 
 export default function ShareButton({ item, variant = "outlined" }) {
   const [anchorEl, setAnchorEl] = useState(null);

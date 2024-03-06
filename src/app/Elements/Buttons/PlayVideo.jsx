@@ -1,6 +1,6 @@
 import React from 'react';
 import Box from '@mui/material/Box';
-import { PlayArrow } from "@mui/icons-material"
+import PlayArrow from "@mui/icons-material/PlayArrow";
 import Rectangular from './Rectangular';
 import { cplVar } from '../../utils/helpers';
 

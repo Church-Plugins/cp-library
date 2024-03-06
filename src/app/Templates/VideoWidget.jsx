@@ -1,18 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
-import Divider from '@mui/material/Divider';
-import { Play, Volume1, Share2 } from 'react-feather';
-import * as VideoPlayer from 'react-player/vimeo';
-import ReactDOM from 'react-dom';
-
 import useBreakpoints from '../Hooks/useBreakpoints';
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 import { cplLog } from '../utils/helpers';
-
 import LoadingIndicator from '../Elements/LoadingIndicator';
 import ErrorDisplay from '../Elements/ErrorDisplay';
-import { PlayCircleOutline } from "@mui/icons-material"
-import { usePersistentPlayer, PersistentPlayerProvider } from '../Contexts/PersistentPlayerContext';
+import PlayCircleOutline from "@mui/icons-material/PlayCircleOutline";
+import { usePersistentPlayer } from '../Contexts/PersistentPlayerContext';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from "../Templates/Theme";
 import Logo from '../Elements/Logo';

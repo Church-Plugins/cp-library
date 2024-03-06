@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 import PlayerWrapper from '../Components/PlayerWrapper';
-import FilePlayer from 'react-player/file';
 import Slider from '@mui/material/Slider';
 import IconButton from '@mui/material/IconButton';
 import ReactDOM from 'react-dom';
 import screenfull from 'screenfull';
 
-import { Cancel, Fullscreen, PictureInPicture, Forward30, Replay10, OpenInFull, PlayCircleOutline, Facebook, Twitter, Download, Link as LinkIcon } from "@mui/icons-material"
-
+import Cancel from "@mui/icons-material/Cancel";
+import Forward30 from "@mui/icons-material/Forward30";
+import Replay10 from "@mui/icons-material/Replay10";
+import OpenInFull from "@mui/icons-material/OpenInFull";
 import useBreakpoints from '../Hooks/useBreakpoints';
 import formatDuration from '../utils/formatDuration';
 import { cplLog, cplMarker } from '../utils/helpers';
