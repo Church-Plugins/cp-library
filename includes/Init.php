@@ -191,8 +191,7 @@ class Init {
 	 * Enqueue scripts for analytics dashboard
 	 */
 	public function enqueue_analytics_scripts() {
-		Helpers::enqueue_asset( 'admin-analytics', [ 'jquery' ] );
-		// $this->enqueue->enqueue( 'app', 'analytics', array( 'js_dep' => array( 'jquery' ) ) );
+		Helpers::enqueue_asset( 'admin-analytics', [ 'jquery' ], false, false, true );
 	}
 
 	/**
@@ -286,8 +285,6 @@ class Init {
 		}
 
 		wp_register_script( 'cpl_facets', CP_LIBRARY_PLUGIN_URL . '/assets/js/facets.js', array( 'jquery' ), CP_LIBRARY_PLUGIN_VERSION, true );
-
-		// $scripts = $this->enqueue->enqueue( 'app', 'main', array( 'js_dep' => array( 'jquery', 'cpl_facets' ) ) );
 
 		$script  = Helpers::enqueue_asset( 'app', [ 'jquery', 'cpl_facets' ], false, false, true );
 

@@ -164,8 +164,7 @@ class SetupWizard {
 		$screen_check_id = "{$post_type}_page_" . self::$page_name;
 
 		if ( $screen->id === $screen_check_id ) {
-			// \CP_Library\Init::get_instance()->enqueue->enqueue( 'app', 'migration', array( 'js_dep' => array( 'jquery' ) ) );
-			\ChurchPlugins\Helpers::enqueue_asset( 'admin-migration', [ 'jquery' ] );
+			\ChurchPlugins\Helpers::enqueue_asset( 'admin-migration', [ 'jquery' ], false, false, true );
 		}
 	}
 
