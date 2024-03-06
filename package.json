@@ -3,11 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "bootstrap": "wpackio-scripts bootstrap",
-    "styles": "wpackio-scripts build",
-    "build": "wpackio-scripts build && npm run build:blocks",
-    "start": "wpackio-scripts start",
-    "archive": "wpackio-scripts pack",
     "dev:blocks": "wp-scripts start --webpack-src-dir=blocks/ --output-path=dist/blocks",
     "build:blocks": "wp-scripts build --webpack-src-dir=blocks/ --output-path=dist/blocks",
     "start:wp": "wp-scripts start",
