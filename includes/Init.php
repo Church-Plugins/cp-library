@@ -49,13 +49,6 @@ class Init {
 	public $adapters;
 
 	/**
-	 * The Enqueue class instance
-	 *
-	 * @var \WPackio\Enqueue
-	 */
-	public $enqueue;
-
-	/**
 	 * CP Sermons modules for page builders
 	 *
 	 * @var Modules\Init
@@ -79,7 +72,6 @@ class Init {
 	 * Class constructor: Add Hooks and Actions
 	 */
 	protected function __construct() {
-		$this->enqueue = new \WPackio\Enqueue( 'cpLibrary', 'dist', $this->get_version(), 'plugin', CP_LIBRARY_PLUGIN_FILE );
 		add_action( 'cp_core_loaded', array( $this, 'maybe_setup' ), - 9999 );
 		add_action( 'init', array( $this, 'maybe_init' ) );
 	}
