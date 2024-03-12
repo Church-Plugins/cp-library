@@ -83,6 +83,7 @@ class Extension extends \DiviExtension {
 	 * Register module assets
 	 */
 	public function enqueue_assets() {
-		cp_library()->enqueue->enqueue( 'modules', 'divi', array( 'js_dep' => array( 'jquery' ) ) );
+		\ChurchPlugins\Helpers::enqueue_asset( 'divi', [ 'jquery' ], false, false, true );
+		\ChurchPlugins\Helpers::enqueue_asset( 'divi', [], false, true );
 	}
 }
