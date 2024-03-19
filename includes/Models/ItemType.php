@@ -78,6 +78,7 @@ class ItemType extends Table  {
 			$sort_by    = Settings::get_item_type( 'item_sort_by', 'post_date' );
 
 			// sanitize sort options
+			// TODO: find a non-hardcoded way to do this (if necessary)
 			if ( ! in_array( $sort_order, [ 'ASC', 'DESC' ] ) ) {
 				$sort_order = 'DESC';
 			}
