@@ -77,16 +77,6 @@ class ItemType extends Table  {
 			$sort_order = Settings::get_item_type( 'item_sort_order', 'DESC' );
 			$sort_by    = Settings::get_item_type( 'item_sort_by', 'post_date' );
 
-			// sanitize sort options
-			// TODO: find a non-hardcoded way to do this (if necessary)
-			if ( ! in_array( $sort_order, [ 'ASC', 'DESC' ] ) ) {
-				$sort_order = 'DESC';
-			}
-
-			if ( ! in_array( $sort_by, [ 'post_date', 'post_title' ] ) ) {
-				$sort_by = 'post_date';
-			}
-
 			// Return items for this Type in POST date order
 			$prepared = $wpdb->prepare(
 				"SELECT		{$item->table_name}.*
@@ -98,8 +88,6 @@ class ItemType extends Table  {
 				 ORDER BY {$wpdb->prefix}posts.{$sort_by} {$sort_order}",
 				$this->id
 			);
-
-			print_r($prepared);
 
 			$this->items = $wpdb->get_results( $prepared );
 
