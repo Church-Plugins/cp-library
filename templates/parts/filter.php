@@ -48,7 +48,7 @@ $disabled_filters = Settings::get_advanced( 'disable_filters', array() );
 		<?php if ( $is_item_archive && cp_library()->setup->post_types->service_type_enabled() && ! in_array( 'service_type', $disabled_filters ) ) : ?>
 			<div class="cpl-filter--service_type cpl-filter--has-dropdown" <?php echo $display; // phpcs:ignore ?>>
 				<a href="#" class="cpl-filter--dropdown-button cpl-button is-light"><?php echo esc_html( cp_library()->setup->post_types->service_type->single_label ); ?></a>
-				<div class="<?php echo $dropdown_class; ?>" data-facet-type="service_type">
+				<div class="<?php echo $dropdown_class; ?>" data-facet-type="service-type">
 				</div>
 			</div>
 		<?php endif; ?>
