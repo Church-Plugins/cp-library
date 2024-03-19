@@ -7,6 +7,7 @@ use CP_Library\Setup\Tables\ItemMeta;
 use CP_Library\Setup\Tables\Item;
 use CP_Library\Models\Item as ItemModel;
 use ChurchPlugins\Models\Table;
+use CP_Library\Admin\Settings;
 
 /**
  * Item DB Class
@@ -73,6 +74,18 @@ class ItemType extends Table  {
 			$meta = ItemMeta::get_instance();
 			$item = Item::get_instance();
 
+			$sort_order = Settings::get_item_type( 'item_sort_order', 'DESC' );
+			$sort_by    = Settings::get_item_type( 'item_sort_by', 'post_date' );
+
+			// sanitize sort options
+			if ( ! in_array( $sort_order, [ 'ASC', 'DESC' ] ) ) {
+				$sort_order = 'DESC';
+			}
+
+			if ( ! in_array( $sort_by, [ 'post_date', 'post_title' ] ) ) {
+				$sort_by = 'post_date';
+			}
+
 			// Return items for this Type in POST date order
 			$prepared = $wpdb->prepare(
 				"SELECT		{$item->table_name}.*
@@ -81,9 +94,11 @@ class ItemType extends Table  {
 				 			{$meta->table_name}.item_type_id = %d AND
 							{$item->table_name}.id = {$meta->table_name}.item_id AND
 							{$wpdb->prefix}posts.ID = {$item->table_name}.origin_id
-				 ORDER BY 	{$wpdb->prefix}posts.post_date ASC",
+				 ORDER BY {$wpdb->prefix}posts.{$sort_by} {$sort_order}",
 				$this->id
 			);
+
+			print_r($prepared);
 
 			$this->items = $wpdb->get_results( $prepared );
 
