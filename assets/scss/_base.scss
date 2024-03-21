@@ -5,7 +5,7 @@
 	color: var(--cpl--text-color);
 	margin: var(--cp-gap--md) auto;
 
-	.cpl-layout-vertical {
+	&.has-vertical-layout {
 		padding-top: 0;
 		padding-left: 0;
 		padding-right: 0;
