@@ -150,12 +150,18 @@ class AJAX {
 			}
 		}
 
+		$show_count = 'show' === Settings::get_advanced( 'show_filter_count', 'show' );
+
 		?>
 		<?php foreach ( $items as $item ) : ?>
 			<label class="cp-has-checkmark">
 				<input type="checkbox" <?php checked( in_array( $item->value, $selected, true ) ); ?> name="<?php echo esc_attr( $facet_type ); ?>[]" value="<?php echo esc_attr( $item->value ); ?>"/>
 				<span class="cp-checkmark"></span>
-				<span class="cp-filter-label"><?php echo esc_html( $item->title ); ?> <sup class="cp-filter-count">(<?php echo esc_html( $item->count ); ?>)</sup></span>
+				<span class="cp-filter-label"><?php echo esc_html( $item->title ); ?>
+					<?php if ( $show_count ) : ?>
+						<sup class="cp-filter-count">(<?php echo esc_html( $item->count ); ?>)</sup>
+					<?php endif; ?>
+				</span>
 			</label>
 		<?php endforeach; ?>
 		<?php

@@ -690,6 +690,7 @@ class Settings {
 		);
 
 		add_thickbox();
+
 		$advanced_options->add_field( array(
 			'name'    => __( 'Enable Built-in Seasons' ),
 			'id'      => 'season_terms_enabled',
@@ -729,6 +730,20 @@ class Settings {
 				'name' => __( 'Filters', 'cp-library' ),
 				'id'   => 'filters',
 				'type' => 'title',
+			)
+		);
+
+		$advanced_options->add_field(
+			array(
+				'name'    => __( 'Show Counts', 'cp-library' ),
+				'id'      => 'show_filter_count',
+				'desc'    => sprintf( __( 'Show the count of each item in the filters.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+				'type'    => 'radio_inline',
+				'default' => 1,
+				'options' => array(
+					'show' => __( 'Show', 'cp-library' ),
+					'hide' => __( 'Hide', 'cp-library' ),
+				),
 			)
 		);
 
