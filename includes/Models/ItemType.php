@@ -36,8 +36,8 @@ class ItemType extends Table  {
 
 		parent::init();
 
-		$this->table_name  = $wpdb->base_prefix . 'cpl_' . $this->type;
-		$this->meta_table_name  = $wpdb->base_prefix . 'cpl_' . $this->type . "_meta";
+		$this->table_name  = $wpdb->prefix . 'cpl_' . $this->type;
+		$this->meta_table_name  = $wpdb->prefix . 'cpl_' . $this->type . "_meta";
 	}
 
 	/**
@@ -126,7 +126,7 @@ class ItemType extends Table  {
 			// we need this meta value for sorting
 			update_post_meta( $this->origin_id, 'last_item_date', 0 );
 
-			if ( 'publish' === $status && apply_filters( 'cpl_item_type_require_items', true, $this ) ) {
+			if ( 'publish' === $status && apply_filters( 'cpl_item_type_require_items', false, $this ) ) {
 				wp_update_post( [ 'ID' => $this->origin_id, 'post_status' => 'draft' ] );
 				return 'draft';
 			}

@@ -1,6 +1,7 @@
 <?php
 namespace CP_Library\Setup\Taxonomies;
 
+use CP_Library\Admin\Settings;
 use CP_Library\Templates;
 use ChurchPlugins\Setup\Taxonomies\Taxonomy;
 
@@ -27,6 +28,30 @@ class Topic extends Taxonomy  {
 		$this->plural_label = apply_filters( "{$this->taxonomy}_plural_label", 'Topics' );
 
 		parent::__construct();
+
+		add_action( $this->taxonomy . '_pre_add_form', [ $this, 'builtin_terms' ] );
+	}
+
+	/**
+	 * Show notice for built-in terms
+	 *
+	 * @since  1.3.0
+	 *
+	 * @author Tanner Moushey, 12/6/23
+	 */
+	public function builtin_terms() {
+		if ( ! Settings::get_advanced( 'topic_terms_enabled', 1 ) ) {
+			return;
+		}
+		add_thickbox();
+		?>
+		<h3><?php _e( 'Built-in Topics', 'cp-library' ); ?></h3>
+		<p><?php _e( 'Before adding a new Season, please make sure that one does not already exist in the <a href="#TB_inline?width=600&height=550&inlineId=modal-topics" class="thickbox">built-in list of Topics</a>. When a built-in Topic is used, it will show in the Term table.'); ?></p>
+		<div id="modal-topics" style="display:none;">
+			<h3><?php _e( 'Built-in Topics', 'cp-library' ); ?></h3>
+			<p><?php echo implode( ', ', wp_list_pluck( cp_library()->setup->taxonomies->topic->get_term_data(), 'term' ) ); ?></p>
+		</div>
+		<?php
 	}
 
 	/**
@@ -55,7 +80,14 @@ class Topic extends Taxonomy  {
 	 * @author Tanner Moushey
 	 */
 	public function get_object_types() {
-		return apply_filters( 'cpl_topic_object_types', [ cp_library()->setup->post_types->item->post_type ], $this );
+		$types = [ cp_library()->setup->post_types->item->post_type ];
+
+		if ( cp_library()->setup->post_types->item_type_enabled() ) {
+			$types[] = cp_library()->setup->post_types->item_type->post_type;
+		}
+
+
+		return apply_filters( 'cpl_topic_object_types', $types, $this );
 	}
 
 	/**
@@ -104,7 +136,7 @@ class Topic extends Taxonomy  {
 
 		$topics_file = Templates::get_template_hierarchy( '__data/topics.json' );
 
-		if ( ! $topics_file ) {
+		if ( ! $topics_file || ! Settings::get_advanced( 'topic_terms_enabled', 1 ) ) {
 			return [];
 		}
 

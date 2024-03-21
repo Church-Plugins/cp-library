@@ -404,3 +404,65 @@ jQuery( function( $ ){
 	}
 
 });
+
+
+/**
+ * Check for basic submit buttons
+ */
+jQuery($ => {
+	$('.cpl_admin_submit_button').on('click', function(e) {
+		e.preventDefault()
+		const url = $(this).data('url')
+
+		$(this).addClass('loading');
+		$(this).attr('disabled', true);
+		$(this).parent().find('.error').remove();
+
+		fetch(url, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			}
+		})
+		.then(res => res.json())
+		.then(res => {
+			$(this).removeClass('loading');
+			if(res.success) {
+				$(this).addClass('success')
+			} else {
+				$(this).parent().append('<div class="error">' + res.data.error + '</div>');
+				$(this).attr('disabled', false);
+			}
+		})
+		.catch(err => {
+			console.warn(err)
+			$(this).removeClass('loading');
+			$(this).attr('disabled', false);
+			$(this).parent().append('<div class="error">' + err.message + '</div>');
+		})
+	})
+})
+
+/**
+ * Merge speakers
+ */
+jQuery($ => {
+	const mergeSpeakers = (e) => {
+		$.ajax({
+			url: e.target.dataset.ajaxurl,
+			method: 'POST',
+			data: {
+				action: 'cpl_merge_speakers',
+				nonce: e.target.dataset.nonce
+			},
+			success: res => {
+				e.target.parentElement.innerHTML = '<div class="success">' + res.data.html + '</div>'
+			},
+			error: err => {
+				$(e.target.parentElement).append('<div class="error">' + err.message + '</div>');
+			}
+		})
+	}
+
+	$('#cpl_merge_speakers').on('click', mergeSpeakers)
+})

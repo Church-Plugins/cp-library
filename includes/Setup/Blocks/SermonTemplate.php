@@ -90,7 +90,7 @@ class SermonTemplate extends Block {
 			// This ensures that for the inner instances of the Post Template block, we do not render any block supports.
 			$block_instance['blockName'] = 'core/null';
 
-			// Get the CP Library model for the current post.
+			// Get the CP Sermons model for the current post.
 			switch ( $query->post->post_type ) {
 				case cp_library()->setup->post_types->item->post_type:
 					$item_class = Item::class;
@@ -99,7 +99,7 @@ class SermonTemplate extends Block {
 					$item_class = ItemType::class;
 					break;
 				default:
-					throw new \ChurchPlugins\Exception( 'Invalid post type for CP Library Sermon Template block.' );
+					throw new \ChurchPlugins\Exception( 'Invalid post type for CP Sermons Sermon Template block.' );
 			}
 
 			try {

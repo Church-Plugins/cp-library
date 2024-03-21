@@ -50,11 +50,16 @@ class Item extends Controller{
 		foreach ( $locations as $location ) {
 			$location_id = \CP_Locations\Setup\Taxonomies\Location::get_id_from_term( $location->slug );
 
-			if ( 'global' === $location_id ) {
+			if ( 'global' === $location_id || empty( $location_id ) ) {
 				continue;
 			}
 
 			$location    = new \CP_Locations\Controllers\Location( $location_id );
+
+			if ( empty( $location->post ) ) {
+				continue;
+			}
+
 			$item_locations[ $location_id ] = [
 				'title' => $location->get_title(),
 				'url'   => $location->get_permalink(),
@@ -174,6 +179,11 @@ class Item extends Controller{
 		return $this->filter( $return, __FUNCTION__ );
 	}
 
+	/**
+	 * Get array of sermon scriptures.
+	 *
+	 * @return false|array<array{name:string,slug:string,url:string}>
+	 */
 	public function get_scripture() {
 
 		// scripture is top level, get parent scripture if applicable
@@ -187,24 +197,31 @@ class Item extends Controller{
 		$passages = cp_library()->setup->taxonomies->scripture->get_object_passages( $this->post->ID );
 		$terms    = cp_library()->setup->taxonomies->scripture->get_object_scripture( $this->post->ID );
 
+		if ( empty( $terms ) && empty( $passages[0] ) ) {
+			return $return;
+		}
+
+		$term = false;
+
 		if ( empty( $passages[0] ) ) {
-			return false;
+			$term = $terms[0];
+		} else {
+			$book = cp_library()->setup->taxonomies->scripture->get_book( $passages[0] );
+			$term = get_term_by( 'name', $book, cp_library()->setup->taxonomies->scripture->taxonomy );
 		}
 
-		$book = cp_library()->setup->taxonomies->scripture->get_book( $passages[0] );
-		if ( ! $term = get_term_by( 'name', $book, cp_library()->setup->taxonomies->scripture->taxonomy ) ) {
+		if ( ! $term || is_wp_error( $term ) ) {
 			return false;
 		}
-
 
 		$terms  = [ $term ];
 
 		if ( $terms ) {
 			foreach ( $terms as $term ) {
 				$return[ $term->slug ] = [
-					'name' => $passages[0],
+					'name' => empty( $passages[0] ) ? $term->name : $passages[0],
 					'slug' => $term->slug,
-					'url'  => get_term_link( $term )
+					'url'  => get_term_link( $term ),
 				];
 			}
 		}
@@ -435,6 +452,18 @@ class Item extends Controller{
 	 */
 	public function get_timestamp() {
 		return get_post_meta( $this->post->ID, 'message_timestamp', true );
+	}
+
+	/**
+	 * Get the item's downloads
+	 *
+	 * @since  1.4.0
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 1/29/24
+	 */
+	public function get_downloads() {
+		return $this->filter( get_post_meta( $this->post->ID, 'downloads', true ), __FUNCTION__ );
 	}
 
 	/*************** Variation Functions ****************/
@@ -802,12 +831,15 @@ class Item extends Controller{
 				'category'   => $this->get_categories(),
 				'speakers'   => $this->get_speakers(),
 				'locations'  => $this->get_locations(),
+				'topics'     => $this->get_topics(),
+				'scripture'  => $this->get_scripture(),
 				'video'      => $this->get_video(),
 				'audio'      => $this->get_audio(),
 				'types'      => $this->get_types(),
 				'service_types' => $this->get_service_types(),
 				'passage'       => $this->get_passage(),
 				'timestamp'     => $this->get_timestamp(),
+				'downloads'     => $this->get_downloads(),
 				'variations'    => null,
 			];
 

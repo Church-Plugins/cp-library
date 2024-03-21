@@ -113,12 +113,6 @@
 	}
 
 	&--attachment {
-		padding: 2px var(--cp-gap-base);
-		background-color: var(--cp-color-ui-inverted-light);
-		color: var(--cp-color-text-primary);
-		display: inline-flex;
-		align-items: center;
-
 		.material-icons-outlined {
 			font-size: var(--cp-font-size--sm);
 		}
@@ -141,6 +135,7 @@
 		position: absolute;
 		inset: 0;
 		background-color: rgba(0,0,0,.5);
+		backdrop-filter: blur(5px);
 	}
 
 	.cpl-single-item--details {
@@ -183,7 +178,7 @@
 			flex-basis: 100%;
 		}
 	}
-	
+
 	.itemDetail__actions {
 		justify-content: center;
 		position: relative;

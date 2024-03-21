@@ -29,3 +29,29 @@
 	}
 
 }
+
+.cpl-archive--ratio-1x1,
+.cpl-archive--ratio-4x3,
+.cpl-archive--ratio-16x9 {
+	.cpl-list-type--thumb img {
+		object-fit: cover;
+	}
+}
+
+.cpl-archive--ratio-1x1 {
+	.cpl-list-type--thumb img {
+		aspect-ratio: 1/1;
+	}
+}
+
+.cpl-archive--ratio-4x3 {
+	.cpl-list-type--thumb img {
+		aspect-ratio: 4/3;
+	}
+}
+
+.cpl-archive--ratio-16x9 {
+	.cpl-list-type--thumb img {
+		aspect-ratio: 16/9;
+	}
+}

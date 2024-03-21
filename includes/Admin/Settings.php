@@ -2,6 +2,7 @@
 
 namespace CP_Library\Admin;
 
+use CMB2_Field;
 use CP_Library\Admin\Settings\Podcast;
 use CP_Library\Models\ServiceType;
 
@@ -99,6 +100,7 @@ class Settings {
 	protected function __construct() {
 		add_action( 'cmb2_admin_init', [ $this, 'register_main_options_metabox' ] );
 		add_action( 'cmb2_save_options_page_fields', 'flush_rewrite_rules' );
+		add_action( 'cmb2_render_cpl_submit_button', [ $this, 'custom_button_form_field' ], 10, 5);
 	}
 
 	public function register_main_options_metabox() {
@@ -208,6 +210,14 @@ class Settings {
 			Podcast::fields();
 		}
 
+		$adapters = cp_library()->adapters->get_adapters();
+
+		foreach( $adapters as $adapter ) {
+			if( $adapter->is_enabled() ) {
+				$adapter->options_page();
+			}
+		}
+
 		$this->advanced_options();
 		$this->license_fields();
 
@@ -221,7 +231,7 @@ class Settings {
 		 */
 		$args = array(
 			'id'           => 'cpl_options_page',
-			'title'        => 'CP Library Settings',
+			'title'        => 'CP Sermons Settings',
 			'object_types' => array( 'options-page' ),
 			'option_key'   => 'cpl_license',
 			'parent_slug'  => 'cpl_main_options',
@@ -337,18 +347,18 @@ class Settings {
 			'classes' => 'cp-radio-image',
 		] );
 
-		$options->add_field( [
-			'name'    => __( 'Archive Page Template', 'cp-library' ),
-			'desc'    => '',
-			'id'      => 'archive_template',
-			'type'    => 'radio_inline',
-			'default' => '',
-			'options' => [
-				''      => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-list-template.png" />' . __( 'List View', 'cp-library' ),
-				'-grid' => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-grid-template.png" />' . __( 'Grid (3 column)', 'cp-library' ),
-			],
-			'classes' => 'cp-radio-image',
-		] );
+//		$options->add_field( [
+//			'name'    => __( 'Archive Page Template', 'cp-library' ),
+//			'desc'    => '',
+//			'id'      => 'archive_template',
+//			'type'    => 'radio_inline',
+//			'default' => '',
+//			'options' => [
+//				''      => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-list-template.png" />' . __( 'List View', 'cp-library' ),
+//				'-grid' => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-grid-template.png" />' . __( 'Grid (3 column)', 'cp-library' ),
+//			],
+//			'classes' => 'cp-radio-image',
+//		] );
 
 
 		$variation_sources = cp_library()->setup->variations->get_sources();
@@ -500,7 +510,7 @@ class Settings {
 
 		$options->add_field( array(
 			'name' => sprintf( __( 'Enable %s permalinks', 'cp-library' ), cp_library()->setup->post_types->speaker->single_label ),
-			'desc' => sprintf( __( 'Will make a %s\'s name clickable', 'cp-library' ), cp_library()->setup->post_types->speaker->single_label ),
+			'desc' => sprintf( __( 'Link the %s\'s name to the speaker page that shows their %s.', 'cp-library' ), cp_library()->setup->post_types->speaker->single_label, cp_library()->setup->post_types->item->plural_label ),
 			'id'   => 'enable_permalinks',
 			'type' => 'checkbox'
 		) );
@@ -633,6 +643,21 @@ class Settings {
 			]
 		) );
 
+		$adapters = cp_library()->adapters->get_adapters();
+
+		foreach( $adapters as $adapter ) {
+			$advanced_options->add_field( array(
+				'name'    => sprintf( __( 'Enable %s Integration', 'cp-library' ), $adapter->display_name ),
+				'id'      => "cpl_{$adapter->type}_adapter_enabled",
+				'type'    => 'radio_inline',
+				'default' => 0,
+				'options' => [
+					1 => __( 'Enable', 'cp-library' ),
+					0 => __( 'Disable', 'cp-library' ),
+				]
+			) );
+		}
+
 		if ( cp_library()->setup->post_types->item_type_enabled() ) {
 
 			// @todo move this out of conditional once we add more settings
@@ -654,6 +679,50 @@ class Settings {
 				'desc'    => sprintf( __( 'Select which object to use for the Admin menu item.', 'cp-library' ), cp_library()->setup->post_types->item_type->plural_label, cp_library()->setup->post_types->item->plural_label ),
 			] );
 		}
+
+		$advanced_options->add_field(
+			array(
+				'name' => __( 'Built-in Terms', 'cp-library' ),
+				'desc' => __( 'We have spent years compiling a robust list of Topics and Seasons built specifically for churches.', 'cp-library' ),
+				'id'   => 'builtin-terms',
+				'type' => 'title',
+			)
+		);
+
+		add_thickbox();
+		$advanced_options->add_field( array(
+			'name'    => __( 'Enable Built-in Seasons' ),
+			'id'      => 'season_terms_enabled',
+			'type'    => 'radio_inline',
+			'default' => 1,
+			'options' => [
+				1 => __( 'Enable', 'cp-library' ),
+				0 => __( 'Disable', 'cp-library' ),
+			],
+			'desc' => __( 'Seasons are a great way to organize your content by time of year. We have a <a href="#TB_inline?width=600&height=550&inlineId=modal-seasons" class="thickbox">built-in list of seasons</a> that you can use to organize your content.', 'cp-library' ),
+			'after_row' => '
+<div id="modal-seasons" style="display:none;">
+    <h3>' . __( 'Built-in Seasons', 'cp-library' ) . '</h3>
+    <p>' . implode( ', ', wp_list_pluck( cp_library()->setup->taxonomies->season->get_term_data(), 'term' ) ) . '</p>
+</div>',
+		) );
+
+		$advanced_options->add_field( array(
+			'name'    => __( 'Enable Built-in Topics' ),
+			'id'      => 'topic_terms_enabled',
+			'type'    => 'radio_inline',
+			'default' => 1,
+			'options' => [
+				1 => __( 'Enable', 'cp-library' ),
+				0 => __( 'Disable', 'cp-library' ),
+			],
+			'desc' => __( 'Topics keep your content organized and easily searchable. We have a <a href="#TB_inline?width=600&height=550&inlineId=modal-topics" class="thickbox">built-in list of topics</a> that you can use to organize your content.', 'cp-library' ),
+			'after_row' => '
+<div id="modal-topics" style="display:none;">
+    <h3>' . __( 'Built-in Topics', 'cp-library' ) . '</h3>
+    <p>' . implode( ', ', wp_list_pluck( cp_library()->setup->taxonomies->topic->get_term_data(), 'term' ) ) . '</p>
+</div>',
+		) );
 
 		$advanced_options->add_field(
 			array(
@@ -736,6 +805,7 @@ class Settings {
 					),
 				)
 			);
+
 		}
 	}
 
@@ -792,5 +862,19 @@ class Settings {
 		return $tabs;
 	}
 
-
+	/**
+	 * Render a custom CMB2 field, a button that submits an API request to admin-post.php with specified query args
+	 *
+	 * @param CMB2_Field $field
+	 * @param mixed $escaped_value
+	 * @param int $object_id
+	 * @param string $object_type
+	 * @param CMB2_Types $field_type_object
+	 * @since 1.3.0
+	 * @return void
+	 */
+	public function custom_button_form_field( $field, $escaped_value, $object_id, $object_type, $field_type_object ) {
+		$url = add_query_arg( isset( $field->args['query_args'] ) ? $field->args['query_args'] : array(), admin_url( 'admin-post.php' ) );
+		echo sprintf( '<button type="button" class="button cpl_admin_submit_button" data-url="%s">%s</button>', esc_url( $url ), $field->args['desc'] );
+	}
 }
