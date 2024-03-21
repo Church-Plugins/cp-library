@@ -17,7 +17,7 @@ $classes = [ 'cpl-pg-template', 'cp-pg-template' ];
 if ( is_single() && get_post_type() === cp_library()->setup->post_types->item->post_type ) {
 	$layout    = \CP_Library\Admin\Settings::get_item( 'single_template' );
 	$layout    = $layout ? $layout : '-default';
-	$classes[] = 'cpl-layout' . $layout;
+	// $classes[] = 'cpl-layout' . $layout;
 }
 
 /**
