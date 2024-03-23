@@ -131,7 +131,7 @@ class AJAX {
 
 			switch ( $facet_type ) {
 				case 'speaker':
-				case 'service_type':
+				case 'service-type':
 					$items = $this->get_sources( $args );
 					break;
 				case 'cpl_scripture':
@@ -187,7 +187,7 @@ class AJAX {
 			)
 		);
 
-		if ( ! in_array( $args['facet_type'], array( 'speaker', 'service_type' ) ) ) {
+		if ( ! in_array( $args['facet_type'], array( 'speaker', 'service-type' ) ) ) {
 			throw new \ChurchPlugins\Exception( 'Invalid facet type' );
 		}
 
@@ -225,7 +225,7 @@ class AJAX {
 			$wpdb->prefix . 'cp_source',
 			$wpdb->prefix . 'cp_source_meta',
 			$wpdb->prefix . 'cp_source_type',
-			$args['facet_type'],
+			'service-type' === $args['facet_type'] ? 'service_type' : $args['facet_type'],
 			$wpdb->prefix . 'cpl_item',
 			$args['post__in'],
 			$args['threshold'],
