@@ -118,7 +118,7 @@
 		}
 	}
 
-	
+
 }
 
 .cpl-single-item.cpl-layout-vertical {
@@ -144,7 +144,7 @@
 		margin: 0 auto;
 	}
 
-	.cpl-single-item--details > *:not(&--desc) {
+	.cpl-single-item--details > *:not(.cpl-single-item--desc) {
 		text-align: center;
 	}
 
