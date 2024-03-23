@@ -765,7 +765,7 @@ class Settings {
 				'id'      => 'show_filter_count',
 				'desc'    => sprintf( __( 'Show the count of each item in the filters.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
 				'type'    => 'radio_inline',
-				'default' => 1,
+				'default' => 'show',
 				'options' => array(
 					'show' => __( 'Show', 'cp-library' ),
 					'hide' => __( 'Hide', 'cp-library' ),
