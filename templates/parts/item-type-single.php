@@ -69,7 +69,8 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 		$post = $selected_item;
 		setup_postdata( $post );
 
-		\CP_Library\Templates::get_template_part( 'parts/item-single' );
+		$template = 'item' . \CP_Library\Admin\Settings::get_item( 'single_template', '' ) . '-single';
+		\CP_Library\Templates::get_template_part( "parts/$template" );
 
 		$post = $original_post;
 		wp_reset_postdata();

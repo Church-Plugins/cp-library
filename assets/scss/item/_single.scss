@@ -117,10 +117,12 @@
 			font-size: var(--cp-font-size--sm);
 		}
 	}
+
+	
 }
 
-.cpl-layout-vertical .cpl-single-item {
-	&--hero {
+.cpl-single-item.cpl-layout-vertical {
+	.cpl-single-item--hero {
 		position: relative;
 		padding: var(--cp-content-padding);
 		background-color: var(--cpl-color--primary);
@@ -129,24 +131,24 @@
 		background-repeat: no-repeat;
 	}
 
-	&--hero-overlay {
+	.cpl-single-item--hero-overlay {
 		position: absolute;
 		inset: 0;
 		background-color: rgba(0,0,0,.5);
 		backdrop-filter: blur(5px);
 	}
 
-	&--details {
+	.cpl-single-item--details {
 		max-width: var(--cp-content-width);
 		padding: var(--cp-content-padding);
 		margin: 0 auto;
 	}
 
-	&--details > *:not(&--desc) {
+	.cpl-single-item--details > *:not(&--desc) {
 		text-align: center;
 	}
 
-	&--desc {
+	.cpl-single-item--desc {
 		max-width: 50em;
 		margin: auto;
 	}
@@ -159,7 +161,7 @@
 		margin-top: var(--cp-gap--sm);
 	}
 
-	&--back {
+	.cpl-single-item--back {
 		width: 100%;
 	}
 
@@ -172,7 +174,7 @@
 			padding-right: var(--cp-content-padding);
 		}
 
-		&--media {
+		.cpl-single-item--media {
 			flex-basis: 100%;
 		}
 	}
@@ -182,12 +184,17 @@
 		position: relative;
 	}
 
-	&--title {
+	.cpl-single-item--title {
 		margin: var(--cp-gap--sm) auto;
 	}
 
-	&--title::after {
+	.cpl-single-item--title::after {
 		margin-left: auto;
 		margin-right: auto;
+	}
+
+	// fix strange-looking centered lists
+	li {
+		text-align: left;
 	}
 }

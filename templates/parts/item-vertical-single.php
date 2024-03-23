@@ -14,7 +14,7 @@ try {
 
 <?php do_action( 'cpl_single_item_before', $item ); ?>
 
-<div class="cpl-single-item">
+<div class="cpl-single-item cpl-layout-vertical">
 
 	<div
 		class="cpl-single-item--hero"
