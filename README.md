@@ -24,6 +24,13 @@ npm run build
 
 ### Change Log
 
+#### 1.4.3
+* Bug Fix: Service Type filter was not working
+* Bug Fix: Sermon vertical outline broken in Series context
+* Bug Fix: Hide Sermons in Series edit screen when more than 60 Sermons
+* Enhancement: Setting to hide item count in filters
+* Enhancement: control Sermon order on Series page
+
 #### 1.4.2
 * Bug Fix: Speaker single page had incorrect sermon count displayed.
 * Bug Fix: Speakers with no sermons assigned would display all sermons on the single page.
