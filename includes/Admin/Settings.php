@@ -100,7 +100,7 @@ class Settings {
 	protected function __construct() {
 		add_action( 'cmb2_admin_init', [ $this, 'register_main_options_metabox' ] );
 		add_action( 'cmb2_save_options_page_fields', 'flush_rewrite_rules' );
-		add_action( 'cmb2_render_cpl_submit_button', [ $this, 'custom_button_form_field' ], 10, 5);
+		add_action( 'cmb2_render_cpl_submit_button', [ $this, 'custom_button_form_field' ], 10, 5 );
 	}
 
 	public function register_main_options_metabox() {
@@ -467,7 +467,33 @@ class Settings {
 			'classes' => 'cp-radio-image',
 		] );
 
+		$options->add_field( [
+			/* translators: %s is the plural label for the item post type */
+			'name'    => sprintf( __( '%s sort order', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'id'      => 'item_sort_order',
+			/* translators: %s is the plural label for the item type post type */
+			'desc'    => sprintf( __( 'The sort order for messages when viewing a single %s.', 'cp-library' ), cp_library()->setup->post_types->item_type->single_label ),
+			'type'    => 'radio_inline',
+			'default' => 'DESC',
+			'options' => [
+				'DESC' => __( 'Descending', 'cp-library' ),
+				'ASC'  => __( 'Ascending', 'cp-library' ),
+			],
+		] );
 
+		$options->add_field( [
+			/* translators: %s is the plural label for the item post type */
+			'name'    => sprintf( __( '%s sort by', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'id'      => 'item_sort_by',
+			/* translators: %s is the plural label for the item post type */
+			'desc'    => sprintf( __( 'Which field to sort %s by', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'type'    => 'radio_inline',
+			'default' => 'post_date',
+			'options' => [
+				'post_title' => __( 'Title', 'cp-library' ),
+				'post_date'  => __( 'Publish Date', 'cp-library' ),
+			],
+		] );
 	}
 
 	protected function speaker_options() {
@@ -690,6 +716,7 @@ class Settings {
 		);
 
 		add_thickbox();
+
 		$advanced_options->add_field( array(
 			'name'    => __( 'Enable Built-in Seasons' ),
 			'id'      => 'season_terms_enabled',
@@ -729,6 +756,20 @@ class Settings {
 				'name' => __( 'Filters', 'cp-library' ),
 				'id'   => 'filters',
 				'type' => 'title',
+			)
+		);
+
+		$advanced_options->add_field(
+			array(
+				'name'    => __( 'Show Counts', 'cp-library' ),
+				'id'      => 'show_filter_count',
+				'desc'    => sprintf( __( 'Show the count of each item in the filters.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+				'type'    => 'radio_inline',
+				'default' => 'show',
+				'options' => array(
+					'show' => __( 'Show', 'cp-library' ),
+					'hide' => __( 'Hide', 'cp-library' ),
+				),
 			)
 		);
 
