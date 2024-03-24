@@ -339,18 +339,24 @@ class ItemType extends PostType  {
 	public function register_metaboxes() {
 		$this->sermon_series_metabox();
 
-		if ( $id = Helpers::get_param( $_GET, 'post', Helpers::get_request( 'post_ID' ) ) ) {
-			$item_type = Model::get_instance_from_origin( $id );
-			$items = $item_type->get_items();
-
-			// don't show series items if we have too many
-			if ( count( $items ) > 60 ) {
-				return;
-			}
-		}
-
 		// disable series items if we support sermon variations
 		if ( ! cp_library()->setup->variations->is_enabled() ) {
+
+			// return early if we have too many series items
+			if ( $id = Helpers::get_param( $_GET, 'post', Helpers::get_request( 'post_ID' ) ) ) {
+				try {
+					$item_type = Model::get_instance_from_origin( $id );
+					$items = $item_type->get_items();
+
+					// don't show series items if we have too many
+					if ( count( $items ) > 60 ) {
+						return;
+					}
+				} catch ( Exception $e ) {
+					return;
+				}
+			}
+
 			// allow for multiple sources for series (ie. locations)
 			foreach ( $this->get_sources() as $key => $source ) {
 				$this->series_items( $key, $source );

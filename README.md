@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.4.4
+* Bug Fix: Fatal error was thrown for non-Series edit pages
+
 #### 1.4.3
 * Bug Fix: Service Type filter was not working
 * Bug Fix: Sermon vertical outline broken in Series context
