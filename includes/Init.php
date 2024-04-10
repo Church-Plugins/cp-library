@@ -61,6 +61,13 @@ class Init {
 	public $modules;
 
 	/**
+	 * Is this the Pro version?
+	 *
+	 * @var
+	 */
+	public $is_pro = false;
+
+	/**
 	 * Only make one instance of Init
 	 *
 	 * @return Init
@@ -90,6 +97,14 @@ class Init {
 	public function maybe_setup() {
 		if ( ! $this->check_required_plugins() ) {
 			return;
+		}
+
+		if ( class_exists( '\\CP_Library\\Pro\\Init' ) ) {
+			$this->is_pro = true;
+
+			if ( $this->is_pro() ) {
+				\CP_Library\Pro\Init::get_instance();
+			}
 		}
 
 		$cp = \ChurchPlugins\Setup\Init::get_instance();
@@ -422,6 +437,10 @@ class Init {
 	}
 
 	/** Helper Methods **************************************/
+
+	public function is_pro() {
+		return apply_filters( 'cp_library_is_pro', $this->is_pro );
+	}
 
 	/**
 	 * Get the default thumbnail for series and sermions
