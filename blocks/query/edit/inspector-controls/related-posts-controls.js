@@ -18,6 +18,10 @@ export default function RelatedPostsControls({ query, onChange, postType }) {
 		'cpl_service_type': {
 			...cplAdmin.postTypes.cpl_service_type,
 			queryKey: 'cpl_service_types'
+		},
+		'cpl_item_type': {
+			...cplAdmin.postTypes.cpl_item_type,
+			queryKey: 'cpl_item_type'
 		}
 	} : {}
 

@@ -214,6 +214,10 @@ class SermonTemplate extends Block {
 			$query['cpl_service_types'] = $block->context['query']['cpl_service_types'];
 		}
 
+		if ( isset( $block->context['query']['cpl_item_type'] ) ) {
+			$query['cpl_item_type'] = $block->context['query']['cpl_item_type'];
+		}
+
 		return $query;
 	}
 }
