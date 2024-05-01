@@ -6,6 +6,8 @@ try {
 	return;
 }
 
+$image = $item->get_thumbnail();
+
 ?>
 <item>
 
@@ -16,13 +18,17 @@ try {
 	<guid isPermaLink="false"><?php the_guid(); ?></guid>
 	<link><?php the_permalink_rss(); ?></link>
 
-	<itunes:image href="<?php echo esc_url( $item->get_thumbnail() ); ?>"></itunes:image>
-	<googleplay:image href="<?php echo esc_url( $item->get_thumbnail() ); ?>"></googleplay:image>
-	<media:content 
-		url="<?php echo esc_url( $item->get_thumbnail( 'full' ) ); ?>"
-		medium="image"
-		type="image/jpeg"
-	/>
+	<?php if ( ! empty( $image ) ) : ?>
+		<itunes:image href="<?php echo esc_url( $item->get_thumbnail() ); ?>"></itunes:image>
+		<googleplay:image href="<?php echo esc_url( $item->get_thumbnail() ); ?>"></googleplay:image>
+
+		<?php $filetype = wp_check_filetype( $image ); ?>
+		<media:content 
+			url="<?php echo esc_url( $item->get_thumbnail( 'full' ) ); ?>"
+			medium="image"
+			type="<?php echo esc_attr( $filetype['type'] ); ?>"
+		/>
+	<?php endif; ?>
 
 	<?php if ( $item->get_podcast_speakers() ) : ?>
 		<dc:creator><?php echo $item->get_podcast_speakers(); ?></dc:creator>

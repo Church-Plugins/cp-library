@@ -139,10 +139,13 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 		<?php if ( $image ) : ?>
 			<itunes:image href="<?php echo esc_url( $image ); ?>"></itunes:image>
 			<googleplay:image href="<?php echo esc_url( $image ); ?>"></googleplay:image>
+
+			<?php $filetype = wp_check_filetype( $image ); ?>
+
 			<media:content 
 				url="<?php echo esc_url( $image ); ?>"
 				medium="image" 
-				type="image/jpeg" 
+				type="<?php echo esc_attr( $filetype['type'] ); ?>"
 			/>
 		<?php endif; ?>
 
