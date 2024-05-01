@@ -84,13 +84,14 @@ class Item extends Controller{
 	/**
 	 * Get thumbnail
 	 *
+	 * @param string|int[] $size Size of thumbnail to get. Not guaranteed to be applicable. Default 'full'.
 	 * @return mixed|void
 	 * @since  1.0.0
 	 *
 	 * @author Tanner Moushey
 	 */
-	public function get_thumbnail() {
-		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID, 'full' ) ) {
+	public function get_thumbnail( $size = 'full' ) {
+		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID, $size ) ) {
 			return $this->filter( $thumb, __FUNCTION__ );
 		}
 
@@ -99,7 +100,7 @@ class Item extends Controller{
 		if ( ! $thumb && ! empty( $this->get_types() ) ) {
 			try {
 				$type = new ItemType( $this->get_types()[0]['id'], false );
-				$thumb = $type->get_thumbnail();
+				$thumb = $type->get_thumbnail( $size );
 			} catch( Exception $e ) {
 				error_log( $e );
 			}

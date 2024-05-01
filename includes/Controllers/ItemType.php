@@ -22,8 +22,8 @@ class ItemType extends Controller{
 		return $this->filter( get_permalink( $this->post->ID ), __FUNCTION__ );
 	}
 
-	public function get_thumbnail() {
-		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID, 'full' ) ) {
+	public function get_thumbnail( $size = 'full' ) {
+		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID, $size ) ) {
 			return $this->filter( $thumb, __FUNCTION__ );
 		}
 

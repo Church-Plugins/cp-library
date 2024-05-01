@@ -16,6 +16,14 @@ try {
 	<guid isPermaLink="false"><?php the_guid(); ?></guid>
 	<link><?php the_permalink_rss(); ?></link>
 
+	<itunes:image href="<?php echo esc_url( $item->get_thumbnail() ); ?>"></itunes:image>
+	<googleplay:image href="<?php echo esc_url( $item->get_thumbnail() ); ?>"></googleplay:image>
+	<media:content 
+		url="<?php echo esc_url( $item->get_thumbnail( 'full' ) ); ?>"
+		medium="image"
+		type="image/jpeg"
+	/>
+
 	<?php if ( $item->get_podcast_speakers() ) : ?>
 		<dc:creator><?php echo $item->get_podcast_speakers(); ?></dc:creator>
 		<itunes:author><?php echo $item->get_podcast_speakers(); ?></itunes:author>

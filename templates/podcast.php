@@ -53,10 +53,14 @@ foreach ( $settings as $setting => $default ) {
 	extract( array( $setting => $value ) ); // phpcs:ignore WordPress.PHP.DontExtract.extract_extract
 }
 
-// Default image is post thumbnail, otherwise specified image.
-$fallback_image = $image;
-$image          = get_the_post_thumbnail_url( get_the_ID(), array( 600, 600 ) );
-$image          = $image ? $image : $fallback_image;
+// if we're on a single page with relations (such as a series with sermons) we want to use the featured image.
+// if we're on an archive page (including taxonomy pages), we want to use the globally defined image.
+if ( is_singular( cp_library()->setup->post_types->item_type->post_type ) ) {
+	$item_thumb = get_the_post_thumbnail_url( get_the_ID(), 'full' );
+	if ( $item_thumb ) {
+		$image = $item_thumb;
+	}
+}
 
 // Category.
 if ( $category && 'none' !== $category ) {
@@ -135,6 +139,11 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 		<?php if ( $image ) : ?>
 			<itunes:image href="<?php echo esc_url( $image ); ?>"></itunes:image>
 			<googleplay:image href="<?php echo esc_url( $image ); ?>"></googleplay:image>
+			<media:content 
+				url="<?php echo esc_url( $image ); ?>"
+				medium="image" 
+				type="image/jpeg" 
+			/>
 		<?php endif; ?>
 
 		<?php if ( $category ) : ?>
