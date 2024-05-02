@@ -171,7 +171,7 @@ function TaxonomyItem( { taxonomy, termIds, onChange } ) {
 		onChange( Array.from( newTermIds ) );
 	};
 	return (
-		<div className="block-library-query-inspector__taxonomy-control">
+		<div>
 			<FormTokenField
 				label={ taxonomy.name }
 				value={ value }
