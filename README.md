@@ -24,6 +24,10 @@ npm run build
 
 ### Change Log
 
+#### 1.4.5
+* Feature: Add filter by series in template builder
+* Update: Podcast feed improvements
+
 #### 1.4.4
 * Bug Fix: Fatal error was thrown for non-Series edit pages
 
