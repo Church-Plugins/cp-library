@@ -27,7 +27,8 @@ npm run build
 #### 1.4.5
 * Feature: Add filter by series in template builder
 * Enhancement: Podcast feed improvements
-* Enhancement: Improve watch/listen button functionality on archive page
+* Enhancement: Import Service Type from SermonAudio
+* Bug Fix: Fix audio / video play button not showing on archive
 
 #### 1.4.4
 * Bug Fix: Fatal error was thrown for non-Series edit pages
