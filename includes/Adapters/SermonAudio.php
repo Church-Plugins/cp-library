@@ -361,7 +361,7 @@ class SermonAudio extends Adapter {
 			}
 
 			// Service type
-			if ( isset( $cpl_data['service_type'] ) ) {
+			if ( isset( $cpl_data['service_type'] ) && cp_library()->setup->post_types->service_type_enabled() ) {
 
 				// create service type if it doesn't exist
 				$service_type_slug = sanitize_title( $cpl_data['service_type'] );
