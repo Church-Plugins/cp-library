@@ -67,11 +67,12 @@ export default function Actions({
 	return (
 		<Box className="cpl-list-item--actions">
 				<Box className="cpl-list-item--actions--buttons cpl-touch-hide">
-					{isVideoURL && (
-						<PlayVideo onClick={playVideo}/>
+					{!!item.video.value && (
+						// when an href is provided, the onclick is ignored and an anchor tag is rendered instead of a button
+						<PlayVideo onClick={playVideo} href={isVideoURL ? false : item.permalink} />
 					)}
-					{isAudioURL && (
-						<PlayAudio onClick={playAudio}/>
+					{!!item.audio && (
+						<PlayAudio onClick={playAudio} href={isAudioURL ? false : item.permalink} />
 					)}
 				</Box>
 				<IconButton className="cpl-list-item--to-item cpl-touch-only" onClick={viewItem}>
