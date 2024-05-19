@@ -6,6 +6,7 @@ $original_post = $post;
 
 try {
 	$item = new \CP_Library\Controllers\Item( get_the_ID() );
+	$player_data = $item->get_player_data();
 	$item_data = $item->get_api_data();
 } catch ( \CP_Library\Exception $e ) {
 	error_log( $e );
@@ -59,6 +60,7 @@ if ( $item->has_variations() ) {
 					$post = get_post( $variation_id );
 					try {
 						$variant = new \CP_Library\Controllers\Item( get_the_ID() );
+						$variant_player_data = $variant->get_player_data();
 						$variant_data = $variant->get_api_data();
 					} catch ( \CP_Library\Exception $e ) {
 						error_log( $e );
@@ -80,7 +82,7 @@ if ( $item->has_variations() ) {
 							<?php \CP_Library\Templates::get_template_part( 'parts/item-single/info', [ 'item' => $variant_data ] ); ?>
 						</div>
 
-						<div class="cpl_item_actions cpl-item--actions" data-item="<?php echo esc_attr( json_encode( $variant_data ) ); ?>"></div>
+						<div class="cpl_item_actions cpl-item--actions" data-item="<?php echo esc_attr( json_encode( $variant_player_data ) ); ?>"></div>
 					</div>
 				<?php endforeach; $post = $original_post; ?>
 			</div>
@@ -108,7 +110,7 @@ if ( $item->has_variations() ) {
 
 				</div>
 
-				<div class="cpl_item_actions cpl-item--actions" data-item="<?php echo esc_attr( json_encode( $item_data ) ); ?>" ></div>
+				<div class="cpl_item_actions cpl-item--actions" data-item="<?php echo esc_attr( json_encode( $player_data ) ); ?>" ></div>
 
 			</div>
 

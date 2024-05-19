@@ -3,7 +3,6 @@ import { useState, useEffect } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { FormTokenField } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
-import { coreStore } from '@wordpress/core-data';
 
 export default function PostSearchControl( { value, postType, onChange, ...props } ) {
 	const [ search, setSearch ] = useState('');

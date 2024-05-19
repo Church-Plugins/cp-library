@@ -10,8 +10,6 @@ export default function SermonScriptureEdit({
 }) {
 	const blockProps = useBlockProps({})
 
-	console.log(postType, item)
-
 	if( postType !== 'cpl_item' && postType !== 'cpl_item_type' ) {
 		return (
 			<div {...blockProps}>{ __( 'This block is not compatible with this post type', 'cp-library' ) }</div>

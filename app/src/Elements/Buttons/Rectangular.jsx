@@ -7,8 +7,19 @@ export default function Rectangular({
   onClick,
   disabled = false,
   children,
-	sx = { height: 55, borderRadius: 2 }
+	sx = { height: 55, borderRadius: 2 },
+  href = false,
 }) {
+
+  if (href) {
+    return (
+      <a href={href} className={`cpl-button cpl-button--${variant} is-${variant} cpl-button--rectangle`}>
+        {leftIcon && ( leftIcon )}
+	      <span>{children}</span>
+      </a>
+    )
+  }
+
   return (
     <button
       className={`cpl-button cpl-button--${variant} is-${variant} cpl-button--rectangle`}

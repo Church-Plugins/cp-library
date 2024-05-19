@@ -72,6 +72,7 @@ class ItemType extends PostType  {
 		add_filter( 'cmb2_save_field_cpl_series', [ $this, 'save_item_series' ], 10, 3 );
 		add_action( 'pre_get_posts', [ $this, 'default_posts_per_page' ] );
 		add_action( 'pre_get_posts', [ $this, 'item_item_type_query' ] );
+		add_action( 'pre_get_posts', [ $this, 'item_type_param_query' ] );
 		add_filter( 'post_updated_messages', [ $this, 'post_update_messages' ] );
 		add_filter( "{$this->post_type}_slug", [ $this, 'custom_slug' ] );
 
@@ -202,11 +203,10 @@ class ItemType extends PostType  {
 	}
 
 	public function item_item_type_query( $query ) {
-
 		// For ItemType/Series, order by metadata (contained item date)
-		if( $query->is_main_query() ) {
-			if( !empty( $query->query_vars ) && !empty( $query->query_vars['post_type'] ) && $query->query_vars['post_type'] == 'cpl_item_type' ) {
-				if( empty( $query->query_vars['cpl_item_type'] ) ) {
+		if ( $query->is_main_query() ) {
+			if ( ! empty( $query->query_vars ) && ! empty( $query->query_vars['post_type'] ) && 'cpl_item_type' === $query->query_vars['post_type'] ) {
+				if ( empty( $query->query_vars['cpl_item_type'] ) ) {
 					$query->set( 'orderby', 'meta_value_num' );
 					$query->set( 'order', 'DESC' );
 					$query->set( 'meta_key', 'last_item_date' );
@@ -226,7 +226,7 @@ class ItemType extends PostType  {
 			return;
 		}
 
-		if ( ! in_array( $query->get('post_type'), [ Item::get_instance()->post_type ] ) ) {
+		if ( ! in_array( $query->get( 'post_type' ), [ Item::get_instance()->post_type ], true ) ) {
 			return;
 		}
 
@@ -241,9 +241,50 @@ class ItemType extends PostType  {
 		} catch ( Exception $e ) {
 			error_log( $e );
 		}
-
 	}
 
+
+	/**
+	 * Filters queries with the `cpl_item_type` parameter
+	 *
+	 * @param WP_Query $query The query object.
+	 */
+	public function item_type_param_query( $query ) {
+		if ( cp_library()->setup->post_types->item->post_type !== $query->get( 'post_type' ) ) {
+			return;
+		}
+
+		$types = $query->get( 'cpl_item_type', [] );
+
+		if ( empty( $types ) ) {
+			return;
+		}
+
+		$types = array_map( 'absint', $types );
+
+		try {
+			foreach ( $types as $type ) {
+				$type = Model::get_instance_from_origin( $type );
+
+				$items = array_map( 'absint', wp_list_pluck( $type->get_items(), 'origin_id' ) );
+				$items = array_merge( array_map( 'absint', $query->get( 'post__in', [] ) ), $items );
+
+				$query->set( 'post__in', $items );
+			}
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
+	}
+
+	/**
+	 * Set the default posts per page for the item type
+	 *
+	 * @param WP_Query $query The query object.
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function default_posts_per_page( $query ) {
 		if ( is_admin() ) {
 			return;

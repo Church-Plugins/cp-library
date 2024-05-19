@@ -35,7 +35,6 @@ addFilter(
 	'cp-library/query-pagination',
 	function( settings, name ) {
 		if ( 'core/query-pagination' === name ) {
-			console.log(settings)
 			return {
 				...settings,
 				parent: [ ...(settings.parent || []), 'cp-library/query' ]
