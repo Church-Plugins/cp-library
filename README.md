@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.4.6
+* Compatibility update for Divi
+
 #### 1.4.5
 * Feature: Add filter by series in template builder
 * Enhancement: Podcast feed improvements
