@@ -79,6 +79,95 @@ if ( isset( $_GET['show-all'] ) ) {
 	$per_page = 9999;
 }
 
+/**
+ * Add podcast feed images
+ *
+ * @since  1.4.7
+ *
+ * @author Tanner Moushey, 6/24/24
+ */
+function cpl_podcast_feed_head() {
+	remove_action( 'rss2_head', 'rss2_site_icon' );
+
+	$image_id = Podcast::get( 'image_id', '' );
+
+	// Default image is post thumbnail, otherwise specified image.
+	if ( is_singular() ) {
+		$fallback_image_id = $image_id;
+		$image_id          = get_post_thumbnail_id( get_the_ID() );
+		$image_id          = $image_id ? $image_id : $fallback_image_id;
+	}
+
+	$rss_title = get_wp_title_rss();
+	if ( empty( $rss_title ) ) {
+		$rss_title = get_bloginfo_rss( 'name' );
+	}
+
+	$small_url = get_site_icon_url( 32 );
+
+	if ( $image_id ) {
+		$large_url = wp_get_attachment_image_src( $image_id, [ 512, 512 ] );
+		$small_url = wp_get_attachment_image_url( $image_id, [ 32, 32 ] );
+	}
+
+	if ( $small_url ) {
+		echo '
+		<image>
+			<url>' . convert_chars( $small_url ) . '</url>
+			<title>' . $rss_title . '</title>
+			<link>' . get_bloginfo_rss( 'url' ) . '</link>
+			<width>32</width>
+			<height>32</height>
+		</image> ' . "\n";
+
+		$small_rss = sprintf( "
+			<cpsermons:image>
+				<url>%s</url>
+				<title>%s</title>
+				<link>%s</link>
+				<width>32</width>
+				<height>32</height>
+			</cpsermons:image>",
+			convert_chars( $small_url ),
+			$rss_title,
+			get_bloginfo_rss( 'url' )
+		);
+
+		$large_rss = '';
+		if ( $large_url ) {
+			$large_rss = sprintf( "
+			<cpsermons:image>
+				<url>%s</url>
+				<title>%s</title>
+				<link>%s</link>
+				<width>%s</width>
+				<height>%s</height>
+			</cpsermons:image>",
+				convert_chars( $large_url[0] ),
+				$rss_title,
+				get_bloginfo_rss( 'url' ),
+				$large_url[1],
+				$large_url[2]
+			);
+		}
+
+
+		echo "
+		<cpsermons:images>
+			{$small_rss}
+			{$large_rss}
+		</cpsermons:images>\n\n";
+	}
+
+	/**
+	 * Fires at the end of the RSS2 Feed Header (before items).
+	 *
+	 * @since 1.4.0
+	 */
+	do_action( 'cpl_podcast_feed_head' );
+}
+add_action( 'rss2_head', 'cpl_podcast_feed_head', 5 );
+
 // Set content type and charset.
 header( 'Content-Type: ' . feed_content_type( 'rss2' ) . '; charset=' . $charset, true );
 
@@ -95,6 +184,7 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
 	xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
 	xmlns:googleplay="http://www.google.com/schemas/play-podcasts/1.0"
+	xmlns:cpsermons="https://churchplugins.com/wordpress-plugins/cp-sermons/"
 	<?php do_action( 'rss2_ns' ); // Core: Fires at the end of the RSS root to add namespaces. ?>
 >
 
@@ -104,9 +194,9 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 
 		<atom:link href="<?php self_link(); ?>" rel="self" type="application/rss+xml" />
 
-		<?php if ( $link ) : ?>
-			<link><?php echo esc_url( $link ); ?></link>
-		<?php endif; ?>
+<?php if ( $link ) : ?>
+		<link><?php echo esc_url( $link ); ?></link>
+<?php endif; ?>
 
 		<language><?php echo esc_html( $language ); ?></language>
 
@@ -124,32 +214,30 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 
 		<?php if ( $email ) : ?>
 
-			<itunes:owner>
-				<itunes:name><?php echo esc_html( $owner_name ); ?></itunes:name>
-				<itunes:email><?php echo esc_html( $email ); ?></itunes:email>
-			</itunes:owner>
+		<itunes:owner>
+			<itunes:name><?php echo esc_html( $owner_name ); ?></itunes:name>
+			<itunes:email><?php echo esc_html( $email ); ?></itunes:email>
+		</itunes:owner>
 
-			<googleplay:owner><?php echo esc_html( $email ); ?></googleplay:owner>
-			<googleplay:email><?php echo esc_html( $email ); ?></googleplay:email>
+		<googleplay:owner><?php echo esc_html( $email ); ?></googleplay:owner>
+		<googleplay:email><?php echo esc_html( $email ); ?></googleplay:email>
 
 		<?php endif; ?>
 
-		<?php if ( $image ) : ?>
-			<itunes:image href="<?php echo esc_url( $image ); ?>"></itunes:image>
-			<googleplay:image href="<?php echo esc_url( $image ); ?>"></googleplay:image>
-		<?php endif; ?>
+<?php if ( $image ) : ?>
+		<itunes:image href="<?php echo esc_url( $image ); ?>"></itunes:image>
+		<googleplay:image href="<?php echo esc_url( $image ); ?>"></googleplay:image>
+<?php endif; ?>
 
 		<?php if ( $category ) : ?>
 
-			<itunes:category text="<?php echo esc_attr( $category ); ?>">
+		<itunes:category text="<?php echo esc_attr( $category ); ?>">
+<?php if ( $subcategory ) : ?>
+			<itunes:category text="<?php echo esc_attr( $subcategory ); ?>"/>
+<?php endif; ?>
+		</itunes:category>
 
-				<?php if ( $subcategory ) : ?>
-					<itunes:category text="<?php echo esc_attr( $subcategory ); ?>"/>
-				<?php endif; ?>
-
-			</itunes:category>
-
-			<googleplay:category text="<?php echo esc_attr( $category ); ?>"></googleplay:category>
+		<googleplay:category text="<?php echo esc_attr( $category ); ?>"></googleplay:category>
 
 		<?php endif; ?>
 
@@ -157,19 +245,17 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 		<googleplay:explicit><?php echo esc_html( $explicit ); ?></googleplay:explicit>
 
 		<?php if ( $new_url ) : ?>
-			<itunes:new-feed-url><?php echo esc_url( $new_url ); ?></itunes:new-feed-url>
+		<itunes:new-feed-url><?php echo esc_url( $new_url ); ?></itunes:new-feed-url>
 		<?php endif; ?>
 
 		<sy:updatePeriod><?php echo esc_html( apply_filters( 'rss_update_period', 'hourly' ) ); // Core filter. ?></sy:updatePeriod>
 		<sy:updateFrequency><?php echo esc_html( apply_filters( 'rss_update_frequency', '1' ) ); // Core filter. ?></sy:updateFrequency>
 
-		<lastBuildDate>
-		<?php
+		<lastBuildDate><?php
 		// from core, standard practice.
 		$date = get_lastpostmodified( 'GMT' );
-		echo esc_html( $date ? mysql2date( 'r', $date, false ) : gmdate( 'r' ) );
-		?>
-		</lastBuildDate>
+			echo esc_html( $date ? mysql2date( 'r', $date, false ) : gmdate( 'r' ) );
+		?></lastBuildDate>
 
 		<?php
 

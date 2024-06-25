@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.4.7
+* Enhancement: Add additional image sizes to podcast feed <channel>
+
 #### 1.4.6
 * Compatibility update for Divi
 
