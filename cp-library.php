@@ -3,7 +3,7 @@
  * Plugin Name: CP Sermon Library
  * Plugin URL: https://churchplugins.com
  * Description: Church library plugin for sermons, talks, and other media
- * Version: 1.4.6
+ * Version: 1.4.7
  * Author: Church Plugins
  * Author URI: https://churchplugins.com
  * Text Domain: cp-library
