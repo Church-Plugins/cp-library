@@ -89,6 +89,9 @@ class AJAX {
 
 		unset( $query_vars[ $facet_type ] );
 		unset( $query_vars['paged'] );
+		unset( $query_vars['post_parent'] );
+
+		add_filter( 'cpl_item_query_show_children', '__return_true' );
 
 		// different default for scripture
 		$default_order_by = 'cpl_scripture' === $facet_type ? 'name' : 'sermon_count';

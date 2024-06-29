@@ -126,7 +126,7 @@ class Item extends PostType  {
 		}
 
 		// hide child items in queries (both frontend and admin)
-		if ( ! $query->get( 'post_parent' ) && ! isset( $_GET['show-child-items'] ) ) {
+		if ( ! $query->get( 'post_parent' ) && ! apply_filters( 'cpl_item_query_show_children', isset( $_GET['show-child-items'] ), $query ) ) {
 			$query->set( 'post_parent', 0 );
 		}
 

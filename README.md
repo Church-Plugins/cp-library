@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.4.8
+* Bug Fix: Show correct post counts when using variations
+
 #### 1.4.7
 * Enhancement: Add additional image sizes to podcast feed <channel>
 
