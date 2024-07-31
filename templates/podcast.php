@@ -110,6 +110,8 @@ function cpl_podcast_feed_head() {
 		$small_url = wp_get_attachment_image_url( $image_id, [ 32, 32 ] );
 	}
 
+	$rss_title = Podcast::get( 'title', $rss_title );
+
 	if ( $small_url ) {
 		echo '
 		<image>
@@ -174,8 +176,7 @@ header( 'Content-Type: ' . feed_content_type( 'rss2' ) . '; charset=' . $charset
 // Begin output.
 // The contents are retrieved from buffer, trimmed and formatted before output.
 echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
-?>
-<rss version="2.0"
+?><rss version="2.0"
 	xmlns:content="http://purl.org/rss/1.0/modules/content/"
 	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
 	xmlns:dc="http://purl.org/dc/elements/1.1/"

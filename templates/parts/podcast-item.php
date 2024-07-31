@@ -42,6 +42,23 @@ try {
 		<itunes:duration><?php echo esc_html( $item->get_duration() ); ?></itunes:duration>
 	<?php endif; ?>
 
+	<?php if ( ( $thumb = $item->get_thumbnail() ) && $image_size = getimagesize( $thumb ) ) {
+		printf( "
+			<image>
+				<url>%s</url>
+				<title>%s</title>
+				<link>%s</link>
+				<width>%s</width>
+				<height>%s</height>
+			</image>",
+			convert_chars( $thumb ),
+			get_the_title_rss(),
+			get_the_permalink(),
+			$image_size[0],
+			$image_size[1]
+		);
+	} ?>
+
 	<?php do_action( 'rss2_item' ); // Core: Fires at the end of each RSS2 feed item. ?>
 
 </item>
