@@ -1,0 +1,107 @@
+
+
+.cpl-migration-progressbar-wrapper {
+	position: relative;
+	height: 15px;
+	border-radius: 30px;
+	overflow: hidden;
+	background: #e9e9e9;
+
+	.cpl-migration-progressbar {
+		position: absolute;
+		top: 0;
+		left: 0;
+		height: 100%;
+		background: #05303d;
+		transition: width 0.3s ease-in-out;
+	}
+
+	.cpl-migration-progressbar.loading {
+		// a vertical bar is 10px wide, at 45 deg this is the width of the cross-section
+		$offset: 28.2842712475px;
+		
+		background-image: repeating-linear-gradient(-45deg, #0e6464 0 10px, #0f4040 10px 20px);
+		background-size: calc(100% + $offset) 100%;
+		animation: cpl-load 0.5s linear infinite;
+
+		@keyframes cpl-load {
+			0% {
+				background-position: -$offset;
+			}
+			100% {
+				background-position: 0px;
+			}
+		}
+	}
+}
+
+.cpl-migration-cards {
+	display: grid;
+	grid-template-columns: repeat( auto-fill, minmax( 300px, 1fr ) );
+	grid-gap: 2rem;
+	padding-top: 2rem;
+}
+
+.cpl-migration-card {
+	padding: 2rem;
+	border-radius: 5px;
+	background: #fff;
+	border: 1px solid #e9e9e9;
+	cursor: pointer;
+
+	&:hover {
+		box-shadow: 0 0 10px rgba(0,0,0,0.2);
+	}
+
+	&--action {
+		margin-top: 0.5rem;
+		font-weight: bold;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+}
+
+.cpl-modal-wrapper {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: #0007;
+	z-index: 999999;
+	display: flex;
+	justify-content: center;
+	align-items: start;
+	padding: 8rem 2rem 2rem;
+	opacity: 0;
+	transition: opacity 0.3s ease-in-out;
+
+	.cpl-modal {
+		position: relative;
+		padding: 4rem;
+		border-radius: 1rem;
+		background: #fff;
+		transform: translateY(-200px);
+		transition: transform 0.3s ease-in-out;
+		width: 800px;
+		max-width: calc(100vw - 4rem);
+	}
+
+	&.open {
+		opacity: 1;
+	}
+
+	&.open .cpl-modal {
+		transform: translateY(0);
+	}
+	
+	.cpl-modal-close {
+		position: absolute;
+		top: 1rem;
+		right: 1rem;
+		background: none;
+		cursor: pointer;
+	}
+}
+

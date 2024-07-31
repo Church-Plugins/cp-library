@@ -2,7 +2,7 @@ import React from 'react';
 import IconButton from '@mui/material/IconButton';
 import { ChevronRight } from "react-feather"
 import { useHistory } from "react-router-dom";
-import { cplVar } from '../../utils/helpers';
+import { cplVar, isURL } from '../../utils/helpers';
 import Box from '@mui/material/Box';
 import useBreakpoints from '../../Hooks/useBreakpoints';
 
@@ -61,14 +61,18 @@ export default function Actions({
 
   const history = useHistory();
 
+	const isVideoURL = item.video.value && isURL(item.video.value);
+	const isAudioURL = item.audio       && isURL(item.audio);
+
 	return (
 		<Box className="cpl-list-item--actions">
 				<Box className="cpl-list-item--actions--buttons cpl-touch-hide">
-					{item.video.value && (
-						<PlayVideo onClick={playVideo}/>
+					{!!item.video.value && (
+						// when an href is provided, the onclick is ignored and an anchor tag is rendered instead of a button
+						<PlayVideo onClick={playVideo} href={isVideoURL ? false : item.permalink} />
 					)}
-					{item.audio && (
-						<PlayAudio onClick={playAudio}/>
+					{!!item.audio && (
+						<PlayAudio onClick={playAudio} href={isAudioURL ? false : item.permalink} />
 					)}
 				</Box>
 				<IconButton className="cpl-list-item--to-item cpl-touch-only" onClick={viewItem}>

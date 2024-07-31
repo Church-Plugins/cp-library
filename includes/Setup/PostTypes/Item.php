@@ -73,6 +73,8 @@ class Item extends PostType  {
 		if ( empty( $_GET['cpl-recovery'] ) ) {
 			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
 		}
+
+		add_action( 'cmb2_sanitize_file', [ $this, 'sanitize_text_field' ], 10, 5 );
 	}
 
 	/**
@@ -124,7 +126,7 @@ class Item extends PostType  {
 		}
 
 		// hide child items in queries (both frontend and admin)
-		if ( ! $query->get( 'post_parent' ) && ! isset( $_GET['show-child-items'] ) ) {
+		if ( ! $query->get( 'post_parent' ) && ! apply_filters( 'cpl_item_query_show_children', isset( $_GET['show-child-items'] ), $query ) ) {
 			$query->set( 'post_parent', 0 );
 		}
 
@@ -310,6 +312,7 @@ class Item extends PostType  {
 	public function get_args() {
 		$args              = parent::get_args();
 		$args['menu_icon'] = apply_filters( "{$this->post_type}_icon", 'dashicons-format-video' );
+		$args['supports'][] = 'excerpt';
 
 		// make hierarchical if we are using variations
 		if ( cp_library()->setup->variations->is_enabled() ) {
@@ -335,7 +338,9 @@ class Item extends PostType  {
 		$id         = Helpers::get_param( $_GET, 'post', Helpers::get_request( 'post_ID' ) );
 
 		Helpers::get_request( 'post' );
-		if ( $id && get_post( $id )->post_parent ) {
+
+		$post_exists = get_post( $id );
+		if ( $id && $post_exists && $post_exists->post_parent ) {
 			$has_parent = true;
 		}
 
@@ -346,6 +351,7 @@ class Item extends PostType  {
 			'context'      => 'normal',
 			'priority'     => 'high',
 			'show_names'   => true,
+			'show_in_rest' => \WP_REST_Server::READABLE
 		] );
 
 		if ( ! $has_parent && cp_library()->setup->variations->is_enabled() ) {
@@ -431,15 +437,15 @@ class Item extends PostType  {
 
 	protected function item_meta_fields( $cmb ) {
 		$cmb->add_field( [
-			'name' => __( 'Audio URL', 'cp-library' ),
-			'desc' => __( 'The URL of the audio to show, leave blank to hide this field.', 'cp-library' ),
+			'name' => sprintf( __( '%s Audio', 'cp-library' ), $this->single_label ),
+			'desc' => __( 'This can be either a URL of an audio file, or the HTML for an embed.', 'cp-library' ),
 			'id'   => 'audio_url',
 			'type' => 'file',
 		] );
 
 		$cmb->add_field( [
-			'name' => __( 'Video URL', 'cp-library' ),
-			'desc' => __( 'The URL of the video to show, leave blank to hide this field.', 'cp-library' ),
+			'name' => sprintf( __( '%s Video', 'cp-library' ), $this->single_label ),
+			'desc' => __( 'This can be either a URL of a video file, or the HTML for an embed.', 'cp-library' ),
 			'id'   => 'video_url',
 			'type' => 'file',
 		] );
@@ -484,6 +490,39 @@ class Item extends PostType  {
 				'type' => 'text_medium',
 			] );
 		}
+
+		$downloads_field_id = $cmb->add_field( [
+			'id'   => 'downloads',
+			'type' => 'group',
+			/* translators: %s is the singular label for the post type */
+			'desc' => sprintf( __( 'Add downloadable files to this %s.', 'cp-library' ), $this->single_label ),
+			'options' => array(
+				'add_button'    => sprintf( __( 'Add file', 'cp-library' ), strtolower( $this->single_label ) ),
+				'remove_button' => sprintf( __( 'Remove file', 'cp-library' ), strtolower( $this->single_label ) ),
+				'sortable'      => true,
+			),
+		] );
+
+		$cmb->add_group_field( $downloads_field_id, [
+			'name'       => __( 'Name' ),
+			'id'         => 'name',
+			'type'       => 'text',
+			'attributes' => [
+				'placeholder' => __( 'Notes', 'cp-library' ),
+			],
+		] );
+
+		$cmb->add_group_field( $downloads_field_id, [
+			'name'        => __( 'File' ),
+			'id'          => 'file',
+			'type'        => 'file',
+			'attributes'  => [
+				'placeholder' => 'https://example.com/notes.pdf'
+			],
+			'query_args'  => array(
+				'type' => 'application/pdf',
+			),
+		] );
 	}
 
 	protected function analytics() {
@@ -778,14 +817,14 @@ class Item extends PostType  {
 
 		$cmb->add_group_field( $group_field_id, [
 			'name' => __( 'Video URL', 'cp-library' ),
-			'desc' => __( 'The URL of the video to show, leave blank to hide this field.', 'cp-library' ),
+			'desc' => __( 'This can be either a URL of a video file, or the HTML for an embed.', 'cp-library' ),
 			'id'   => 'video_url',
 			'type' => 'file',
 		] );
 
 		$cmb->add_group_field( $group_field_id, [
 			'name' => __( 'Audio URL', 'cp-library' ),
-			'desc' => __( 'The URL of the audio to show, leave blank to hide this field.', 'cp-library' ),
+			'desc' => __( 'This can be either a URL of a audio file, or the HTML for an embed.', 'cp-library' ),
 			'id'   => 'audio_url',
 			'type' => 'file',
 		] );
@@ -803,5 +842,15 @@ class Item extends PostType  {
 			}
 		}
 
+	}
+
+	/**
+	 * CMB2 removes all markup from text fields. We want to allow it for embeds.
+	 */
+	public function sanitize_text_field( $override_value, $value, $object_id, $field_args, $sanitize_object ) {
+		if ( in_array( $field_args['id'], [ 'audio_url', 'video_url' ] ) || ( isset( $field_args['_id'] ) && in_array( $field_args['_id'], [ 'audio_url', 'video_url' ] ) ) ) {
+			return \CP_Library\Controllers\Item::sanitize_embed( $value );
+		}
+		return $override_value;
 	}
 }

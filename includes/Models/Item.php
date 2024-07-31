@@ -430,7 +430,7 @@ class Item extends Table  {
 			'post_name' => sanitize_title( $variant->get_variation_source_label() )
 		] );
 
-		if ( cp_library()->setup->post_types->speaker_enabled() ) {
+		if ( cp_library()->setup->post_types->speaker_enabled() && isset( $item_data['speakers'] ) ) {
 			$variant->model->update_speakers( $item_data['speakers'] );
 		}
 
@@ -487,7 +487,7 @@ class Item extends Table  {
 	/**
 	 * Get the variation ids for this Item
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return array variation Post IDs
 	 * @author Tanner Moushey, 5/6/23

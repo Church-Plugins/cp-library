@@ -3,7 +3,7 @@
  * Plugin Name: CP Sermon Library
  * Plugin URL: https://churchplugins.com
  * Description: Church library plugin for sermons, talks, and other media
- * Version: 1.1.0
+ * Version: 1.4.8
  * Author: Church Plugins
  * Author URI: https://churchplugins.com
  * Text Domain: cp-library
@@ -12,7 +12,7 @@
 
 if( !defined( 'CP_LIBRARY_PLUGIN_VERSION' ) ) {
 	 define ( 'CP_LIBRARY_PLUGIN_VERSION',
-	 	'1.1.0'
+	 	'1.4.8'
 	);
 }
 
@@ -65,3 +65,38 @@ function cp_library_load_textdomain() {
 
 }
 add_action( 'init', 'cp_library_load_textdomain' );
+
+
+/**
+ * Runs on plugin activation.
+ *
+ * @return void
+ */
+function cpl_activation() {
+	update_option( 'cp_library_activated', 1 );
+	update_option( 'cp_library_install_tables', 1 );
+}
+
+/**
+ * Calls an action once when the plugin is activated.
+ *
+ * @return void
+ */
+function cpl_after_activation() {
+	if ( is_admin() && ! wp_doing_ajax() && get_option( 'cp_library_activated' ) == 1 ) {
+		update_option( 'cp_library_activated', time() );
+		do_action( 'cpl_after_activation' );
+	}
+}
+
+/**
+ * Runs on plugin deactivation.
+ */
+function cpl_deactivation() {
+	delete_option( 'cp_library_activated' );
+	do_action( 'cpl_deactivation' );
+}
+
+register_activation_hook( __FILE__, 'cpl_activation' );
+register_deactivation_hook( __FILE__, 'cpl_deactivation' );
+add_action( 'admin_init', 'cpl_after_activation' );

@@ -15,7 +15,7 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 		margin-left: $gap;
 		display: flex;
 		flex-flow: column;
-		justify-content: space-between;
+		justify-content: space-evenly;
 		width: 100%;
 		overflow: hidden;
 	}
@@ -58,7 +58,7 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 			background-position: center center !important;
 			//background-color: rgb(196, 196, 196);
 
-			@include media-breakpoint-up(lg) {
+			@include media-breakpoint-up(md) {
 				padding-bottom: 62.5%;
 			}
 		}
@@ -151,17 +151,18 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 		overflow: hidden;
 		flex-flow: row;
 
-		> * {
+		*:not(.material-icons-outlined) {
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
-			display: block;
 		}
 	}
 
 	@include media-breakpoint-down(md) {
 		margin-top: min(3.5%,1rem);
 		padding: min(3.5%,1rem);
+		overflow: visible;
+		padding-right: 1.5em;
 
 		.cpl-meta,
 		.cpl-info {
@@ -183,9 +184,23 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 			}
 
 		}
+
+		.cpl-item--actions {
+			position: absolute;
+			right: -0.5em;
+			top: 50%;
+			margin-top: -1em;
+			background: white;
+			border-radius: 100px;
+		}
 	}
 
-	@include media-breakpoint-down(xs) {
+	@include media-breakpoint-down(sm) {
+		.cpl-list-item--title,
+		.cpl-info {
+			margin-bottom: 0;
+		}
+
 		.cpl-item--info {
 			.cpl-item--locations {
 				display: none;

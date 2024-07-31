@@ -3,6 +3,7 @@ use ChurchPlugins\Helpers;
 
 try {
 	$item = new \CP_Library\Controllers\Item( get_the_ID() );
+	$player_data = $item->get_player_data( true );
 	$item = $item->get_api_data( true );
 } catch ( \CP_Library\Exception $e ) {
 	error_log( $e );
@@ -36,13 +37,15 @@ add_action( 'cpl_single_item_before', 'cpl_item_back' );
 
 			<?php \CP_Library\Templates::get_template_part( 'parts/item-single/info' ); ?>
 
+			<?php \CP_Library\Templates::get_template_part( 'parts/item-single/attachments' ); ?>
+
 			<div class="cpl-single-item--desc">
 				<?php the_content(); ?>
 			</div>
 		</div>
 
 		<div class="cpl-single-item--media">
-			<div class="itemDetail__rightContent cpl_item_player" data-item="<?php echo esc_attr( json_encode( $item ) ); ?>"></div>
+			<div class="itemDetail__rightContent cpl_item_player" data-item="<?php echo esc_attr( json_encode( $player_data ) ); ?>"></div>
 		</div>
 	</div>
 

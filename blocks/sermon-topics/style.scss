@@ -1,0 +1,17 @@
+
+.wp-block-cp-library-sermon-topics {
+	.cpl-topic-link {
+		line-height: inherit;
+	}
+	a.cpl-topic-link.cpl-topic-link {
+		text-decoration: none;
+		cursor: pointer;
+	}
+	.material-icons, .material-icons-outlined {
+		font-size: 1em;
+		float: left;
+		margin-right: calc( var(--cp-gap-base) * 1.5 );
+		line-height: inherit;
+		transform: scale(1.5);
+	}
+}

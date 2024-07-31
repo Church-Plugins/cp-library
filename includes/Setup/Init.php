@@ -2,6 +2,9 @@
 
 namespace CP_Library\Setup;
 
+use CP_Library\Admin\Settings;
+use CP_Library\Setup\Blocks\Block;
+
 /**
  * Setup plugin initialization
  */
@@ -28,7 +31,7 @@ class Init {
 
 	/**
 	 * @var Variations
-	 * @since 1.0.5
+	 * @since 1.1.0
 	 */
 	public $variations;
 
@@ -41,6 +44,11 @@ class Init {
 	 * @var Taxonomies\Init;
 	 */
 	public $taxonomies;
+
+	/**
+	 * @var Blocks\Init;
+	 */
+	public $blocks;
 
 	/**
 	 * Only make one instance of Init
@@ -76,9 +84,39 @@ class Init {
 		$this->tables     = Tables\Init::get_instance();
 		$this->post_types = PostTypes\Init::get_instance();
 		$this->taxonomies = Taxonomies\Init::get_instance();
+		$this->blocks     = Blocks\Init::get_instance();
 	}
 
-	protected function actions() {}
+	protected function actions() {
+		add_action( 'admin_menu', function () {
+			global $submenu;
+			$menu_type = cp_library()->get_admin_menu_slug();
+			$menu_item = 'edit.php?post_type=' . $menu_type;
+
+			$top_menu  = [];
+			$tax_menu  = [];
+			$cpt_menu  = [];
+			$tool_menu = [];
+
+			if ( empty( $submenu[ $menu_item ] ) ) {
+				return;
+			}
+
+			foreach ( $submenu[ $menu_item ] as $item ) {
+				if ( $item[2] === $menu_item || false !== strpos( $item[2], 'post-new.php' ) ) {
+					$top_menu[] = $item;
+				} elseif ( false !== strpos( $item[2], 'edit-tags.php?taxonomy=' ) ) {
+					$tax_menu[] = $item;
+				} elseif ( false !== strpos( $item[2], 'edit.php' ) && false === strpos( $item[2], 'cpl_template' ) ) {
+					$cpt_menu[] = $item;
+				} else {
+					$tool_menu[] = $item;
+				}
+			}
+
+			$submenu[ $menu_item ] = array_values( array_merge( $top_menu, $cpt_menu, $tax_menu, $tool_menu ) );
+		}, 9999 );
+	}
 
 	/** Actions ***************************************************/
 

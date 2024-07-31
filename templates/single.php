@@ -1,5 +1,9 @@
 <?php
 $type = \CP_Library\Templates::get_type();
+
+if ( 'item' === $type ) {
+	$type .= \CP_Library\Admin\Settings::get_item( 'single_template', '' );
+}
 ?>
 
 <?php if ( have_posts() ) : ?>
