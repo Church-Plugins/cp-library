@@ -42,7 +42,7 @@ try {
 		<itunes:duration><?php echo esc_html( $item->get_duration() ); ?></itunes:duration>
 	<?php endif; ?>
 
-	<?php if ( ( $thumb = $item->get_thumbnail() ) && $image_size = getimagesize( $thumb ) ) {
+	<?php if ( 0 && ( $thumb = $item->get_thumbnail() ) && $image_size = getimagesize( $thumb ) ) { // disable for now
 		printf( "
 			<image>
 				<url>%s</url>

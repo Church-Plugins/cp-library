@@ -24,9 +24,6 @@ npm run build
 
 ### Change Log
 
-#### 1.4.9
-* Enhancement: Add item image to feed
-
 #### 1.4.8
 * Bug Fix: Show correct post counts when using variations
 
