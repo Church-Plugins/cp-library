@@ -339,3 +339,23 @@
 		transform: translateY(-50%) rotateZ(360deg);
 	}
 }
+
+.cpl-import-transcript-btn {
+	display: flex !important;
+	align-items: center;
+	gap: 0.5rem;
+
+	&.success {
+		border-color: #007427;
+		color: #007427;
+	}
+
+	.cp-icon {
+		display: flex;
+	}
+
+	.cp-icon svg {
+		width: 20px;
+		fill: currentColor;
+	}
+}
