@@ -206,6 +206,7 @@ class Init {
 
 		$this->enqueue->enqueue( 'styles', 'admin', [] );
 		wp_enqueue_script( 'inline-edit-post' );
+		wp_enqueue_script( 'wp-api-fetch' );
 
 		$scripts = $this->enqueue->enqueue( 'scripts', 'admin', array( 'jquery', 'select2' ) );
 
@@ -312,6 +313,8 @@ class Init {
 		if ( defined( 'TRIBE_EVENTS_FILE' ) ) {
 			Integrations\EventsCalendar::get_instance();
 		}
+
+		Integrations\YouTube::get_instance();
 
 		$this->modules = Modules\Init::get_instance();
 	}

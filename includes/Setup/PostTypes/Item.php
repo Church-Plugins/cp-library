@@ -252,8 +252,10 @@ class Item extends PostType  {
 		$new_columns = [];
 		foreach( $columns as $key => $column ) {
 			if ( 'date' === $key ) {
-				$new_columns['item_data'] = $this->single_label . ' ' . __( 'Data', 'cp-library' );
+				$new_columns['item_data']  = $this->single_label . ' ' . __( 'Data', 'cp-library' );
+				$new_columns['transcript'] = __( 'Transcript', 'cp-library' );
 			}
+
 
 			$new_columns[ $key ] = $column;
 		}
@@ -261,6 +263,7 @@ class Item extends PostType  {
 		// in case date isn't set
 		if ( ! isset( $columns['date'] ) ) {
 			$new_columns['item_data'] = $this->single_label . ' ' . __( 'Data', 'cp-library' );
+			$new_columns['transcript'] = __( 'Transcript', 'cp-library' );
 		}
 
 		return $new_columns;
@@ -287,6 +290,31 @@ class Item extends PostType  {
 				} catch ( Exception $e ) {
 					error_log( $e );
 				}
+				break;
+			case 'transcript':
+				$video_url  = get_post_meta( $post_id, 'video_url', true );
+				$transcript = get_post_meta( $post_id, 'transcript', true );
+
+				if ( ! empty( $transcript ) ) {
+					$output = '<button type="button" class="button cpl-transcript-btn" data-post-id="' . $post_id .  '">View</button>';
+				} else if ( $video_url && ( strpos( $video_url, 'youtube.com' ) !== false || strpos( $transcript, 'youtu.be' ) !== false ) ) {
+					$output = sprintf(
+						'<button type="button" class="button cpl-import-transcript-btn" data-url="%s">%s</button>',
+						add_query_arg(
+							[
+								'cp_action' => 'cpl_import_transcript',
+								'post_id'   => $post_id,
+							],
+							admin_url( 'admin-post.php' )
+						),
+						\ChurchPlugins\Helpers::get_icon( 'youtube' ) . esc_html__( 'Import', 'cp-library' )
+					);
+				} else {
+					$output = __( 'No', 'cp-library' );
+				}
+
+				echo $output;
+
 				break;
 		}
 	}
@@ -325,6 +353,7 @@ class Item extends PostType  {
 
 	public function register_metaboxes() {
 		$this->analytics();
+		$this->transcript();
 		$this->meta_details();
 	}
 
@@ -538,6 +567,33 @@ class Item extends PostType  {
 		$cmb->add_field( [
 			'id' => 'analytics',
 			'type' => 'item_analytics',
+		] );
+	}
+
+	protected function transcript() {
+		$cmb = new_cmb2_box( [
+			'id'           => 'item_transcript',
+			'title'        => __( 'Transcript', 'cp-library' ),
+			'object_types' => [ $this->post_type ],
+			'context'      => 'normal',
+			'priority'     => 'low',
+			'show_names'   => false,
+			'show_in_rest' => \WP_REST_Server::READABLE
+		] );
+
+		$cmb->add_field( [
+			'name' => __( 'Transcript', 'cp-library' ),
+			'id'   => 'transcript',
+			'type' => 'wysiwyg',
+		] );
+
+		// This is a custom cmb2 field, it is managed in includes/Integrations/YouTube.php
+		$cmb->add_field( [
+			'name'         => __( 'Import from YouTube', 'cp-library' ),
+			'desc'         => __( 'Import transcript', 'cp-library' ),
+			'id'           => 'transcript_import',
+			'type'         => 'cpl_import_transcript_button', 
+			'show_in_rest' => false
 		] );
 	}
 

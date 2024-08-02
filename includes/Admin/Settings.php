@@ -916,6 +916,11 @@ class Settings {
 	 */
 	public function custom_button_form_field( $field, $escaped_value, $object_id, $object_type, $field_type_object ) {
 		$url = add_query_arg( isset( $field->args['query_args'] ) ? $field->args['query_args'] : array(), admin_url( 'admin-post.php' ) );
+
+		if ( ! empty( $field->args['name'] ) ) {
+			echo sprintf( '<h5 class="cmb2-metabox-title">%s</h5>', $field->args['name'] );
+		}
+
 		echo sprintf( '<button type="button" class="button cpl_admin_submit_button" data-url="%s">%s</button>', esc_url( $url ), $field->args['desc'] );
 	}
 }
