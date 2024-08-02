@@ -314,6 +314,10 @@ class Init {
 			Integrations\EventsCalendar::get_instance();
 		}
 
+		if ( defined( 'SEARCHWP_VERSION' ) ) {
+			Integrations\SearchWP::get_instance();
+		}
+
 		Integrations\YouTube::get_instance();
 
 		$this->modules = Modules\Init::get_instance();
