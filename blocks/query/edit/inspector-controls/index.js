@@ -289,13 +289,14 @@ export default function QueryInspectorControls( {
 								hasValue={ () =>
 									Object.values( taxQuery || {} ).some(
 										( terms ) => !! terms.length
-									) || query.cpl_speakers || query.cpl_service_types
+									) || query.cpl_speakers || query.cpl_service_types || query.cpl_item_type
 								}
 								onDeselect={ () =>
 									setQuery( { 
 										taxQuery: null,
 										cpl_speakers: null,
 										cpl_service_types: null,
+										cpl_item_type: null
 									} )
 								}
 							>

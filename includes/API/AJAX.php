@@ -89,6 +89,9 @@ class AJAX {
 
 		unset( $query_vars[ $facet_type ] );
 		unset( $query_vars['paged'] );
+		unset( $query_vars['post_parent'] );
+
+		add_filter( 'cpl_item_query_show_children', '__return_true' );
 
 		// different default for scripture
 		$default_order_by = 'cpl_scripture' === $facet_type ? 'name' : 'sermon_count';
@@ -131,7 +134,7 @@ class AJAX {
 
 			switch ( $facet_type ) {
 				case 'speaker':
-				case 'service_type':
+				case 'service-type':
 					$items = $this->get_sources( $args );
 					break;
 				case 'cpl_scripture':
@@ -150,12 +153,18 @@ class AJAX {
 			}
 		}
 
+		$show_count = 'show' === Settings::get_advanced( 'show_filter_count', 'show' );
+
 		?>
 		<?php foreach ( $items as $item ) : ?>
 			<label class="cp-has-checkmark">
 				<input type="checkbox" <?php checked( in_array( $item->value, $selected, true ) ); ?> name="<?php echo esc_attr( $facet_type ); ?>[]" value="<?php echo esc_attr( $item->value ); ?>"/>
 				<span class="cp-checkmark"></span>
-				<span class="cp-filter-label"><?php echo esc_html( $item->title ); ?> <sup class="cp-filter-count">(<?php echo esc_html( $item->count ); ?>)</sup></span>
+				<span class="cp-filter-label"><?php echo esc_html( $item->title ); ?>
+					<?php if ( $show_count ) : ?>
+						<sup class="cp-filter-count">(<?php echo esc_html( $item->count ); ?>)</sup>
+					<?php endif; ?>
+				</span>
 			</label>
 		<?php endforeach; ?>
 		<?php
@@ -181,7 +190,7 @@ class AJAX {
 			)
 		);
 
-		if ( ! in_array( $args['facet_type'], array( 'speaker', 'service_type' ) ) ) {
+		if ( ! in_array( $args['facet_type'], array( 'speaker', 'service-type' ) ) ) {
 			throw new \ChurchPlugins\Exception( 'Invalid facet type' );
 		}
 
@@ -219,7 +228,7 @@ class AJAX {
 			$wpdb->prefix . 'cp_source',
 			$wpdb->prefix . 'cp_source_meta',
 			$wpdb->prefix . 'cp_source_type',
-			$args['facet_type'],
+			'service-type' === $args['facet_type'] ? 'service_type' : $args['facet_type'],
 			$wpdb->prefix . 'cpl_item',
 			$args['post__in'],
 			$args['threshold'],

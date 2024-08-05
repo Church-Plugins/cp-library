@@ -271,7 +271,7 @@ class Init {
 			);
 		}
 
-		wp_register_script( 'cpl_facets', CP_LIBRARY_PLUGIN_URL . '/assets/js/facets.js', array( 'jquery' ), CP_LIBRARY_PLUGIN_VERSION, true );
+		wp_register_script( 'cpl_facets', CP_LIBRARY_PLUGIN_URL . '/assets/js/facets.js', array( 'jquery' ), CP_LIBRARY_PLUGIN_VERSION );
 
 		$script  = Helpers::enqueue_asset( 'app', [ 'jquery', 'cpl_facets' ], false, false, true );
 

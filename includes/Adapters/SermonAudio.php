@@ -147,7 +147,7 @@ class SermonAudio extends Adapter {
 			'X-Api-Key' => $api_key,
 		);
 
-		$response = wp_remote_get( $url, [ 'timeout' => 10, 'headers' => $headers ] );
+		$response = wp_remote_get( $url, [ 'timeout' => 100, 'headers' => $headers ] );
 
 		if ( is_wp_error( $response ) ) {
 			throw new \ChurchPlugins\Exception( esc_html( $response->get_error_message() ) );
@@ -180,8 +180,8 @@ class SermonAudio extends Adapter {
 		// loop through all pages
 		do {
 			$query['page'] = $page;
-			$data    = $this->get_results( $query );
-			$results = array_merge( $results, $data->results );
+			$data          = $this->get_results( $query );
+			$results       = array_merge( $results, $data->results );
 			$page++;
 		} while ( $data->next );
 
@@ -243,6 +243,7 @@ class SermonAudio extends Adapter {
 			'post_content' => wp_kses_post( $item->moreInfoText ),
 			'meta_input'   => array(),
 			'cpl_data'     => array(),
+			'taxonomies'   => array(),
 		);
 
 		if ( $item->hasAudio ) {
@@ -255,6 +256,10 @@ class SermonAudio extends Adapter {
 
 		if ( $item->bibleText ) {
 			$args['cpl_data']['scripture'] = $item->bibleText;
+		}
+
+		if ( $item->eventType ) {
+			$args['cpl_data']['service_type'] = $item->eventType;
 		}
 
 		return $args;
@@ -353,6 +358,43 @@ class SermonAudio extends Adapter {
 		if ( 'cpl_item' === $post_type ) {
 			if ( isset( $cpl_data['scripture'] ) ) {
 				$item->update_scripture( explode( ';', $cpl_data['scripture'] ) );
+			}
+
+			// Service type
+			if ( isset( $cpl_data['service_type'] ) && cp_library()->setup->post_types->service_type_enabled() ) {
+
+				// create service type if it doesn't exist
+				$service_type_slug = sanitize_title( $cpl_data['service_type'] );
+				$service_type_post = get_posts(
+					array(
+						'name'           => $service_type_slug,
+						'post_type'      => cp_library()->setup->post_types->service_type->post_type,
+						'posts_per_page' => 1,
+					)
+				);
+				$service_type_post = current( $service_type_post );
+
+				if ( ! $service_type_post ) {
+					$service_type_post = wp_insert_post(
+						array(
+							'post_title'  => $cpl_data['service_type'],
+							'post_name'   => $service_type_slug,
+							'post_status' => 'publish',
+							'post_type'   => cp_library()->setup->post_types->service_type->post_type,
+						)
+					);
+				}
+
+				if ( is_wp_error( $service_type_post ) ) {
+					error_log( $service_type_post->get_error_message() );
+					return;
+				}
+
+				$service_type_post = get_post( $service_type_post ); // make sure we have the post object
+
+				$service_type_model = \CP_Library\Models\ServiceType::get_instance_from_origin( $service_type_post->ID );
+
+				$item->update_service_types( [ $service_type_model->id ] );
 			}
 		}
 	}

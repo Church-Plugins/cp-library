@@ -3,6 +3,7 @@ use ChurchPlugins\Helpers;
 
 try {
 	$item = new \CP_Library\Controllers\Item( get_the_ID() );
+	$player_data = $item->get_player_data( true );
 	$item = $item->get_api_data( true );
 	$item['layout'] = 'vertical';
 } catch ( \CP_Library\Exception $e ) {
@@ -14,7 +15,7 @@ try {
 
 <?php do_action( 'cpl_single_item_before', $item ); ?>
 
-<div class="cpl-single-item">
+<div class="cpl-single-item cpl-layout-vertical">
 
 	<div
 		class="cpl-single-item--hero"
@@ -23,7 +24,7 @@ try {
 		<div class="cpl-single-item--hero-overlay"></div>
 		<div class="cpl-columns">
 			<div class="cpl-single-item--media">
-				<div class="cpl_item_player" data-item="<?php echo esc_attr( json_encode( $item ) ); ?>"></div>
+				<div class="cpl_item_player" data-item="<?php echo esc_attr( json_encode( $player_data ) ); ?>"></div>
 			</div>
 		</div>
 	</div>
@@ -52,7 +53,7 @@ try {
 			<?php printf( __( 'Back to All %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ); ?>
 		</a>
 	</div>
-	
+
 </div>
 
 <?php do_action( 'cpl_single_item_after', $item ); ?>
