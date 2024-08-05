@@ -1,0 +1,18 @@
+.wp-block-cp-library-item-date {
+	// This block has customizable padding, border-box makes that more predictable.
+	box-sizing: border-box;
+
+	a.cpl-item-date-link.cpl-item-date-link {
+		line-height: inherit;
+		text-decoration: none;
+		cursor: pointer;
+	}
+
+	.material-icons, .material-icons-outlined {
+		font-size: 1em;
+		float: left;
+		margin-right: calc( var(--cp-gap-base) * 1.5 );
+		line-height: inherit;
+		transform: scale(1.5);
+	}
+}

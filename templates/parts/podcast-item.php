@@ -9,10 +9,10 @@ try {
 ?>
 <item>
 
-	<title><?php the_title_rss() ?></title>
-	<itunes:title><?php the_title_rss() ?></itunes:title>
+	<title><?php the_title_rss(); ?></title>
+	<itunes:title><?php the_title_rss(); ?></itunes:title>
 
-	<pubDate><?php echo mysql2date( 'D, d M Y H:i:s +0000', get_post_time( 'Y-m-d H:i:s', true ), false ); ?></pubDate>
+	<pubDate><?php echo esc_html( mysql2date( 'D, d M Y H:i:s +0000', get_post_time( 'Y-m-d H:i:s', true ), false ) ); ?></pubDate>
 	<guid isPermaLink="false"><?php the_guid(); ?></guid>
 	<link><?php the_permalink_rss(); ?></link>
 
@@ -23,16 +23,13 @@ try {
 	<?php endif; ?>
 
 	<?php if ( $item->get_podcast_subtitle() ) : ?>
-		<itunes:subtitle><![CDATA[<?php echo $item->get_podcast_subtitle(); ?>]]></itunes:subtitle>
-	<?php endif; ?>
-
-	<?php if ( $item->get_podcast_summary() ) : ?>
-		<itunes:summary><![CDATA[<?php echo $item->get_podcast_summary(); ?>]]></itunes:summary>
-		<googleplay:description><![CDATA[<?php echo $item->get_podcast_summary(); ?>]]></googleplay:description>
+		<itunes:subtitle><?php echo esc_html( $item->get_podcast_subtitle() ); ?></itunes:subtitle>
 	<?php endif; ?>
 
 	<?php if ( $item->get_podcast_description() ) : ?>
-		<description><![CDATA[<?php echo $item->get_podcast_description(); ?>]]></description>
+		<description><?php echo esc_html( $item->get_podcast_description() ); ?></description>
+		<itunes:summary><?php echo esc_html( $item->get_podcast_description() ); ?></itunes:summary>
+		<googleplay:description><?php echo esc_html( $item->get_podcast_description() ); ?></googleplay:description>
 	<?php endif; ?>
 
 	<?php if ( $item->get_podcast_content() ) : ?>
@@ -44,6 +41,23 @@ try {
 	<?php if ( $item->get_duration() ) : ?>
 		<itunes:duration><?php echo esc_html( $item->get_duration() ); ?></itunes:duration>
 	<?php endif; ?>
+
+	<?php if ( 0 && ( $thumb = $item->get_thumbnail() ) && $image_size = getimagesize( $thumb ) ) { // disable for now
+		printf( "
+			<image>
+				<url>%s</url>
+				<title>%s</title>
+				<link>%s</link>
+				<width>%s</width>
+				<height>%s</height>
+			</image>",
+			convert_chars( $thumb ),
+			get_the_title_rss(),
+			get_the_permalink(),
+			$image_size[0],
+			$image_size[1]
+		);
+	} ?>
 
 	<?php do_action( 'rss2_item' ); // Core: Fires at the end of each RSS2 feed item. ?>
 

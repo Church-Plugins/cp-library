@@ -2,6 +2,7 @@
 
 namespace CP_Library\Admin;
 
+use CMB2_Field;
 use CP_Library\Admin\Settings\Podcast;
 use CP_Library\Models\ServiceType;
 
@@ -99,6 +100,7 @@ class Settings {
 	protected function __construct() {
 		add_action( 'cmb2_admin_init', [ $this, 'register_main_options_metabox' ] );
 		add_action( 'cmb2_save_options_page_fields', 'flush_rewrite_rules' );
+		add_action( 'cmb2_render_cpl_submit_button', [ $this, 'custom_button_form_field' ], 10, 5 );
 	}
 
 	public function register_main_options_metabox() {
@@ -208,6 +210,14 @@ class Settings {
 			Podcast::fields();
 		}
 
+		$adapters = cp_library()->adapters->get_adapters();
+
+		foreach( $adapters as $adapter ) {
+			if( $adapter->is_enabled() ) {
+				$adapter->options_page();
+			}
+		}
+
 		$this->advanced_options();
 		$this->license_fields();
 
@@ -221,7 +231,7 @@ class Settings {
 		 */
 		$args = array(
 			'id'           => 'cpl_options_page',
-			'title'        => 'CP Library Settings',
+			'title'        => 'CP Sermons Settings',
 			'object_types' => array( 'options-page' ),
 			'option_key'   => 'cpl_license',
 			'parent_slug'  => 'cpl_main_options',
@@ -308,7 +318,7 @@ class Settings {
 
 		$options->add_field( [
 			'name' => __( 'Info Items', 'cp-library' ),
-			'desc' => __( 'The items to show under the title on the single view and list view.', 'cp-library' ),
+			'desc' => __( 'The items to show under the title on the single view, grid view, and list view.', 'cp-library' ),
 			'id'   => 'info_items',
 			'type' => 'pw_multiselect',
 			'options' => $template_items,
@@ -324,6 +334,33 @@ class Settings {
 			'default' => [ 'date', 'topics', 'scripture' ]
 		] );
 
+		$options->add_field( [
+			'name'    => __( 'Single Page Template', 'cp-library' ),
+			'desc'    => '',
+			'id'      => 'single_template',
+			'type'    => 'radio_inline',
+			'default' => '',
+			'options' => [
+				''          => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-default-template.png" />' . __( 'Default (2 column)', 'cp-library' ),
+				'-vertical' => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-vertical-template.png" />' . __( 'Vertical (1 column)', 'cp-library' ),
+			],
+			'classes' => 'cp-radio-image',
+		] );
+
+//		$options->add_field( [
+//			'name'    => __( 'Archive Page Template', 'cp-library' ),
+//			'desc'    => '',
+//			'id'      => 'archive_template',
+//			'type'    => 'radio_inline',
+//			'default' => '',
+//			'options' => [
+//				''      => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-list-template.png" />' . __( 'List View', 'cp-library' ),
+//				'-grid' => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/sermon-grid-template.png" />' . __( 'Grid (3 column)', 'cp-library' ),
+//			],
+//			'classes' => 'cp-radio-image',
+//		] );
+
+
 		$variation_sources = cp_library()->setup->variations->get_sources();
 		$desc              = __( 'Use this section to control the sermon variation functionality. Variations allows you to create multiple versions of a sermon with different speakers, media, etc. This is ideal for churches that deliver the same message from multiple locations each Sunday.', 'cp-library' );
 
@@ -337,6 +374,7 @@ class Settings {
 			'desc' => $desc,
 			'type' => 'title',
 		) );
+
 
 		if ( empty( $variation_sources ) ) {
 			return;
@@ -408,6 +446,54 @@ class Settings {
 			'default' => strtolower( sanitize_title( cp_library()->setup->post_types->item_type->plural_label ) ),
 		) );
 
+		$options->add_field( array(
+			'name' => __( 'Template Options', 'cp-library' ),
+			'id'   => 'template_title',
+			'type' => 'title',
+		) );
+
+		$options->add_field( [
+			'name'    => __( 'Image Aspect Ratio', 'cp-library' ),
+			'desc'    => __( 'Enforce a consistent image ratio in the Grid view.', 'cp-library' ),
+			'id'      => 'image_ratio',
+			'type'    => 'radio_inline',
+			'default' => '',
+			'options' => [
+				''     => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-none.png" />' . __( 'Default (No Aspect Ratio)', 'cp-library' ),
+				'1x1'  => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-1x1.png" />' . __( 'Square (1:1)', 'cp-library' ),
+				'4x3'  => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-4x3.png" />' . __( 'Standard (4:3)', 'cp-library' ),
+				'16x9' => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-16x9.png" />' . __( 'Landscape (16:9)', 'cp-library' ),
+			],
+			'classes' => 'cp-radio-image',
+		] );
+
+		$options->add_field( [
+			/* translators: %s is the plural label for the item post type */
+			'name'    => sprintf( __( '%s sort order', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'id'      => 'item_sort_order',
+			/* translators: %s is the plural label for the item type post type */
+			'desc'    => sprintf( __( 'The sort order for messages when viewing a single %s.', 'cp-library' ), cp_library()->setup->post_types->item_type->single_label ),
+			'type'    => 'radio_inline',
+			'default' => 'DESC',
+			'options' => [
+				'DESC' => __( 'Descending', 'cp-library' ),
+				'ASC'  => __( 'Ascending', 'cp-library' ),
+			],
+		] );
+
+		$options->add_field( [
+			/* translators: %s is the plural label for the item post type */
+			'name'    => sprintf( __( '%s sort by', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'id'      => 'item_sort_by',
+			/* translators: %s is the plural label for the item post type */
+			'desc'    => sprintf( __( 'Which field to sort %s by', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'type'    => 'radio_inline',
+			'default' => 'post_date',
+			'options' => [
+				'post_title' => __( 'Title', 'cp-library' ),
+				'post_date'  => __( 'Publish Date', 'cp-library' ),
+			],
+		] );
 	}
 
 	protected function speaker_options() {
@@ -446,6 +532,13 @@ class Settings {
 			'id'      => 'plural_label',
 			'type'    => 'text',
 			'default' => cp_library()->setup->post_types->speaker->plural_label,
+		) );
+
+		$options->add_field( array(
+			'name' => sprintf( __( 'Enable %s permalinks', 'cp-library' ), cp_library()->setup->post_types->speaker->single_label ),
+			'desc' => sprintf( __( 'Link the %s\'s name to the speaker page that shows their %s.', 'cp-library' ), cp_library()->setup->post_types->speaker->single_label, cp_library()->setup->post_types->item->plural_label ),
+			'id'   => 'enable_permalinks',
+			'type' => 'checkbox'
 		) );
 
 	}
@@ -576,6 +669,21 @@ class Settings {
 			]
 		) );
 
+		$adapters = cp_library()->adapters->get_adapters();
+
+		foreach( $adapters as $adapter ) {
+			$advanced_options->add_field( array(
+				'name'    => sprintf( __( 'Enable %s Integration', 'cp-library' ), $adapter->display_name ),
+				'id'      => "cpl_{$adapter->type}_adapter_enabled",
+				'type'    => 'radio_inline',
+				'default' => 0,
+				'options' => [
+					1 => __( 'Enable', 'cp-library' ),
+					0 => __( 'Disable', 'cp-library' ),
+				]
+			) );
+		}
+
 		if ( cp_library()->setup->post_types->item_type_enabled() ) {
 
 			// @todo move this out of conditional once we add more settings
@@ -598,6 +706,148 @@ class Settings {
 			] );
 		}
 
+		$advanced_options->add_field(
+			array(
+				'name' => __( 'Built-in Terms', 'cp-library' ),
+				'desc' => __( 'We have spent years compiling a robust list of Topics and Seasons built specifically for churches.', 'cp-library' ),
+				'id'   => 'builtin-terms',
+				'type' => 'title',
+			)
+		);
+
+		add_thickbox();
+
+		$advanced_options->add_field( array(
+			'name'    => __( 'Enable Built-in Seasons' ),
+			'id'      => 'season_terms_enabled',
+			'type'    => 'radio_inline',
+			'default' => 1,
+			'options' => [
+				1 => __( 'Enable', 'cp-library' ),
+				0 => __( 'Disable', 'cp-library' ),
+			],
+			'desc' => __( 'Seasons are a great way to organize your content by time of year. We have a <a href="#TB_inline?width=600&height=550&inlineId=modal-seasons" class="thickbox">built-in list of seasons</a> that you can use to organize your content.', 'cp-library' ),
+			'after_row' => '
+<div id="modal-seasons" style="display:none;">
+    <h3>' . __( 'Built-in Seasons', 'cp-library' ) . '</h3>
+    <p>' . implode( ', ', wp_list_pluck( cp_library()->setup->taxonomies->season->get_term_data(), 'term' ) ) . '</p>
+</div>',
+		) );
+
+		$advanced_options->add_field( array(
+			'name'    => __( 'Enable Built-in Topics' ),
+			'id'      => 'topic_terms_enabled',
+			'type'    => 'radio_inline',
+			'default' => 1,
+			'options' => [
+				1 => __( 'Enable', 'cp-library' ),
+				0 => __( 'Disable', 'cp-library' ),
+			],
+			'desc' => __( 'Topics keep your content organized and easily searchable. We have a <a href="#TB_inline?width=600&height=550&inlineId=modal-topics" class="thickbox">built-in list of topics</a> that you can use to organize your content.', 'cp-library' ),
+			'after_row' => '
+<div id="modal-topics" style="display:none;">
+    <h3>' . __( 'Built-in Topics', 'cp-library' ) . '</h3>
+    <p>' . implode( ', ', wp_list_pluck( cp_library()->setup->taxonomies->topic->get_term_data(), 'term' ) ) . '</p>
+</div>',
+		) );
+
+		$advanced_options->add_field(
+			array(
+				'name' => __( 'Filters', 'cp-library' ),
+				'id'   => 'filters',
+				'type' => 'title',
+			)
+		);
+
+		$advanced_options->add_field(
+			array(
+				'name'    => __( 'Show Counts', 'cp-library' ),
+				'id'      => 'show_filter_count',
+				'desc'    => sprintf( __( 'Show the count of each item in the filters.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+				'type'    => 'radio_inline',
+				'default' => 'show',
+				'options' => array(
+					'show' => __( 'Show', 'cp-library' ),
+					'hide' => __( 'Hide', 'cp-library' ),
+				),
+			)
+		);
+
+		$advanced_options->add_field(
+			array(
+				'name'    => __( 'Count Threshold', 'cp-library' ),
+				'id'      => 'filter_count_threshold',
+				/* translators: %s is the plural label for the item post type */
+				'desc'    => sprintf( __( 'The minimum number of %s to show a filter field for.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+				'type'    => 'text_small',
+				'default' => 3,
+			)
+		);
+
+		$taxonomies = cp_library()->setup->taxonomies->get_objects();
+
+		$filters = wp_list_pluck( $taxonomies, 'plural_label', 'taxonomy' );
+		$sources = array();
+
+		if ( cp_library()->setup->post_types->speaker_enabled() ) {
+			$sources['speaker'] = $filters['speaker'] = cp_library()->setup->post_types->speaker->plural_label;
+		}
+
+		if ( cp_library()->setup->post_types->service_type_enabled() ) {
+			$sources['service_type'] = $filters['service_type'] = cp_library()->setup->post_types->service_type->plural_label;
+		}
+
+		$advanced_options->add_field(
+			array(
+				'name'    => __( 'Disable Filters', 'cp-library' ),
+				'id'      => 'disable_filters',
+				/* translators: %s is the plural label for the item post type */
+				'desc'    => sprintf( __( 'Choose to disable any of the filters on the %s archive page.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+				'type'    => 'multicheck_inline',
+				'options' => $filters,
+			)
+		);
+
+		foreach ( $taxonomies as $taxonomy ) {
+			$default_value = 'sermon_count';
+			$options       = array(
+				'sermon_count' => sprintf( __( 'By %s Count', 'cp-library' ), cp_library()->setup->post_types->item->single_label ),
+				'name'         => __( 'Alphabetically', 'cp-library' ),
+			);
+
+			if ( 'cpl_scripture' === $taxonomy->taxonomy ) {
+				$default_value   = 'name';
+				$options['name'] = __( 'By Scripture Order', 'cp-library' );
+			}
+
+			$advanced_options->add_field(
+				array(
+					/* translators: %s is the single label for the taxonomy */
+					'name'    => sprintf( __( 'Sort %s', 'cp-library' ), $taxonomy->plural_label ),
+					'id'      => 'sort_' . $taxonomy->taxonomy,
+					'type'    => 'radio',
+					'default' => $default_value,
+					'options' => $options,
+				)
+			);
+		}
+		foreach ( $sources as $key => $source ) {
+			$advanced_options->add_field(
+				array(
+					/* translators: %s is the single label for the source post type */
+					'name'    => sprintf( __( 'Sort %s', 'cp-library' ), $source ),
+					'id'      => "sort_{$key}",
+					'type'    => 'radio',
+					'default' => 'sermon_count',
+					'options' => array(
+						/* translators: %s is the plural label for the item post type */
+						'sermon_count' => sprintf( __( 'By %s Count', 'cp-library' ), cp_library()->setup->post_types->item->single_label ),
+						'name'  => __( 'Alphabetically', 'cp-library' ),
+					),
+				)
+			);
+
+		}
 	}
 
 	/**
@@ -653,5 +903,19 @@ class Settings {
 		return $tabs;
 	}
 
-
+	/**
+	 * Render a custom CMB2 field, a button that submits an API request to admin-post.php with specified query args
+	 *
+	 * @param CMB2_Field $field
+	 * @param mixed $escaped_value
+	 * @param int $object_id
+	 * @param string $object_type
+	 * @param CMB2_Types $field_type_object
+	 * @since 1.3.0
+	 * @return void
+	 */
+	public function custom_button_form_field( $field, $escaped_value, $object_id, $object_type, $field_type_object ) {
+		$url = add_query_arg( isset( $field->args['query_args'] ) ? $field->args['query_args'] : array(), admin_url( 'admin-post.php' ) );
+		echo sprintf( '<button type="button" class="button cpl_admin_submit_button" data-url="%s">%s</button>', esc_url( $url ), $field->args['desc'] );
+	}
 }

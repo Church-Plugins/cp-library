@@ -4,13 +4,18 @@
   "private": true,
   "scripts": {
     "bootstrap": "wpackio-scripts bootstrap",
-    "build": "wpackio-scripts build",
+    "styles": "wpackio-scripts build",
+    "build": "wpackio-scripts build && npm run build:blocks",
     "start": "wpackio-scripts start",
-    "archive": "wpackio-scripts pack"
+    "archive": "wpackio-scripts pack",
+    "dev:blocks": "wp-scripts start --webpack-src-dir=blocks/ --output-path=dist/blocks",
+    "build:blocks": "wp-scripts build --webpack-src-dir=blocks/ --output-path=dist/blocks"
   },
   "devDependencies": {
+    "@wordpress/scripts": "^26.9.0",
     "@wpackio/scripts": "^6.4.0",
-    "sass": "^1.42.1"
+    "sass": "^1.42.1",
+    "webpack-cli": "^5.1.4"
   },
   "dependencies": {
     "@emotion/react": "^11.4.1",
@@ -19,8 +24,10 @@
     "@mui/material": "^5.0.0",
     "@mui/styled-engine-sc": "^5.0.0",
     "@mui/styles": "^5.0.1",
+    "@wordpress/api-fetch": "^6.35.0",
     "@wordpress/compose": "^5.0.2",
     "@wordpress/data": "^6.1.0",
+    "@wordpress/icons": "^9.29.0",
     "@wpackio/entrypoint": "^6.4.0",
     "async": "^3.2.1",
     "axios": "^0.21.4",
@@ -39,7 +46,6 @@
     "react-templates": "^0.6.3",
     "react-templates-loader": "^0.6.5",
     "requirejs": "^2.3.6",
-    "sass": "^1.42.1",
     "screenfull": "^5.1.0",
     "styled-components": "^5.3.1",
     "tiny-relative-date": "^1.3.0",

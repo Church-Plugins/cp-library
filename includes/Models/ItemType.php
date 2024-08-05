@@ -7,6 +7,7 @@ use CP_Library\Setup\Tables\ItemMeta;
 use CP_Library\Setup\Tables\Item;
 use CP_Library\Models\Item as ItemModel;
 use ChurchPlugins\Models\Table;
+use CP_Library\Admin\Settings;
 
 /**
  * Item DB Class
@@ -36,8 +37,8 @@ class ItemType extends Table  {
 
 		parent::init();
 
-		$this->table_name  = $wpdb->base_prefix . 'cpl_' . $this->type;
-		$this->meta_table_name  = $wpdb->base_prefix . 'cpl_' . $this->type . "_meta";
+		$this->table_name  = $wpdb->prefix . 'cpl_' . $this->type;
+		$this->meta_table_name  = $wpdb->prefix . 'cpl_' . $this->type . "_meta";
 	}
 
 	/**
@@ -73,6 +74,9 @@ class ItemType extends Table  {
 			$meta = ItemMeta::get_instance();
 			$item = Item::get_instance();
 
+			$sort_order = Settings::get_item_type( 'item_sort_order', 'DESC' );
+			$sort_by    = Settings::get_item_type( 'item_sort_by', 'post_date' );
+
 			// Return items for this Type in POST date order
 			$prepared = $wpdb->prepare(
 				"SELECT		{$item->table_name}.*
@@ -81,7 +85,7 @@ class ItemType extends Table  {
 				 			{$meta->table_name}.item_type_id = %d AND
 							{$item->table_name}.id = {$meta->table_name}.item_id AND
 							{$wpdb->prefix}posts.ID = {$item->table_name}.origin_id
-				 ORDER BY 	{$wpdb->prefix}posts.post_date ASC",
+				 ORDER BY {$wpdb->prefix}posts.{$sort_by} {$sort_order}",
 				$this->id
 			);
 
@@ -126,7 +130,7 @@ class ItemType extends Table  {
 			// we need this meta value for sorting
 			update_post_meta( $this->origin_id, 'last_item_date', 0 );
 
-			if ( 'publish' === $status && apply_filters( 'cpl_item_type_require_items', true, $this ) ) {
+			if ( 'publish' === $status && apply_filters( 'cpl_item_type_require_items', false, $this ) ) {
 				wp_update_post( [ 'ID' => $this->origin_id, 'post_status' => 'draft' ] );
 				return 'draft';
 			}

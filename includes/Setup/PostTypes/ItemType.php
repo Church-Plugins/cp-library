@@ -72,6 +72,7 @@ class ItemType extends PostType  {
 		add_filter( 'cmb2_save_field_cpl_series', [ $this, 'save_item_series' ], 10, 3 );
 		add_action( 'pre_get_posts', [ $this, 'default_posts_per_page' ] );
 		add_action( 'pre_get_posts', [ $this, 'item_item_type_query' ] );
+		add_action( 'pre_get_posts', [ $this, 'item_type_param_query' ] );
 		add_filter( 'post_updated_messages', [ $this, 'post_update_messages' ] );
 		add_filter( "{$this->post_type}_slug", [ $this, 'custom_slug' ] );
 
@@ -88,10 +89,12 @@ class ItemType extends PostType  {
 		if ( $this->show_in_menu() && 'item_type' === Settings::get_advanced( 'default_menu_item', 'item_type' ) ) {
 			$source_type  = Speaker::get_instance()->post_type;
 			$service_type = ServiceType::get_instance()->post_type;
+			$template = Template::get_instance()->post_type;
 
 			add_filter( "{$item}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 			add_filter( "{$source_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 			add_filter( "{$service_type}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
+			add_filter( "{$template}_args", [ $this, 'cpt_menu_position' ], 10, 2 );
 		}
 	}
 
@@ -200,11 +203,10 @@ class ItemType extends PostType  {
 	}
 
 	public function item_item_type_query( $query ) {
-
 		// For ItemType/Series, order by metadata (contained item date)
-		if( $query->is_main_query() ) {
-			if( !empty( $query->query_vars ) && !empty( $query->query_vars['post_type'] ) && $query->query_vars['post_type'] == 'cpl_item_type' ) {
-				if( empty( $query->query_vars['cpl_item_type'] ) ) {
+		if ( $query->is_main_query() ) {
+			if ( ! empty( $query->query_vars ) && ! empty( $query->query_vars['post_type'] ) && 'cpl_item_type' === $query->query_vars['post_type'] ) {
+				if ( empty( $query->query_vars['cpl_item_type'] ) ) {
 					$query->set( 'orderby', 'meta_value_num' );
 					$query->set( 'order', 'DESC' );
 					$query->set( 'meta_key', 'last_item_date' );
@@ -224,7 +226,7 @@ class ItemType extends PostType  {
 			return;
 		}
 
-		if ( ! in_array( $query->get('post_type'), [ Item::get_instance()->post_type ] ) ) {
+		if ( ! in_array( $query->get( 'post_type' ), [ Item::get_instance()->post_type ], true ) ) {
 			return;
 		}
 
@@ -239,15 +241,60 @@ class ItemType extends PostType  {
 		} catch ( Exception $e ) {
 			error_log( $e );
 		}
-
 	}
 
+
+	/**
+	 * Filters queries with the `cpl_item_type` parameter
+	 *
+	 * @param WP_Query $query The query object.
+	 */
+	public function item_type_param_query( $query ) {
+		if ( cp_library()->setup->post_types->item->post_type !== $query->get( 'post_type' ) ) {
+			return;
+		}
+
+		$types = $query->get( 'cpl_item_type', [] );
+
+		if ( empty( $types ) ) {
+			return;
+		}
+
+		$types = array_map( 'absint', $types );
+
+		try {
+			foreach ( $types as $type ) {
+				$type = Model::get_instance_from_origin( $type );
+
+				$items = array_map( 'absint', wp_list_pluck( $type->get_items(), 'origin_id' ) );
+				$items = array_merge( array_map( 'absint', $query->get( 'post__in', [] ) ), $items );
+
+				$query->set( 'post__in', $items );
+			}
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
+	}
+
+	/**
+	 * Set the default posts per page for the item type
+	 *
+	 * @param WP_Query $query The query object.
+	 *
+	 * @since  1.0.0
+	 *
+	 * @return void
+	 */
 	public function default_posts_per_page( $query ) {
 		if ( is_admin() ) {
 			return;
 		}
 
 		if ( ! in_array( $query->get( 'post_type' ), [ $this->post_type ] ) ) {
+			return;
+		}
+
+		if ( $query->get( 'posts_per_page' ) ) {
 			return;
 		}
 
@@ -274,6 +321,7 @@ class ItemType extends PostType  {
 	public function get_args() {
 		$args                    = parent::get_args();
 		$args['menu_icon']       = apply_filters( "{$this->post_type}_icon", 'dashicons-list-view' );
+		$args['supports'][] = 'excerpt';
 
 		// show in Item menu if default item type is item
 		if ( 'item' === Settings::get_advanced( 'default_menu_item', 'item_type' ) ) {
@@ -286,8 +334,9 @@ class ItemType extends PostType  {
 	protected function sermon_series_metabox() {
 		$id = Helpers::get_param( $_GET, 'post', Helpers::get_request( 'post_ID' ) );
 
-		// don't include series metabox on variants
-		if ( $id && get_post( $id )->post_parent ) {
+		// don't include series metabox on variants.
+		$post_exists = get_post( $id );
+		if ( $id && $post_exists && $post_exists->post_parent ) {
 			return;
 		}
 
@@ -333,6 +382,22 @@ class ItemType extends PostType  {
 
 		// disable series items if we support sermon variations
 		if ( ! cp_library()->setup->variations->is_enabled() ) {
+
+			// return early if we have too many series items
+			if ( $id = Helpers::get_param( $_GET, 'post', Helpers::get_request( 'post_ID' ) ) ) {
+				try {
+					$item_type = Model::get_instance_from_origin( $id );
+					$items = $item_type->get_items();
+
+					// don't show series items if we have too many
+					if ( count( $items ) > 60 ) {
+						return;
+					}
+				} catch ( Exception $e ) {
+					return;
+				}
+			}
+
 			// allow for multiple sources for series (ie. locations)
 			foreach ( $this->get_sources() as $key => $source ) {
 				$this->series_items( $key, $source );
@@ -620,7 +685,12 @@ class ItemType extends PostType  {
 			return;
 		}
 
-		if ( 'auto-draft' == get_post_status( $object_id ) || wp_is_post_autosave( $object_id ) ) {
+		if ( 'auto-draft' === get_post_status( $object_id ) || wp_is_post_autosave( $object_id ) ) {
+			return;
+		}
+
+		// don't update dates when trashing.
+		if ( isset( $_GET['action'] ) && 'trash' === $_GET['action'] ) {
 			return;
 		}
 
@@ -674,7 +744,7 @@ class ItemType extends PostType  {
 		}
 
 		// if we have just one updated post and it was set to draft or publish, handle the redirect.
-		if ( count( self::$_updated_dates ) === 1 && apply_filters( 'cpl_save_post_date_redirect', current_user_can( 'edit_post' ) ) ) {
+		if ( count( self::$_updated_dates ) === 1 && apply_filters( 'cpl_save_post_date_redirect', current_user_can( 'edit_posts' ) ) ) {
 			$update = reset( self::$_updated_dates );
 			$origin_id = key( self::$_updated_dates );
 

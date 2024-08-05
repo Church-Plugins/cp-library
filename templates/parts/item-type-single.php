@@ -69,7 +69,8 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 		$post = $selected_item;
 		setup_postdata( $post );
 
-		\CP_Library\Templates::get_template_part( 'parts/item-single' );
+		$template = 'item' . \CP_Library\Admin\Settings::get_item( 'single_template', '' ) . '-single';
+		\CP_Library\Templates::get_template_part( "parts/$template" );
 
 		$post = $original_post;
 		wp_reset_postdata();
@@ -123,37 +124,38 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 
 	<p class="cpl-single-type--items-title" id="cpl-single-type--items-title"><?php printf( '%s: %s', cp_library()->setup->post_types->item->plural_label, count( $item_type['items'] ) ); ?></p>
 
-	<section class="cpl-single-type--items" id="cpl-single-type--items">
-		<?php
-		// Items come in ASC order, show in DESC
-		$ids = array_reverse( wp_list_pluck( $item_type['items'], 'originID' ) );
-		$page = get_query_var( 'cpl_page' ) ? get_query_var( 'cpl_page' ) : 1;
-		$item_query = new WP_Query( array(
-			'post_type' => cp_library()->setup->post_types->item->post_type,
-			'post__in' => $ids,
-			'orderby' => 'post__in',
-			'posts_per_page' => 10,
-			'paged' => $page
-		) );
-		?>
-
-		<?php while( $item_query->have_posts() ) : $item_query->the_post() ?>
-			<?php \CP_Library\Templates::get_template_part( "parts/item-list" ); ?>
-		<?php endwhile; ?>
-
-		<?php wp_reset_postdata(); ?>
-
-		<div class="cpl-single-type--items--pagination">
+	<?php if ( ! empty( $item_type['items'] ) ) : ?>
+		<section class="cpl-single-type--items" id="cpl-single-type--items">
 			<?php
-			echo paginate_links( array(
-				'base' => get_permalink() . '?cpl_page=%#%#cpl-single-type--items-title',
-				'format' => '?cpl_page=%#%',
-				'current' => max( 1, get_query_var( 'cpl_page' ) ),
-				'total' => $item_query->max_num_pages
+			$ids  = wp_list_pluck( $item_type['items'], 'originID' );
+			$page = get_query_var( 'cpl_page' ) ? get_query_var( 'cpl_page' ) : 1;
+			$item_query = new WP_Query( array(
+				'post_type' => cp_library()->setup->post_types->item->post_type,
+				'post__in' => $ids,
+				'orderby' => 'post__in',
+				'posts_per_page' => \CP_Library\Templates::posts_per_page( cp_library()->setup->post_types->item->post_type ),
+				'paged' => $page
 			) );
 			?>
-		</div>
-	</section>
+
+			<?php while( $item_query->have_posts() ) : $item_query->the_post() ?>
+				<?php \CP_Library\Templates::get_template_part( "parts/item-list" ); ?>
+			<?php endwhile; ?>
+
+			<?php wp_reset_postdata(); ?>
+
+			<div class="cpl-single-type--items--pagination et_smooth_scroll_disabled">
+				<?php
+				echo paginate_links( array(
+					'base' => get_permalink() . '?cpl_page=%#%#cpl-single-type--items-title',
+					'format' => '?cpl_page=%#%',
+					'current' => max( 1, get_query_var( 'cpl_page' ) ),
+					'total' => $item_query->max_num_pages
+				) );
+				?>
+			</div>
+		</section>
+	<?php endif; ?>
 </div>
 
 <?php do_action( 'cpl_single_type_after', $item_type ); ?>

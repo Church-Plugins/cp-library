@@ -430,7 +430,7 @@ class Item extends Table  {
 			'post_name' => sanitize_title( $variant->get_variation_source_label() )
 		] );
 
-		if ( cp_library()->setup->post_types->speaker_enabled() ) {
+		if ( cp_library()->setup->post_types->speaker_enabled() && isset( $item_data['speakers'] ) ) {
 			$variant->model->update_speakers( $item_data['speakers'] );
 		}
 

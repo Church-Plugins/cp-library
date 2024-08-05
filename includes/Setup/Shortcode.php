@@ -23,6 +23,8 @@ class Shortcode
 	 */
 	protected static $_instance;
 
+	protected static $_query = false;
+
 	/**
 	 * Enforce singleton instantiation
 	 *
@@ -66,13 +68,12 @@ class Shortcode
 			'cpl_source_list'  => 'render_source_list',
 			'cpl_source'       => 'render_source',
 			'cpl_player'       => 'render_player',
+			'cp-sermons' => 'render_sermons_archive',
 		];
 
 		foreach( $codes as $shortcode => $handler ) {
 			add_shortcode( $shortcode, [ $this, $handler ] );
 		}
-
-		add_action( 'wp_footer', [ $this, 'render_persistent_player' ] );
 	}
 
 
@@ -224,6 +225,7 @@ class Shortcode
 	 *
 	 * @since  1.0.0
 	 * @updated 1.1.0
+	 * @deprecated 1.4.2
 	 *
 	 * @author Tanner Moushey
 	 */
@@ -261,6 +263,41 @@ class Shortcode
 		}
 
 		return $output;
+	}
+
+	public function render_sermons_archive() {
+		global $wp_query;
+
+		$taxonomies = cp_library()->setup->taxonomies->get_objects();
+
+		$args = [
+			'post_type' => 'cpl_item',
+			'post_status' => 'publish',
+		];
+
+		self::$_query = $wp_query = new \WP_Query( $args );
+
+		ob_start();
+
+		Templates::get_template_part( 'archive' );
+
+		$content = ob_get_clean();
+		wp_reset_query();
+
+		add_action( 'wp_footer', [ $this, 'custom_query_vars' ], 500 );
+		return $content;
+	}
+
+	public function custom_query_vars() {
+		if ( ! self::$_query ) {
+			return;
+		} ?>
+
+		<script>
+			var cplVars = cplVars || {};
+			cplVars.query_vars = <?php echo json_encode( self::$_query->query_vars ); ?>;
+		</script>
+		<?php
 	}
 
 }

@@ -126,7 +126,7 @@ class Item extends PostType  {
 		}
 
 		// hide child items in queries (both frontend and admin)
-		if ( ! $query->get( 'post_parent' ) && ! isset( $_GET['show-child-items'] ) ) {
+		if ( ! $query->get( 'post_parent' ) && ! apply_filters( 'cpl_item_query_show_children', isset( $_GET['show-child-items'] ), $query ) ) {
 			$query->set( 'post_parent', 0 );
 		}
 
@@ -312,6 +312,7 @@ class Item extends PostType  {
 	public function get_args() {
 		$args              = parent::get_args();
 		$args['menu_icon'] = apply_filters( "{$this->post_type}_icon", 'dashicons-format-video' );
+		$args['supports'][] = 'excerpt';
 
 		// make hierarchical if we are using variations
 		if ( cp_library()->setup->variations->is_enabled() ) {
@@ -337,7 +338,9 @@ class Item extends PostType  {
 		$id         = Helpers::get_param( $_GET, 'post', Helpers::get_request( 'post_ID' ) );
 
 		Helpers::get_request( 'post' );
-		if ( $id && get_post( $id )->post_parent ) {
+
+		$post_exists = get_post( $id );
+		if ( $id && $post_exists && $post_exists->post_parent ) {
 			$has_parent = true;
 		}
 
@@ -348,6 +351,7 @@ class Item extends PostType  {
 			'context'      => 'normal',
 			'priority'     => 'high',
 			'show_names'   => true,
+			'show_in_rest' => \WP_REST_Server::READABLE
 		] );
 
 		if ( ! $has_parent && cp_library()->setup->variations->is_enabled() ) {
@@ -486,6 +490,39 @@ class Item extends PostType  {
 				'type' => 'text_medium',
 			] );
 		}
+
+		$downloads_field_id = $cmb->add_field( [
+			'id'   => 'downloads',
+			'type' => 'group',
+			/* translators: %s is the singular label for the post type */
+			'desc' => sprintf( __( 'Add downloadable files to this %s.', 'cp-library' ), $this->single_label ),
+			'options' => array(
+				'add_button'    => sprintf( __( 'Add file', 'cp-library' ), strtolower( $this->single_label ) ),
+				'remove_button' => sprintf( __( 'Remove file', 'cp-library' ), strtolower( $this->single_label ) ),
+				'sortable'      => true,
+			),
+		] );
+
+		$cmb->add_group_field( $downloads_field_id, [
+			'name'       => __( 'Name' ),
+			'id'         => 'name',
+			'type'       => 'text',
+			'attributes' => [
+				'placeholder' => __( 'Notes', 'cp-library' ),
+			],
+		] );
+
+		$cmb->add_group_field( $downloads_field_id, [
+			'name'        => __( 'File' ),
+			'id'          => 'file',
+			'type'        => 'file',
+			'attributes'  => [
+				'placeholder' => 'https://example.com/notes.pdf'
+			],
+			'query_args'  => array(
+				'type' => 'application/pdf',
+			),
+		] );
 	}
 
 	protected function analytics() {

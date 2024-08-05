@@ -1,4 +1,5 @@
-<?php
+<?php // phpcs:ignore
+
 namespace CP_Library\Setup;
 
 use CP_Library\Templates;
@@ -43,6 +44,7 @@ class Podcast
 		add_filter( 'cpl_podcast_text', 'ent2ncr' );
 		add_filter( 'cpl_podcast_text', 'esc_html' );
 		add_filter( 'cpl_podcast_text', [ $this, 'convert_amp' ] );
+		add_action( 'parse_query', array( $this, 'setup_rss_feed_query' ) );
 	}
 
 	/**
@@ -76,13 +78,69 @@ class Podcast
 		return apply_filters( 'cpl_enable_podcast', $enabled );
 	}
 
+	/**
+	 * Get the podcast feed name and allow for pages to use this feed name
+	 *
+	 * @since  1.2.5
+	 * @updated 1.3.1 - allow for pages to use this feed name
+	 *
+	 * @author Tanner Moushey, 12/14/23
+	 */
 	public function add_feed() {
 		add_feed( $this->get_feed_name(), [ $this, 'output_feed' ] );
+		add_filter( 'feed_content_type', [ $this, 'feed_content_type' ], 10, 2 );
 		add_action( 'pre_get_posts', [ $this, 'feed_query' ] );
+
+		// allow the feed name to also be a page
+		add_rewrite_rule( '^' . $this->get_feed_name() . '/?$', 'index.php?pagename=' . $this->get_feed_name(), 'top' );
+		add_filter( 'wp_unique_post_slug', [ $this, 'unique_post_slug' ], 10, 6 );
 	}
 
+	/**
+	 * Allow page to use same slug as feed
+	 *
+	 * @since  1.3.1
+	 *
+	 * @param $slug
+	 * @param $post_ID
+	 * @param $post_status
+	 * @param $post_type
+	 * @param $post_parent
+	 * @param $original_slug
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 12/14/23
+	 */
+	public function unique_post_slug( $slug, $post_ID, $post_status, $post_type, $post_parent, $original_slug ) {
+		if ( $this->get_feed_name() === $original_slug && $original_slug . '-2' == $slug ) {
+			$slug = $original_slug;
+		}
+
+		return $slug;
+	}
+
+	/**
+	 * Outputs the RSS feed.
+	 */
 	public function output_feed() {
+		header( 'Content-Type: application/rss+xml; charset=' . get_option( 'blog_charset' ), true );
 		Templates::get_template_part( 'podcast' );
+	}
+
+	/**
+	 * Set the content type for the podcast feed
+	 *
+	 * @param string $content_type The content type.
+	 * @param string $type The feed identifier.
+	 * @since  1.4.2
+	 * @return string The content type.
+	 */
+	public function feed_content_type( $content_type, $type ) {
+		if ( $this->get_feed_name() === $type ) {
+			return feed_content_type( 'rss2' );
+		}
+
+		return $content_type;
 	}
 
 	/**
@@ -192,5 +250,24 @@ class Podcast
 	public function get_feed_uri() {
 		$feed_link = get_feed_link( $this->get_feed_name() );
 		return apply_filters( 'cpl_podcast_feed_uri', str_replace( home_url(), '', $feed_link ) );
+	}
+
+	/**
+	 * Modifies the $wp_query object if it is for a comment feed and adds our own query parameter.
+	 * This is to replace the default feed for single posts (comments) with our custom relational post types.
+	 *
+	 * @param \WP_Query $query The query object.
+	 * @since 1.3.0
+	 */
+	public function setup_rss_feed_query( $query ) {
+		if ( $query->is_feed && $query->get( 'feed' ) === $this->get_feed_name() && $query->is_comment_feed() && in_array( $query->get( 'post_type' ), cp_library()->setup->post_types->get_post_types(), true ) ) {
+			$query->set( 'cpl_relation_feed', true );
+			$query->is_comment_feed = false;
+			$query->set( 'is_comment_feed', false );
+
+			if ( isset( $_GET['show-all'] ) ) {
+				$query->set( 'posts_per_rss', 9999 );
+			}
+		}
 	}
 }
