@@ -49,6 +49,8 @@ add_action( 'cpl_single_item_before', 'cpl_item_back' );
 		</div>
 	</div>
 
+	<?php \CP_Library\Templates::get_template_part( 'parts/item-single/transcript' ); ?>
+
 </div>
 
 <?php do_action( 'cpl_single_item_after', $item ); ?>

@@ -6,7 +6,7 @@
 namespace CP_Library\Integrations;
 
 use CP_Library\Admin\Settings;
-use CP_Library\Setup\PostTypes\Item;
+use CP_Library\Controllers\Item;
 
 /**
  * YouTube integration.
@@ -78,13 +78,19 @@ class YouTube {
 			return new \WP_Error( 'no_post_id', 'No post ID provided' );
 		}
 
+		try {
+			$item = new Item( $post_id );
+		} catch ( \ChurchPlugins\Exception $e ) {
+			return new \WP_Error( 'item_error', $e->getMessage() );
+		}
+
 		$transcript = get_post_meta( $post_id, 'transcript', true );
 
 		if ( $transcript ) {
 			return new \WP_Error( 'transcript_exists', 'Transcript already exists for this post. Please delete existing transcript before running import.' );
 		}
 
-		$video_url = get_post_meta( $post_id, 'video_url', true );
+		$video_url = $item->model->get_meta_value( 'video_url' );
 
 		if ( ! $video_url ) {
 			return new \WP_Error( 'no_video_url', 'No video URL found for this post' );
@@ -126,13 +132,13 @@ class YouTube {
 	 * Fetch a YouTube video transcript
 	 *
 	 * @param string $video_id YouTube video ID.
-	 * @return array|\WP_Error 
+	 * @return array|\WP_Error
 	 */
 	public function fetch_youtube_transcript( $video_id ) {
 		$USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36,gzip(gfe)';
 		$RE_XML_TRANSCRIPT = '/<text start="([^"]*)" dur="([^"]*)">([^<]*)<\/text>/';
 
-		$request = wp_remote_get( 
+		$request = wp_remote_get(
 			"https://www.youtube.com/watch?v=$video_id",
 			[
 				'headers' => [
@@ -171,11 +177,11 @@ class YouTube {
 		} catch ( \Exception $e ) {
 			return new \WP_Error( 'youtube_error', 'Could not decode YouTube captions' );
 		}
-	
+
 		$transcript_url = $captions['playerCaptionsTracklistRenderer']['captionTracks'][0]['baseUrl'];
 
 		// fetch transcript
-		$transcript_request = wp_remote_get( 
+		$transcript_request = wp_remote_get(
 			$transcript_url,
 			[
 				'headers' => [

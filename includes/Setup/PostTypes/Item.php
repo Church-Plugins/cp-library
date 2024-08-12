@@ -281,23 +281,24 @@ class Item extends PostType  {
 	 * @author Tanner Moushey
 	 */
 	public function item_data_column_cb( $column, $post_id ) {
+		try {
+			$item = new ItemController( $post_id );
+		} catch( Exception $e ) {
+			error_log( $e );
+			return;
+		}
+
 		switch( $column ) {
 			case 'item_data' :
-				try {
-					$item = new ItemController( $post_id );
-
-					printf( 'Video: %s <br />Audio: %s', ( $item->get_video()['value'] ) ? 'Yes' : 'No', ( $item->get_audio() ) ? 'Yes' : 'No' );
-				} catch ( Exception $e ) {
-					error_log( $e );
-				}
+				printf( 'Video: %s <br />Audio: %s', ( $item->get_video()['value'] ) ? 'Yes' : 'No', ( $item->get_audio() ) ? 'Yes' : 'No' );
 				break;
 			case 'transcript':
-				$video_url  = get_post_meta( $post_id, 'video_url', true );
+				$video_url  = $item->model->get_meta_value( 'video_url' );
 				$transcript = get_post_meta( $post_id, 'transcript', true );
 
 				if ( ! empty( $transcript ) ) {
 					$output = '<button type="button" class="button cpl-transcript-btn" data-post-id="' . $post_id .  '">View</button>';
-				} else if ( $video_url && ( strpos( $video_url, 'youtube.com' ) !== false || strpos( $transcript, 'youtu.be' ) !== false ) ) {
+				} else if ( $video_url && ( strpos( $video_url, 'youtube.com' ) !== false || strpos( $video_url, 'youtu.be' ) !== false ) ) {
 					$output = sprintf(
 						'<button type="button" class="button cpl-import-transcript-btn" data-url="%s">%s</button>',
 						add_query_arg(
@@ -592,7 +593,7 @@ class Item extends PostType  {
 			'name'         => __( 'Import from YouTube', 'cp-library' ),
 			'desc'         => __( 'Import transcript', 'cp-library' ),
 			'id'           => 'transcript_import',
-			'type'         => 'cpl_import_transcript_button', 
+			'type'         => 'cpl_import_transcript_button',
 			'show_in_rest' => false
 		] );
 	}

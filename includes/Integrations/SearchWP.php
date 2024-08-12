@@ -67,7 +67,7 @@ class SearchWP {
 		$search = new \SearchWP\Query(
 			$query->get( 's' ),
 			[
-				'engine'   => 'default',
+				'engine'   => apply_filters( 'cp_library_searchwp_engine', 'default' ),
 				'per_page' => $query->get( 'posts_per_page' ),
 				'paged'    => get_query_var( 'paged' ),
 			]
