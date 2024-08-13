@@ -46,22 +46,21 @@ class SearchWP {
 	 * Add actions.
 	 */
 	protected function actions() {
-		add_filter( 'posts_pre_query', [ $this, 'searchwp_for_admin' ], 10, 2 );
+		add_action( 'pre_get_posts', [ $this, 'searchwp_for_admin' ] );
 	}
 
 	/**
 	 * Use SearchWP searching on admin sermon pages. (To search for transcript)
 	 *
-	 * @param \WP_Post[]|int[]|null $posts The post objects.
 	 * @param \WP_Query $query The WP_Query object.
 	 */
-	public function searchwp_for_admin( $posts, $query ) {
+	public function searchwp_for_admin( $query ) {
 		if ( ! is_admin() || ! $query->is_main_query() || 'cpl_item' !== $query->get( 'post_type' ) ) {
-			return $posts;
+			return;
 		}
 
 		if ( empty( $query->get( 's' ) ) ) {
-			return $posts;
+			return;
 		}
 
 		$search = new \SearchWP\Query(
@@ -74,23 +73,17 @@ class SearchWP {
 		);
 
 		if ( 0 === $search->found_results ) {
-			return [];
+			return; // revert to default search
 		}
 
-		$ids = wp_list_pluck( $search->results, 'id' );
+		$query->set( 'post__in', wp_list_pluck( $search->results, 'id' ) );
 
-		$new_query_vars = $query->query_vars;
-		$new_query_vars['post__in'] = $ids;
-		unset( $new_query_vars['s'] ); // unset search query vars
-		unset( $new_query_vars['sentence'] );
-		unset( $new_query_vars['search_terms'] );
-		unset( $new_query_vars['search_orderby_title'] );
-		unset( $new_query_vars['search_fields'] );
-		unset( $new_query_vars['search_columns'] );
-
-		// create a new query
-		$new_query = new \WP_Query( $new_query_vars );
-
-		return $new_query->posts;
+		// unset search query vars
+		$query->set( 's', '' ); 
+		$query->set( 'sentence', '' );
+		$query->set( 'search_terms', '' );
+		$query->set( 'search_orderby_title', '' );
+		$query->set( 'search_fields', '' );
+		$query->set( 'search_columns', '' );
  	}
 }
