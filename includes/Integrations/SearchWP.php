@@ -81,7 +81,12 @@ class SearchWP {
 
 		$new_query_vars = $query->query_vars;
 		$new_query_vars['post__in'] = $ids;
-		unset( $new_query_vars['s'] ); // unset search query
+		unset( $new_query_vars['s'] ); // unset search query vars
+		unset( $new_query_vars['sentence'] );
+		unset( $new_query_vars['search_terms'] );
+		unset( $new_query_vars['search_orderby_title'] );
+		unset( $new_query_vars['search_fields'] );
+		unset( $new_query_vars['search_columns'] );
 
 		// create a new query
 		$new_query = new \WP_Query( $new_query_vars );
