@@ -49,12 +49,17 @@ class Templates {
 
 		add_action( 'wp_head', [ __CLASS__, 'wpHeadFinished' ], 999 );
 		add_action( 'cpl_after_archive', 'the_posts_pagination' );
-		add_action( 'cpl_before_archive', [ __CLASS__, 'type_switcher' ] );
 
 		// add the theme name to the body class when needed
 		if ( self::needs_compatibility_fix() ) {
 			add_filter( 'body_class', [ __CLASS__, 'theme_body_class' ] );
 		}
+	}
+
+	public static function posts_per_page( $post_type = 'post' ) {
+		$posts_per_page = get_option( 'posts_per_page', 10 );
+
+		return apply_filters( 'cpl_posts_per_page', $posts_per_page, $post_type );
 	}
 
 	/**

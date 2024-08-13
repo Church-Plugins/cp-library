@@ -2,6 +2,8 @@
 
 namespace CP_Library\Admin;
 
+use CP_Library\Controllers\Item;
+
 /**
  * Plugin Tools
  *
@@ -36,6 +38,8 @@ class Tools {
 		add_action( 'cp_batch_import_class_include', [ $this, 'include_class' ] );
 		add_filter( 'cp_importer_is_class_allowed', [ $this, 'importer_class' ] );
 		add_filter( 'upload_mimes', [ $this, 'import_mime_type' ] );
+		add_action( 'cp_export_items', [ $this, 'export_data' ] );
+		add_action( 'wp_ajax_cpl_merge_speakers', [ $this, 'merge_speakers' ] );
 	}
 
 	public function import_mime_type( $existing_mimes ) {
@@ -54,7 +58,7 @@ class Tools {
 	}
 
 	public function tools_menu() {
-		$post_type = cp_library()->setup->post_types->item_type_enabled() ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
+		$post_type = Settings::get_advanced( 'default_menu_item', 'item_type' ) === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
 
 		add_submenu_page( 'edit.php?post_type=' . $post_type, __( 'CP Sermon Library Tools', 'cp-library' ), __( 'Tools', 'cp-library' ), 'manage_options', 'cp-library-tools', [
 			$this,
@@ -71,11 +75,11 @@ class Tools {
 			? sanitize_key( $_GET['tab'] )
 			: 'import_export';
 
-//		wp_enqueue_script( 'cp-admin-tools' );
+		// wp_enqueue_script( 'cp-admin-tools' );
 
 		if ( 'import_export' === $active_tab ) {
 			wp_enqueue_script( 'cp-admin-tools-import' );
-//			wp_enqueue_script( 'cp-admin-tools-export' );
+			// wp_enqueue_script( 'cp-admin-tools-export' );
 		}
 		?>
 
@@ -132,9 +136,9 @@ class Tools {
 		?>
 
 		<div class="postbox cp-import-payment-history">
-			<h3><span><?php esc_html_e( 'Import Sermons', 'cp-library' ); ?></span></h3>
+			<h3><span><?php echo sprintf( esc_html__( 'Import %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label); ?></span></h3>
 			<div class="inside">
-				<p><?php esc_html_e( 'Import a CSV file of sermons.', 'cp-library' ); ?></p>
+				<p><?php echo sprintf( __( 'Import a CSV file of %s. <a href="%s">Download a sample csv file.</a>', 'cp-library' ), cp_library()->setup->post_types->item->plural_label, CP_LIBRARY_PLUGIN_URL . '/templates/__sample/import-sermons.csv'); ?></p>
 				<form id="cp-import-sermons" class="cp-import-form cp-import-export-form"
 					  action="<?php echo esc_url( add_query_arg( 'cp_action', 'cp_upload_import_file', admin_url() ) ); ?>"
 					  method="post" enctype="multipart/form-data">
@@ -333,6 +337,17 @@ class Tools {
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
 							</tr>
 							<tr>
+								<td><?php _e( 'Downloads', 'cp-library' ); ?></td>
+								<td>
+									<select name="cp-import-field[downloads]" class="cp-import-csv-column"
+											data-field="Downloads">
+										<option
+											value="" selected><?php _e( '- Ignore this field -', 'cp-library' ); ?></option>
+									</select>
+								</td>
+								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
+							</tr>
+							<tr>
 								<td><?php _e( 'Variation', 'cp-library' ); ?></td>
 								<td>
 									<select name="cp-import-field[variation]" class="cp-import-csv-column"
@@ -343,13 +358,20 @@ class Tools {
 								</td>
 								<td class="cp-import-preview-field"><?php _e( '- select field to preview data -', 'cp-library' ); ?></td>
 							</tr>
+
+
 							</tbody>
 						</table>
 
 						<h4><span><?php esc_html_e( 'Additional Options', 'cp-library' ); ?></span></h4>
 						<p>
-							<input type='checkbox' id='sideload-audio-urls' name='sideload-audio-urls'>
+							<input type='checkbox' id='sideload-audio-urls' name='sideload-audio-urls' checked>
 							<label for='sideload-audio-urls'><?php esc_html_e( 'Attempt to import mp3 files to the Media Library', 'cp-library' ); ?></label>
+						</p>
+
+						<p>
+							<input type='checkbox' id='sideload-downloads' name='sideload-downloads' checked>
+							<label for='sideload-downloads'><?php esc_html_e( 'Attempt to import downloadable files to the Media Library', 'cp-library' ); ?></label>
 						</p>
 
 						<p>
@@ -367,6 +389,30 @@ class Tools {
 			</div><!-- .inside -->
 		</div><!-- .postbox -->
 
+		<div class="postbox cp-import-payment-history">
+			<h3><span><?php esc_html_e( 'Export data', 'cp-library' ) ?></span></h3>
+			<div class="inside">
+
+				<?php $action_url = esc_url( add_query_arg( 'cp_action', 'cp_export_items', admin_url() ) ); ?>
+				<form id="cpl_export_data" action="<?php echo $action_url ?>" method="POST" enctype="multipart/form-data">
+					<button class="button button-primary"><?php echo sprintf( esc_html__( 'Export all %s as CSV', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ); ?></button>
+				</form>
+
+			</div>
+		</div>
+
+		<div class="postbox">
+			<h3><span><?php esc_html_e( 'Merge Duplicate Speakers', 'cp-library' ); ?></span></h3>
+			<div class="inside">
+				<p><?php esc_html_e( 'Remove duplicate speakers, transferring sermons to a single speaker.', 'cp-library' ); ?></p>
+				<div>
+					<?php $ajaxurl = esc_url( admin_url( 'admin-ajax.php' ) ); ?>
+					<?php $nonce = wp_create_nonce( 'cpl_merge_speakers' ); ?>
+					<button data-nonce="<?php echo esc_attr( $nonce ); ?>" data-ajaxurl="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" class="button button-primary" id="cpl_merge_speakers"><?php esc_html_e( 'Merge Speakers', 'cp-library' ); ?></button>
+				</div>
+			</div>
+		</div>
+
 		<?php
 		do_action( 'cp_library_tools_import_export_after' );
 	}
@@ -379,7 +425,7 @@ class Tools {
 
 			// Define all tabs
 			$tabs = array(
-				//'system_info'   => __( 'System Info', 'cp-library' ),
+				// 'system_info'   => __( 'System Info', 'cp-library' ),
 				'import_export' => __( 'Import/Export', 'cp-library' )
 			);
 
@@ -424,4 +470,277 @@ class Tools {
 		<?php
 	}
 
+	/**
+	 * Exports all Sermons when form is submitted
+	 * @return void
+	 * @since 1.0.4
+	 * @author Jonathan Roley
+	 */
+	public function export_data() {
+		$return_value = [];
+
+		$args = [
+			'post_type'      =>  CP_LIBRARY_UPREFIX . "_item",
+			'post_status'    => array('publish','private','draft','future'),
+			'posts_per_page' => -1,
+		];
+
+		$posts = new \WP_Query( $args );
+
+		$upload_dir = wp_upload_dir();
+		// WP-CLI may need to find a fallback directory
+		if( empty( $upload_dir ) || empty( $upload_dir['path'] ) ) {
+			$upload_dir['path'] = dirname( __FILE__ );
+		} else {
+			wp_mkdir_p( $upload_dir['path'] );
+		}
+
+		$filename = sanitize_file_name( sprintf( "%s_" . date( 'Y-m-d' ) . ".csv", cp_library()->setup->post_types->item->plural_label ) );
+		$file_path = trailingslashit( $upload_dir['path'] ) . $filename;
+		$file_handle = fopen( $file_path, 'w');
+
+		$header_added = false;
+
+		foreach( $posts->posts as $post ) {
+
+			try {
+				$item = new Item( $post->ID );
+
+				$data = $item->get_api_data();
+
+				$formatted_data = $this->get_formatted_item( $data );
+
+				if( ! $header_added ) {
+					fputcsv($file_handle, array_keys($formatted_data));
+					$header_added = true;
+				}
+
+				fputcsv($file_handle, $formatted_data);
+			} catch ( \Exception $e ) {
+				$return_value['error'] = $e->getMessage();
+				error_log( $e->getMessage() );
+			}
+		}
+
+		fclose($file_handle);
+
+		header("Content-Type: text/csv; charset=utf-8");
+		header( "Content-disposition: attachment; filename=\"" . $filename . "\"" );
+
+		if ( isset( $headers['content-length'] ) ) {
+			header( "Content-Length: " . $headers['content-length'] );
+		}
+
+		session_write_close();
+		readfile( rawurldecode( $file_path ) );
+
+    exit();
+	}
+
+	/**
+	 * Formats data for exporting as CSV
+	 * @param array $data
+	 * @return array
+	 * @since 1.0.4
+	 */
+	public function get_formatted_item( $data ) {
+
+		$strings = array(
+			'types'        => 'title',
+			'scripture'     => 'name',
+			'topics'        => 'name',
+			'speakers'      => 'title',
+			'locations'     => 'title',
+			'service_types' => 'title',
+			'seasons'       => 'name',
+		);
+
+		$values = [];
+
+		foreach ( $strings as $string => $type ) {
+			$values[ $string ] = '';
+
+			if ( ! empty( $data[ $string ] ) ) {
+				$values[ $string ] = $this->get_csv_string( $data[ $string ], $type );
+			}
+		}
+
+		$downloads = '';
+
+		if ( ! empty( $data['downloads'] ) ) {
+			$downloads = [];
+			foreach ( $data['downloads'] as $download ) {
+				if ( empty( $download['name'] ) ) {
+					$download['name'] = '';
+				}
+
+				$downloads[] = $download['name'] . '|' . $download['file'];
+			}
+
+			$downloads = implode( ',', $downloads );
+		}
+
+		extract( $values );
+
+		return array(
+			'Title'        => $data['title'],
+			'Description'  => $data['desc'],
+			'Series'       => $types,
+			'Date'         => $data['date']['timestamp'],
+			'Passage'      => $data['passage'],
+			'Location'     => $locations,
+			'Service Type' => $service_types,
+			'Speaker'      => $speakers,
+			'Topics'       => $topics,
+			'Season'       => $seasons,
+			'Scripture'    => $scripture,
+			'Thumbnail'    => $data['thumb'],
+			'Video'        => $data['video']['value'],
+			'Audio'        => $data['audio'],
+			'Downloads'    => $downloads,
+		);
+	}
+
+	/**
+	 * Gets data from an array and converts it to a comma seperated string
+	 *
+	 * @param mixed $data
+	 * @param string $key
+	 * @return string
+	 */
+	public function get_csv_string( $data, $key ) {
+		if( ! is_array( $data )  ) {
+			$data = empty( $data ) ? array() : array( $data );
+		}
+
+		return html_entity_decode( implode( ',', wp_list_pluck( $data, $key ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	}
+
+	/**
+	 * Merge speakers
+	 *
+	 * @since 1.4.1
+	 */
+	public function merge_speakers() {
+		global $wpdb;
+
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'cpl_merge_speakers' ) ) {
+			wp_send_json_error( array( 'message' => esc_html__( 'Invalid nonce.', 'cp-library' ) ) );
+		}
+
+		// get speakers with duplicate names
+		$sql = $wpdb->prepare(
+			"SELECT post_title, COUNT({$wpdb->posts}.ID) AS speaker_count
+			FROM {$wpdb->posts}
+			WHERE post_type='cpl_speaker'
+			GROUP BY post_title
+			HAVING speaker_count > 1"
+		);
+
+		$speakers = $wpdb->get_results( $sql );
+
+		foreach ( $speakers as $speaker ) {
+			$this->merge_speaker( $speaker->post_title );
+		}
+
+		$html = '<div>' . esc_html__( 'Speakers merged successfully.', 'cp-library' ) . '</div>';
+
+		wp_send_json_success( array( 'html' => $html ) );
+	}
+
+	/**
+	 * Merge a single speaker by name
+	 *
+	 * @param string $name The name of the speaker to merge.
+	 * @since 1.4.1
+	 */
+	public function merge_speaker( $name ) {
+		global $wpdb;
+		$posts = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT ID, post_name
+				FROM {$wpdb->posts}
+				WHERE post_type='cpl_speaker'
+				AND post_title=%s",
+				$name
+			)
+		);
+
+		$callback = fn( $a, $b ) => $this->get_post_name_value( $a->post_name ) - $this->get_post_name_value( $b->post_name );
+
+		usort( $posts, $callback );
+
+		$first_speaker = array_shift( $posts );
+		$first_speaker = \CP_Library\Models\Speaker::get_instance_from_origin( $first_speaker->ID );
+		$first_post    = get_post( $first_speaker->origin_id );
+
+		foreach ( $posts as $speaker ) {
+			$post     = get_post( $speaker->ID );
+			$speaker  = \CP_Library\Models\Speaker::get_instance_from_origin( $speaker->ID );
+			$messages = $speaker->get_all_items();
+
+			if ( empty( $first_post->post_content ) && ! empty( $post->post_content ) ) {
+				$first_post->post_content = $post->post_content;
+				wp_update_post( $first_post );
+			}
+
+			// copy over taxonomies
+			$taxonomies = get_object_taxonomies( cp_library()->setup->post_types->speaker->post_type );
+			foreach ( $taxonomies as $taxonomy ) {
+				$terms = wp_get_object_terms( $post->ID, $taxonomy );
+
+				if ( ! empty( $terms ) ) {
+					wp_set_object_terms( $first_post->ID, wp_list_pluck( $terms, 'term_id' ), $taxonomy, true );
+				}
+			}
+
+			// copy over thumbnail if first speaker doesn't have one
+			if ( ! get_post_thumbnail_id( $first_post ) ) {
+				$thumbnail_id = get_post_thumbnail_id( $post->ID );
+
+				if ( $thumbnail_id ) {
+					set_post_thumbnail( $first_post, $thumbnail_id );
+				}
+			}
+
+			foreach ( $messages as $message ) {
+				try {
+					$message = \CP_Library\Models\Item::get_instance_from_origin( absint( $message ) );
+					$message_speakers   = $message->get_speakers();
+					$message_speakers   = array_diff( $message_speakers, array( $speaker->id ) );
+					$message_speakers[] = $first_speaker->id;
+					$message->update_speakers( array_unique( $message_speakers ) );
+				} catch ( \ChurchPlugins\Exception $e ) {
+					continue;
+				}
+			}
+
+			// move terms to first speaker
+			$terms = wp_get_object_terms( $speaker->origin_id, cp_library()->setup->taxonomies->speaker->taxonomy );
+			if ( ! empty( $terms ) ) {
+				wp_set_object_terms( $first_speaker->origin_id, wp_list_pluck( $terms, 'term_id' ), cp_library()->setup->taxonomies->speaker->taxonomy, true );
+			}
+
+			// delete the speaker
+			wp_delete_post( $speaker->origin_id, true );
+		}
+	}
+
+	/**
+	 * Returns an integer sort value for a post name.
+	 * If the post name does not end with '-#', the sort value is -1.
+	 * Otherwise, the sort value is the number after the dash.
+	 *
+	 * @param string $name The post name to sort.
+	 * @return int
+	 */
+	public function get_post_name_value( $name ) {
+		$match = preg_match( '/-(\d+)$/', $name, $matches );
+
+		if ( $match ) {
+			return intval( $matches[1] );
+		}
+
+		return -1;
+	}
 }

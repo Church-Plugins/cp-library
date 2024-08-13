@@ -15,6 +15,7 @@ import Link from '@mui/icons-material/Link';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import useBreakpoints from '../Hooks/useBreakpoints';
 import { cplVar } from '../utils/helpers';
+import Providers from "../Contexts/Providers";
 
 const App = ({
   itemId, typeId
@@ -41,7 +42,7 @@ const App = ({
   };
 
   return (
-    <PersistentPlayerProvider>
+    <Providers>
       <BrowserRouter initialEntries={[initialPath]}>
 
 	      <div className="cpl-touch-only" dangerouslySetInnerHTML={{__html: cplVar( 'mobileTop', 'components' ) }} />
@@ -63,7 +64,7 @@ const App = ({
           </Route>
         </Switch>
       </BrowserRouter>
-    </PersistentPlayerProvider>
+    </Providers>
   );
 };
 

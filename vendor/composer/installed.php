@@ -6,7 +6,7 @@
     'aliases' => 
     array (
     ),
-    'reference' => '4afbc5f174287311faf2ddeb79c671d649dc581a',
+    'reference' => 'f6a7c42662b89364436e98820656d9e57640c009',
     'name' => 'churchplugins/cp-library',
   ),
   'versions' => 
@@ -18,25 +18,34 @@
       'aliases' => 
       array (
       ),
-      'reference' => '4afbc5f174287311faf2ddeb79c671d649dc581a',
+      'reference' => 'f6a7c42662b89364436e98820656d9e57640c009',
     ),
     'composer/installers' => 
     array (
-      'pretty_version' => 'v2.0.1',
-      'version' => '2.0.1.0',
+      'pretty_version' => 'v2.2.0',
+      'version' => '2.2.0.0',
       'aliases' => 
       array (
       ),
-      'reference' => 'a241e78aaeb09781f5f5b92ac01ffd13ab43e5e8',
+      'reference' => 'c29dc4b93137acb82734f672c37e029dfbd95b35',
+    ),
+    'deliciousbrains/wp-background-processing' => 
+    array (
+      'pretty_version' => '1.1.1',
+      'version' => '1.1.1.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => 'ebbed762c42e70e76573ffbd36e591378ba5f2ee',
     ),
     'wpackio/enqueue' => 
     array (
-      'pretty_version' => '3.4.0',
-      'version' => '3.4.0.0',
+      'pretty_version' => '3.5.0',
+      'version' => '3.5.0.0',
       'aliases' => 
       array (
       ),
-      'reference' => '8a5604f5ab3bd5f000e503dda02603e15e534d47',
+      'reference' => '944dd17df10e2e534e62ca3f5f20e550c2058a63',
     ),
   ),
 );

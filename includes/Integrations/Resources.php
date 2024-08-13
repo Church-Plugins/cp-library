@@ -74,7 +74,7 @@ class Resources {
 	/**
 	 * Process resources for the provided item
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @param $item Item
 	 * @param $row

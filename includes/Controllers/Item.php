@@ -50,11 +50,16 @@ class Item extends Controller{
 		foreach ( $locations as $location ) {
 			$location_id = \CP_Locations\Setup\Taxonomies\Location::get_id_from_term( $location->slug );
 
-			if ( 'global' === $location_id ) {
+			if ( 'global' === $location_id || empty( $location_id ) ) {
 				continue;
 			}
 
 			$location    = new \CP_Locations\Controllers\Location( $location_id );
+
+			if ( empty( $location->post ) ) {
+				continue;
+			}
+
 			$item_locations[ $location_id ] = [
 				'title' => $location->get_title(),
 				'url'   => $location->get_permalink(),
@@ -85,7 +90,7 @@ class Item extends Controller{
 	 * @author Tanner Moushey
 	 */
 	public function get_thumbnail() {
-		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID ) ) {
+		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID, 'full' ) ) {
 			return $this->filter( $thumb, __FUNCTION__ );
 		}
 
@@ -174,6 +179,11 @@ class Item extends Controller{
 		return $this->filter( $return, __FUNCTION__ );
 	}
 
+	/**
+	 * Get array of sermon scriptures.
+	 *
+	 * @return false|array<array{name:string,slug:string,url:string}>
+	 */
 	public function get_scripture() {
 
 		// scripture is top level, get parent scripture if applicable
@@ -187,24 +197,31 @@ class Item extends Controller{
 		$passages = cp_library()->setup->taxonomies->scripture->get_object_passages( $this->post->ID );
 		$terms    = cp_library()->setup->taxonomies->scripture->get_object_scripture( $this->post->ID );
 
+		if ( empty( $terms ) && empty( $passages[0] ) ) {
+			return $return;
+		}
+
+		$term = false;
+
 		if ( empty( $passages[0] ) ) {
-			return false;
+			$term = $terms[0];
+		} else {
+			$book = cp_library()->setup->taxonomies->scripture->get_book( $passages[0] );
+			$term = get_term_by( 'name', $book, cp_library()->setup->taxonomies->scripture->taxonomy );
 		}
 
-		$book = cp_library()->setup->taxonomies->scripture->get_book( $passages[0] );
-		if ( ! $term = get_term_by( 'name', $book, cp_library()->setup->taxonomies->scripture->taxonomy ) ) {
+		if ( ! $term || is_wp_error( $term ) ) {
 			return false;
 		}
-
 
 		$terms  = [ $term ];
 
 		if ( $terms ) {
 			foreach ( $terms as $term ) {
 				$return[ $term->slug ] = [
-					'name' => $passages[0],
+					'name' => empty( $passages[0] ) ? $term->name : $passages[0],
 					'slug' => $term->slug,
-					'url'  => get_term_link( $term )
+					'url'  => get_term_link( $term ),
 				];
 			}
 		}
@@ -230,21 +247,30 @@ class Item extends Controller{
 		return $this->filter( $return, __FUNCTION__ );
 	}
 
+	/**
+	 * Returns the video for this item.
+	 */
 	public function get_video() {
-
 		$timestamp = get_post_meta( $this->model->origin_id, 'message_timestamp', true );
 		$timestamp = ItemModel::duration_to_seconds( $timestamp );
-		$return = [
-			'type'  	=> 'url',
-			'value' 	=> false,
-			'marker'	=> $timestamp
-		];
+		$return    = array(
+			'type'   => 'url',
+			'value'  => false,
+			'marker' => $timestamp,
+		);
 
-		if ( $url = $this->model->get_meta_value( 'video_url' ) ) {
-			$return['value'] = esc_url( $url );
+		$value = $this->model->get_meta_value( 'video_url' );
+
+		if ( $value ) {
+			$return['value'] = self::sanitize_embed( $value );
+
+			// if the value is not a URL, we'll assume it's an embed.
+			if ( ! filter_var( $value, FILTER_VALIDATE_URL ) ) {
+				$return['type'] = 'embed';
+			}
 		}
 
-		if ( ! $url ) {
+		if ( ! $value ) {
 			if ( $id = $this->model->get_meta_value( 'video_id_vimeo' ) ) {
 				$return['type']  = 'vimeo';
 				$return['id']    = $id;
@@ -259,8 +285,11 @@ class Item extends Controller{
 		return $this->filter( $return, __FUNCTION__ );
 	}
 
+	/**
+	 * Returns the audio for this item.
+	 */
 	public function get_audio() {
-		return $this->filter( esc_url ( $this->model->get_meta_value( 'audio_url' ) ), __FUNCTION__ );
+		return $this->filter( self::sanitize_embed( $this->model->get_meta_value( 'audio_url' ) ), __FUNCTION__ );
 	}
 
 	/**
@@ -327,6 +356,28 @@ class Item extends Controller{
 	}
 
 	/**
+	 * Get the seasons for this Item
+	 * @return array|mixed|void
+	 * @since 1.0.4
+	 */
+	public function get_seasons() {
+		$return = [];
+		$terms  = get_the_terms( $this->post->ID, cp_library()->setup->taxonomies->season->taxonomy );
+
+		if ( $terms ) {
+			foreach ( $terms as $term ) {
+				$return[ $term->slug ] = [
+					'name' => $term->name,
+					'slug' => $term->slug,
+					'url'  => get_term_link( $term )
+				];
+			}
+		}
+
+		return $this->filter( $return, __FUNCTION__ );
+	}
+
+	/**
 	 * Get speakers for this Item
 	 *
 	 * @return mixed|void
@@ -385,12 +436,42 @@ class Item extends Controller{
 		return $this->filter( $service_types, __FUNCTION__ );
 	}
 
+	/**
+	 * Get passage for this Item
+	 * @return mixed (get_post_meta)
+	 * @since 1.0.4
+	 */
+	public function get_passage() {
+		return get_post_meta( $this->post->ID, 'passage', true );
+	}
+
+	/**
+	 * Get sermon timestamp for this Item
+	 * @return mixed (get_post_meta)
+	 * @since 1.0.4
+	 */
+	public function get_timestamp() {
+		return get_post_meta( $this->post->ID, 'message_timestamp', true );
+	}
+
+	/**
+	 * Get the item's downloads
+	 *
+	 * @since  1.4.0
+	 *
+	 * @return mixed|void
+	 * @author Tanner Moushey, 1/29/24
+	 */
+	public function get_downloads() {
+		return $this->filter( get_post_meta( $this->post->ID, 'downloads', true ), __FUNCTION__ );
+	}
+
 	/*************** Variation Functions ****************/
 
 	/**
 	 * Whether this item has variations
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return mixed|void
 	 * @author Tanner Moushey, 5/6/23
@@ -416,7 +497,7 @@ class Item extends Controller{
 	/**
 	 * Get variants for this item
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return mixed|void
 	 * @author Tanner Moushey, 5/6/23
@@ -434,7 +515,7 @@ class Item extends Controller{
 	/**
 	 * Get variant for the provided source
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @param $source
 	 *
@@ -454,7 +535,7 @@ class Item extends Controller{
 	/**
 	 * Whether this item is a variant
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return mixed|void
 	 * @author Tanner Moushey, 5/6/23
@@ -466,7 +547,7 @@ class Item extends Controller{
 	/**
 	 * Get the variation source for this variant
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return false|array $source should provide an array with 'type', 'id' and 'label' defined
 	 * @author Tanner Moushey, 5/6/23
@@ -489,7 +570,7 @@ class Item extends Controller{
 	/**
 	 * Return the ID for this item's variation source
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return false|mixed|void
 	 * @author Tanner Moushey, 5/6/23
@@ -509,7 +590,7 @@ class Item extends Controller{
 	/**
 	 * Return the Label for this item's variation source
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return false|mixed|void
 	 * @author Tanner Moushey, 5/6/23
@@ -529,7 +610,7 @@ class Item extends Controller{
 	/**
 	 * Return the type for this item's variation source
 	 *
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @return false|mixed|void
 	 * @author Tanner Moushey, 5/6/23
@@ -601,7 +682,11 @@ class Item extends Controller{
 	 * @author Tanner Moushey, 4/10/23
 	 */
 	public function get_podcast_content() {
+		get_the_content( null, false, $this->post );
 		$content = $this->get_content();
+
+		$content = str_replace( ']]>', ']]&gt;', $content );
+		$content = apply_filters( 'the_content_feed', $content, get_default_feed() );
 
 		// Allow some HTML per iTunes spec:
 		// "You can use rich text formatting and some HTML (<p>, <ol>, <ul>, <a>) in the <content:encoded> tag."
@@ -609,7 +694,7 @@ class Item extends Controller{
 
 		$content = strip_shortcodes( $content );
 
-		$content = trim( $content );
+		$content = apply_filters( 'cpl_podcast_content', trim( $content ) );
 
 		return $this->filter( $content, __FUNCTION__ );
 	}
@@ -653,6 +738,8 @@ class Item extends Controller{
 			array( '', '', '', '', '', '', '', '' ),
 			$excerpt
 		);
+
+		$excerpt = apply_filters( 'cpl_podcast_content', trim( $excerpt ) );
 
 		if ( $max_chars ) {
 			$excerpt = Helpers::str_truncate( $this->get_podcast_excerpt(), $max_chars );
@@ -705,7 +792,8 @@ class Item extends Controller{
 		}
 
 		$speakers = implode( ', ', $speakers );
-		$speakers = htmlspecialchars( trim( $speakers ) );
+
+		$speakers = apply_filters( 'cpl_podcast_text', trim( $speakers ) );
 
 		// iTunes limits to 4000 characers
 		return $this->filter( $speakers, __FUNCTION__ );
@@ -728,28 +816,65 @@ class Item extends Controller{
 
 		try {
 			$data = [
-				'id'         => $this->model->id,
-				'originID'   => $this->post->ID,
-				'permalink'  => $this->get_permalink(),
-				'status'     => get_post_status( $this->post ),
-				'slug'       => $this->post->post_name,
-				'thumb'      => $this->get_thumbnail(),
-				'title'      => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
-				'desc'       => $this->get_content(),
-				'date'       => [
+				'id'            => $this->model->id,
+				'originID'      => $this->post->ID,
+				'permalink'     => $this->get_permalink(),
+				'status'        => get_post_status( $this->post ),
+				'slug'          => $this->post->post_name,
+				'thumb'         => $this->get_thumbnail(),
+				'title'         => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
+				'desc'          => $this->get_content(),
+				'date'          => [
 					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
 					'timestamp' => $this->get_publish_date()
 				],
 				'category'   => $this->get_categories(),
 				'speakers'   => $this->get_speakers(),
 				'locations'  => $this->get_locations(),
+				'topics'     => $this->get_topics(),
+				'scripture'  => $this->get_scripture(),
 				'video'      => $this->get_video(),
 				'audio'      => $this->get_audio(),
 				'types'      => $this->get_types(),
 				'service_types' => $this->get_service_types(),
-				'topics'     => $this->get_topics(),
-				'scripture'  => $this->get_scripture(),
-				'variations' => null,
+				'passage'       => $this->get_passage(),
+				'timestamp'     => $this->get_timestamp(),
+				'downloads'     => $this->get_downloads(),
+				'variations'    => null,
+			];
+
+			if ( $include_variations ) {
+				$data['variations'] = $this->get_variation_data();
+			}
+		} catch ( \ChurchPlugins\Exception $e ) {
+			error_log( $e );
+		}
+
+		return $this->filter( $data, __FUNCTION__ );
+	}
+
+
+	public function get_player_data( $include_variations = false) {
+		$date = [];
+
+		try {
+			$data = [
+				'id'            => $this->model->id,
+				'originID'      => $this->post->ID,
+				'permalink'     => $this->get_permalink(),
+				'title'         => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
+				'date'          => [
+					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
+					'timestamp' => $this->get_publish_date()
+				],
+				'speakers'   => $this->get_speakers(),
+				'video'      => $this->get_video(),
+				'audio'      => $this->get_audio(),
+				'types'      => $this->get_types(),
+				'service_types' => $this->get_service_types(),
+				'passage'       => $this->get_passage(),
+				'timestamp'     => $this->get_timestamp(),
+				'variations'    => null,
 			];
 
 			if ( $include_variations ) {
@@ -815,4 +940,48 @@ class Item extends Controller{
 		do_enclose( $audio, $this->post->ID );
 	}
 
+	/**
+	 * Returns the sanitized HTML for an embed.
+	 *
+	 * @param string $embed_html The HTML to sanitize.
+	 * @return string The sanitized HTML.
+	 */
+	public static function sanitize_embed( $embed_html ) {
+		$allowed_html = array(
+			'iframe' => array(
+				'src'             => true,
+				'width'           => true,
+				'height'          => true,
+				'frameborder'     => true,
+				'allowfullscreen' => true,
+				'scrolling'       => true,
+				'style'           => true,
+				'tabindex'        => true,
+				'class'           => true,
+				'title'           => true,
+				'name'            => true,
+				'id'              => true,
+				'aria-*'          => true,
+				'data-*'          => true,
+			),
+			'script' => array(
+				'src'  => true,
+				'type' => true,
+			),
+			'div'    => array(
+				'style'  => true,
+				'class'  => true,
+				'id'     => true,
+				'data'   => true,
+				'data-*' => true,
+			),
+			'p'      => array(
+				'*' => true,
+			),
+		);
+
+		$sanitized = wp_kses( $embed_html, $allowed_html );
+
+		return $sanitized;
+	}
 }

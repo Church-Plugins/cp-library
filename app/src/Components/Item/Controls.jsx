@@ -3,6 +3,7 @@ import PlayVideo from "../../Elements/Buttons/PlayVideo";
 import PlayAudio from "../../Elements/Buttons/PlayAudio";
 import { usePersistentPlayer } from "../../Contexts/PersistentPlayerContext";
 import ShareButton from "./ShareButton";
+import { isURL } from "../../utils/helpers";
 
 export default function Controls({
   isVariation,
@@ -30,7 +31,8 @@ export default function Controls({
             onClick={() => {
               handleSelect({
                 item         : item,
-                mode         : 'video',
+                mode         : isURL(item.video.value) ? 'video' : 'embed',
+                url          : item.video.value,
                 isPlaying    : true,
                 playedSeconds: 0.0,
               })
@@ -46,17 +48,19 @@ export default function Controls({
             onClick={() => {
               handleSelect({
                 item         : item,
-                mode         : 'audio',
+                mode         : isURL(item.audio) ? 'audio' : 'embed',
+                url          : item.audio,
                 isPlaying    : true,
                 playedSeconds: 0.0,
               })
             }}
+            variant={ item.layout === 'vertical' ? 'light' : 'outlined' }
           />
 
         </Box>
       )}
 
-      <ShareButton item={item} />
+      <ShareButton item={item} variant={ item.layout === 'vertical' ? 'light' : 'outlined' } />
     </Box>
   )
 }

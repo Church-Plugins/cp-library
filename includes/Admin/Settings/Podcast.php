@@ -43,16 +43,53 @@ class Podcast {
 	 *
 	 * @return mixed|void
 	 * @since  1.0.4
+	 * @updated 1.2.0 - special handling for single and taxonomy feeds
 	 *
 	 * @author Tanner Moushey
 	 */
 	public static function get( $key, $default = '' ) {
 		$options = get_option( 'cpl_podcast_options', [] );
+		$value = false;
 
-		if ( isset( $options[ $key ] ) ) {
-			$value = $options[ $key ];
-		} else {
-			$value = $default;
+		if ( is_tax() && $term = get_queried_object() ) {
+			switch( $key ) {
+				case 'title':
+					$value = $term->name;
+
+					if ( ! empty( $options['title'] ) ) {
+						$value .= ' - ' . $options['title'];
+					}
+					break;
+				case 'subtitle':
+					$value = $term->description;
+					break;
+			}
+		}
+
+		if ( is_singular() ) {
+			switch( $key ) {
+				case 'title':
+					$value = get_the_title_rss();
+
+					if ( ! empty( $options['title'] ) ) {
+						$value .= ' - ' . $options['title'];
+					}
+					break;
+				case 'subtitle':
+					$value = get_the_excerpt();
+					break;
+				case 'summary':
+					$value = get_the_content_feed();
+					break;
+			}
+		}
+
+		if ( empty( $value ) ) {
+			if ( isset( $options[ $key ] ) ) {
+				$value = $options[ $key ];
+			} else {
+				$value = $default;
+			}
 		}
 
 		if ( 'category' === $key ) {
@@ -101,7 +138,12 @@ class Podcast {
 			'name'    => __( 'Podcast Settings', 'cp-library' ),
 			'id'      => 'heading',
 			'type'    => 'title',
-			'desc'    => __( 'Feed url: ', 'cp-library' ) . sprintf( '<a href="%1$s" target="_blank">%1$s</a>', cp_library()->setup->podcast->get_feed_url() ),
+			'desc'    => __( 'Feed url: ', 'cp-library' ) . sprintf( '<a href="%1$s" target="_blank">%1$s</a>. Or append <code>%2$s</code> to any %3$s or any %4$s taxonomy page.',
+					cp_library()->setup->podcast->get_feed_url(),
+					cp_library()->setup->podcast->get_feed_uri(),
+					cp_library()->setup->post_types->item_type->single_label,
+					cp_library()->setup->post_types->item->single_label,
+				),
 		) );
 
 		$options->add_field( array(

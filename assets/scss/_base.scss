@@ -3,8 +3,15 @@
 	width: var( --cp-content-width );
 	padding: var(--cp-content-padding);
 	color: var(--cpl--text-color);
-	margin: auto;
+	margin: var(--cp-gap--md) auto;
 
+	&.has-vertical-layout {
+		padding-top: 0;
+		padding-left: 0;
+		padding-right: 0;
+		margin-top: 0;
+	}
+	
 	.cpl-pagination {
 		ul {
 			display: flex;

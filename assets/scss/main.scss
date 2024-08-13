@@ -5,8 +5,9 @@
 @import "variables";
 @import "mixins/breakpoints";
 
+@import '../../includes/ChurchPlugins/assets/scss/main';
+
 @import "mui";
-@import "base";
 @import "utilities";
 
 @import "elements/button";
@@ -15,6 +16,7 @@
 
 @import "archive";
 @import "single";
+@import 'base';
 
 @import "item/list";
 @import "item/card";
@@ -22,6 +24,8 @@
 
 @import "item-type/single";
 @import "item-type/list";
+
+@import "speaker";
 
 @import "widgets/item-single";
 

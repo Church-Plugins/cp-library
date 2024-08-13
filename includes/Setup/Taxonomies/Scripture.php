@@ -37,7 +37,7 @@ class Scripture extends Taxonomy  {
 	/**
 	 * Override action-adder for CPT-descendants
 	 *
-	 * @since 1.0.5
+	 * @since 1.1.0
 	 * @return void
 	 * @author costmo
 	 */
@@ -45,6 +45,7 @@ class Scripture extends Taxonomy  {
 
 		add_action( 'add_meta_boxes', [ $this, 'register_metaboxes' ] );
 		add_action( 'save_post_cpl_item', [ $this, 'save_metabox_input' ] );
+		add_action( 'save_post_cpl_item_type', [ $this, 'save_metabox_input' ] );
 		add_action( 'cp_register_taxonomies', [ $this, 'register_taxonomy' ] );
 	}
 
@@ -69,7 +70,7 @@ class Scripture extends Taxonomy  {
 			'cpl_scripture_metabox',
 			$this->single_label,
 			[ $this, 'render_metabox' ],
-			'cpl_item',
+			$this->get_object_types(),
 			'normal',
 			'default'
 		);
@@ -78,14 +79,14 @@ class Scripture extends Taxonomy  {
 	/**
 	 * Admin Metabox for Scripture management
 	 *
-	 * @since 1.0.5
+	 * @since 1.1.0
 	 * @param WP_Post $post
 	 * @return void
 	 * @author costmo
 	 */
 	public function render_metabox( $post ) {
 
-		wp_nonce_field( 'cpl-admin', 'cpl_admin_nonce_field' );
+		wp_nonce_field( 'cpl-admin', 'cpl_scripture_nonce_field' );
 
 		// Get our static list of possible Book/Chapter/Verse values
 		$scriptures = _C::arrayify_json( $this->get_term_data() );
@@ -140,26 +141,33 @@ class Scripture extends Taxonomy  {
 	 * Saves input from the wp-admin input for Scripture taxonomy
 	 *
 	 * @return void
-	 * @since  1.0.5
+	 * @since  1.1.0
 	 *
 	 * @param int $post_id
 	 * @author costmo
 	 */
 	public function save_metabox_input( $post_id ) {
 		// Basic input and security checks
-		if( ! isset( $_POST['cpl_admin_nonce_field'] ) || ! wp_verify_nonce( $_POST['cpl_admin_nonce_field'], 'cpl-admin' ) ) {
+		if( ! isset( $_POST['cpl_scripture_nonce_field'] ) || ! wp_verify_nonce( $_POST['cpl_scripture_nonce_field'], 'cpl-admin' ) ) {
 			return;
 		}
+
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return;
 		}
 
 		// Sanity check the input
-		if( empty( $_POST ) || ! is_array( $_POST ) || ! isset( $_POST['cpl-scripture-tag-selections'] ) ) {
+		if( empty( $_POST ) || ! is_array( $_POST ) ) {
 			return;
 		}
 
-		$this->update_object_scripture( $post_id, $_POST['cpl-scripture-tag-selections'] );
+		$scriptures = array();
+
+		if ( isset( $_POST['cpl-scripture-tag-selections'] ) ) {
+			$scriptures = $_POST['cpl-scripture-tag-selections'];
+		}
+
+		$this->update_object_scripture( $post_id, $scriptures );
 	}
 
 	/**
@@ -175,6 +183,13 @@ class Scripture extends Taxonomy  {
 	public function get_object_passages( $object_id ) {
 		if ( ! $passages = get_post_meta( $object_id, '_cp_scripture', true ) ) {
 			$passages = [];
+
+			// fall back to terms if no meta is found
+			if ( $scriptures = $this->get_object_scripture( $object_id ) ) {
+				foreach ( $scriptures as $scripture ) {
+					$passages[] = $scripture->name;
+				}
+			}
 		}
 
 		return apply_filters( 'cp_library_get_object_passages', $passages, $object_id );
