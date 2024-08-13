@@ -24,6 +24,11 @@ npm run build
 
 ### Change Log
 
+#### 1.5.0
+* Enhancement: Add transcript support for Sermons
+* Enhancement: Add automatic transcript import from YouTube
+* Enhancement: Add support for SearchWP search engine in Sermon admin area
+
 #### 1.4.8
 * Bug Fix: Show correct post counts when using variations
 
