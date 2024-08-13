@@ -73,6 +73,10 @@ class SearchWP {
 			]
 		);
 
+		if ( 0 === $search->found_results ) {
+			return [];
+		}
+
 		$ids = wp_list_pluck( $search->results, 'id' );
 
 		$new_query_vars = $query->query_vars;
