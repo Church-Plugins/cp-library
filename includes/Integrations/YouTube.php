@@ -123,6 +123,8 @@ class YouTube {
 			return $item['text'];
 		}, $transcript ) );
 
+		$raw_text = html_entity_decode( $raw_text );
+
 		update_post_meta( $post_id, 'transcript', $raw_text );
 
 		return true;

@@ -482,6 +482,12 @@ jQuery($ => {
 		</div>
 	`)
 
+	const decodeHTMLEntities = (text) => {
+		const textArea = document.createElement('textarea')
+		textArea.innerHTML = text
+		return textArea.value
+	}
+
 	const modal    = modalWrapper.find('.cpl-modal')
 	const closeBtn = modal.find('.cpl-modal-close')
 	const content  = modal.find('.cpl-modal-content')
@@ -511,10 +517,10 @@ jQuery($ => {
 		modalWrapper.addClass('open')
 
 		wp.apiFetch({
-			path: `/wp/v2/${cplAdmin.postTypes.cpl_item.postType}/${postId}`,
+			path: `/wp/v2/${cplAdmin.postTypes.cpl_item.postType}/${postId}?_fields=cmb2`,
 		}).then(data => {
 			const text = data.cmb2.item_transcript.transcript
-			content.html(text)
+			content.html(decodeHTMLEntities(text))
 		}).catch(err => {
 			content.html('<div class="error">' + err.message + '</div>')
 		})
