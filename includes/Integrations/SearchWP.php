@@ -47,6 +47,21 @@ class SearchWP {
 	 */
 	protected function actions() {
 		add_action( 'pre_get_posts', [ $this, 'searchwp_for_admin' ] );
+		add_filter( 'get_search_query', [ $this, 'get_search_query_text' ] );
+	}
+
+	/**
+	 * Get the search query text.
+	 *
+	 * @param string $query The search query.
+	 * @return string
+	 */
+	public function get_search_query_text( $query ) {
+		global $wp_query;
+		if ( $wp_query->get( 'cpl_searchwp_search_term' ) ) {
+			return $wp_query->get( 'cpl_searchwp_search_term' );
+		}
+		return $query;
 	}
 
 	/**
@@ -76,6 +91,7 @@ class SearchWP {
 			return; // revert to default search
 		}
 
+		$query->set( 'cpl_searchwp_search_term', $query->get( 's' ) );
 		$query->set( 'post__in', wp_list_pluck( $search->results, 'id' ) );
 
 		// unset search query vars
