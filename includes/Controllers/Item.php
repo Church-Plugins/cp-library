@@ -90,6 +90,9 @@ class Item extends Controller{
 	 * @author Tanner Moushey
 	 */
 	public function get_thumbnail() {
+		// priority for getting thumbnail is as follows:
+		// Sermon thumbnail -> Vimeo thumbnail -> Series thumbnail -> Service Type thumbnail -> Global default thumbnail
+
 		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID, 'full' ) ) {
 			return $this->filter( $thumb, __FUNCTION__ );
 		}
@@ -102,6 +105,22 @@ class Item extends Controller{
 				$thumb = $type->get_thumbnail();
 			} catch( Exception $e ) {
 				error_log( $e );
+			}
+		}
+
+		if ( ! $thumb ) {
+			$service_types = wp_list_pluck( $this->get_service_types(), 'origin_id' );
+
+			// try to find a service type with a thumbnail
+			if ( ! empty( $service_types ) ) {
+				foreach ( $service_types as $service_type_id ) {
+					$service_type_thumb = get_the_post_thumbnail_url( $service_type_id, 'full' );
+
+					if ( $service_type_thumb ) {
+						$thumb = $service_type_thumb;
+						break;
+					}
+				}
 			}
 		}
 
@@ -862,6 +881,7 @@ class Item extends Controller{
 				'id'            => $this->model->id,
 				'originID'      => $this->post->ID,
 				'permalink'     => $this->get_permalink(),
+				'thumb'         => $this->get_thumbnail(),
 				'title'         => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
 				'date'          => [
 					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
