@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.4.9
+* Bug Fix: Fix featured image on single sermon template
+
 #### 1.4.8
 * Bug Fix: Show correct post counts when using variations
 
