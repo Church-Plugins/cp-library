@@ -44,6 +44,7 @@ class Init {
 		Tools::get_instance();
 		Analytics\Init::get_instance();
 		Migrate\Init::get_instance();
+		
 	}
 
 	/**
@@ -52,6 +53,7 @@ class Init {
 	 * @return void
 	 */
 	protected function actions() {
+		Import\ImportSermons::setup();
 	}
 
 	/** Actions ***************************************************/
