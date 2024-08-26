@@ -1,17 +1,16 @@
 import Box from '@mui/material/Box';
 import { cplVar } from '../utils/helpers';
-import { useNavigate } from "react-router-dom";
 
 export default function ItemMeta({
   date,
   category = [],
 	setActiveFilters
 }) {
-  const navigate = useNavigate();
-
 	const metaClick = (slug, type) => {
 		if ( undefined === setActiveFilters ) {
-			navigate(`${cplVar( 'path', 'site' )}/${cplVar( 'slug', 'item' )}?${type}=${slug}`);
+			
+			window.location.href = `${cplVar( 'path', 'site' )}/${cplVar( 'slug', 'item' )}?${type}=${slug}`;
+
 			return false;
 		}
 
