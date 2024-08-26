@@ -1,10 +1,7 @@
 <?php
 namespace CP_Library;
 
-use Automattic\Jetpack\Search\Helper;
 use CP_Library\Admin\Settings;
-use CP_Library\Controllers\Shortcode as Shortcode_Controller;
-use ChurchPlugins\Helpers;
 
 /**
  * Provides the global $cp_library object
@@ -183,7 +180,7 @@ class Init {
 	 * Enqueue scripts for analytics dashboard
 	 */
 	public function enqueue_analytics_scripts() {
-		Helpers::enqueue_asset( 'admin-analytics', [ 'jquery' ], false, false, true );
+		\ChurchPlugins\Helpers::enqueue_asset( 'admin-analytics', [ 'jquery' ], false, false, true );
 	}
 
 	/**
@@ -273,7 +270,7 @@ class Init {
 
 		wp_register_script( 'cpl_facets', CP_LIBRARY_PLUGIN_URL . '/assets/js/facets.js', array( 'jquery' ), CP_LIBRARY_PLUGIN_VERSION, true );
 
-		$script  = Helpers::enqueue_asset( 'app', [ 'jquery', 'cpl_facets' ], false, false, true );
+		$script  = \ChurchPlugins\Helpers::enqueue_asset( 'app', [ 'jquery', 'cpl_facets' ], false, false, true );
 
 		if ( ! empty( $script ) ) {
 			wp_localize_script( $script['handle'], 'cplVars', $this->cpl_vars() );
@@ -363,8 +360,6 @@ class Init {
 	 */
 	public function cpl_vars() {
 		global $wp_query;
-
-		$stuff = Settings::get( 'cpl_item_options', 'cheezy' );
 
 		return apply_filters(
 			'cpl_app_vars',
