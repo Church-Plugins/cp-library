@@ -2,55 +2,52 @@
 jQuery($ => {
 	const uploadFileFormConfig = {
 		form: $( '#cp-upload-import-file' ),
+		dataType: 'json',
 		init() {
 			this.form.ajaxForm( this );
 		},
-		beforeSubmit( arr, form, options ) {
-			form.find( '.notice-wrap' ).remove();
-			form.append( '<div class="notice-wrap"><div class="cp-progress"><div></div></div></div>' );
-	
+		beforeSubmit() {
+			this.form.find( '.notice-wrap' ).remove()
+
 			//check whether client browser fully supports all File API
 			if ( window.File && window.FileReader && window.FileList && window.Blob ) {
-	
+				this.form.find('[type="submit"]').attr( 'disabled', true )
+				this.form.find('[type="submit"]').val( 'Processing...' )
+
 				// HTML5 File API is supported by browser
 				return true;
 			} else {
-				const import_form = $( '.cp-import-form' ).find( '.cp-progress' ).parent().parent();
-				const notice_wrap = import_form.find( '.notice-wrap' );
-	
-				import_form.find( '.button:disabled' ).attr( 'disabled', false );
-	
 				//Error for older unsupported browsers that doesn't support HTML5 File API
-				notice_wrap.html( '<div class="update error"><p>We are sorry but your browser is not compatible with this kind of file upload. Please upgrade your browser.</p></div>' );
+				this.form.prepend( `<div class="notice-wrap">
+					<div class="update error">We are sorry but your browser is not compatible with this kind of file upload. Please upgrade your browser.</div>
+				</div>` );
 				return false;
 			}
 		},
 		success( responseText, statusText, xhr, form ) {
-			const data = $.parseJSON( xhr.responseText );
-
-			form.hide()
+			this.form.hide()
 
 			// trigger next step via event
-			$( document ).trigger( 'cp-import-step-1', data );
+			$( document ).trigger( 'cp-import-step-1', JSON.parse( xhr.responseText ) );
 		},
 		error( xhr ) {
-			const data = $.parseJSON( xhr.responseText );
-			this.form.find( '.button:disabled' ).attr( 'disabled', false )
-			
+			const data = JSON.parse( xhr.responseText );
+			this.form.find( '[type="submit"]' ).attr( 'disabled', false )
+			this.form.find( '[type="submit"]' ).val( 'Import CSV' )
+
 			if ( data.message ) {
-				const noticeWrap = $( `<div class="notice-wrap">
+				this.form.prepend( `<div class="notice-wrap">
 					<div class="update error"><p>${data.message}</p></div>
 				</div>` )
-				this.form.append( noticeWrap )
 			} else {
 				this.form.find( '.notice-wrap' ).remove()
 			}
 		},
-		dataType: 'json',
 	}
 
 	const importFormConfig = {
 		form: $( '#cp-import-form' ),
+		dataType: 'json',
 		init( data ) {
 			const form = this.form;
 
@@ -86,18 +83,28 @@ jQuery($ => {
 
 			form.ajaxForm( this ); // setup ajax form
 		},
-		success( responseText, statusText, xhr, form ) {
-			form.hide()
+		beforeSubmit() {
+			this.form.find( '.notice-wrap' ).remove()
+			this.form.find('[type="submit"]').attr( 'disabled', true )
+			this.form.find('[type="submit"]').val( 'Processing...' )
+			return true;
+		},
+		success() {
+			this.form.hide()
 
 			this.form.insertBefore( '<div class="notice-wrap"><div class="update update-success"><p>Import started.</p></div></div>' );
 
 			// trigger next step via event
 			$( document ).trigger( 'cp-import-step-2' );
 		},
-		error() {
-
+		error( xhr ) {
+			this.form.find('[type="submit"]').attr( 'disabled', false )
+			this.form.find('[type="submit"]').val( 'Process Import' )
+			this.form.find( '.notice-wrap' ).remove()
+			this.form.prepend( `<div class="notice-wrap">
+				<div class="update error"><p>${JSON.parse( xhr.responseText ).message}</p></div>
+			</div>` )
 		},
-		dataType: 'json',
 	}
 
 	const importProgress = {

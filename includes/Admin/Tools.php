@@ -425,7 +425,7 @@ class Tools
 						
 						<!-- Submit -->
 						<p class="submit">
-							<button class="button cp-import-proceed button-primary"><?php esc_html_e('Process Import', 'cp-library'); ?></button>
+							<input type="submit" class="button cp-import-proceed button-primary" value="<?php esc_attr_e( 'Process Import', 'cp-library' ) ?>" />
 						</p>
 					</form>
 				<?php endif; ?>

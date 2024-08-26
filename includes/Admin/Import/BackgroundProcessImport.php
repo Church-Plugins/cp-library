@@ -10,6 +10,8 @@ namespace CP_Library\Admin\Import;
 
 use ChurchPlugins\Helpers;
 use WP_Background_Process;
+use WP_Embed;
+use WP_Error;
 
 /**
  * Class BackgroundProcessImport
@@ -435,6 +437,9 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 	 */
 	protected function task( $item ) {
 
+		// start timer to see how long it takes
+		$start = microtime( true );
+
 		// import item
 		try {
 			$item = $this->parse_item( $item );
@@ -457,6 +462,11 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 		// update progress
 		$current_amount = absint ( get_transient( static::get_key() . '_progress' ) ); // phpcs:ignore
 		set_transient( static::get_key() . '_progress', $current_amount + 1 );
+
+		// log time
+		$end = microtime( true );
+		$milliseconds = round(( $end - $start ) * 1000);
+		error_log( 'Imported item in ' . $milliseconds . ' milliseconds' );
 	
 		return false;
 	}
@@ -610,7 +620,7 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 	 *
 	 * @param int    $post_id Post ID to attach the media to.
 	 * @param string $media_url URL of the media to sideload.
-	 * @return string The sideloaded media URL on success, the original media_url if fail.
+	 * @return string|false The sideloaded media URL on success, the false on failure.
 	 * @author Jonathan Roley
 	 */
 	public function sideload_media_and_get_url( $post_id = 0, $media_url = '' ) {
@@ -655,7 +665,7 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 			return wp_get_attachment_url( $attachment_id );
 		}
 
-		return $media_url;
+		return false;
 	}
 
 	/**

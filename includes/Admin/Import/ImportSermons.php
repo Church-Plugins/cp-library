@@ -146,8 +146,6 @@ class ImportSermons extends BackgroundProcessImport {
 		}
 
 		if ( $has_locations && $location && false === $location_id = array_search( $location, $all_locations ) ) {
-			error_log( "Could not find location: '$location'." );
-
 			throw new Exception( "Could not find location: '$location'." );
 		}
 
@@ -196,8 +194,6 @@ class ImportSermons extends BackgroundProcessImport {
 		$message_id = wp_insert_post( $args, true );
 
 		if ( is_wp_error( $message_id ) ) {
-			error_log( $message_id->get_error_message() );
-
 			throw new Exception( esc_html( $message_id->get_error_message() ) );
 		}
 
@@ -263,8 +259,6 @@ class ImportSermons extends BackgroundProcessImport {
 					);
 
 					if ( is_wp_error( $series_id ) ) {
-						error_log( $series_id->get_error_message() );
-
 						throw new Exception( esc_html( $series_id->get_error_message() ) );
 					}
 
@@ -288,8 +282,6 @@ class ImportSermons extends BackgroundProcessImport {
 			$variation_id = array_search( $variation, $variation_options );
 
 			if ( false === $variation_id ) {
-				error_log( 'The provided variation could not be found in ' . cp_library()->setup->variations->get_source_label() );
-
 				throw new Exception( 'The provided variation could not be found in ' . cp_library()->setup->variations->get_source_label() );
 			}
 
