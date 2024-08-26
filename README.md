@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.4.10
+* Enhancement: Add support for image in Podcast feed <item>
+
 #### 1.4.9
 * Bug Fix: Fix featured image on single sermon template
 
