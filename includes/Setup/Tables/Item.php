@@ -55,6 +55,12 @@ class Item extends Table  {
 	public function maybe_update() {
 		global $wpdb;
 
+		// don't update if title column already exists
+		$column = $wpdb->get_results( "SHOW COLUMNS FROM " . $this->table_name . " LIKE 'title';" );
+		if ( ! empty( $column ) ) {
+			return;
+		}
+
 		$sql = "ALTER TABLE " . $this->table_name . " ADD COLUMN title varchar(255) AFTER origin_id;";
 
 		$wpdb->query( $sql );
