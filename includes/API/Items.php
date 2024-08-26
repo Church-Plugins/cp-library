@@ -492,6 +492,12 @@ class Items extends WP_REST_Controller {
 			'default'     => array(),
 		);
 
+		$params['cpl_item_type'] = array(
+			'type'        => 'array',
+			'description' => __( 'Filter by item type', 'cp-library' ),
+			'default'     => array(),
+		);
+
 		return $params;
 	}
 
@@ -506,6 +512,10 @@ class Items extends WP_REST_Controller {
 
 		if ( isset( $_GET['cpl_service_types'] ) && is_array( $_GET['cpl_service_types'] ) ) {
 			$args['cpl_service_types'] = (array) $_GET['cpl_service_types'];
+		}
+
+		if ( isset( $_GET['cpl_item_type'] ) && is_array( $_GET['cpl_item_type'] ) ) {
+			$args['cpl_item_type'] = (array) $_GET['cpl_item_type'];
 		}
 
 		return $args;

@@ -853,6 +853,40 @@ class Item extends Controller{
 		return $this->filter( $data, __FUNCTION__ );
 	}
 
+
+	public function get_player_data( $include_variations = false) {
+		$date = [];
+
+		try {
+			$data = [
+				'id'            => $this->model->id,
+				'originID'      => $this->post->ID,
+				'permalink'     => $this->get_permalink(),
+				'title'         => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
+				'date'          => [
+					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
+					'timestamp' => $this->get_publish_date()
+				],
+				'speakers'   => $this->get_speakers(),
+				'video'      => $this->get_video(),
+				'audio'      => $this->get_audio(),
+				'types'      => $this->get_types(),
+				'service_types' => $this->get_service_types(),
+				'passage'       => $this->get_passage(),
+				'timestamp'     => $this->get_timestamp(),
+				'variations'    => null,
+			];
+
+			if ( $include_variations ) {
+				$data['variations'] = $this->get_variation_data();
+			}
+		} catch ( \ChurchPlugins\Exception $e ) {
+			error_log( $e );
+		}
+
+		return $this->filter( $data, __FUNCTION__ );
+	}
+
 	/**
 	 * Return analytics for this Item
 	 *

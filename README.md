@@ -24,6 +24,31 @@ npm run build
 
 ### Change Log
 
+#### 1.4.8
+* Bug Fix: Show correct post counts when using variations
+
+#### 1.4.7
+* Enhancement: Add additional image sizes to podcast feed <channel>
+
+#### 1.4.6
+* Compatibility update for Divi
+
+#### 1.4.5
+* Feature: Add filter by series in template builder
+* Enhancement: Podcast feed improvements
+* Enhancement: Import Service Type from SermonAudio
+* Bug Fix: Fix audio / video play button not showing on archive
+
+#### 1.4.4
+* Bug Fix: Fatal error was thrown for non-Series edit pages
+
+#### 1.4.3
+* Bug Fix: Service Type filter was not working
+* Bug Fix: Sermon vertical outline broken in Series context
+* Bug Fix: Hide Sermons in Series edit screen when more than 60 Sermons
+* Enhancement: Setting to hide item count in filters
+* Enhancement: control Sermon order on Series page
+
 #### 1.4.2
 * Bug Fix: Speaker single page had incorrect sermon count displayed.
 * Bug Fix: Speakers with no sermons assigned would display all sermons on the single page.

@@ -62,7 +62,7 @@ add_action( 'cpl_single_speaker_before', 'cpl_item_back' );
 
 	<?php wp_reset_postdata(); ?>
 
-	<div class="cpl-single-type--items--pagination">
+	<div class="cpl-single-type--items--pagination et_smooth_scroll_disabled">
 		<?php
 		echo paginate_links( array(
 			'base'    => get_permalink() . '?cpl_page=%#%',

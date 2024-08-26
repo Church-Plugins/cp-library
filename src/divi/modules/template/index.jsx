@@ -39,13 +39,10 @@ class Template extends Component {
 				templateHTML: ''
 			})
 			this.fetchTemplate();
-			console.log("Updating template")
 		}
 	}
 
 	render() {
-		console.log(this.state)
-
 		if(this.props.template_id == 0) {
 			return (
 				<div className='cpl-divi-template-module'>No Template Selected</div>
