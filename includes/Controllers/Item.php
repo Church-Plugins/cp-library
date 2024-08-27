@@ -10,6 +10,7 @@ use CP_Library\Models\Item as ItemModel;
 use CP_Library\Models\ServiceType;
 use CP_Library\Models\Speaker;
 use CP_Library\Util\Convenience;
+use CP_Library\Admin\Settings\Podcast;
 
 class Item extends Controller{
 
@@ -90,6 +91,9 @@ class Item extends Controller{
 	 * @author Tanner Moushey
 	 */
 	public function get_thumbnail() {
+		// priority for getting thumbnail is as follows:
+		// Sermon thumbnail -> Vimeo thumbnail -> Series thumbnail -> Service Type thumbnail -> Global default thumbnail
+
 		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID, 'full' ) ) {
 			return $this->filter( $thumb, __FUNCTION__ );
 		}
@@ -102,6 +106,22 @@ class Item extends Controller{
 				$thumb = $type->get_thumbnail();
 			} catch( Exception $e ) {
 				error_log( $e );
+			}
+		}
+
+		if ( ! $thumb ) {
+			$service_types = wp_list_pluck( $this->get_service_types(), 'origin_id' );
+
+			// try to find a service type with a thumbnail
+			if ( ! empty( $service_types ) ) {
+				foreach ( $service_types as $service_type_id ) {
+					$service_type_thumb = get_the_post_thumbnail_url( $service_type_id, 'full' );
+
+					if ( $service_type_thumb ) {
+						$thumb = $service_type_thumb;
+						break;
+					}
+				}
 			}
 		}
 
@@ -748,6 +768,17 @@ class Item extends Controller{
 		return $this->filter( trim( $excerpt ), __FUNCTION__ );
 	}
 
+	public function get_podcast_description_html() {
+		$description = apply_filters( 'the_excerpt_rss', get_the_excerpt() );
+
+		if ( Podcast::get( 'show_item_image', false ) ) {
+			$img = $this->get_thumbnail( 'large' );
+			$description = sprintf( "<img src='%s' alt='%s' />\n\r%s", $img, $this->get_title(), $description );
+		}
+
+		return $this->filter( wpautop( $description ), __FUNCTION__ );
+	}
+
 	/**
 	 * Generate the podcast description for this item
 	 *
@@ -862,6 +893,7 @@ class Item extends Controller{
 				'id'            => $this->model->id,
 				'originID'      => $this->post->ID,
 				'permalink'     => $this->get_permalink(),
+				'thumb'         => $this->get_thumbnail(),
 				'title'         => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
 				'date'          => [
 					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
