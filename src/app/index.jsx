@@ -1,8 +1,6 @@
 import React 		from 'react';
 import { createRoot } from 'react-dom/client';
 
-import App from "./Templates/App";
-import ItemDetail from "./Templates/ItemDetail";
 import ItemList from './Templates/ItemList';
 import ItemWidget from './Templates/ItemWidget';
 import VideoWidget from './Templates/VideoWidget';
@@ -10,9 +8,6 @@ import ItemActions from './Templates/ItemActions';
 import ItemPlayer from './Templates/ItemPlayer';
 import PlayOverlay from './Templates/PlayOverlay';
 
-// Possible elements that we may find for shortcodes
-const root = document.getElementById( 'cpl_root' );
-const item = document.getElementById( 'cpl_item' );
 const itemList = document.getElementById( 'cpl_item_list' );
 const itemWidget = document.getElementById( 'cpl_item_widget' );
 const videoWidget = document.getElementById( 'cpl_video_widget' );
@@ -21,22 +16,6 @@ const itemPlayers = document.querySelectorAll( '.cpl_item_player' );
 const playBtnOverlays = document.querySelectorAll( '.cpl_play_overlay' )
 
 const renderEvent = new Event( 'cpl-rendered' );
-
-if (root) {
-	let itemId = root.getAttribute( 'data-item-id' );
-	const urlParams = new URLSearchParams(window.location.search);
-	const talkID = urlParams.get('talk_id');
-
-	if ( 0 < talkID ) {
-		itemId = talkID;
-	}
-
-	if ( 0 < itemId ) {
-		createRoot(root).render( <App itemId={itemId} /> );
-	} else {
-		createRoot(root).render(<App />);
-	}
-}
 
 if (itemList) {
 	createRoot(itemList).render(<ItemList/>);
@@ -60,10 +39,6 @@ if (videoWidget) {
 	} else {
 		createRoot(videoWidget).render(<VideoWidget />);
 	}
-}
-
-if( item ) {
-	createRoot(root).render( <ItemDetail /> );
 }
 
 if ( itemActions.length ) {
