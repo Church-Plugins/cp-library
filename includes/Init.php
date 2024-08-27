@@ -70,7 +70,6 @@ class Init {
 	 */
 	protected function __construct() {
 		add_action( 'cp_core_loaded', array( $this, 'maybe_setup' ), - 9999 );
-		add_action( 'init', array( $this, 'maybe_init' ) );
 	}
 
 	/**
@@ -111,20 +110,6 @@ class Init {
 		Templates::init();
 
 		include_once( CP_LIBRARY_INCLUDES . '/CLI/CP_Migrate.php' );
-	}
-
-	/**
-	 * Actions that must run through the `init` hook
-	 *
-	 * @return void
-	 * @author costmo
-	 */
-	public function maybe_init() {
-
-		if ( ! $this->check_required_plugins() ) {
-			return;
-		}
-
 	}
 
 	/**
@@ -268,9 +253,9 @@ class Init {
 			);
 		}
 
-		wp_register_script( 'cpl_facets', CP_LIBRARY_PLUGIN_URL . '/assets/js/facets.js', array( 'jquery' ), CP_LIBRARY_PLUGIN_VERSION );
+		$facets_script = \ChurchPlugins\Helpers::enqueue_asset( 'facets', [ 'jquery' ], false, false, true );
 
-		$script  = \ChurchPlugins\Helpers::enqueue_asset( 'app', [ 'jquery', 'cpl_facets' ], false, false, true );
+		$script  = \ChurchPlugins\Helpers::enqueue_asset( 'app', [ 'jquery', $facets_script['handle'] ], false, false, true );
 
 		if ( ! empty( $script ) ) {
 			wp_localize_script( $script['handle'], 'cplVars', $this->cpl_vars() );
