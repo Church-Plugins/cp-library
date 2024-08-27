@@ -241,24 +241,18 @@ class Init {
 	 * @author costmo
 	 */
 	public function app_enqueue() {
-		\ChurchPlugins\Helpers::enqueue_asset( 'scss', [], false, true );
+		$scss_asset   = \ChurchPlugins\Helpers::enqueue_asset( 'scss', [], false, true );
+		$facets_asset = \ChurchPlugins\Helpers::enqueue_asset( 'facets', [ 'jquery' ], false, false, true );
+		$main_asset   = \ChurchPlugins\Helpers::enqueue_asset( 'main', [ 'jquery', $facets_asset['handle'] ], false, false, true );
+		$app_asset    = \ChurchPlugins\Helpers::enqueue_asset( 'app', [ 'jquery' ], false, false, true );
 
-		$main_script = \ChurchPlugins\Helpers::enqueue_asset( 'main', [ 'jquery' ], false, false, true );
-
-		if ( ! empty( $main_script ) ) {
+		if ( ! empty( $main_asset ) ) {
 			wp_add_inline_script(
-				$main_script['handle'],
+				$main_asset['handle'],
 				'jQuery(document).ready(function() {jQuery("body").append(\'<div id="cpl_persistent_player"></div>\');});',
 				'after'
 			);
-		}
-
-		$facets_script = \ChurchPlugins\Helpers::enqueue_asset( 'facets', [ 'jquery' ], false, false, true );
-
-		$script  = \ChurchPlugins\Helpers::enqueue_asset( 'app', [ 'jquery', $facets_script['handle'] ], false, false, true );
-
-		if ( ! empty( $script ) ) {
-			wp_localize_script( $script['handle'], 'cplVars', $this->cpl_vars() );
+			wp_localize_script( $main_asset['handle'], 'cplVars', $this->cpl_vars() );
 		}
 
 		wp_enqueue_style( 'material-icons' );
