@@ -7,7 +7,7 @@ import PersistentPlayer from "../Templates/PersistentPlayer";
 import theme from "../Templates/Theme";
 // TODO: Refactor to avoid circular dependency
 import Providers from "./Providers";
-import { createRoot } from "react-dom/client";
+import { createRoot } from "@wordpress/element";
 
 const PersistentPlayerContext = createContext()
 

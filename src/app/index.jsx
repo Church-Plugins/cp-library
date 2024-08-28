@@ -1,5 +1,5 @@
 import React 		from 'react';
-import { createRoot } from 'react-dom/client';
+import { createRoot } from '@wordpress/element';
 
 import ItemList from './Templates/ItemList';
 import ItemWidget from './Templates/ItemWidget';

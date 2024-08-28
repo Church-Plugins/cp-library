@@ -1,5 +1,5 @@
 import React from 'react'
-import { createRoot } from 'react-dom/client'
+import { createRoot } from '@wordpress/element'
 import Analytics from './Analytics'
 import './index.scss'
 
