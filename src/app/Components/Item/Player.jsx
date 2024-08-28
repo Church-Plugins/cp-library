@@ -19,13 +19,8 @@ import PlayPause from '../../Elements/Buttons/PlayPause';
 import throttle from 'lodash.throttle';
 import Controls from './Controls';
 
-
-export default function Player({
-  item,
-}) {
+export default function Player({ item }) {
   const { isDesktop } = useBreakpoints();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState();
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasPlayed, setHasPlayed] = useState(false);
   const [playedSeconds, setPlayedSeconds] = useState(0.0);
@@ -77,8 +72,6 @@ export default function Player({
 		}
 	}, [mode]);
 
-  let progressIntervalHandle = null;
-
 	const handleClickFullscreen = () => {
 		cplLog(item.id, 'fullscreen');
 		const instance = ReactDOM.findDOMNode(playerInstance.current);
@@ -104,7 +97,6 @@ export default function Player({
 	};
 
 	const updateItemState = ({ url, ...data }) => {
-
 		if(persistentPlayerIsActive) {
 			if(isURL( url )) {
 				passToPersistentPlayer( data )
@@ -117,8 +109,6 @@ export default function Player({
 			updateMode( data.mode, url )
 		}
 	}
-
-
 
 	const updateMode = (mode, url = null) => {
 		setMode(mode);
@@ -178,10 +168,11 @@ export default function Player({
   }, [])
 
   useEffect(() => {
-    if ( currentItem?.thumb ) {
+    if ( item?.thumb ) {
+			console.log("item thumb", item.thumb);
     	setDisplayBG( { background: "url(" + item.thumb + ")", backgroundSize: "cover", backgroundPosition: "center center" } );
     }
-  }, [currentItem]);
+  }, [item]);
 
 	let marker = cplMarker( item, mode, duration );
 	let markPosition	= marker.position;
