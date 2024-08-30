@@ -169,7 +169,6 @@ export default function Player({ item }) {
 
   useEffect(() => {
     if ( item?.thumb ) {
-			console.log("item thumb", item.thumb);
     	setDisplayBG( { background: "url(" + item.thumb + ")", backgroundSize: "cover", backgroundPosition: "center center" } );
     }
   }, [item]);
