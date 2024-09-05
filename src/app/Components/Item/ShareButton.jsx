@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { cplLog } from "../../utils/helpers";
+import { cplLog, cplVar } from "../../utils/helpers";
 import Box from '@mui/material/Box';
 import MenuItem from '@mui/material/MenuItem';
 import Menu from "@mui/material/Menu";
@@ -25,14 +25,13 @@ export default function ShareButton({ item, variant = "outlined" }) {
 
   const handleFBShare = () => {
 		cplLog(item.id, 'share_facebook');
-		window.open('http://www.facebook.com/sharer.php?u='+encodeURIComponent( item.permalink )+'&t='+encodeURIComponent( item.title ),'sharer','toolbar=0,status=0,width=626,height=436');
+		window.open('http://www.facebook.com/sharer.php?u=' + encodeURIComponent( item.permalink ) + '&t=' + encodeURIComponent( item.title ), 'sharer', 'toolbar=0,status=0,width=626,height=436');
     setAnchorEl(null);
 	};
 
 	const handleTwitterShare = () => {
 		cplLog(item.id, 'share_twitter');
-
-		window.open( "http://twitter.com/intent/tweet?text=" + encodeURIComponent( item.title + ' ' + item.permalink ),'sharer','toolbar=0,status=0,width=626,height=436');
+		window.open( "http://twitter.com/intent/tweet?text=" + encodeURIComponent( item.title + ' ' + item.permalink ), 'sharer', 'toolbar=0,status=0,width=626,height=436');
     setAnchorEl(null);
 	};
 

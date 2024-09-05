@@ -1,14 +1,16 @@
-import React 		from 'react';
 import { createRoot } from '@wordpress/element';
-
-import ItemList from './Templates/ItemList';
 import ItemWidget from './Templates/ItemWidget';
 import VideoWidget from './Templates/VideoWidget';
 import ItemActions from './Templates/ItemActions';
 import ItemPlayer from './Templates/ItemPlayer';
 import PlayOverlay from './Templates/PlayOverlay';
+import api from './api';
 
-const itemList = document.getElementById( 'cpl_item_list' );
+/**
+ * Expose the api to the window object.
+ */
+window.cp_library = api;
+
 const itemWidget = document.getElementById( 'cpl_item_widget' );
 const videoWidget = document.getElementById( 'cpl_video_widget' );
 const itemActions = document.querySelectorAll( '.cpl_item_actions' );
@@ -17,17 +19,11 @@ const playBtnOverlays = document.querySelectorAll( '.cpl_play_overlay' )
 
 const renderEvent = new Event( 'cpl-rendered' );
 
-if (itemList) {
-	createRoot(itemList).render(<ItemList/>);
-}
-
 if (itemWidget) {
 	let item = JSON.parse(itemWidget.getAttribute('data-item'));
 
 	if (item) {
 		createRoot(itemWidget).render(<ItemWidget item={item}/>);
-	} else {
-		createRoot(itemWidget).render(<ItemWidget/>);
 	}
 }
 
@@ -36,8 +32,6 @@ if (videoWidget) {
 
 	if ( item ) {
 		createRoot(videoWidget).render(<VideoWidget item={item}/>);
-	} else {
-		createRoot(videoWidget).render(<VideoWidget />);
 	}
 }
 

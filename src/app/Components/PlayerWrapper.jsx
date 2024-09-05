@@ -1,8 +1,25 @@
-import { forwardRef, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useLayoutEffect, useRef } from "react";
 import { cplLog } from "../utils/helpers";
 import VideoPlayer from 'react-player'
 import Cookies from 'js-cookie'
 
+/**
+ * @typedef {import('react-player').ReactPlayerProps} ReactPlayerProps
+ */
+
+/**
+ * @typedef {ReactPlayerProps & {
+ *  item: object
+ *  mode: string
+ * }} PlayerWrapperProps
+ */
+
+/**
+ * Counts the number of truthy values in an array.
+ *
+ * @param {Uint32Array} arr
+ * @returns {number}
+ */
 const countTruthy = (arr) => {
   let count = 0
   for(let i = 0; i < arr.length; i++) {
@@ -11,14 +28,23 @@ const countTruthy = (arr) => {
   return count
 }
 
-
-export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) {
+/**
+ * Wrapper for the VideoPlayer component that handles tracking of video views.
+ *
+ * @param {PlayerWrapperProps} props
+ * @param {object} ref
+ * @returns {React.ReactElement}
+ */
+function PlayerWrapper({ item, mode, ...props }, ref) {
   const compoundId = `${mode}-${item.id}`
   const viewedRef = useRef(false)
   const isEngagedRef = useRef(false)
-  const watchData = useRef()
+  /** @type {{ current: Uint32Array|null }} */
+  const watchData = useRef(null)
+  /** @type {{ current: number|null  }} */
   const intervalRef = useRef(null)
-  const lastProgressPosition = useRef()
+  /** @type {{ current: number }} */
+  const lastProgressPosition = useRef(0)
 
   const handlePlay = () => {
     props.onPlay?.()
@@ -38,18 +64,22 @@ export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) 
     intervalRef.current = null
   }
 
+  /** @param {number} duration */
   const handleDuration = (duration) => {
     props.onDuration?.(duration)
 
     watchData.current = new Uint32Array(Math.floor(duration))
   }
 
-  const handleProgress = (played, loaded) => {    
-    props.onProgress?.(played, loaded)
+  /**
+   * @param {import("react-player/base").OnProgressProps} data
+   */
+  const handleProgress = (data) => {    
+    props.onProgress?.(data)
 
     if(!watchData.current) return
 
-    const currentSecond = Math.floor(played.playedSeconds)
+    const currentSecond = Math.floor(data.playedSeconds)
 
     if(lastProgressPosition.current !== currentSecond) {
       // increments number of views at current second
@@ -67,7 +97,7 @@ export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) 
 
     if(!watchData.current || !mode || !viewedRef.current) return
 
-    const watchedSeconds = countTruthy(watchData.current)
+    const watchedSeconds    = countTruthy(watchData.current)
     const watchedPercentage = watchedSeconds / watchData.current.length
 
     const record = {
@@ -154,26 +184,6 @@ export default forwardRef(function PlayerWrapper({ item, mode, ...props }, ref) 
       progressInterval={100}
     />
   )
-})
+}
 
-/*
-<VideoPlayer
-  ref={playerInstance}
-  className="itemDetail__video"
-  url={playingURL}
-  width="100%"
-  height="100%"
-  controls={false}
-  playbackRate={playbackRate}
-  playing={isPlaying}
-  onPlay={() => setIsPlaying(true)}
-  onPause={() => setIsPlaying(false)}
-  onDuration={duration => {
-    setDuration(duration);
-    playerInstance.current.seekTo(playedSeconds, 'seconds');
-    setIsPlaying(true);
-  }}
-  onProgress={progress => setPlayedSeconds(progress.playedSeconds)}
-  progressInterval={100}
-/>
-*/
+export default forwardRef(PlayerWrapper);

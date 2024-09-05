@@ -1,22 +1,15 @@
 import Box from "@mui/material/Box";
 import PlayVideo from "../../Elements/Buttons/PlayVideo";
 import PlayAudio from "../../Elements/Buttons/PlayAudio";
-import { usePersistentPlayer } from "../../Contexts/PersistentPlayerContext";
 import ShareButton from "./ShareButton";
 import { isURL } from "../../utils/helpers";
 
-export default function Controls({
-  isVariation,
-  item,
-  handleSelect
-}) {
-  const { isActive: persistentPlayerIsActive, passToPersistentPlayer } = usePersistentPlayer()
+export default function Controls({ isVariation, item, handleSelect }) {
 	const containerClass   = isVariation ? ' cpl-is-variation' : '';
   const speakers = item.speakers?.map(speaker => speaker.title).join(', ');
 
   return (
     <Box className={"itemDetail__actions" + containerClass}>
-
       {
         isVariation &&
         <Box className="cpl-list-item--details">

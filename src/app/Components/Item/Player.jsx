@@ -18,6 +18,7 @@ import formatDuration from '../../utils/formatDuration';
 import PlayPause from '../../Elements/Buttons/PlayPause';
 import throttle from 'lodash.throttle';
 import Controls from './Controls';
+import api from '../../api';
 
 export default function Player({ item }) {
   const { isDesktop } = useBreakpoints();
@@ -32,7 +33,7 @@ export default function Player({ item }) {
   // Keep frequently-updated states (mainly the progress from the media player) as a ref so they
   // don't trigger re-render.
   const mediaState = useRef({});
-  const { isActive: persistentPlayerIsActive, passToPersistentPlayer, closePersistentPlayer } = usePersistentPlayer();
+  const { isActive: persistentPlayerIsActive } = usePersistentPlayer();
   const playerInstance = useRef();
 	const playingClass   = isPlaying ? ' is_playing' : '';
 	const hasVariations = Boolean(item.variations?.length)
@@ -88,7 +89,7 @@ export default function Player({ item }) {
 		setMode( false );
 		setShowFSControls( false );
 		
-		passToPersistentPlayer({
+		api.passToPersistentPlayer({
 			item         : mediaState.current.item,
 			mode         : mediaState.current.mode,
 			isPlaying    : true,
@@ -99,10 +100,10 @@ export default function Player({ item }) {
 	const updateItemState = ({ url, ...data }) => {
 		if(persistentPlayerIsActive) {
 			if(isURL( url )) {
-				passToPersistentPlayer( data )
+				api.passToPersistentPlayer( data )
 			}
 			else {
-				closePersistentPlayer()
+				api.closePersistentPlayer()
 				updateMode( data.mode, url )
 			}
 		} else {
@@ -157,7 +158,7 @@ export default function Player({ item }) {
   useLayoutEffect(() => {
     return () => {
       if (mediaState.current.isPlaying) {
-        passToPersistentPlayer({
+        api.passToPersistentPlayer({
           item: mediaState.current.item,
           mode: mediaState.current.mode,
           isPlaying: true,
@@ -379,7 +380,7 @@ export default function Player({ item }) {
 														let defaultMode = ( currentItem.video.value ) ? 'video' : 'audio';
 
 														if (persistentPlayerIsActive) {
-															passToPersistentPlayer({
+															api.passToPersistentPlayer({
 																item         : mediaState.current.item,
 																mode         : defaultMode,
 																isPlaying    : true,

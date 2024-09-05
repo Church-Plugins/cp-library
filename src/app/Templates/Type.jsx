@@ -1,4 +1,3 @@
-import React from 'react';
 import Box from '@mui/material/Box';
 import ListItem from '@mui/material/ListItem';
 import IconButton from '@mui/material/IconButton';
@@ -7,17 +6,11 @@ import { useNavigate } from "react-router-dom";
 import { cplVar } from '../utils/helpers';
 
 import useBreakpoints from '../Hooks/useBreakpoints';
-import { usePersistentPlayer } from '../Contexts/PersistentPlayerContext';
-import Rectangular from '../Elements/Buttons/Rectangular';
 import TypeMeta from "./TypeMeta";
 import Logo from "../Elements/Logo";
 
-export default function Type({
-  item,
-  isNew,
-}) {
+export default function Type({ item, isNew }) {
   const { isDesktop } = useBreakpoints();
-
   const displayTitle = item.title.replace( "&#8217;", "'" );
   const displayBg    = item.thumb ? { background: "url(" + item.thumb + ")", backgroundSize: "cover" } : {backgroundColor: "#C4C4C4"};
   const navigate     = useNavigate();
@@ -83,32 +76,7 @@ export default function Type({
   );
 }
 
-export function ItemActions({
-  isDesktop = false,
-  item,
-}) {
-  const { passToPersistentPlayer } = usePersistentPlayer();
-
-	const playVideo = (e) => {
-		e.stopPropagation();
-		passToPersistentPlayer({
-			item,
-			mode         : 'video',
-			isPlaying    : true,
-			playedSeconds: 0.0,
-		});
-	};
-
-	const playAudio = (e) => {
-		e.stopPropagation();
-		passToPersistentPlayer({
-      item,
-      mode: "audio",
-      isPlaying: true,
-      playedSeconds: 0.0,
-    });
-	};
-
+export function ItemActions({ item }) {
   const navigate = useNavigate();
 
   return (

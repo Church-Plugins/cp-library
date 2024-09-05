@@ -1,15 +1,4 @@
-import { createContext, useReducer, useContext, useEffect, useCallback, useRef } from "react";
-import ReactDOM from 'react-dom';
-import { ThemeProvider } from '@mui/material/styles';
-import { cplLog } from '../utils/helpers';
-
-import PersistentPlayer from "../Templates/PersistentPlayer";
-import theme from "../Templates/Theme";
-// TODO: Refactor to avoid circular dependency
-import Providers from "./Providers";
-import { createRoot } from "@wordpress/element";
-
-const PersistentPlayerContext = createContext()
+import { createContext, useReducer, useContext, useEffect, useRef } from "react";
 
 const defaultState = {
   isActive: undefined,
@@ -17,6 +6,8 @@ const defaultState = {
   mode: undefined,
   isPlaying: false,
 }
+
+const PersistentPlayerContext = createContext(defaultState)
 
 function reducer(state, action) {
   switch (action.type) {
@@ -41,7 +32,7 @@ function reducer(state, action) {
   }
 }
 
-function PersistentPlayerProvider({children}) {
+export function PersistentPlayerProvider({children}) {
   const [state, dispatch] = useReducer(reducer, defaultState);
   const root = useRef(null);
 
@@ -72,67 +63,25 @@ function PersistentPlayerProvider({children}) {
       window.top.removeEventListener("message", handleMessage);
     }
   }, [])
-
-  const passToPersistentPlayer = useCallback(({ item, mode, isPlaying, playedSeconds }) => {
-    if (!state.isActive) {
-      const player = window.top.document.getElementById('cpl_persistent_player');
-
-      root.current = createRoot(player)
-
-      root.current.render(
-        <Providers>
-          <PersistentPlayer />
-        </Providers>
-      )
-    }
-
- 	  setTimeout(() => {
-		  window.top.postMessage({
-			  action: 'CPL_HANDOVER_TO_PERSISTENT',
-			  item,
-			  mode,
-			  isPlaying,
-			  playedSeconds,
-		  });
-	  }, 50);
-
-		cplLog( item.id, 'persistent' );
-
-		// also log a play action if we are not currently playing
-		if ( ! playedSeconds > 0 ) {
-			cplLog( item.id, 'play' );
-		}
-
-  }, [state.isActive])
-
-  const closePersistentPlayer = () => {
-    const player = window.top.document.getElementById('cpl_persistent_player');
-
-    root.current?.unmount()
-
-    window.top.document.body.classList.remove('cpl-persistent-player');
-    window.top.postMessage({
-      action: "CPL_PERSISTENT_PLAYER_CLOSED",
-    });
-  }
-
+  
+  
   // NOTE: you *might* need to memoize this value
   // Learn more in http://kcd.im/optimize-context
   const value = {
-    ...state,
-    passToPersistentPlayer,
-    closePersistentPlayer,
+    ...state
   }
 
-  return <PersistentPlayerContext.Provider value={value}><ThemeProvider theme={theme}>{children}</ThemeProvider></PersistentPlayerContext.Provider>
+  return (
+    <PersistentPlayerContext.Provider value={value}>
+      {children}
+    </PersistentPlayerContext.Provider>
+  )
 }
 
-function usePersistentPlayer() {
+export function usePersistentPlayer() {
   const context = useContext(PersistentPlayerContext)
   if (context === undefined) {
     throw new Error('usePersistentPlayer must be used within a PersistentPlayerContext.Provider')
   }
   return context
 }
-
-export {PersistentPlayerProvider, usePersistentPlayer}

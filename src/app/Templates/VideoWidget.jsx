@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import useBreakpoints from '../Hooks/useBreakpoints';
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
@@ -6,27 +6,19 @@ import { cplLog } from '../utils/helpers';
 import LoadingIndicator from '../Elements/LoadingIndicator';
 import ErrorDisplay from '../Elements/ErrorDisplay';
 import PlayCircleOutline from "@mui/icons-material/PlayCircleOutline";
-import { usePersistentPlayer } from '../Contexts/PersistentPlayerContext';
-import { ThemeProvider } from '@mui/material/styles';
-import theme from "../Templates/Theme";
 import Logo from '../Elements/Logo';
 import Providers from '../Contexts/Providers';
+import api from '../api';
 
 export default function ItemWidget( { item } ) {
-
   return (
-  	<ThemeProvider theme={theme}>
-	    <Providers>
-	      <ItemWidgetContent widgetItem={item} />
-	    </Providers>
-	  </ThemeProvider>
+  	<Providers>
+			<ItemWidgetContent widgetItem={item} />
+		</Providers>
   );
 };
 
-export function ItemWidgetContent ({
-	widgetItem
-}) {
-  const { passToPersistentPlayer } = usePersistentPlayer();
+export function ItemWidgetContent({ widgetItem }) {
 	const {isDesktop} = useBreakpoints();
 	const [item, setItem] = useState();
 	const [loading, setLoading] = useState(true);
@@ -68,7 +60,7 @@ export function ItemWidgetContent ({
 
 	const playVideo = () => {
 		cplLog( item.id, 'video_widget_play' );
-		passToPersistentPlayer({
+		api.passToPersistentPlayer({
 			item,
 			mode         : 'video',
 			isPlaying    : true,

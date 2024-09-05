@@ -1,33 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
-import { Play, Volume1, Share2 } from 'react-feather';
+import { Play, Volume1 } from 'react-feather';
 import Controllers_WP_REST_Request from '../Controllers/WP_REST_Request';
 import { cplLog } from '../utils/helpers';
-
 import LoadingIndicator from '../Elements/LoadingIndicator';
 import ErrorDisplay from '../Elements/ErrorDisplay';
 import ItemMeta from './ItemMeta';
 import Rectangular from '../Elements/Buttons/Rectangular';
-import { usePersistentPlayer, PersistentPlayerProvider } from '../Contexts/PersistentPlayerContext';
-import { ThemeProvider } from '@mui/material/styles';
-import theme from "../Templates/Theme";
+import api from '../api';
 import Providers from '../Contexts/Providers';
 
 export default function ItemWidget( { item } ) {
-
   return (
-  	<ThemeProvider theme={theme}>
-	    <Providers>
-	      <ItemWidgetContent widgetItem={item}  />
-	    </Providers>
-	  </ThemeProvider>
+  	<Providers>
+			<ItemWidgetContent widgetItem={item}  />
+		</Providers>
   );
 };
 
 export function ItemWidgetContent ({
 	widgetItem
 }) {
-  const { passToPersistentPlayer } = usePersistentPlayer();
 	const [item, setItem] = useState();
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState();
@@ -56,7 +49,7 @@ export function ItemWidgetContent ({
 
 	const playVideo = () => {
 		cplLog( item.id, 'video_widget_play' );
-		passToPersistentPlayer({
+		api.passToPersistentPlayer({
 			item,
 			mode         : 'video',
 			isPlaying    : true,
@@ -66,7 +59,7 @@ export function ItemWidgetContent ({
 
 	const playAudio = () => {
 		cplLog( item.id, 'audio_widget_play' );
-		passToPersistentPlayer({
+		api.passToPersistentPlayer({
       item,
       mode: "audio",
       isPlaying: true,

@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
 import PlayerWrapper from '../Components/PlayerWrapper';
 import Slider from '@mui/material/Slider';
 import IconButton from '@mui/material/IconButton';
-import ReactDOM from 'react-dom';
 import screenfull from 'screenfull';
 
 import Cancel from "@mui/icons-material/Cancel";
@@ -18,13 +17,10 @@ import LoadingIndicator from '../Elements/LoadingIndicator';
 import ErrorDisplay from '../Elements/ErrorDisplay';
 import PlayPause from '../Elements/Buttons/PlayPause';
 import Logo from '../Elements/Logo';
-import { ThemeProvider } from '@mui/material/styles';
-import theme from "./Theme";
 import throttle from 'lodash.throttle';
-import { usePersistentPlayer } from '../Contexts/PersistentPlayerContext';
+import api from '../api';
 
 export default function PersistentPlayer(props) {
-  const { closePersistentPlayer } = usePersistentPlayer();
   const { isDesktop } = useBreakpoints();
   const [item, setItem] = useState(props.item);
   const [loading, setLoading] = useState(false);
@@ -70,12 +66,12 @@ export default function PersistentPlayer(props) {
 
 	const handleClickFullscreen = () => {
 		cplLog( item.id, 'fullscreen' );
-		const instance = ReactDOM.findDOMNode(playerInstance.current);
-		screenfull.request( instance.parentElement )
+		api.openInFullscreen();
 		return false;
 	};
 
-  const playerInstance = useRef();
+	/** @var {{ current: }} playerInstance */
+  const playerInstance = useRef(null);
 	const desktopClass   = isDesktop ? ' is_desktop' : '';
 
   useEffect(() => {
@@ -154,7 +150,6 @@ export default function PersistentPlayer(props) {
   ) : error ? (
     <ErrorDisplay error={error} />
   ) : item ? (
-  	<ThemeProvider theme={theme}>
     <Box className={"persistentPlayer__root persistentPlayer__mode__" + mode + desktopClass }>
 
 	    {mode === 'video' &&
@@ -200,7 +195,7 @@ export default function PersistentPlayer(props) {
 						     </Box>
 
 						     <Box position="absolute" zIndex={50} top={0} right={0} className="persistentPlayer__close">
-							     <IconButton sx={{color: '#ffffff'}} onClick={closePersistentPlayer}><Cancel/></IconButton>
+							     <IconButton sx={{color: '#ffffff'}} onClick={api.closePersistentPlayer}><Cancel/></IconButton>
 						     </Box>
 
 						     <Box position="absolute" zIndex={50} top={0} left={0} className="persistentPlayer__fullscreen">
@@ -394,12 +389,11 @@ export default function PersistentPlayer(props) {
 	         </PlayerWrapper>
 
 	         <Box position='absolute' zIndex={50} top={0} right={0} className='persistentPlayer__close'>
-		         <IconButton onClick={closePersistentPlayer} aria-label="Close persistent player"><Cancel/></IconButton>
+		         <IconButton onClick={api.closePersistentPlayer} aria-label="Close persistent player"><Cancel/></IconButton>
 	         </Box>
          </Box>
         }
 	    </Box>
     </Box>
-	  </ThemeProvider>
   ) : null;
 }

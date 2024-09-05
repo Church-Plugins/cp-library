@@ -12,6 +12,14 @@
 
 			SELF.$body.on('click', 'a', SELF.handleLinkClick);
 			window.addEventListener("message", SELF.iframeMessage);
+
+			if(window.navigation) [
+				window.navigation.addEventListener('navigate', event => {
+					if( SELF.$iframe ) {
+						SELF.$iframe.attr('src', event.destination.url);
+					}
+				})
+			]
 		};
 
 		/**
@@ -67,9 +75,10 @@
 				return true;
 			}
 
+			// Remove the margin-top that the admin bar adds
+			document.querySelector('html').style.setProperty('margin-top', '0px', 'important')
 			SELF.$body.prepend('<iframe id="cpl_persistent_player_iframe" style="z-index:5000;background:transparent;width:100%;height:100%;position:fixed;border:none;"></iframe>');
 			SELF.$iframe = $('#cpl_persistent_player_iframe');
-
 			SELF.$iframe.on('load', SELF.iframeLoaded);
 			SELF.$iframe.attr('src', SELF.url);
 			window.history.pushState({}, '', url);

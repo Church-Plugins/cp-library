@@ -8,11 +8,7 @@ import Logo from "../Elements/Logo";
 
 import Actions from "../Components/Item/Actions";
 
-export default function Item({
-  item,
-  isNew,
-	setActiveFilters
-}) {
+export default function Item({ item, isNew, setActiveFilters }) {
   const displayTitle = item.title.replace( "&#8217;", "'" );
   const displayBg    = item.thumb ? { background: "url(" + item.thumb + ")", backgroundSize: "cover" } : {backgroundColor: "#C4C4C4"};
   const navigate     = useNavigate();
