@@ -262,7 +262,7 @@ export default function Player({ item }) {
 												justifyContent="space-around" margin="auto">
 
 											<Box display="flex" alignItems="center">
-												<PlayPause autoFocus playedSeconds={playedSeconds} flex={0} padding={2} isPlaying={isPlaying} circleIcon={false} onClick={() => setIsPlaying(!isPlaying)}/>
+												<PlayPause autoFocus isLoading={isPlaying && playedSeconds == 0} flex={0} padding={2} isPlaying={isPlaying} circleIcon={false} onClick={() => setIsPlaying(!isPlaying)}/>
 											</Box>
 
 											<IconButton
@@ -488,7 +488,7 @@ export default function Player({ item }) {
 			         </IconButton>
 
 			         <Box display="flex" alignItems="center">
-				         <PlayPause autoFocus playedSeconds={playedSeconds} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
+				         <PlayPause autoFocus isLoading={isPlaying && playedSeconds == 0} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
 			         </Box>
 			         <IconButton size='large' onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')} aria-label='Skip 30 seconds'>
 				         <Forward30 fontSize="inherit"/>

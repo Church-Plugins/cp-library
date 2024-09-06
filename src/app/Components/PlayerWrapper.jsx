@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useLayoutEffect, useRef } from "react";
+import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cplLog } from "../utils/helpers";
 import VideoPlayer from 'react-player'
 import Cookies from 'js-cookie'
@@ -46,6 +46,8 @@ function PlayerWrapper({ item, mode, ...props }, ref) {
   /** @type {{ current: number }} */
   const lastProgressPosition = useRef(0)
 
+  const [rand] = useState(Math.random)
+
   const handlePlay = () => {
     props.onPlay?.()
 
@@ -88,6 +90,7 @@ function PlayerWrapper({ item, mode, ...props }, ref) {
     }
   }
 
+  /** @param {number} seconds */
   const handleSeek = (seconds) => {
     props.onSeek?.(seconds)
   }

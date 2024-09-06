@@ -1,6 +1,6 @@
 import IconButton from '@mui/material/IconButton';
 import { ChevronRight } from "react-feather"
-import { cplVar, isURL } from '../../utils/helpers';
+import { isURL } from '../../utils/helpers';
 import Box from '@mui/material/Box';
 import PlayAudio from '../../Elements/Buttons/PlayAudio';
 import PlayVideo from '../../Elements/Buttons/PlayVideo';
@@ -8,8 +8,6 @@ import jQuery from 'jquery';
 import api from '../../api';
 
 export default function Actions({ item, callback }) {
-	console.log("Actions", item);
-
 	const viewItem = (e) => {
 		e.stopPropagation();
 		window.location.href = item.permalink;
@@ -26,10 +24,8 @@ export default function Actions({ item, callback }) {
 
 		// Slider mark may load up to a second after the frame is open
 		setTimeout(
-			() => {
-				let element = jQuery( '.MuiSlider-root.MuiSlider-marked .MuiSlider-mark' );
-				jQuery( element ).attr( 'title', 'Jump to Sermon' );
-			}, 1500
+			() => jQuery( '.MuiSlider-root.MuiSlider-marked .MuiSlider-mark' ).attr( 'title', 'Jump to Sermon' ),
+			1500
 		);
 	};
 

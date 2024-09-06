@@ -76,7 +76,6 @@
 			}
 
 			// Remove the margin-top that the admin bar adds
-			document.querySelector('html').style.setProperty('margin-top', '0px', 'important')
 			SELF.$body.prepend('<iframe id="cpl_persistent_player_iframe" style="z-index:5000;background:transparent;width:100%;height:100%;position:fixed;border:none;"></iframe>');
 			SELF.$iframe = $('#cpl_persistent_player_iframe');
 			SELF.$iframe.on('load', SELF.iframeLoaded);
@@ -92,6 +91,9 @@
 		 * player persist. A SPA-like experience as far the end-user is concerned.
 		 */
 		SELF.iframeLoaded = function() {
+			if ( $('body').hasClass('admin-bar') ) {
+				document.querySelector('html').style.setProperty('margin-top', '0px', 'important')
+			}
 
 			$('body > *').each(function () {
 				var $this = $(this);

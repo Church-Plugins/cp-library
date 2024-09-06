@@ -1,0 +1,30 @@
+#cpl_root {
+	background: var(--cpl--background);
+	color: var(--cpl--text-color);
+	min-height: 500px;
+}
+
+.cpl-sr-only {
+	position: absolute;
+	top: -10000em;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	border: 0;
+}
+
+body.single-cploc_location {
+	.cpl-list-item--actions {
+		.cpl-list-item--actions--buttons.cpl-touch-hide {
+			display: flex !important;
+		}
+		.cpl-list-item--to-item.cpl-touch-only {
+			display: none !important;
+		}
+	}
+
+}
+

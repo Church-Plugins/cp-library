@@ -14,7 +14,39 @@ class CP_Library {
 	/** @type {HTMLElement | null} */
 	static __domNode = null
 
+	/** @type {{[key:string]: Function[]}} */
+	__listeners = {}
+
+	/** @type {boolean} */
+	__listener = false
+
+	/** @type {boolean} */
 	isIframe = window !== window.parent
+
+	/**
+	 * Class constructor.
+	 */
+	constructor() {
+		if( ! this.isIframe ) {
+			this.listen('CPL_OPEN_PERSISTENT_PLAYER', this.__createRoot.bind(this));
+		}
+	}
+
+	/**
+	 * Create the root element for the persistent player.
+	 */
+	__createRoot() {
+		if (!CP_Library.__root) {
+			CP_Library.__domNode = window.top.document.getElementById('cpl_persistent_player');
+			CP_Library.__root    = createRoot(CP_Library.__domNode)
+			CP_Library.__root.render(
+				<Providers>
+					<PersistentPlayer />
+				</Providers>
+			)
+			window.top.document.body.classList.add('cpl-persistent-player');
+		}
+	}
 
 	/**
 	 * Pass an item to the persistent player.
@@ -26,23 +58,15 @@ class CP_Library {
 	 * @param {number} args.playedSeconds The number of seconds to start playing from.
 	 */
 	passToPersistentPlayer({ item, mode, isPlaying, playedSeconds }) {
-		if (!CP_Library.__root && !this.isIframe) {
-			const player = window.top.document.getElementById('cpl_persistent_player');
-			CP_Library.__root = createRoot(player)
-			CP_Library.__root.render(
-				<Providers>
-					<PersistentPlayer />
-				</Providers>
-			)
-			CP_Library.__domNode = player
-			console.log("Created persistent player")
-		}
-
-		console.log("Passed to persistent player")
+		this.triggerEvent('CPL_OPEN_PERSISTENT_PLAYER', {
+			item,
+			mode,
+			isPlaying,
+			playedSeconds,
+		});
 	
-		 setTimeout(() => {
-			window.top.postMessage({
-				action: 'CPL_HANDOVER_TO_PERSISTENT',
+		setTimeout(() => {
+			this.triggerEvent('CPL_HANDOVER_TO_PERSISTENT', {
 				item,
 				mode,
 				isPlaying,
@@ -64,7 +88,7 @@ class CP_Library {
 	 * @returns {void}
 	 */
 	closePersistentPlayer() {
-		CP_Library.__root?.unmount()
+		CP_Library.__root.unmount()
 		CP_Library.__root = null
 		CP_Library.__domNode = null
 		window.top.document.body.classList.remove('cpl-persistent-player');
@@ -79,7 +103,7 @@ class CP_Library {
 	 * @returns {boolean}
 	 */
 	playerIsActive() {
-		return !!CP_Library.__root;
+		return window.top.document.body.classList.contains('cpl-persistent-player');
 	}
 
 	/**
@@ -114,6 +138,68 @@ class CP_Library {
 	 */
 	log(itemID, action, payload = null) {
 		cplLog(itemID, action, payload);
+	}
+
+	/**
+	 * Trigger an event that happens globally, including sending to the parent window when in iframe.
+	 *
+	 * @param {string} action The action to trigger.
+	 * @param {Object} payload The payload to send.
+	 * @returns {void}
+	 */
+	triggerEvent(action, payload = {}) {
+		window.top.postMessage({
+			action,
+			...payload,
+		});
+	}
+
+	/**
+	 * Setup a global event listener for messages.
+	 *
+	 * @param {string} action The action to listen for.
+	 * @param {Function} callback The callback to run when the action is triggered.
+	 * @returns {void}
+	 */
+	listen(action, callback) {
+		this.__listeners[action] = [ ...(this.__listeners[action] || []), callback ];
+		if( ! this.__listener ) {
+			window.top.addEventListener('message', this.__onEvent.bind(this));
+			this.__listener = true;
+		}
+	}
+
+	/**
+	 * Stop listening for an action.
+	 *
+	 * @param {string} action The action to stop listening for.
+	 * @param {Function} callback The callback to remove.
+	 * @returns {void}
+	 */
+	removeListener(action, callback) {
+		this.__listeners[action] = this.__listeners[action].filter(cb => cb !== callback);
+	}
+
+	/**
+	 * Global listener for messages.
+	 *
+	 * @param {MessageEvent} e
+	 * @returns {void}
+	*/
+	__onEvent(e) {
+		if (e.origin !== window.location.origin) {
+			return;
+		}
+
+		if(!e.data.action) {
+			return;
+		}
+
+		if(e.data.action in this.__listeners) {
+			this.__listeners[e.data.action].forEach(callback => {
+				callback(e.data);
+			})
+		}
 	}
 }
 

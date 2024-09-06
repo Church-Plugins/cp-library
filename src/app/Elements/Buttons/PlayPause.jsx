@@ -16,11 +16,11 @@ export default function PlayPause({
   children,
 	isPlaying,
 	size = 36,
-	playedSeconds = 1,
+	isLoading = false,
 	...props
 }) {
 
-  return isPlaying && !playedSeconds ? (
+  return isLoading ? (
 		  <IconButton
 				{...props}
 			  className={`roundButton__root roundButton__${variant} button__play button__loading`}

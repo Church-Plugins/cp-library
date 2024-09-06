@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from '@wordpress/element';
 import Box from '@mui/material/Box';
 import PlayerWrapper from '../Components/PlayerWrapper';
 import Slider from '@mui/material/Slider';
@@ -13,17 +13,17 @@ import useBreakpoints from '../Hooks/useBreakpoints';
 import formatDuration from '../utils/formatDuration';
 import { cplLog, cplMarker } from '../utils/helpers';
 
-import LoadingIndicator from '../Elements/LoadingIndicator';
 import ErrorDisplay from '../Elements/ErrorDisplay';
 import PlayPause from '../Elements/Buttons/PlayPause';
 import Logo from '../Elements/Logo';
 import throttle from 'lodash.throttle';
 import api from '../api';
+import useListenerRef from '../Hooks/useListenerRef';
 
 export default function PersistentPlayer(props) {
   const { isDesktop } = useBreakpoints();
   const [item, setItem] = useState(props.item);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playedSeconds, setPlayedSeconds] = useState(0.0);
   const [playbackRate, setPlaybackRate] = useState(1 );
@@ -32,6 +32,11 @@ export default function PersistentPlayer(props) {
 	const [showFSControls, setShowFSControls]   = useState( false );
   // Video or audio
   const [mode, setMode] = useState();
+	const playerInstance = useListenerRef(null, (value) => {
+		if(value) {
+			setLoading(false); // we're done loading once the ref is populated
+		}
+	})
 
 	const onMouseMove = (e) => {
 		if (showFSControls) return;
@@ -70,43 +75,40 @@ export default function PersistentPlayer(props) {
 		return false;
 	};
 
-	/** @var {{ current: }} playerInstance */
-  const playerInstance = useRef(null);
-	const desktopClass   = isDesktop ? ' is_desktop' : '';
+	const desktopClass = isDesktop ? ' is_desktop' : '';
 
   useEffect(() => {
-    window.top.postMessage({
-      action: "CPL_PERSISTENT_PLAYER_MOUNTED",
-      item,
-    });
+		api.triggerEvent('CPL_PERSISTENT_PLAYER_MOUNTED', { item });
 
     return () => {
-      window.top.postMessage({
-        action: "CPL_PERSISTENT_PLAYER_UNMOUNTED",
-      });
+      api.triggerEvent('CPL_PERSISTENT_PLAYER_UNMOUNTED');
     }
   }, []);
 
+	// Seek to the correct position when the player is ready
+	useEffect(() => {
+		if(!loading && playerInstance.current) {
+			playerInstance.current.seekTo(playedSeconds);
+		}
+	}, [loading])
+
   useEffect(() => {
-    function handleMessage(event) {
-      if (event.data.action === "CPL_HANDOVER_TO_PERSISTENT") {
-        setItem(event.data.item);
-				setMode(event.data.mode);
+    function handleMessage(data) {
+			setItem(data.item);
+			setMode(data.mode);
+			setPlayedSeconds(data.playedSeconds);
+			setIsPlaying(data.playedSeconds > 0 ? false : data.isPlaying);
 
-				if ( event.data.playedSeconds ) {
-					playerInstance.current.seekTo(event.data.playedSeconds, 'seconds');
-				}
-
-        setPlayedSeconds(event.data.playedSeconds);
-        setIsPlaying(event.data.playedSeconds > 0 ? false : event.data.isPlaying);
-      }
+			if (!playerInstance.current) {
+				setLoading(true);
+			}	
     }
 
-    window.top.addEventListener("message", handleMessage);
+		api.listen('CPL_HANDOVER_TO_PERSISTENT', handleMessage);
 
     return () => {
-      window.top.removeEventListener("message", handleMessage);
-    }
+      api.removeListener('CPL_HANDOVER_TO_PERSISTENT', handleMessage);
+		}
   }, [])
 
   useEffect(() => {
@@ -118,20 +120,15 @@ export default function PersistentPlayer(props) {
       window.top.document.body.classList.add('cpl-persistent-player');
     }
 
-    window.top.postMessage({
-      action: "CPL_PERSISTENT_RECEIVED_ITEM",
-      item,
-      mode,
-    });
+		api.triggerEvent('CPL_PERSISTENT_RECEIVED_ITEM', { item, mode });
   }, [item, mode]);
 
-  let marker = cplMarker( item, mode, duration );
-  let markPosition	= marker.position;
-  let snapDiff		= marker.snapDistance;
-  let videoMarks	= marker.marks;
+  let marker       = cplMarker( item, mode, duration );
+  let markPosition = marker.position;
+  let snapDiff		 = marker.snapDistance;
+  let videoMarks	 = marker.marks;
 
-
-  	let doScroll = ( scrollValue ) => {
+  const doScroll = ( scrollValue ) => {
 		if( markPosition > 0 && Math.abs( (scrollValue - markPosition) ) < snapDiff ) {
 			setPlayedSeconds( markPosition );
 		} else {
@@ -139,15 +136,9 @@ export default function PersistentPlayer(props) {
 		}
 	}
 
-	let throttleScroll = throttle(
-		(scrollValue) => {
-			doScroll( scrollValue );
-		}, 10
-	);
+	const throttleScroll = throttle( doScroll, 10 );
 
-  return loading ? (
-    <LoadingIndicator />
-  ) : error ? (
+  return error ? (
     <ErrorDisplay error={error} />
   ) : item ? (
     <Box className={"persistentPlayer__root persistentPlayer__mode__" + mode + desktopClass }>
@@ -172,7 +163,7 @@ export default function PersistentPlayer(props) {
 				     width="100%"
 				     height="100%"
 				     controls={false}
-				     playing={isPlaying}
+				     playing={!loading && isPlaying}
 				     onPlay={() => setIsPlaying(true)}
 				     onPause={() => setIsPlaying(false)}
 				     onDuration={duration => {
@@ -190,7 +181,7 @@ export default function PersistentPlayer(props) {
 					     <>
 						     <Box display="flex" alignItems="center" justifyContent="space-around" height="100%" width="100%"
 						          position="absolute" zIndex={50} top={0} right={0}>
-							     <PlayPause autoFocus playedSeconds={playedSeconds} size={48} flex={0} padding={2} isPlaying={isPlaying}
+							     <PlayPause autoFocus isLoading={isPlaying && playedSeconds == 0} size={48} flex={0} padding={2} isPlaying={isPlaying}
 							                onClick={() => setIsPlaying(!isPlaying)}/>
 						     </Box>
 
@@ -217,7 +208,7 @@ export default function PersistentPlayer(props) {
 					          justifyContent="space-around" margin="auto">
 
 						     <Box display="flex" alignItems="center">
-							     <PlayPause autoFocus playedSeconds={playedSeconds} flex={0} padding={2} isPlaying={isPlaying} circleIcon={false}
+							     <PlayPause autoFocus isLoading={isPlaying && playedSeconds == 0} flex={0} padding={2} isPlaying={isPlaying} circleIcon={false}
 							                onClick={() => setIsPlaying(!isPlaying)}/>
 						     </Box>
 
@@ -290,11 +281,9 @@ export default function PersistentPlayer(props) {
 	    }
 
 	    <Box className="persistentPlayer__controls" display="flex" flexDirection="row" padding={1}>
-
-
 		    {(isDesktop || 'audio' === mode) && (
 			    <Box display="flex" alignItems="center">
-				    <PlayPause autoFocus playedSeconds={playedSeconds} flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
+				    <PlayPause autoFocus isLoading={isPlaying && playedSeconds == 0} flex={0} padding={2} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
 			    </Box>
 		    )}
 
@@ -372,7 +361,7 @@ export default function PersistentPlayer(props) {
 		         url={item.audio}
 		         width="0"
 		         height="0"
-		         playing={isPlaying}
+		         playing={!loading && isPlaying}
 		         onPlay={() => setIsPlaying(true)}
 		         onPause={() => setIsPlaying(false)}
 		         onDuration={duration => {
@@ -384,9 +373,7 @@ export default function PersistentPlayer(props) {
 		         }}
 		         onProgress={progress => setPlayedSeconds(progress.playedSeconds)}
 		         progressInterval={100}
-	         >
-		         Your browser does not support the audio element.
-	         </PlayerWrapper>
+	         />
 
 	         <Box position='absolute' zIndex={50} top={0} right={0} className='persistentPlayer__close'>
 		         <IconButton onClick={api.closePersistentPlayer} aria-label="Close persistent player"><Cancel/></IconButton>
