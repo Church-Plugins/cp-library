@@ -1,0 +1,22 @@
+.cpl-columns {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	width: 100%;
+}
+
+@include media-breakpoint-down(md) {
+	.cpl-touch-hide {
+		display: none !important;
+	}
+}
+
+@include media-breakpoint-up(lg) {
+	.cpl-touch-only {
+		display: none !important;
+	}
+}
+
+.align-left {
+	text-align: left;
+}

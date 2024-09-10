@@ -38,7 +38,7 @@ if( !defined( 'CP_LIBRARY_TEXT_DOMAIN' ) ) {
 }
 if( !defined( 'CP_LIBRARY_DIST' ) ) {
 	 define ( 'CP_LIBRARY_DIST',
-		CP_LIBRARY_PLUGIN_URL . "/dist/"
+		CP_LIBRARY_PLUGIN_URL . "/build/"
    );
 }
 

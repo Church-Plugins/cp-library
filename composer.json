@@ -14,7 +14,6 @@
   "require": {
     "php": ">=5.3.0",
     "composer/installers": "*",
-    "wpackio/enqueue": "^3.4",
     "deliciousbrains/wp-background-processing": "^1.1"
   },
   "autoload": {

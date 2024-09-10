@@ -2,7 +2,6 @@
 namespace CP_Library;
 
 use CP_Library\Admin\Settings;
-use CP_Library\Controllers\Shortcode as Shortcode_Controller;
 
 /**
  * Provides the global $cp_library object
@@ -47,13 +46,6 @@ class Init {
 	public $adapters;
 
 	/**
-	 * The Enqueue class instance
-	 *
-	 * @var \WPackio\Enqueue
-	 */
-	public $enqueue;
-
-	/**
 	 * CP Sermons modules for page builders
 	 *
 	 * @var Modules\Init
@@ -77,9 +69,7 @@ class Init {
 	 * Class constructor: Add Hooks and Actions
 	 */
 	protected function __construct() {
-		$this->enqueue = new \WPackio\Enqueue( 'cpLibrary', 'dist', $this->get_version(), 'plugin', CP_LIBRARY_PLUGIN_FILE );
 		add_action( 'cp_core_loaded', array( $this, 'maybe_setup' ), - 9999 );
-		add_action( 'init', array( $this, 'maybe_init' ) );
 	}
 
 	/**
@@ -120,20 +110,6 @@ class Init {
 		Templates::init();
 
 		include_once( CP_LIBRARY_INCLUDES . '/CLI/CP_Migrate.php' );
-	}
-
-	/**
-	 * Actions that must run through the `init` hook
-	 *
-	 * @return void
-	 * @author costmo
-	 */
-	public function maybe_init() {
-
-		if ( ! $this->check_required_plugins() ) {
-			return;
-		}
-
 	}
 
 	/**
@@ -189,49 +165,45 @@ class Init {
 	 * Enqueue scripts for analytics dashboard
 	 */
 	public function enqueue_analytics_scripts() {
-		$this->enqueue->enqueue( 'app', 'analytics', array( 'js_dep' => array( 'jquery' ) ) );
+		\ChurchPlugins\Helpers::enqueue_asset( 'admin-analytics', [ 'jquery' ], false, false, true );
+		\ChurchPlugins\Helpers::enqueue_asset( 'admin-analytics', [], false, true, true );
 	}
 
 	/**
 	 * Enqueue scripts on our admin pages
 	 */
 	public function admin_scripts() {
-
-		$this->enqueue->enqueue( 'styles', 'admin', [] );
 		wp_enqueue_style( 'material-icons' );
+		\ChurchPlugins\Helpers::enqueue_asset( 'admin-scss', [], false, true );
 
 		if ( ! $this->is_admin_page() ) {
 			 return;
 		}
 
-		$this->enqueue->enqueue( 'styles', 'admin', [] );
-		wp_enqueue_script( 'inline-edit-post' );
-		wp_enqueue_script( 'wp-api-fetch' );
+		$script = \ChurchPlugins\Helpers::enqueue_asset( 'admin-main', [ 'jquery' ], false, false, true );
 
-		$scripts = $this->enqueue->enqueue( 'scripts', 'admin', array( 'jquery', 'select2' ) );
-
-		// Expose variables to JS.
-		$entry_point = array_pop( $scripts['js'] );
 		wp_localize_script(
-			$entry_point['handle'],
+			$script['handle'],
 			'cplAdmin',
 			$this->cpl_vars(),
 		);
+
+		wp_enqueue_script( 'wp-api-fetch' );
+		wp_enqueue_script( 'inline-edit-post' );
 	}
 
 	/**
 	 * Enqueue block editor assets.
 	 */
 	public function block_editor_assets() {
-		$this->enqueue->enqueue( 'styles', 'main', array() );
+		\ChurchPlugins\Helpers::enqueue_asset( 'scss', [], false, true );
+
 		wp_enqueue_style( 'material-icons' );
 		wp_enqueue_script( 'feather-icons' );
 
-		$scripts     = $this->enqueue->enqueue( 'scripts', 'block_editor', array( 'js_dep' => array( 'jquery' ) ) );
-		$entry_point = array_pop( $scripts['js'] );
-
+		$script = \ChurchPlugins\Helpers::enqueue_asset( 'admin-block-editor', [ 'jquery' ], false, false, true );
 		wp_localize_script(
-			$entry_point['handle'],
+			$script['handle'],
 			'cplAdmin',
 			$this->cpl_vars(),
 		);
@@ -272,28 +244,22 @@ class Init {
 	 * @author costmo
 	 */
 	public function app_enqueue() {
-		$this->enqueue->enqueue( 'styles', 'main', array() );
-		$main_script = $this->enqueue->enqueue( 'scripts', 'main', array( 'js_dep' => array( 'jquery' ) ) );
+		$scss_asset   = \ChurchPlugins\Helpers::enqueue_asset( 'scss', [], false, true );
+		$facets_asset = \ChurchPlugins\Helpers::enqueue_asset( 'facets', [ 'jquery' ], false, false, true );
+		$main_asset   = \ChurchPlugins\Helpers::enqueue_asset( 'main', [ 'jquery', $facets_asset['handle'] ], false, false, true );
+		$app_asset    = \ChurchPlugins\Helpers::enqueue_asset( 'app', [ 'jquery' ], false, false, true );
 
-		if ( isset( $main_script['js'], $main_script['js'][0], $main_script['js'][0]['handle'] ) ) {
+		if ( ! empty( $main_asset ) ) {
 			wp_add_inline_script(
-				$main_script['js'][0]['handle'],
+				$main_asset['handle'],
 				'jQuery(document).ready(function() {jQuery("body").append(\'<div id="cpl_persistent_player"></div>\');});',
 				'after'
 			);
-		}
-
-		wp_register_script( 'cpl_facets', CP_LIBRARY_PLUGIN_URL . '/assets/js/facets.js', array( 'jquery' ), CP_LIBRARY_PLUGIN_VERSION );
-
-		$scripts = $this->enqueue->enqueue( 'app', 'main', array( 'js_dep' => array( 'jquery', 'cpl_facets' ) ) );
-
-		if ( isset( $scripts['js'], $scripts['js'][0], $scripts['js'][0]['handle'] ) ) {
-			wp_localize_script( $scripts['js'][0]['handle'], 'cplVars', $this->cpl_vars() );
+			wp_localize_script( $main_asset['handle'], 'cplVars', $this->cpl_vars() );
 		}
 
 		wp_enqueue_style( 'material-icons' );
 		wp_enqueue_script( 'feather-icons' );
-
 	}
 
 	/**
@@ -404,6 +370,16 @@ class Init {
 				'_n'      => wp_create_nonce( 'cpl-admin' ),
 				'query_vars' => $wp_query->query_vars,
 				'postTypes' => $this->setup->post_types->get_post_type_info(),
+				'item' => array(
+					'labelSingular' => cp_library()->setup->post_types->item->single_label,
+					'labelPlural'   => cp_library()->setup->post_types->item->plural_label,
+					'slug'          => Settings::get( 'slug', 'sermons', 'cpl_item_options' )
+				),
+				'item_type' => array(
+					'labelSingular' => cp_library()->setup->post_types->item_type->single_label,
+					'labelPlural'   => cp_library()->setup->post_types->item_type->plural_label,
+					'slug'          => Settings::get( 'slug', 'series', 'cpl_item_type_options' )
+				),
 			)
 		);
 	}
