@@ -1,3 +1,5 @@
+import jQuery from "jquery";
+
 jQuery( function( $ ){
 
 	let wp_inline_edit_function = false;
@@ -404,7 +406,6 @@ jQuery( function( $ ){
 	}
 
 });
-
 
 /**
  * Check for basic submit buttons

@@ -3,12 +3,14 @@ namespace CP_Library;
 
 use CP_Library\Admin\Settings;
 
+require_once __DIR__ . '/../includes/ChurchPlugins/Setup/Plugin.php';
+
 /**
  * Provides the global $cp_library object
  *
  * @author costmo
  */
-class Init {
+class Init extends \ChurchPlugins\Setup\Plugin {
 
 	/**
 	 * The single instance of the class.
@@ -63,6 +65,24 @@ class Init {
 		}
 
 		return self::$_instance;
+	}
+
+	/**
+	 * Get plugin directory
+	 *
+	 * @return string
+	 */
+	public function get_plugin_dir() {
+		return CP_LIBRARY_PLUGIN_DIR;
+	}	
+
+	/**
+	 * Get plugin URL
+	 *
+	 * @return string
+	 */
+	public function get_plugin_url() {
+		return CP_LIBRARY_PLUGIN_URL;
 	}
 
 	/**
@@ -165,8 +185,8 @@ class Init {
 	 * Enqueue scripts for analytics dashboard
 	 */
 	public function enqueue_analytics_scripts() {
-		\ChurchPlugins\Helpers::enqueue_asset( 'admin-analytics', [ 'jquery' ], false, false, true );
-		\ChurchPlugins\Helpers::enqueue_asset( 'admin-analytics', [], false, true, true );
+		$this->enqueue_asset( 'admin-analytics', [ 'jquery' ], false, false, true );
+		$this->enqueue_asset( 'admin-analytics', [], false, true, true );
 	}
 
 	/**
@@ -174,13 +194,13 @@ class Init {
 	 */
 	public function admin_scripts() {
 		wp_enqueue_style( 'material-icons' );
-		\ChurchPlugins\Helpers::enqueue_asset( 'admin-scss', [], false, true );
+		$this->enqueue_asset( 'admin-scss', [], false, true );
 
 		if ( ! $this->is_admin_page() ) {
 			 return;
 		}
 
-		$script = \ChurchPlugins\Helpers::enqueue_asset( 'admin-main', [ 'jquery' ], false, false, true );
+		$script = $this->enqueue_asset( 'admin-main', [ 'jquery' ], false, false, true );
 
 		wp_localize_script(
 			$script['handle'],
@@ -196,12 +216,12 @@ class Init {
 	 * Enqueue block editor assets.
 	 */
 	public function block_editor_assets() {
-		\ChurchPlugins\Helpers::enqueue_asset( 'scss', [], false, true );
+		$this->enqueue_asset( 'scss', [], false, true );
 
 		wp_enqueue_style( 'material-icons' );
 		wp_enqueue_script( 'feather-icons' );
 
-		$script = \ChurchPlugins\Helpers::enqueue_asset( 'admin-block-editor', [ 'jquery' ], false, false, true );
+		$script = $this->enqueue_asset( 'admin-block-editor', [ 'jquery' ], false, false, true );
 		wp_localize_script(
 			$script['handle'],
 			'cplAdmin',
@@ -244,10 +264,10 @@ class Init {
 	 * @author costmo
 	 */
 	public function app_enqueue() {
-		$scss_asset   = \ChurchPlugins\Helpers::enqueue_asset( 'scss', [], false, true );
-		$facets_asset = \ChurchPlugins\Helpers::enqueue_asset( 'facets', [ 'jquery' ], false, false, true );
-		$main_asset   = \ChurchPlugins\Helpers::enqueue_asset( 'main', [ 'jquery', $facets_asset['handle'] ], false, false, true );
-		$app_asset    = \ChurchPlugins\Helpers::enqueue_asset( 'app', [ 'jquery' ], false, false, true );
+		$scss_asset   = $this->enqueue_asset( 'scss', [], false, true );
+		$facets_asset = $this->enqueue_asset( 'facets', [ 'jquery' ], false, false, true );
+		$main_asset   = $this->enqueue_asset( 'main', [ 'jquery', $facets_asset['handle'] ], false, false, true );
+		$app_asset    = $this->enqueue_asset( 'app', [ 'jquery' ], false, false, true );
 
 		if ( ! empty( $main_asset ) ) {
 			wp_add_inline_script(
