@@ -1,6 +1,34 @@
 
 (function($) {
 
+	let transcripts = function() {
+		let SELF = this;
+
+		SELF.init = function() {
+			SELF.$body = $('body');
+			SELF.$transcript = $('.cpl-item--transcript');
+
+			if ( !SELF.$transcript.length ) {
+				return;
+			}
+
+			if ( SELF.$transcript.outerHeight() < 200 ) {
+				return;
+			}
+
+			SELF.$transcript.addClass( 'cpl-transcript--collapsed' );
+			SELF.$transcript.find( '.cpl-transcript--toggle' ).on( 'click', SELF.toggleTranscript );
+		};
+
+		SELF.toggleTranscript = function( e ) {
+			e.preventDefault();
+			SELF.$transcript.removeClass( 'cpl-transcript--collapsed' );
+		}
+
+		SELF.init();
+
+	}
+
 	let persistentPlayer = function() {
 		let SELF = this;
 
@@ -130,6 +158,7 @@
 
 	$(document).on('ready', function() {
 		persistentPlayer();
+		transcripts();
 	});
 
 })(jQuery);

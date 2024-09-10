@@ -1,3 +1,5 @@
+import jQuery from "jquery";
+
 jQuery( function( $ ){
 
 	let wp_inline_edit_function = false;
@@ -405,7 +407,6 @@ jQuery( function( $ ){
 
 });
 
-
 /**
  * Check for basic submit buttons
  */
@@ -465,4 +466,98 @@ jQuery($ => {
 	}
 
 	$('#cpl_merge_speakers').on('click', mergeSpeakers)
+})
+
+/**
+ * View transcript button
+ */
+jQuery($ => {
+	const modalWrapper = $(`
+		<div class="cpl-modal-wrapper">
+			<div class="cpl-modal" style="margin-left: auto; margin-right: auto;">
+				<div class="cpl-modal-close">
+					<span class="material-icons-outlined">close</span>
+				</div>
+				<div class="cpl-modal-content"></div>
+			</div>
+		</div>
+	`)
+
+	const decodeHTMLEntities = (text) => {
+		const textArea = document.createElement('textarea')
+		textArea.innerHTML = text
+		return textArea.value
+	}
+
+	const modal    = modalWrapper.find('.cpl-modal')
+	const closeBtn = modal.find('.cpl-modal-close')
+	const content  = modal.find('.cpl-modal-content')
+
+	const closeModal = () => {
+		modalWrapper.removeClass('open')
+		setTimeout(() => {
+			modalWrapper.attr('style', 'display: none;')
+		}, 300)
+	}
+
+	modal.on('click', (e) => e.stopPropagation())
+
+	modalWrapper.on('click', () => closeModal())
+
+	closeBtn.on('click', () => closeModal())
+
+	$(document).on('click', '.cpl-transcript-btn', function(e) {
+		e.preventDefault()
+		
+		const postId = $(this).data('post-id')
+
+		// add loader
+		content.html('<span class="spinner" style="visibility: visible; display: block; margin: 0 auto; float: none;"></span>')
+
+		modalWrapper.attr('style', 'display: block;')
+		modalWrapper.addClass('open')
+
+		wp.apiFetch({
+			path: `/wp/v2/${cplAdmin.postTypes.cpl_item.postType}/${postId}?_fields=cmb2`,
+		}).then(data => {
+			const text = data.cmb2.item_transcript.transcript
+			content.html(decodeHTMLEntities(text))
+		}).catch(err => {
+			content.html('<div class="error">' + err.message + '</div>')
+		})
+	})
+
+	modalWrapper.attr('style', 'display: none;')
+
+	$('body').append(modalWrapper)
+})
+
+/**
+ * Import transcript buttons
+ */
+jQuery($ => {
+	$('.cpl-import-transcript-btn').on('click', function(e) {
+		const url    = $(this).data('url')
+		const postId = url.split('post_id=')[1]
+
+		$(this).addClass('loading');
+
+		const savedHTML = $(this).html()
+
+		$(this).html('Importing...')
+		$(this).attr('disabled', true)
+
+		$.post(url, (response) => {
+			$(this).removeClass('loading');			
+			if(response.success) {
+				$(this).addClass('success')
+				$(this).replaceWith(`<button type="button" class="button cpl-transcript-btn" data-post-id="${postId}">View</button>`)
+			} else {
+				alert(response.data)
+				$(this).attr('disabled', false)
+				$(this).html(savedHTML)
+				console.warn(response)
+			}
+		})
+	})
 })
