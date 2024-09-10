@@ -14,7 +14,9 @@ import { cloneBlock, store as blocksStore } from '@wordpress/blocks';
 /**
  * Internal dependencies
  */
-import { name as queryLoopName } from './block.json';
+import metadata from './block.json';
+
+const { name: queryLoopName } = metadata;
 
 /** @typedef {import('@wordpress/blocks').WPBlockVariation} WPBlockVariation */
 

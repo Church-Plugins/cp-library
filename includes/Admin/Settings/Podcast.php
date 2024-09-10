@@ -178,6 +178,13 @@ class Podcast {
 		) );
 
 		$options->add_field( array(
+			'name'    => __( 'Item Image', 'cp-library' ),
+			'desc'    => __( 'Add image to item description', 'cp-library' ),
+			'id'      => 'show_item_image',
+			'type'    => 'checkbox',
+		) );
+
+		$options->add_field( array(
 			'name'    => __( 'Provider', 'cp-library' ),
 			'desc'    => __( 'The name of the podcast provider (probably your church name)', 'cp-library' ),
 			'id'      => 'author',
