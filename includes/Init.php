@@ -166,6 +166,7 @@ class Init {
 	 */
 	public function enqueue_analytics_scripts() {
 		\ChurchPlugins\Helpers::enqueue_asset( 'admin-analytics', [ 'jquery' ], false, false, true );
+		\ChurchPlugins\Helpers::enqueue_asset( 'admin-analytics', [], false, true, true );
 	}
 
 	/**

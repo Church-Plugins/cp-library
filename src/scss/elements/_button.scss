@@ -64,7 +64,7 @@
 
 	svg, i,
 	.fl-button-text {
-		color: var(--cp-button--color);
+		color: currentColor;
 	}
 
 	svg {
@@ -106,7 +106,7 @@
 
 		svg, i,
 		.fl-button-text {
-			color: var(--cp-button--color--hover);
+			//color: var(--cp-button--color--hover);
 		}
 	}
 
@@ -117,7 +117,7 @@
 		outline:none;
 
 		.fl-button-text {
-			color: var(--cp-button--color--hover);
+			//color: var(--cp-button--color--hover);
 		}
 	}
 
