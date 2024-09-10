@@ -10,6 +10,7 @@ use CP_Library\Models\Item as ItemModel;
 use CP_Library\Models\ServiceType;
 use CP_Library\Models\Speaker;
 use CP_Library\Util\Convenience;
+use CP_Library\Admin\Settings\Podcast;
 
 class Item extends Controller{
 
@@ -765,6 +766,17 @@ class Item extends Controller{
 		}
 
 		return $this->filter( trim( $excerpt ), __FUNCTION__ );
+	}
+
+	public function get_podcast_description_html() {
+		$description = apply_filters( 'the_excerpt_rss', get_the_excerpt() );
+
+		if ( Podcast::get( 'show_item_image', false ) ) {
+			$img = $this->get_thumbnail( 'large' );
+			$description = sprintf( "<img src='%s' alt='%s' />\n\r%s", $img, $this->get_title(), $description );
+		}
+
+		return $this->filter( wpautop( $description ), __FUNCTION__ );
 	}
 
 	/**

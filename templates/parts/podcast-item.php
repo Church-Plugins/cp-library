@@ -26,8 +26,11 @@ try {
 		<itunes:subtitle><?php echo esc_html( $item->get_podcast_subtitle() ); ?></itunes:subtitle>
 	<?php endif; ?>
 
+	<?php if ( $item->get_podcast_description_html() ) : ?>
+		<description><![CDATA[<?php echo wp_kses_post( $item->get_podcast_description_html() ); ?>]]></description>
+	<?php endif; ?>
+
 	<?php if ( $item->get_podcast_description() ) : ?>
-		<description><?php echo esc_html( $item->get_podcast_description() ); ?></description>
 		<itunes:summary><?php echo esc_html( $item->get_podcast_description() ); ?></itunes:summary>
 		<googleplay:description><?php echo esc_html( $item->get_podcast_description() ); ?></googleplay:description>
 	<?php endif; ?>
