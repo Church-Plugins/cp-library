@@ -165,6 +165,7 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 		delete_transient( static::get_key() . '_progress' );
 		delete_transient( static::get_key() . '_total' );
 		delete_transient( static::get_key() . '_started_at' );
+		delete_transient( static::get_key() . '_last_timestamp' );
 	}
 
 	/**
@@ -335,6 +336,7 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 		$instance->cancel();
 		$instance->delete_all();
 		static::clear_db();
+		set_transient( static::get_key() . '_cancelled', true );
 		return rest_ensure_response(
 			[
 				'success' => true,
@@ -364,7 +366,7 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 		 *
 		 * @param int $batch_size Batch size.
 		 */
-		$batch_size = apply_filters( 'cpl_import_batch_size', 250 );
+		$batch_size = apply_filters( 'cpl_import_batch_size', 25 );
 
 		$first_batch = null;
 		$queue       = [];
@@ -410,6 +412,8 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 		set_transient( static::get_key() . '_progress', 0 );
 		set_transient( static::get_key() . '_total', $total );
 		set_transient( static::get_key() . '_started_at', time() );
+		set_transient( static::get_key() . '_last_timestamp', microtime( true ) );
+		delete_transient( static::get_key() . '_cancelled' );
 	}
 
 	/**
@@ -436,9 +440,9 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 	 * @param array $item Item to process.
 	 */
 	protected function task( $item ) {
-
-		// start timer to see how long it takes
-		$start = microtime( true );
+		if ( get_transient( static::get_key() . '_cancelled' ) ) {
+			return false;
+		}
 
 		// import item
 		try {
@@ -464,9 +468,10 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 		set_transient( static::get_key() . '_progress', $current_amount + 1 );
 
 		// log time
-		$end = microtime( true );
-		$milliseconds = round(( $end - $start ) * 1000);
-		error_log( 'Imported item in ' . $milliseconds . ' milliseconds' );
+		$last_timestamp = get_transient( static::get_key() . '_last_timestamp' ) ?: microtime( true );
+		$milliseconds   = round( ( microtime( true ) - $last_timestamp ) * 1000 );
+		// error_log( 'Imported item in ' . $milliseconds . ' milliseconds' );
+		set_transient( static::get_key() . '_last_timestamp', microtime( true ) );
 	
 		return false;
 	}
