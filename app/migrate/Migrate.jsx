@@ -98,9 +98,9 @@ export default function Migrate({ plugin, onComplete }) {
 			{
 				status === 'in_progress' &&
 				<>
-				<div className="cpl-migration-progressbar-label">{`${Math.round(progress)}%`}</div>
-				<div className="cpl-migration-progressbar-wrapper">
-					<div className={`cpl-migration-progressbar loading`} style={{ width: widthPercent }}></div>
+				<div className="cpl-progressbar-label">{`${Math.round(progress)}%`}</div>
+				<div className="cpl-progressbar-wrapper">
+					<div className={`cpl-progressbar loading`} style={{ width: widthPercent }}></div>
 				</div>
 				</>
 			}

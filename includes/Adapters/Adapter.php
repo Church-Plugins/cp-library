@@ -58,11 +58,19 @@ abstract class Adapter extends \WP_Background_Process {
 	public $_cron_hook;
 
 	/**
+	 * Dispatcher
+	 *
+	 * @var Dispatcher
+	 */
+	protected $dispatcher;
+
+	/**
 	 * Class constructor
 	 */
 	public function __construct() {
 		$this->action     = "cpl_{$this->type}_adapter";
 		$this->_cron_hook = "cpl_adapter_cron_{$this->type}";
+		$this->dispatcher = new Dispatcher( "cpl_dispatcher_{$this->type}" );
 
 		parent::__construct();
 
@@ -72,12 +80,40 @@ abstract class Adapter extends \WP_Background_Process {
 	}
 
 	/**
-	 * Handles pulling data from API
-	 *
-	 * @param int $amount The number of items to pull.
-	 * @param int $page The page to pull from.
+	 * Actions
 	 */
-	abstract public function pull( int $amount, int $page );
+	public function actions() {
+		add_action( $this->_cron_hook, array( $this, 'update_check' ) );
+		add_action( 'init', array( $this, 'schedule_cron' ) );
+		add_action( "cpl_adapter_pull_{$this->type}", array( $this, 'update_check' ) );
+		add_action( "cpl_adapter_import_{$this->type}", array( $this, 'do_full_import' ) );
+		add_filter( "cpl_dispatcher_{$this->type}_make_request", [ $this, 'fetch_batch' ], 10, 2 );
+		add_action( "cpl_dispatcher_{$this->type}_done", [ $this, 'fetch_complete' ], 10, 2 );
+	}
+
+	/**
+	 * Format and start processing items
+	 *
+	 * @param array $items The items to format and process.
+	 * @return void
+	 */
+	abstract public function format_and_process( $items );
+
+	/**
+	 * Get next batch of items to process
+	 *
+	 * @param int $batch The batch number to get the next batch for.
+	 * @return array|false The next batch of items to process, or false if there are no more items to process.
+	 */
+	abstract public function get_next_batch( $batch );
+
+	/**
+	 * Get most recently updated items
+	 *
+	 * @param int $amount The amount of items to get.
+	 * @return array
+	 */
+	abstract public function get_recent_items( $amount );
 
 	/**
 	 * Get model based on key
@@ -87,7 +123,7 @@ abstract class Adapter extends \WP_Background_Process {
 	abstract public function get_model_from_key( $key );
 
 	/**
-	 * Handles adding an attachment to a Sermon. Implemted by child classes
+	 * Handles adding an attachment to a Sermon. Implemented by child classes
 	 *
 	 * @param Item   $item The item being processed.
 	 * @param mixed  $attachment The attachment to add.
@@ -105,17 +141,6 @@ abstract class Adapter extends \WP_Background_Process {
 	abstract public function process_cpl_data( $item, $cpl_data, $post_type );
 
 	/**
-	 * Actions
-	 */
-	public function actions() {
-		add_action( $this->_cron_hook, array( $this, 'update_check' ) );
-		add_action( 'init', array( $this, 'schedule_cron' ) );
-		add_action( "cpl_adapter_pull_{$this->type}", array( $this, 'update_check' ) );
-		add_action( "cpl_adapter_hard_pull_{$this->type}", array( $this, 'hard_pull' ) );
-		add_action( "cpl_adapter_import_{$this->type}", array( $this, 'import' ) );
-	}
-
-	/**
 	 * Updates when the cron runs
 	 *
 	 * @return void
@@ -126,7 +151,8 @@ abstract class Adapter extends \WP_Background_Process {
 		$amount = absint( $this->get_setting( 'check_count', 50 ) );
 
 		try {
-			$this->pull( $amount, 1 );
+			$items = $this->get_recent_items( $amount );
+			$this->format_and_process( $items );
 			if ( $is_json_request ) {
 				wp_send_json_success( array( 'message' => 'Sermons updated' ) );
 			}
@@ -139,44 +165,53 @@ abstract class Adapter extends \WP_Background_Process {
 	}
 
 	/**
-	 * Hard pull all items
+	 * Handles a full import
 	 *
 	 * @return void
 	 */
-	public function hard_pull() {
-		// keep pulling until all items are saved.
-		try {
-			$page    = 1;
-			$is_more = true;
-			while ( $is_more ) {
-				$is_more = $this->pull( 100, $page );
-				if ( $page > 10 ) {
-					wp_send_json_error( array( 'error' => 'Sermon count too large. ' . ( ( $page - 1 ) * 100 ) . ' Sermons have been processed' ) );
-					break;
-				}
-				++$page;
-			}
-			wp_send_json_success( array( 'message' => 'Update process started' ) );
-		} catch ( Exception $e ) {
-			error_log( $e->getMessage() );
-			wp_send_json_error( array( 'error' => $e->getMessage() ) );
-		}
+	public function do_full_import() {
+		$this->delete_all(); // delete any queued items
+
+		$this->dispatcher->set_batch( 1 )->dispatch(); // start the fetching process
+
+		// delete store data
+		global $wpdb;
+		$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE 'cpl_{$this->type}_adapter_store_%'" );
+
+		update_option( "cpl_{$this->type}_adapter_import_complete", false );
+		update_option( "cpl_{$this->type}_adapter_import_in_progress", true );
+
+		wp_send_json_success( array( 'message' => 'Import started' ) );
 	}
 
 	/**
-	 * Handles the initial import
+	 * Runs when all fetching with dispatcher is complete.
 	 *
+	 * @param int $batch The batch number.
 	 * @return void
 	 */
-	public function import() {
-		try {
-			$this->hard_pull();
-			update_option( $this->option_id( 'import_complete' ), true );
-			wp_send_json_success( array( 'message' => 'Data pulled. Import initialized' ) );
-		} catch ( Exception $e ) {
-			error_log( $e->getMessage() );
-			wp_send_json_error( array( 'error' => $e->getMessage() ) );
+	public function fetch_complete() {
+		update_option( "cpl_{$this->type}_adapter_import_complete", true );
+		update_option( "cpl_{$this->type}_adapter_import_in_progress", false );
+	}
+
+	/**
+	 * Process a batch
+	 *
+	 * @param bool $done Whether the batch is done or not.
+	 * @param int  $batch The batch number.
+	 * @return bool Whether we can stop fetching batches.
+	 */
+	public function fetch_batch( $done, $batch ) {
+		$batch = $this->get_next_batch( $batch );
+
+		if ( ! $batch ) {
+			return true;
 		}
+
+		$this->format_and_process( $batch );
+
+		return $done;
 	}
 
 	/**
@@ -263,23 +298,21 @@ abstract class Adapter extends \WP_Background_Process {
 	/**
 	 * Process items retrieved from the API
 	 *
-	 * @param bool $hard_pull Whether to do a full pull or not.
 	 * @since 1.3.0
 	 */
-	public function process( $hard_pull = false ) {
+	public function process_batch() {
 		$this->items = apply_filters( 'cpl_adapter_process_items', $this->items, $this );
 
 		if ( empty( $this->items ) ) {
 			return;
 		}
 
-		// delete items not in the response.
 		foreach ( $this->attachments as $attachment_key => $attachments ) {
 			$attachments = apply_filters( 'cpl_adapter_process_items', $attachments, $this );
-			$this->add_items_to_queue( $attachments, $attachment_key, $hard_pull );
+			$this->add_items_to_queue( $attachments, $attachment_key );
 		}
 
-		$this->add_items_to_queue( $this->items, 'items', $hard_pull );
+		$this->add_items_to_queue( $this->items, 'items' );
 
 		$this->items       = null;
 		$this->attachments = null;
@@ -292,9 +325,8 @@ abstract class Adapter extends \WP_Background_Process {
 	 *
 	 * @param array  $items The items to add to the queue.
 	 * @param string $store_key The store key to use.
-	 * @param bool   $hard_pull Whether to do a full pull or not.
 	 */
-	public function add_items_to_queue( $items, $store_key, $hard_pull = false ) {
+	public function add_items_to_queue( $items, $store_key ) {
 		$store_data   = $this->get_store( $store_key );
 		$needs_update = false;
 
@@ -312,12 +344,6 @@ abstract class Adapter extends \WP_Background_Process {
 			unset( $store_data[ $item['external_id'] ] );
 		}
 
-		if ( $hard_pull ) {
-			foreach ( $store_data as $external_id => $_ ) {
-				$this->remove_item( $external_id );
-			}
-		}
-
 		if ( $needs_update ) {
 			$this->update_store( $items, $store_key );
 		}
@@ -332,7 +358,6 @@ abstract class Adapter extends \WP_Background_Process {
 	 * @author Jonathan Roley
 	 */
 	public function task( $item_data ) {
-
 		if ( empty( $item_data ) ) {
 			error_log( 'Item was empty' );
 			return false;
@@ -543,19 +568,20 @@ abstract class Adapter extends \WP_Background_Process {
 			)
 		);
 
-		if ( get_option( $this->option_id( 'import_complete' ), false ) === false ) {
-			$cmb->add_field(
-				array(
-					'name'       => __( 'Start initial import', 'cp-library' ),
-					'id'         => 'start_initial_import',
-					'type'       => 'cpl_submit_button',
-					'desc'       => __( 'Start initial import', 'cp-library' ),
-					'query_args' => array(
-						'cp_action' => "cpl_adapter_import_{$this->type}",
-					),
-				)
-			);
-		}
+		$import_in_progress = get_option( "cpl_{$this->type}_adapter_import_in_progress", false );
+		$field_name         = $import_in_progress ? __( 'Import in progress', 'cp-library' ) : __( 'Start initial import', 'cp-library' );
+		$cmb->add_field(
+			array(
+				'name'       => __( 'Start initial import', 'cp-library' ),
+				'id'         => 'start_initial_import',
+				'type'       => 'cpl_submit_button',
+				'desc'       => $field_name,
+				'query_args' => array(
+					'cp_action' => "cpl_adapter_import_{$this->type}",
+				),
+				'disabled'   => $import_in_progress,
+			)
+		);
 
 		$cron_schedules   = wp_get_schedules();
 		$schedule_options = array();
