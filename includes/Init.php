@@ -55,6 +55,11 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 	public $modules;
 
 	/**
+	 * @var \ChurchPlugins\Logging
+	 */
+	public $logging;
+
+	/**
 	 * Only make one instance of Init
 	 *
 	 * @return Init
@@ -74,7 +79,7 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 	 */
 	public function get_plugin_dir() {
 		return CP_LIBRARY_PLUGIN_DIR;
-	}	
+	}
 
 	/**
 	 * Get plugin URL
@@ -307,6 +312,7 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 		Integrations\YouTube::get_instance();
 
 		$this->modules = Modules\Init::get_instance();
+		$this->logging = new \ChurchPlugins\Logging( $this->get_id(), $this->is_debug_mode() );
 	}
 
 	/**
@@ -526,6 +532,28 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 	 */
 	public function get_api_namespace() {
 		return $this->get_id() . '/v1';
+	}
+
+	/**
+	 * Return the debug mode
+	 *
+	 * @return mixed|null
+	 * @since  1.5.0
+	 *
+	 * @author Tanner Moushey, 9/13/24
+	 */
+	public function is_debug_mode() {
+		$debug_mode = false;
+
+		if ( Settings::get_advanced( 'debug', false ) ) {
+			$debug_mode = true;
+		}
+
+		if ( defined( 'CP_LIBRARY_DEBUG' ) && CP_LIBRARY_DEBUG ) {
+			$debug_mode = true;
+		}
+
+		return apply_filters( 'cp_library_debug_mode', $debug_mode );
 	}
 
 }

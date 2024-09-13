@@ -39,6 +39,7 @@ class Tools
 	{
 		add_action('admin_menu', [$this, 'tools_menu'], 10);
 		add_action('cp_library_tools_tab_import_export', [$this, 'import_export_display']);
+		add_action('cp_library_tools_tab_log', [$this, 'tools_log_display']);
 		add_action('cp_batch_import_class_include', [$this, 'include_class']);
 		add_filter('cp_importer_is_class_allowed', [$this, 'importer_class']);
 		add_filter('upload_mimes', [$this, 'import_mime_type']);
@@ -501,7 +502,8 @@ class Tools
 			// Define all tabs
 			$tabs = array(
 				// 'system_info'   => __( 'System Info', 'cp-library' ),
-				'import_export' => __('Import/Export', 'cp-library')
+				'import_export' => __('Import/Export', 'cp-library'),
+				'log' => __('Log', 'cp-library'),
 			);
 		}
 
@@ -543,6 +545,38 @@ class Tools
 		</div>
 
 <?php
+	}
+
+	public function tools_log_display()
+	{
+		if (! current_user_can('manage_options')) {
+			return;
+		} ?>
+		<div class="postbox">
+			<h3><span><?php esc_html_e('Debug Log', 'cp-library'); ?></span></h3>
+			<div class="inside">
+				<p>
+					<?php esc_html_e('Use the log below to help troubleshoot problems.', 'cp-library'); ?>
+				</p>
+
+				<p>
+					<form action="" method="post">
+						<input type="hidden" name="log-id" value="<?php echo esc_attr( cp_library()->logging->id ); ?>" />
+						<?php wp_nonce_field( 'clear-log', 'clear-log-nonce' ); ?>
+						<?php submit_button(__('Clear Log', 'cp-library'), 'primary', 'clear-log', false); ?>
+					</form>
+				</p>
+
+				<form id="cp-system-info"
+					  action="<?php echo esc_url(admin_url('edit.php?post_type=download&page=cp-tools&tab=system_info')); ?>"
+					  method="post" dir="ltr">
+					<textarea readonly="readonly" id="log-textarea"
+							  class="cp-tools-textarea" name="cp-sysinfo" style="width:100%;height: 70vh"><?php echo cp_library()->logging->get_file_contents(); ?></textarea>
+				</form>
+			</div>
+		</div>
+
+		<?php
 	}
 
 	/**
@@ -662,7 +696,7 @@ class Tools
 		return array(
 			'Title'        => $data['title'],
 			'Description'  => $data['desc'],
-			'Transcript'   => $data['desc'],
+			'Transcript'   => $data['transcript'],
 			'Series'       => $types,
 			'Date'         => $data['date']['timestamp'],
 			'Passage'      => $data['passage'],

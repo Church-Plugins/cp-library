@@ -35,6 +35,10 @@ class Item extends Controller{
 		return $this->filter( get_permalink( $this->post->ID ), __FUNCTION__ );
 	}
 
+	public function get_transcript() {
+		return $this->filter( get_post_meta( get_the_ID(), 'transcript', true ), __FUNCTION__ );
+	}
+
 	public function get_locations() {
 		if ( ! function_exists( 'cp_locations' ) ) {
 			return $this->filter( [], __FUNCTION__ );

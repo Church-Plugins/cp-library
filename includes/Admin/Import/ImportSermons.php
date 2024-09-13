@@ -101,7 +101,7 @@ class ImportSermons extends BackgroundProcessImport {
 
 	/**
 	 * Import a single item
-	 * 
+	 *
 	 * @since 1.4.10
 	 *
 	 * @param array $item Item to process.
@@ -127,6 +127,7 @@ class ImportSermons extends BackgroundProcessImport {
 		$date         = $item['date'];
 		$title        = trim( $item['title'] );
 		$desc         = trim( $item['description'] );
+		$transcript   = trim( $item['transcript'] );
 		$series       = explode( ';', $item['series'] )[0];
 		$date         = is_numeric( $date ) ? $date : strtotime( $item['date'] );
 		$location     = trim( strtolower( $item['location'] ) );
@@ -212,6 +213,10 @@ class ImportSermons extends BackgroundProcessImport {
 		if ( $thumb && get_post_meta( $message_id, '_cp_import_thumb', true ) !== $thumb ) {
 			$this->set_image( $message_id, $thumb );
 			update_post_meta( $message_id, '_cp_import_thumb', $thumb );
+		}
+
+		if ( $transcript ) {
+			update_post_meta( $message_id, 'transcript', $transcript );
 		}
 
 		if ( ! empty( $topics ) ) {

@@ -856,8 +856,29 @@ class Settings {
 					),
 				)
 			);
-
 		}
+
+		$advanced_options->add_field(
+			array(
+				'name' => __( 'Data', 'cp-library' ),
+				'id'   => 'data',
+				'type' => 'title',
+			)
+		);
+
+		$advanced_options->add_field(
+			array(
+				'name'    => __( 'Enable Debug', 'cp-library' ),
+				'id'      => 'debug',
+				'type'    => 'radio_inline',
+				'default' => 0,
+				'options' => [
+					1 => __( 'Enable', 'cp-library' ),
+					0 => __( 'Disable', 'cp-library' ),
+				],
+				'desc'    => __( 'Turn this on to enable verbose debugging in the Tools > Log.', 'cp-library' ),
+			)
+		);
 	}
 
 	/**
