@@ -916,6 +916,7 @@ class Settings {
 	 */
 	public function custom_button_form_field( $field, $escaped_value, $object_id, $object_type, $field_type_object ) {
 		$url = add_query_arg( isset( $field->args['query_args'] ) ? $field->args['query_args'] : array(), admin_url( 'admin-post.php' ) );
-		echo sprintf( '<button type="button" class="button cpl_admin_submit_button" data-url="%s">%s</button>', esc_url( $url ), $field->args['desc'] );
+		$disabled = isset( $field->args['disabled'] ) && $field->args['disabled'] ? 'disabled' : '';
+		echo sprintf( '<button type="button" class="button cpl_admin_submit_button" data-url="%s" %s>%s</button>', esc_url( $url ), $disabled, $field->args['desc'] );
 	}
 }
