@@ -152,7 +152,7 @@ class Tools
 		<div class="postbox cp-import-payment-history">
 			<h3><span><?php echo sprintf(esc_html__('Import %s', 'cp-library'), cp_library()->setup->post_types->item->plural_label); ?></span></h3>
 			<div class="inside">
-				
+
 				<?php if ( ! $import_running ) : ?>
 					<p><?php echo sprintf(__('Import a CSV file of %s. <a href="%s">Download a sample csv file.</a>', 'cp-library'), cp_library()->setup->post_types->item->plural_label, CP_LIBRARY_PLUGIN_URL . '/templates/__sample/import-sermons.csv'); ?></p>
 
@@ -217,6 +217,19 @@ class Tools
 									<td>
 										<select name="mapping[description]" class="cp-import-csv-column"
 											data-field="Description">
+											<option
+												value="" selected><?php _e('- Ignore this field -', 'cp-library'); ?></option>
+										</select>
+									</td>
+									<td class="cp-import-preview-field"><?php _e('- select field to preview data -', 'cp-library'); ?></td>
+								</tr>
+
+								<!-- Transcript -->
+								<tr>
+									<td><?php _e('Transcript', 'cp-library'); ?></td>
+									<td>
+										<select name="mapping[transcript]" class="cp-import-csv-column"
+											data-field="Transcript">
 											<option
 												value="" selected><?php _e('- Ignore this field -', 'cp-library'); ?></option>
 										</select>
@@ -296,7 +309,7 @@ class Tools
 										<td class="cp-import-preview-field"><?php _e('- select field to preview data -', 'cp-library'); ?></td>
 									</tr>
 								<?php endif; ?>
-								
+
 								<!-- Topics -->
 								<tr>
 									<td><?php _e('Topics', 'cp-library'); ?></td>
@@ -387,7 +400,7 @@ class Tools
 									</td>
 									<td class="cp-import-preview-field"><?php _e('- select field to preview data -', 'cp-library'); ?></td>
 								</tr>
-								
+
 								<!-- Variations -->
 								<tr>
 									<td><?php _e('Variation', 'cp-library'); ?></td>
@@ -422,7 +435,7 @@ class Tools
 							<label for='stop-on-error'><?php esc_html_e('Stop if the importer encounters an error', 'cp-library'); ?></label>
 						</p>
 						<?php do_action('cp_library_tools_import_additional_options'); ?>
-						
+
 						<!-- Submit -->
 						<p class="submit">
 							<input type="submit" class="button cp-import-proceed button-primary" value="<?php esc_attr_e( 'Process Import', 'cp-library' ) ?>" />
@@ -515,7 +528,7 @@ class Tools
 					action="<?php echo esc_url(admin_url('edit.php?post_type=download&page=cp-tools&tab=system_info')); ?>"
 					method="post" dir="ltr">
 					<textarea readonly="readonly" onclick="this.focus(); this.select()" id="system-info-textarea"
-						class="cp-tools-textarea" name="cp-sysinfo" style="width:100%;height: 70vh"><?php // echo $this->tools_sysinfo_get(); 
+						class="cp-tools-textarea" name="cp-sysinfo" style="width:100%;height: 70vh"><?php // echo $this->tools_sysinfo_get();
 																																												?></textarea>
 
 					<p>
@@ -649,6 +662,7 @@ class Tools
 		return array(
 			'Title'        => $data['title'],
 			'Description'  => $data['desc'],
+			'Transcript'   => $data['desc'],
 			'Series'       => $types,
 			'Date'         => $data['date']['timestamp'],
 			'Passage'      => $data['passage'],

@@ -855,6 +855,7 @@ class Item extends Controller{
 				'thumb'         => $this->get_thumbnail(),
 				'title'         => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
 				'desc'          => $this->get_content(),
+				'transcript'    => $this->get_transcript(),
 				'date'          => [
 					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
 					'timestamp' => $this->get_publish_date()
