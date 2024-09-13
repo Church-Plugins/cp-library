@@ -952,6 +952,7 @@ class Settings {
 			echo sprintf( '<h5 class="cmb2-metabox-title">%s</h5>', $field->args['name'] );
 		}
 
-		echo sprintf( '<button type="button" class="button cpl_admin_submit_button" data-url="%s">%s</button>', esc_url( $url ), $field->args['desc'] );
+		$disabled = isset( $field->args['disabled'] ) && $field->args['disabled'] ? 'disabled' : '';
+		echo sprintf( '<button type="button" class="button cpl_admin_submit_button" data-url="%s" %s>%s</button>', esc_url( $url ), $disabled, $field->args['desc'] );
 	}
 }

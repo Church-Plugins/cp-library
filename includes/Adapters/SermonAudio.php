@@ -43,37 +43,17 @@ class SermonAudio extends Adapter {
 	}
 
 	/**
-	 * Performs a hard pull
-	 *
-	 * @return void
-	 */
-	public function hard_pull() {
-		if ( empty( $this->get_setting( 'broadcaster_id', false ) ) ) {
-			wp_send_json_error( array( 'error' => __( 'Invalid broadcaster ID', 'cp-library' ) ) );
-		}
-
-		try {
-			$sermons = $this->fetch_all_since_date();
-		} catch ( \ChurchPlugins\Exception $e ) {
-			wp_send_json_error( array( 'error' => $e->getMessage() ) );
-		}
-
-		$this->format_and_process( $sermons, true );
-	}
-
-	/**
 	 * Formats and enqueues items to be processed
 	 *
-	 * @param \stdClass[] $sermons The sermons to format and enqueue.
-	 * @param bool        $hard_pull Whether or not this is a hard pull.
+	 * @param \stdClass[] $items The items to format and enqueue.
 	 * @return void
 	 */
-	public function format_and_process( $sermons, $hard_pull = false ) {
-		$items      = array();
+	public function format_and_process( $items ) {
+		$sermons    = array();
 		$speakers   = array();
 		$item_types = array();
 
-		foreach ( $sermons as $sermon ) {
+		foreach ( $items as $sermon ) {
 			$item = $this->format_item( $sermon );
 
 			$item['attachments'] = array();
@@ -90,40 +70,60 @@ class SermonAudio extends Adapter {
 				$item['attachments']['cpl_item_type'] = [ $sermon->series->seriesID ];
 			}
 
-			$items[ $sermon->sermonID ] = $item;
+			$sermons[ $sermon->sermonID ] = $item;
 		}
 
 		// enqueues items to be processed
-		$this->enqueue( $items );
+		$this->enqueue( $sermons );
 
 		// enqueues attachments to be processed with the items
 		$this->add_attachments( $speakers, 'cpl_speaker' );
 		$this->add_attachments( $item_types, 'cpl_item_type' );
-		$this->process( $hard_pull );
+		$this->process_batch();
 	}
 
 	/**
-	 * Implements the pulling functionality used by the parent
+	 * Fetch most recently updated items from API
 	 *
-	 * @param int $amount The amount of items to pull.
-	 * @param int $page The page to pull from.
-	 * @return bool Whether or not there are more pages.
+	 * @param int $amount The amount of items to fetch.
+	 * @return array The most recent items.
 	 */
-	public function pull( int $amount, int $page ) {
+	public function get_recent_items( $amount ) {
 		$query = array(
-			'pageSize'      => $amount,
-			'page'          => $page,
-			'sortBy'        => 'updated',
-			'broadcasterID' => $this->get_setting( 'broadcaster_id', '' ),
+			'pageSize'               => $amount,
+			'broadcasterID'          => $this->get_setting( 'broadcaster_id', '' ),
+			'sortBy'                 => 'newest',
+			'preachedAfterTimestamp' => strtotime( $this->get_setting( 'ignore_before', 0 ) )
 		);
 
-		$data    = $this->get_results( $query );
-		$results = array_filter( $data->results, [ $this, 'is_valid_result' ] );
+		$data = $this->get_results( $query );
 
-		$this->format_and_process( $results, false );
+		return $data->results ?? [];
+	}
 
-		// whether or not there are more pages
-		return (bool) $data->next;
+	/**
+	 * Pull a batch of items from the source
+	 *
+	 * @param int $batch The current batch number.
+	 * @return array|false The next batch of items to process, or false if there are no more items to process.
+	 */
+	public function get_next_batch( $batch ) {
+		$query = array(
+			'pageSize'               => 100,
+			'broadcasterID'          => $this->get_setting( 'broadcaster_id', '' ),
+			'sortBy'                 => 'oldest',
+			'page'                   => $batch,
+			'preachedAfterTimestamp' => strtotime( $this->get_setting( 'ignore_before', 0 ) )
+		);
+
+		$data = $this->get_results( $query );
+
+		// if we've reached the end of the results
+		if ( empty( $data->results ) ) {
+			return false;
+		}
+
+		return $data->results;
 	}
 
 	/**
@@ -163,68 +163,6 @@ class SermonAudio extends Adapter {
 		}
 
 		return $data;
-	}
-
-	/**
-	 * Loads all results from sermon audio, looping through pages and accumulating data
-	 *
-	 * @param array $query The url query array
-	 * @return \stdClass[] The results from Sermon Audio
-	 */
-	protected function load_results( $query ) {
-		unset( $query['page'] );
-
-		$results = [];
-		$page = 1;
-
-		// loop through all pages
-		do {
-			$query['page'] = $page;
-			$data          = $this->get_results( $query );
-			$results       = array_merge( $results, $data->results );
-			$page++;
-		} while ( $data->next );
-
-		return $results;
-	}
-
-	/**
-	 * Loads all sermons since the user specified date. Sermon audio doesn't provide a simple way to do this, so some custom logic is required
-	 */
-	protected function fetch_all_since_date() {
-		$sermons = [];
-
-		$date = new \DateTime( $this->get_setting( 'ignore_before', '@0' ) );
-
-		$current_year = (int) gmdate( 'Y' );
-		$min_year     = (int) $date->format( 'Y' );
-
-		// loop through years up to the current date
-		for ( $year = $min_year; $year <= $current_year; $year++ ) {
-			$query = array(
-				'pageSize'      => 100,
-				'broadcasterID' => $this->get_setting( 'broadcaster_id', '' ),
-				'year'          => $year,
-			);
-
-			$results = $this->load_results( $query );
-			$results = array_filter( $results, [ $this, 'is_valid_result' ] );
-			$sermons = array_merge( $sermons, $results );
-		}
-
-		return $sermons;
-	}
-
-	/**
-	 * Checks if a sermon is valid, meaning it is after the specified cutoff date
-	 *
-	 * @param \stdClass $sermon The sermon to check
-	 * @return bool Whether or not the sermon is valid
-	 */
-	protected function is_valid_result( $sermon ) {
-		$min_date    = strtotime( $this->get_setting( 'ignore_before', '0' ) );
-		$sermon_date = strtotime( $sermon->preachDate );
-		return $sermon_date >= $min_date;
 	}
 
 	/**
