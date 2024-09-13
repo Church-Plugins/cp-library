@@ -134,7 +134,7 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 	public static function get_import_progress() {
 		$current_amount = get_transient( static::get_key() . '_progress' ) ?: 0; // phpcs:ignore
 		$total          = get_transient( static::get_key() . '_total' ); // phpcs:ignore
-	
+
 		if ( ! $total ) {
 			return false;
 		}
@@ -356,6 +356,8 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 	 * @return void
 	 */
 	public static function start_import( $file, $mapping, $options ) {
+		cp_library()->logging->log( __( 'Starting import process', 'cp-library' ) );
+
 		$handle  = fopen( $file, 'r' );
 		$headers = fgetcsv( $handle );
 
@@ -460,6 +462,7 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 			 */
 			do_action( 'cpl_import_process_item', $item, $this->options, $this );
 		} catch ( \Exception $e ) {
+			cp_library()->logging->log( $e->getMessage() );
 			error_log( $e->getMessage() );
 		}
 
@@ -472,7 +475,7 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 		$milliseconds   = round( ( microtime( true ) - $last_timestamp ) * 1000 );
 		// error_log( 'Imported item in ' . $milliseconds . ' milliseconds' );
 		set_transient( static::get_key() . '_last_timestamp', microtime( true ) );
-	
+
 		return false;
 	}
 

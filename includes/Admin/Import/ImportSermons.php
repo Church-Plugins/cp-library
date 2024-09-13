@@ -65,6 +65,7 @@ class ImportSermons extends BackgroundProcessImport {
 	protected $field_mapping = array(
 		'title'        => '',
 		'description'  => '',
+		'transcript'   => '',
 		'series'       => '',
 		'date'         => '',
 		'location'     => '',
@@ -110,6 +111,8 @@ class ImportSermons extends BackgroundProcessImport {
 	 */
 	protected function import_item( $item, $options ): void {
 		global $wpdb;
+
+		cp_library()->logging->log( 'Processing item: ' . $item['title'] );
 
 		$all_locations     = $this->maybe_get_locations();
 		$default_series    = $this->maybe_get_default_series();
@@ -376,6 +379,8 @@ class ImportSermons extends BackgroundProcessImport {
 				$item->update_speakers( $speaker_ids );
 			}
 		} // endif ( $variant )
+
+		cp_library()->logging->log( 'Processing complete for: ' . $title );
 	}
 
 	/**
