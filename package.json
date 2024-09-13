@@ -8,7 +8,8 @@
     "start:src": "wp-scripts start",
     "build:src": "wp-scripts build",
     "start": "npm run start:src && npm run start:blocks",
-    "build": "npm run build:src && npm run build:blocks"
+    "build": "npm run build:src && npm run build:blocks",
+    "plugin-zip": "wp-scripts plugin-zip"
   },
   "dependencies": {
     "@emotion/react": "^11.4.1",
@@ -44,5 +45,23 @@
     "tiny-relative-date": "^1.3.0",
     "web-vitals": "^1.1.2",
     "webpack-cli": "5.1.4"
-  }
+  },
+  "files": [
+    "assets/images/**",
+    "assets/js/**",
+    "includes/**",
+    "vendor/**",
+    "dist/**",
+    "build/**",
+    "*.php",
+    "*.md",
+    "readme.txt",
+    "languages/**",
+    "layouts/**",
+    "templates/**",
+    "blocks/**",
+    "block-patterns/**",
+    "LICENSE",
+    "*.css"
+  ]
 }
