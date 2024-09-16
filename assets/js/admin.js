@@ -466,3 +466,32 @@ jQuery($ => {
 
 	$('#cpl_merge_speakers').on('click', mergeSpeakers)
 })
+
+/**
+ * Series deletion detection
+ */
+jQuery($ => {
+	const { __, sprintf } = wp.i18n;
+
+	const message = sprintf(
+		/* translators: %1$s is the plural label for cpl_item_type, %2$s is the single label for cpl_item */
+		__('Are you sure you want to delete this %1$s? Any associated %2$s will be detached from this %1$s but will not be deleted.', 'cp-library'),
+		cplAdmin.postTypes.cpl_item_type.singleLabel,
+		cplAdmin.postTypes.cpl_item.pluralLabel,
+	)
+	
+	$('body.post-type-cpl_item_type a.submitdelete').on('click', (e) => {
+		if(!confirm(message)) {
+			e.preventDefault();
+			return false;
+		}
+	})
+	$('body.post-type-cpl_item_type .bulkactions #doaction').on('click', (e) => {
+		if($('#bulk-action-selector-top').val() === 'trash') {
+			if(!confirm(message)) {
+				e.preventDefault();
+				return false;
+			}
+		}
+	})
+})
