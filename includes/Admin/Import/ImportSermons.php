@@ -193,11 +193,6 @@ class ImportSermons extends BackgroundProcessImport {
 			$args['post_content'] = wp_kses_post( str_replace( '\n', "\n", $desc ) );
 		}
 
-		if ( ! $post_id ) {
-			// update existing post if it exists
-			$post_id = $wpdb->get_var( $wpdb->prepare( "SELECT post_id from $wpdb->postmeta WHERE `meta_key` = '_cp_import_id' AND `meta_value` = %s", $cp_hash ) );
-		}
-
 		if ( $post_id ) {
 			$args['ID'] = $post_id;
 		}
