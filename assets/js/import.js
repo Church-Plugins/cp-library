@@ -89,13 +89,22 @@ jQuery($ => {
 			this.form.find('[type="submit"]').val( 'Processing...' )
 			return true;
 		},
-		success() {
-			this.form.hide()
+		success(response) {
+			if ( response.success ) {
+				this.form.hide()
 
-			this.form.insertBefore( '<div class="notice-wrap"><div class="update update-success"><p>Import started.</p></div></div>' );
+				this.form.insertBefore( '<div class="notice-wrap"><div class="update update-success"><p>Import started.</p></div></div>' );
 
-			// trigger next step via event
-			$( document ).trigger( 'cp-import-step-2' );
+				// trigger next step via event
+				$( document ).trigger( 'cp-import-step-2' );
+			} else {
+				this.form.find( '.notice-wrap' ).remove()
+				this.form.find('[type="submit"]').attr( 'disabled', false )
+				this.form.find('[type="submit"]').val( 'Process Import' )
+				this.form.find('p.submit').prepend( `<div class="notice-wrap">
+					<div class="update error"><p>${response.data.message}</p></div>
+				</div>` )
+			}
 		},
 		error( xhr ) {
 			this.form.find('[type="submit"]').attr( 'disabled', false )

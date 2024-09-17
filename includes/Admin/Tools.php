@@ -177,7 +177,7 @@ class Tools
 					<form
 						id="cp-import-form"
 						class="cl-import-form"
-						action="/wp-json/cp-library/v1/import/sermons"
+						action="<?php echo admin_url('admin-ajax.php?action=cpl_import_sermons'); ?>"
 						method="post"
 						enctype="multipart/form-data"
 						style="display: none;">
@@ -431,10 +431,7 @@ class Tools
 							<input type='checkbox' id='sideload-downloads' name='options[sideload_downloads]' checked>
 							<label for='sideload-downloads'><?php esc_html_e('Attempt to import downloadable files to the Media Library', 'cp-library'); ?></label>
 						</p>
-						<p>
-							<input type='checkbox' id='stop-on-error' name='options[stop_on_error]' checked>
-							<label for='stop-on-error'><?php esc_html_e('Stop if the importer encounters an error', 'cp-library'); ?></label>
-						</p>
+
 						<?php do_action('cp_library_tools_import_additional_options'); ?>
 
 						<!-- Submit -->

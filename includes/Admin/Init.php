@@ -12,6 +12,8 @@ class Init {
 	 */
 	protected static $_instance;
 
+	public $sermon_import;
+
 	/**
 	 * Only make one instance of Init
 	 *
@@ -44,7 +46,7 @@ class Init {
 		Tools::get_instance();
 		Analytics\Init::get_instance();
 		Migrate\Init::get_instance();
-		
+
 	}
 
 	/**
@@ -53,7 +55,8 @@ class Init {
 	 * @return void
 	 */
 	protected function actions() {
-		Import\ImportSermons::setup();
+		$this->sermon_import = new Import\ImportSermons();
+		$this->sermon_import::setup();
 	}
 
 	/** Actions ***************************************************/

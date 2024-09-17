@@ -65,6 +65,18 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 		'application/vnd.msexcel',
 	];
 
+	public function __construct() {
+		parent::__construct();
+
+		$config = get_site_option( static::get_key() . '_config' );
+
+		if ( $config ) {
+			$this->load_mapping( $config['mapping'] );
+			$this->load_options( $config['options'] );
+		}
+
+	}
+
 	/**
 	 * Load the field mapping
 	 *
@@ -101,6 +113,7 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 	 * Setup rest routes, actions, and filters
 	 */
 	public static function setup() {
+		add_action( 'wp_ajax_cpl_import_' . static::$key, [ static::class, 'rest_import' ] );
 		add_action( 'rest_api_init', [ static::class, 'register_rest_routes' ] );
 		// add_action( 'init', [ static::class, 'load_running_processes' ], 1 );
 		static::load_running_processes();
@@ -172,14 +185,14 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 	 * Register REST routes
 	 */
 	public static function register_rest_routes() {
-		register_rest_route(
-			'cp-library/v1',
-			'/import/' . static::$key,
-			[
-				'methods'  => 'POST',
-				'callback' => [ static::class, 'rest_import' ],
-			]
-		);
+//		register_rest_route(
+//			'cp-library/v1',
+//			'/import/' . static::$key,
+//			[
+//				'methods'  => 'POST',
+//				'callback' => [ static::class, 'rest_import' ],
+//			]
+//		);
 
 		register_rest_route(
 			'cp-library/v1',
@@ -250,26 +263,25 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 	}
 
 	/**
-	 * REST import endpoint
+	 * Ajax import endpoint
 	 *
 	 * @since 1.4.10
-	 *
-	 * @param \WP_REST_Request $request Request object.
-	 * @return \WP_REST_Response
 	 */
-	public static function rest_import( $request ) {
+	public static function rest_import() {
 
-		if ( ! $request->get_param( 'file_url' ) ) {
-			return new \WP_Error( 'missing_file', __( 'Missing import file. Please provide an import file.', 'church-plugins' ), [ 'status' => 400 ] );
+		check_ajax_referer( 'cp_ajax_import', 'cp_ajax_import' );
+
+		if ( empty( $_POST['file_url'] ) ) {
+			wp_send_json_error( [ 'message' => __( 'Missing import file. Please provide an import file.', 'cp-library' ) ] );
 		}
 
-		$file = $request->get_param( 'file_url' );
+		$file = $_POST['file_url'];
 
 		// check in our uploads directory based on file URL
 		$upload_dir = wp_upload_dir();
 
 		if ( false === strpos( $file, $upload_dir['baseurl'] ) ) {
-			return new \WP_Error( 'invalid_file', __( 'Invalid file URL.', 'church-plugins' ), [ 'status' => 400 ] );
+			wp_send_json_error( [ 'message' => __( 'Invalid file URL.', 'cp-library' ) ] );
 		}
 
 		// get file from uploads and use
@@ -277,23 +289,18 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 
 		// check if file exists and has correct mime type
 		if ( ! file_exists( $file ) || ! in_array( mime_content_type( $file ), self::$accepted_mime_types, true ) ) {
-			return new \WP_Error( 'invalid_file', __( 'Invalid file.', 'church-plugins' ), [ 'status' => 400 ] );
+			wp_send_json_error( [ 'message' => __( 'Invalid file.', 'cp-library' ) ] );
 		}
 
-		$mapping = $request->get_param( 'mapping' ) ?: [];
-		$options = $request->get_param( 'options' ) ?: [];
+		$mapping = $_POST[ 'mapping' ] ?: [];
+		$options = $_POST[ 'options' ] ?: [];
 
 		$options = static::parse_options( $options );
 
 		// start import
 		static::start_import( $file, $mapping, $options );
 
-		return rest_ensure_response(
-			[
-				'success' => true,
-				'message' => __( 'Import started.', 'church-plugins' ),
-			]
-		);
+		wp_send_json_success( [ 'message' => __( 'Import started.', 'cp-library' ) ] );
 	}
 
 	/**
@@ -402,11 +409,6 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 
 		fclose( $handle );
 
-		// dispatch first batch
-		if ( $first_batch ) {
-			$first_batch->dispatch();
-		}
-
 		update_site_option( static::get_key() . '_config', [
 			'mapping' => $mapping,
 			'options' => $options,
@@ -416,6 +418,11 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 		set_transient( static::get_key() . '_started_at', time() );
 		set_transient( static::get_key() . '_last_timestamp', microtime( true ) );
 		delete_transient( static::get_key() . '_cancelled' );
+
+		// dispatch first batch
+		if ( $first_batch ) {
+			$first_batch->dispatch();
+		}
 	}
 
 	/**

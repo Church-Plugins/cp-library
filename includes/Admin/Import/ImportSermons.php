@@ -168,6 +168,10 @@ class ImportSermons extends BackgroundProcessImport {
 			$title = $series;
 		}
 
+		if ( empty( $title ) ) {
+			throw new Exception( __( 'Title is required', 'cp-library' ) );
+		}
+
 		$cp_hash = md5( $title . $date . $location_id );
 
 		// update existing post if it exists
@@ -175,7 +179,7 @@ class ImportSermons extends BackgroundProcessImport {
 
 		if ( empty( $post_id ) ) {
 			$post_type = cp_library()->setup->post_types->item->post_type;
-			$post_id   = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s AND post_type=%s", $title, $post_type ) );
+			$post_id   = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_title = %s AND Date(post_date) = %s AND post_type=%s", $title, gmdate( 'Y-m-d', $date ), $post_type ) );
 		}
 
 		$args = [
