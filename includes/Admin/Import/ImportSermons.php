@@ -187,8 +187,11 @@ class ImportSermons extends BackgroundProcessImport {
 			'post_title'   => $title,
 			'post_status'  => 'publish',
 			'post_date'    => gmdate( 'Y-m-d 9:00:00', $date ),
-			'post_content' => wp_kses_post( str_replace( '\n', "\n", $desc ) ),
 		];
+
+		if ( ! empty( $desc ) ) {
+			$args['post_content'] = wp_kses_post( str_replace( '\n', "\n", $desc ) );
+		}
 
 		if ( ! $post_id ) {
 			// update existing post if it exists
