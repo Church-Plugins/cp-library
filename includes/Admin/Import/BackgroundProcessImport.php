@@ -113,9 +113,9 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 	 * Setup rest routes, actions, and filters
 	 */
 	public static function setup() {
-		add_action( 'wp_ajax_cpl_import_' . static::$key, [ static::class, 'rest_import' ] );
+		add_action( 'wp_ajax_cpl_import_' . static::$key, [ static::class, 'import' ] );
+		add_action( 'wp_ajax_cpl_import_file_' . static::$key, [ static::class, 'import_upload' ] );
 		add_action( 'rest_api_init', [ static::class, 'register_rest_routes' ] );
-		// add_action( 'init', [ static::class, 'load_running_processes' ], 1 );
 		static::load_running_processes();
 	}
 
@@ -185,30 +185,13 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 	 * Register REST routes
 	 */
 	public static function register_rest_routes() {
-//		register_rest_route(
-//			'cp-library/v1',
-//			'/import/' . static::$key,
-//			[
-//				'methods'  => 'POST',
-//				'callback' => [ static::class, 'rest_import' ],
-//			]
-//		);
-
-		register_rest_route(
-			'cp-library/v1',
-			'/import/' . static::$key . '/upload',
-			[
-				'methods'  => 'POST',
-				'callback' => [ static::class, 'rest_import_upload' ],
-			]
-		);
-
 		register_rest_route(
 			'cp-library/v1',
 			'/import/' . static::$key . '/progress',
 			[
-				'methods'  => 'GET',
-				'callback' => [ static::class, 'rest_import_progress' ],
+				'methods'             => 'GET',
+				'callback'            => [ static::class, 'rest_import_progress' ],
+				'permission_callback' => fn() => current_user_can( 'manage_options' ),
 			]
 		);
 
@@ -216,48 +199,47 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 			'cp-library/v1',
 			'/import/' . static::$key . '/cancel',
 			[
-				'methods'  => 'POST',
-				'callback' => [ static::class, 'rest_import_cancel' ],
+				'methods'             => 'POST',
+				'callback'            => [ static::class, 'rest_import_cancel' ],
+				'permission_callback' => fn() => current_user_can( 'manage_options' ),
 			]
 		);
 	}
 
 	/**
-	 * REST upload endpoint
-	 *
-	 * @param \WP_REST_Request $request Request object.
-	 * @return \WP_REST_Response
+	 * AJAX import file upload endpoint
 	 */
-	public static function rest_import_upload( $request ) {
+	public static function import_upload() {
+		check_ajax_referer( 'cp_ajax_import_file', 'cp_ajax_import_file' );
+
 		if ( ! function_exists( 'wp_handle_upload' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 		}
 
-		$file = $request->get_file_params()['file'] ?? null;
-
+		$file = $_FILES['file'] ?? null;
 		if ( ! $file ) {
-			return new \WP_Error( 'missing_file', __( 'Missing import file. Please provide an import file.', 'church-plugins' ), [ 'status' => 400 ] );
+			wp_send_json_error( [ 'message' => __( 'Missing import file. Please provide an import file.', 'church-plugins' ) ], 400 );
 		}
 
 		if ( empty( $file['type'] ) || ! in_array( $file['type'], self::$accepted_mime_types, true ) ) {
-			return new \WP_Error( 'invalid_file', __( 'The file you uploaded does not appear to be a CSV file.', 'church-plugins' ), [ 'status' => 400 ] );
+			wp_send_json_error( [ 'message' => __( 'The file you uploaded does not appear to be a CSV file.', 'church-plugins' ) ], 400 );
 		}
 
 		if ( ! file_exists( $file['tmp_name'] ) ) {
-			return new \WP_Error( 'file_not_found', __( 'Something went wrong during the upload process, please try again.', 'church-plugins' ), [ 'status' => 400 ] );
+			wp_send_json_error( [ 'message' => __( 'Something went wrong during the upload process, please try again.', 'church-plugins' ) ], 500 );
 		}
 
 		$import_file = wp_handle_upload( $file, array( 'test_form' => false ) );
 
 		if ( ! $import_file || ! empty(  $import_file['error'] ) ) {
-			return new \WP_Error( 'file_upload_error', $import_file['error'], [ 'status' => 400 ] );
+			wp_send_json_error( [ 'message' => $import_file['error'] ], 500 );
 		}
 
-		return rest_ensure_response(
+		wp_send_json_success(
 			[
-				'file_url' => $import_file['url'],
-				'first_row'  => static::get_first_row( $import_file['file'] ),
-				'columns'    => static::get_columns( $import_file['file'] ),
+				'file_url'  => $import_file['url'],
+				'first_row' => static::get_first_row( $import_file['file'] ),
+				'columns'   => static::get_columns( $import_file['file'] ),
 			]
 		);
 	}
@@ -267,8 +249,7 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 	 *
 	 * @since 1.4.10
 	 */
-	public static function rest_import() {
-
+	public static function import() {
 		check_ajax_referer( 'cp_ajax_import', 'cp_ajax_import' );
 
 		if ( empty( $_POST['file_url'] ) ) {

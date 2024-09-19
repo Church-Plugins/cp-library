@@ -161,7 +161,7 @@ class Tools
 					<form
 						id="cp-upload-import-file"
 						class="cp-upload-import-file-form cp-import-export-form"
-						action="/wp-json/cp-library/v1/import/sermons/upload"
+						action="<?php echo admin_url('admin-ajax.php?action=cpl_import_file_sermons'); ?>"
 						method="post"
 						enctype="multipart/form-data">
 						<div class="notice-wrap"></div>
