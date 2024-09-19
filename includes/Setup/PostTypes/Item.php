@@ -71,7 +71,7 @@ class Item extends PostType  {
 		}, 5 );
 
 		if ( empty( $_GET['cpl-recovery'] ) ) {
-			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
+			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override_variation' ], 10, 4 );
 		}
 
 		add_action( 'cmb2_sanitize_file', [ $this, 'sanitize_text_field' ], 10, 5 );
@@ -645,7 +645,7 @@ class Item extends PostType  {
 	 *
 	 * @author Tanner Moushey
 	 */
-	public function meta_get_override( $data, $object_id, $data_args, $field ) {
+	public function meta_get_override_variation( $data, $object_id, $data_args, $field ) {
 
 		// look for a source suffix
 		$source = str_replace( '_cpl_item_variation_', '', $data_args['field_id'] );

@@ -112,7 +112,6 @@ class ImportSermons extends BackgroundProcessImport {
 	protected function import_item( $item, $options ): void {
 		global $wpdb;
 
-		cp_library()->logging->log( 'Processing item: ' . $item['title'] );
 
 		$all_locations     = $this->maybe_get_locations();
 		$default_series    = $this->maybe_get_default_series();
