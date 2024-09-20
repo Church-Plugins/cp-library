@@ -28,10 +28,10 @@ jQuery($ => {
 			this.form.hide()
 
 			// trigger next step via event
-			$( document ).trigger( 'cp-import-step-1', JSON.parse( xhr.responseText ) );
+			$( document ).trigger( 'cp-import-step-1', JSON.parse( xhr.responseText ).data );
 		},
 		error( xhr ) {
-			const data = JSON.parse( xhr.responseText );
+			const { data } = JSON.parse( xhr.responseText );
 			this.form.find( '[type="submit"]' ).attr( 'disabled', false )
 			this.form.find( '[type="submit"]' ).val( 'Import CSV' )
 
