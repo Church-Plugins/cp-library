@@ -114,9 +114,12 @@ class SermonAudio extends Adapter {
 			'broadcasterID'          => $this->get_setting( 'broadcaster_id', '' ),
 			'sortBy'                 => 'oldest',
 			'page'                   => $batch,
-			'preachedAfterTimestamp' => strtotime( $this->get_setting( 'ignore_before', 0 ) ),
-			'cache'                  => true
 		);
+
+		if ( $preached_after = $this->get_setting( 'ignore_before', 0 ) ) {
+			$query['preachedAfterTimestamp'] = strtotime( $preached_after );
+			$query['cache'] = true;
+		}
 
 		$data = $this->get_results( $query );
 

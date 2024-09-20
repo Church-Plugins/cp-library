@@ -575,7 +575,7 @@ abstract class Adapter extends \WP_Background_Process {
 				'name'       => __( 'Start full import', 'cp-library' ),
 				'id'         => 'start_initial_import',
 				'type'       => 'cpl_submit_button',
-				'desc'       => $field_name,
+				'desc'       => __( 'Save any unsaved changes before running.', 'cp-library' ),
 				'query_args' => array(
 					'cp_action' => "cpl_adapter_import_{$this->type}",
 				),

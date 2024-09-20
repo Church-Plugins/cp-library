@@ -28,6 +28,7 @@ npm run build
 * Enhancement: Improvements for Import process
 * Enhancement: Code Cleanup
 * Enhancement: Add initial debug logging
+* Bug Fix: Fix issue with SermonAudio import
 
 #### 1.5.0-beta2
 * Enhancement: Add transcript support to frontend
