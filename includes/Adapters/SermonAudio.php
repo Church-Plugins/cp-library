@@ -34,7 +34,7 @@ class SermonAudio extends Adapter {
 	 * Class constructor
 	 */
 	public function __construct() {
-		$this->base_url = 'https://api.sermonaudio.com/v2/node/sermons';
+		$this->base_url = 'https://api.sermonaudio.com/v2';
 
 		$this->type         = 'sermon_audio';
 		$this->display_name = __( 'Sermon Audio', 'cp-library' );
@@ -97,7 +97,7 @@ class SermonAudio extends Adapter {
 			'cache'                  => true
 		);
 
-		$data = $this->get_results( $query );
+		$data = $this->fetch( '/node/sermons', $query );
 
 		return $data->results ?? [];
 	}
@@ -121,7 +121,7 @@ class SermonAudio extends Adapter {
 			$query['cache'] = true;
 		}
 
-		$data = $this->get_results( $query );
+		$data = $this->fetch( '/node/sermons', $query );
 
 		// if we've reached the end of the results
 		if ( empty( $data->results ) ) {
@@ -132,15 +132,16 @@ class SermonAudio extends Adapter {
 	}
 
 	/**
-	 * Gets results from sermon audio based on a query
+	 * Makes request to Sermon Audio API
 	 *
-	 * @param array $query The url query array.
+	 * @param string $path The path to request.
+	 * @param array  $query Query arguments.
 	 * @return \stdClass The results from Sermon Audio.
 	 * @throws \ChurchPlugins\Exception If there is an error with the request.
-	 * @updated 1.4.1 Sermon Audio API now requires an API key as part of the request.
+	 * @since 1.5.0
 	 */
-	protected function get_results( $query ) {
-		$url = add_query_arg( $query, $this->base_url );
+	protected function fetch( $path, $query = [] ) {
+		$url = add_query_arg( $query, $this->base_url . $path );
 
 		$api_key = $this->get_setting( 'api_key', '' );
 
@@ -177,6 +178,8 @@ class SermonAudio extends Adapter {
 	 * @return array The formatted sermon.
 	 */
 	public function format_item( $item ) {
+		$api_data = $this->fetch( '/node/sermons/' . $item->sermonID );
+
 		$args = array(
 			'external_id'  => $item->sermonID,
 			'post_title'   => $item->displayTitle,
@@ -190,11 +193,11 @@ class SermonAudio extends Adapter {
 		);
 
 		if ( $item->hasAudio ) {
-			$args['meta_input']['audio_url'] = $item->media->audio[0]->downloadURL;
+			$args['meta_input']['audio_url'] = $api_data->media->audio[0]->downloadURL;
 		}
 
 		if ( $item->hasVideo ) {
-			$args['meta_input']['video_url'] = $item->media->video[0]->streamURL;
+			$args['meta_input']['video_url'] = $api_data->media->video[0]->streamURL;
 		}
 
 		if ( $item->bibleText ) {
