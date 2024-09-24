@@ -569,7 +569,6 @@ abstract class Adapter extends \WP_Background_Process {
 		);
 
 		$import_in_progress = get_option( "cpl_{$this->type}_adapter_import_in_progress", false );
-		$field_name         = $import_in_progress ? __( 'Import in progress', 'cp-library' ) : __( 'Start full import', 'cp-library' );
 		$cmb->add_field(
 			array(
 				'name'       => __( 'Start full import', 'cp-library' ),
