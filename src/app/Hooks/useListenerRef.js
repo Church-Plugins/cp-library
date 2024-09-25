@@ -1,33 +1,13 @@
-import { useEffect, useMemo, useRef } from '@wordpress/element';
-
-class Ref {
-	constructor(value, callback) {
-		this._current = value;
-		this._callback = callback;
-	}
-
-	set current( value ) {
-		this._callback(value, this._current);
-		this._current = value;
-	}
-
-	get current() {
-		return this._current;
-	}
-}
+import { useCallback, useRef } from '@wordpress/element';
 
 export default function useListenerRef(initial, callback) {
-	const onChange = (value, oldValue) => {
+	const ref = useRef(initial)
+
+	const setRef = useCallback((value) => {
+		const oldValue = ref.current
+		ref.current = value
 		callback(value, oldValue)
-	}
+	}, [])
 
-	const ref = useMemo(() => {
-		return new Ref(initial, onChange);
-	}, [initial]);
-
-	useEffect(() => {
-		ref._callback = callback;
-	}, [callback])
-
-	return ref
+	return [ref, setRef]
 }

@@ -32,11 +32,7 @@ export default function PersistentPlayer(props) {
 	const [showFSControls, setShowFSControls]   = useState( false );
   // Video or audio
   const [mode, setMode] = useState();
-	const playerInstance = useListenerRef(null, (value) => {
-		if(value) {
-			setLoading(false); // we're done loading once the ref is populated
-		}
-	})
+	const [playerInstance, setPlayerInstance] = useListenerRef(null, (value) => value && setLoading(false));
 
 	const onMouseMove = (e) => {
 		if (showFSControls) return;
@@ -111,6 +107,16 @@ export default function PersistentPlayer(props) {
 		}
   }, [])
 
+	useEffect(() => {
+		if(!loading) {
+			if(typeof playerInstance?.current.getInternalPlayer?.()?.play === 'function') {
+				playerInstance.current.getInternalPlayer().play();
+			} else {
+				setIsPlaying(true);
+			}
+		}
+	}, [loading])
+
   useEffect(() => {
     // Since item and mode are different pieces of state that are set separately, we wait until both
     // are set.
@@ -157,7 +163,7 @@ export default function PersistentPlayer(props) {
 					 	 key={`${mode}-${item.id}`}
 					 	 mode={mode}
 					 	 item={item}
-				     ref={playerInstance}
+				     ref={setPlayerInstance}
 				     className="itemDetail__video"
 				     url={item.video.value}
 				     width="100%"
@@ -356,7 +362,7 @@ export default function PersistentPlayer(props) {
 					   key={`${mode}-${item.id}`}
 					 	 mode={mode}
 					 	 item={item}
-		         ref={playerInstance}
+		         ref={setPlayerInstance}
 		         controls={false}
 		         url={item.audio}
 		         width="0"

@@ -19,11 +19,13 @@ import PlayPause from '../../Elements/Buttons/PlayPause';
 import throttle from 'lodash.throttle';
 import Controls from './Controls';
 import api from '../../api';
+import useListenerRef from '../../Hooks/useListenerRef';
 
 export default function Player({ item }) {
   const { isDesktop } = useBreakpoints();
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasPlayed, setHasPlayed] = useState(false);
+	const [loading, setLoading] = useState(true);
   const [playedSeconds, setPlayedSeconds] = useState(0.0);
   const [duration, setDuration] = useState(0.0);
   const [playbackRate, setPlaybackRate] = useState(1 );
@@ -34,7 +36,7 @@ export default function Player({ item }) {
   // don't trigger re-render.
   const mediaState = useRef({});
   const { isActive: persistentPlayerIsActive } = usePersistentPlayer();
-  const playerInstance = useRef();
+  const [playerInstance, setPlayerInstance] = useListenerRef(null, (value) => value && setLoading(false));
 	const playingClass   = isPlaying ? ' is_playing' : '';
 	const hasVariations = Boolean(item.variations?.length)
 	const [currentItem, setCurrentItem] = useState(hasVariations ? item.variations[0] : item)
@@ -148,6 +150,16 @@ export default function Player({ item }) {
 		setHasPlayed(true);
 	}, [isPlaying])
 
+	useEffect(() => {
+		if(!loading) {
+			if(typeof playerInstance?.current.getInternalPlayer?.()?.play === 'function') {
+				playerInstance.current.getInternalPlayer().play();
+			} else {
+				setIsPlaying(true);
+			}
+		}
+	}, [loading])
+
   // Sync some states to be possibly passed to the persistent player. These states could be gone by
   // the time the clean up function is done during unmounting.
   useEffect(() => {
@@ -232,7 +244,7 @@ export default function Player({ item }) {
 											key={`${mode}-${currentItem.id}`}
 											mode={mode}
 											item={currentItem}
-											ref={playerInstance}
+											ref={setPlayerInstance}
 											className="itemDetail__video"
 											url={currentMedia}
 											width="100%"
