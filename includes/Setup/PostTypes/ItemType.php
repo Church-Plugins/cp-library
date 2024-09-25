@@ -86,7 +86,7 @@ class ItemType extends PostType  {
 			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
 		}
 
-		if ( $this->show_in_menu() && 'item_type' === Settings::get_advanced( 'default_menu_item', 'item_type' ) ) {
+		if ( $this->show_in_menu() && 'item_type' === Settings::get_advanced( 'default_menu_item', 'item' ) ) {
 			$source_type  = Speaker::get_instance()->post_type;
 			$service_type = ServiceType::get_instance()->post_type;
 			$template = Template::get_instance()->post_type;
@@ -324,7 +324,7 @@ class ItemType extends PostType  {
 		$args['supports'][] = 'excerpt';
 
 		// show in Item menu if default item type is item
-		if ( 'item' === Settings::get_advanced( 'default_menu_item', 'item_type' ) ) {
+		if ( 'item' === Settings::get_advanced( 'default_menu_item', 'item' ) ) {
 			$args['show_in_menu']    = 'edit.php?post_type=' . cp_library()->setup->post_types->item->post_type;
 		}
 
