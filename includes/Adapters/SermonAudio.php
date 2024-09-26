@@ -99,6 +99,21 @@ class SermonAudio extends Adapter {
 
 		$data = $this->fetch( '/node/sermons', $query );
 
+		if ( ! $data->results ) {
+			return [];
+		}
+
+		$sermon_ids = wp_list_pluck( $data->results, 'sermonID' );
+
+		$query = array(
+			'pageSize'        => 100,
+			'broadcasterID'   => $this->get_setting( 'broadcaster_id', '' ),
+			'liteBroadcaster' => true,
+			'sermonIDs'       => implode( ',', $sermon_ids ),
+		);
+
+		$data = $this->fetch( '/node/sermons', $query );
+
 		return $data->results ?? [];
 	}
 
@@ -114,21 +129,28 @@ class SermonAudio extends Adapter {
 			'broadcasterID'          => $this->get_setting( 'broadcaster_id', '' ),
 			'sortBy'                 => 'oldest',
 			'page'                   => $batch,
+			'preachedAfterTimestamp' => strtotime( $this->get_setting( 'ignore_before', 0 ) ),
+			'cache'                  => true
 		);
-
-		if ( $preached_after = $this->get_setting( 'ignore_before', 0 ) ) {
-			$query['preachedAfterTimestamp'] = strtotime( $preached_after );
-			$query['cache'] = true;
-		}
 
 		$data = $this->fetch( '/node/sermons', $query );
 
-		// if we've reached the end of the results
 		if ( empty( $data->results ) ) {
 			return false;
 		}
 
-		return $data->results;
+		$sermon_ids = wp_list_pluck( $data->results, 'sermonID' );
+
+		$query = array(
+			'pageSize'        => 100,
+			'broadcasterID'   => $this->get_setting( 'broadcaster_id', '' ),
+			'liteBroadcaster' => true,
+			'sermonIDs'       => implode( ',', $sermon_ids ),
+		);
+
+		$data = $this->fetch( '/node/sermons', $query );
+
+		return $data->results ? $data->results : false;
 	}
 
 	/**
@@ -178,8 +200,6 @@ class SermonAudio extends Adapter {
 	 * @return array The formatted sermon.
 	 */
 	public function format_item( $item ) {
-		$api_data = $this->fetch( '/node/sermons/' . $item->sermonID );
-
 		$args = array(
 			'external_id'  => $item->sermonID,
 			'post_title'   => $item->displayTitle,
@@ -193,11 +213,11 @@ class SermonAudio extends Adapter {
 		);
 
 		if ( $item->hasAudio ) {
-			$args['meta_input']['audio_url'] = $api_data->media->audio[0]->downloadURL;
+			$args['meta_input']['audio_url'] = $item->media->audio[0]->downloadURL;
 		}
 
 		if ( $item->hasVideo ) {
-			$args['meta_input']['video_url'] = $api_data->media->video[0]->streamURL;
+			$args['meta_input']['video_url'] = $item->media->video[0]->streamURL;
 		}
 
 		if ( $item->bibleText ) {

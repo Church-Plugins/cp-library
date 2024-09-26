@@ -10,13 +10,18 @@
 			left: 0;
 			width: 100%;
 			z-index: 450;
-			background: linear-gradient(0deg, black 80%, transparent 100%);
+			background: var(--cp-color-canvas-inverted);
 			color: white;
 			box-sizing: border-box;
-			padding: 3rem 1rem 1rem;
+			padding: 1rem 1rem 1rem;
+			flex-flow: column;
 
 			button {
 				color: white;
+			}
+
+			.itemPlayer__progress, .itemPlayer__controls {
+				width: 100%;
 			}
 
 			.itemPlayer__controls {

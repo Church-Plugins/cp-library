@@ -64,7 +64,7 @@ class CP_Library {
 			isPlaying,
 			playedSeconds,
 		});
-	
+
 		setTimeout(() => {
 			this.triggerEvent('CPL_HANDOVER_TO_PERSISTENT', {
 				item,
@@ -73,9 +73,9 @@ class CP_Library {
 				playedSeconds,
 			});
 		}, 50);
-	
+
 		cplLog( item.id, 'persistent' );
-	
+
 		// also log a play action if we are not currently playing
 		if ( ! (playedSeconds > 0) ) {
 			cplLog( item.id, 'play' );
@@ -115,6 +115,17 @@ class CP_Library {
 		if( ! CP_Library.__domNode ) {
 			return;
 		}
+
+		if(!screenfull.isEnabled) {
+			const node = CP_Library.__domNode.querySelector( '.persistentPlayer__video video' );
+			if ( node.webkitEnterFullscreen ) {
+				node.webkitEnterFullscreen();
+				return;
+			}
+
+			throw new Error("Fullscreen is not supported on this device")
+		}
+
 		screenfull.request( CP_Library.__domNode.querySelector( '.persistentPlayer__video' ) );
 	}
 

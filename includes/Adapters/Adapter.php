@@ -157,7 +157,7 @@ abstract class Adapter extends \WP_Background_Process {
 				wp_send_json_success( array( 'message' => 'Sermons updated' ) );
 			}
 		} catch ( \ChurchPlugins\Exception | \Exception $e ) {
-			error_log( $e->getMessage() . ' ' . $e->getTraceAsString() );
+			cp_library()->logging->log( $e->getMessage() . ' ' . $e->getTraceAsString(), true );
 			if ( $is_json_request ) {
 				wp_send_json_error( array( 'error' => $e->getMessage() ) );
 			}
@@ -203,13 +203,19 @@ abstract class Adapter extends \WP_Background_Process {
 	 * @return bool Whether we can stop fetching batches.
 	 */
 	public function fetch_batch( $done, $batch ) {
-		$batch = $this->get_next_batch( $batch );
 
-		if ( ! $batch ) {
+		try {
+			$batch = $this->get_next_batch( $batch );
+
+			if ( ! $batch ) {
+				return true;
+			}
+
+			$this->format_and_process( $batch );
+		} catch ( \ChurchPlugins\Exception | \Exception $e ) {
+			cp_library()->logging->log( $e->getMessage() . ' ' . $e->getTraceAsString(), true );
 			return true;
 		}
-
-		$this->format_and_process( $batch );
 
 		return $done;
 	}
@@ -569,7 +575,6 @@ abstract class Adapter extends \WP_Background_Process {
 		);
 
 		$import_in_progress = get_option( "cpl_{$this->type}_adapter_import_in_progress", false );
-		$field_name         = $import_in_progress ? __( 'Import in progress', 'cp-library' ) : __( 'Start full import', 'cp-library' );
 		$cmb->add_field(
 			array(
 				'name'       => __( 'Start full import', 'cp-library' ),

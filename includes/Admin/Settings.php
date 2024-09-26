@@ -105,7 +105,7 @@ class Settings {
 
 	public function register_main_options_metabox() {
 
-		$post_type = Settings::get_advanced( 'default_menu_item', 'item_type' ) === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
+		$post_type = Settings::get_advanced( 'default_menu_item', 'item' ) === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
 
 		/**
 		 * Registers main options page menu item and form.

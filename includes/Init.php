@@ -313,6 +313,8 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 
 		$this->modules = Modules\Init::get_instance();
 		$this->logging = new \ChurchPlugins\Logging( $this->get_id(), $this->is_debug_mode() );
+
+		require_once( "migrations.php" );
 	}
 
 	/**
@@ -450,7 +452,7 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 	 * @author Tanner Moushey, 10/21/23
 	 */
 	public function get_admin_menu_slug() {
-		return Settings::get_advanced( 'default_menu_item', 'item_type' ) === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
+		return Settings::get_advanced( 'default_menu_item', 'item' ) === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
 	}
 
 	/**

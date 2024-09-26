@@ -67,7 +67,7 @@ class Tools
 
 	public function tools_menu()
 	{
-		$post_type = Settings::get_advanced('default_menu_item', 'item_type') === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
+		$post_type = Settings::get_advanced('default_menu_item', 'item') === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
 
 		add_submenu_page('edit.php?post_type=' . $post_type, __('CP Sermon Library Tools', 'cp-library'), __('Tools', 'cp-library'), 'manage_options', 'cp-library-tools', [
 			$this,
