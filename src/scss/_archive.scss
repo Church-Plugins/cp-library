@@ -6,9 +6,10 @@
 
 	&--header {
 		display: flex;
-		flex-flow: row wrap;
+		flex-flow: row wrap-reverse;
 		justify-content: space-between;
 		align-items: center;
+		gap: 1rem 2rem;
 	}
 
 	&--item {
@@ -27,7 +28,7 @@
 	.cpl-archive--item-type {
 		.cpl-archive--list {
 			grid-auto-flow: column;
-			grid-auto-columns: minmax(20em, 1fr);
+			grid-auto-columns: minmax(250px, 1fr);
 			overflow-x: scroll;
 		}
 	}
@@ -36,7 +37,7 @@
 		.cpl-archive--list {
 			display: grid;
 			column-gap: var(--cp-gap--md);
-			grid-template-columns: repeat(auto-fill, minmax(20em, 1fr));
+			grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 		}
 	}
 
