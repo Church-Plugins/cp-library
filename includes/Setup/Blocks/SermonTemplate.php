@@ -138,7 +138,7 @@ class SermonTemplate extends Block {
 
 		if ( isset( $block->context['showFilters'] ) && $block->context['showFilters'] ) {
 			ob_start();
-			Templates::get_template_part( 'parts/filter' );
+			cp_library()->templates->get_template_part( 'parts/filter' );
 			$output .= ob_get_clean();
 		}
 

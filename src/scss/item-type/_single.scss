@@ -11,6 +11,7 @@
 		@include media-breakpoint-up(md) {
 			display: flex;
 			flex-direction: row;
+			gap: var(--cp-gap--lg);
 		}
 	}
 
@@ -24,8 +25,8 @@
 	}
 
 	&--content {
-		padding-left: 5%;
 		margin-right: 0;
+		flex: 1 0 50%;
 	}
 
 	&--media {

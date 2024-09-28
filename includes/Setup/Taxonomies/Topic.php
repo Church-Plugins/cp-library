@@ -134,7 +134,7 @@ class Topic extends Taxonomy  {
 	 */
 	public function get_term_data() {
 
-		$topics_file = Templates::get_template_hierarchy( '__data/topics.json' );
+		$topics_file = cp_library()->templates->get_template_hierarchy( '__data/topics.json' );
 
 		if ( ! $topics_file || ! Settings::get_advanced( 'topic_terms_enabled', 1 ) ) {
 			return [];
