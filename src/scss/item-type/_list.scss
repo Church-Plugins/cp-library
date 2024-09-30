@@ -9,6 +9,7 @@
 			width: auto;
 			height: auto;
 			max-width: 100%;
+			display: block;
 		}
 	}
 
@@ -18,7 +19,7 @@
 		background: rgba( 0, 0, 0, .05);
 
 		h3 {
-			font-size: var(--cp-font-size--lg);
+			font-size: var(--cp-font-size--md);
 			margin: auto;
 
 			a {

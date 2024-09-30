@@ -60,6 +60,11 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 	public $logging;
 
 	/**
+	 * @var Templates
+	 */
+	public $templates;
+
+	/**
 	 * Only make one instance of Init
 	 *
 	 * @return Init
@@ -132,7 +137,7 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 		$this->adapters = Adapters\Init::get_instance();
 
 		Download::get_instance();
-		Templates::init();
+		$this->templates = Templates::get_instance();
 
 		include_once( CP_LIBRARY_INCLUDES . '/CLI/CP_Migrate.php' );
 	}

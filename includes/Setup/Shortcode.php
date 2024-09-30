@@ -162,9 +162,9 @@ class Shortcode
 		ob_start();
 
 		if ( 'alt' == $atts['template'] ) {
-			Templates::get_template_part( 'widgets/item-single--alt', $atts );
+			cp_library()->templates->get_template_part( 'widgets/item-single--alt', $atts );
 		} else {
-			Templates::get_template_part( 'widgets/item-single', $atts );
+			cp_library()->templates->get_template_part( 'widgets/item-single', $atts );
 		}
 
 		return ob_get_clean();
@@ -258,7 +258,7 @@ class Shortcode
 
 		ob_start();
 
-		Templates::get_template_part( 'archive' );
+		cp_library()->templates->get_template_part( 'archive' );
 
 		$content = ob_get_clean();
 		wp_reset_query();

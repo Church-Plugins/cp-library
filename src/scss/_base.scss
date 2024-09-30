@@ -1,7 +1,6 @@
 .cpl-pg-template {
-	max-width: 100%;
+	max-width: 90vw;
 	width: var( --cp-content-width );
-	padding: var(--cp-content-padding);
 	color: var(--cpl--text-color);
 	margin: var(--cp-gap--md) auto;
 
@@ -11,7 +10,7 @@
 		padding-right: 0;
 		margin-top: 0;
 	}
-	
+
 	.cpl-pagination {
 		ul {
 			display: flex;

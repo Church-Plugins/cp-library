@@ -24,6 +24,10 @@ npm run build
 
 ### Change Log
 
+#### 1.5.0-beta4
+* Enhancement: Add initial support for block themes
+* Enhancement: Style updates
+
 #### 1.5.0-beta3
 * Enhancement: Improvements for Import process
 * Enhancement: Code Cleanup

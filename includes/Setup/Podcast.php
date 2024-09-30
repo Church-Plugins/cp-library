@@ -124,7 +124,7 @@ class Podcast
 	 */
 	public function output_feed() {
 		header( 'Content-Type: application/rss+xml; charset=' . get_option( 'blog_charset' ), true );
-		Templates::get_template_part( 'podcast' );
+		cp_library()->templates->get_template_part( 'podcast' );
 	}
 
 	/**
