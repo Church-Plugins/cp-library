@@ -579,7 +579,6 @@ class Item extends PostType  {
 			'context'      => 'normal',
 			'priority'     => 'low',
 			'show_names'   => false,
-			'show_in_rest' => \WP_REST_Server::READABLE
 		] );
 
 		$cmb->add_field( [

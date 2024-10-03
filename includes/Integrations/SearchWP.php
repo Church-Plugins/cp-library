@@ -7,8 +7,6 @@
 
 namespace CP_Library\Integrations;
 
-use CP_Library\Setup\PostTypes\Item;
-
 /**
  * SearchWP integration.
  *

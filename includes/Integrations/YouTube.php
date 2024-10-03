@@ -47,7 +47,29 @@ class YouTube {
 		add_action( 'cmb2_render_cpl_import_transcript_button', [ $this, 'display_import_transcript_button' ], 10, 5 );
 		add_filter( 'bulk_actions-edit-cpl_item', [ $this, 'add_bulk_actions' ] );
 		add_filter( 'handle_bulk_actions-edit-cpl_item', [ $this, 'handle_bulk_actions' ], 10, 3 );
+		add_action( 'init', [ $this, 'register_meta' ] );
 	}
+
+	/**
+	 * Register meta fields.
+	 */
+	public function register_meta() {
+		// register post meta
+		register_meta( 'post', 'transcript', [
+			'object_subtype' => cp_library()->setup->post_types->item->post_type,
+			'type'           => 'string',
+			'single'         => true,
+			'show_in_rest'   => true,
+			'auth_callback'  => '__return_true',
+		] );
+		register_meta( 'post', 'transcript_char_groups', [
+			'object_subtype' => cp_library()->setup->post_types->item->post_type,
+			'type'           => 'string',
+			'single'         => true,
+			'show_in_rest'   => true,
+			'auth_callback'  => '__return_true',
+		] );
+	}	
 
 	/**
 	 * Handle transcript import request
@@ -118,14 +140,32 @@ class YouTube {
 			return $transcript;
 		}
 
+		/**
+		 * Transcript data
+		 *
+		 * @var array  $transcript Transcript data.
+		 * @var int    $post_id    Post ID.
+		 * @var string $video_url Video URL.
+		 * @return array|\WP_Error
+		 */
+		$transcript = apply_filters( 'cpl_fetch_transcript', $transcript, $post_id, $video_url );
+
 		// update post meta
-		$raw_text = implode( ' ', array_map( function( $item ) {
-			return $item['text'];
+		$raw_text = implode( ' ', array_map( function( $item ) use ( $video_url ) {
+			$url_with_timestamp = add_query_arg( 't', floor( $item['offset'] ) . 's', $video_url );
+			return '(t:' . floor( $item['offset'] ) . ') ' . $item['text'];
 		}, $transcript ) );
 
-		$raw_text = html_entity_decode( $raw_text );
+		// create a string of timestamp & character count groups
+		$char_groups = '';
+		foreach ( $transcript as $item ) {
+			$char_groups .= floor( $item['offset'] ) . 's' . strlen( $item['text'] ) . 'c';
+		}
+
+		// $raw_text = html_entity_decode( $raw_text );
 
 		update_post_meta( $post_id, 'transcript', $raw_text );
+		update_post_meta( $post_id, 'transcript_char_groups', $char_groups );
 
 		return true;
 	}
@@ -223,20 +263,19 @@ class YouTube {
 	 * @param CMB2_Field $field
 	 * @param mixed $escaped_value
 	 * @param int $object_id
-	 * @param string $object_type
-	 * @param CMB2_Types $field_type_object
-	 * @since 1.3.0
+	 * @since 1.5.0
 	 * @return void
 	 */
-	public function display_import_transcript_button( $field, $escaped_value, $object_id, $object_type, $field_type_object ) {
-		$button_text = $field->args( 'button_text' ) ? $field->args( 'button_text' ) : __( 'Import Transcript', 'cp-library' );
-		$button_args = $field->args( 'query_args' );
+	public function display_import_transcript_button( $field, $escaped_value, $object_id ) {
+		// check if post has youtube video
+		$video_url = get_post_meta( $object_id, 'video_url', true );
+		if ( ! $video_url || strpos( $video_url, 'youtube.com' ) === false ) {
+			return;
+		}
 
+		$button_args = $field->args( 'query_args' );
 		$button_args['cp_action'] = 'cpl_import_transcript';
 		$button_args['post_id']   = $object_id;
-
-		$button_url = add_query_arg( $button_args, admin_url( 'admin-post.php' ) );
-
 		?>
 		<script defer>
 			jQuery($ => {

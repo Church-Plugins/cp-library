@@ -1,4 +1,6 @@
 import jQuery from "jquery";
+import apiFetch from '@wordpress/api-fetch';
+import { debounce } from "@wordpress/compose";
 
 jQuery( function( $ ){
 
@@ -472,27 +474,38 @@ jQuery($ => {
  * View transcript button
  */
 jQuery($ => {
+	// get search param from URL
+	const searchParams = new URLSearchParams(window.location.search)
+	const searchTerm = searchParams.get('s') || ''
+
 	const modalWrapper = $(`
 		<div class="cpl-modal-wrapper">
 			<div class="cpl-modal" style="margin-left: auto; margin-right: auto;">
 				<div class="cpl-modal-close">
 					<span class="material-icons-outlined">close</span>
 				</div>
+				<div class="cpl-modal-header">
+					<div class="cpl-search">
+						<input type="text" placeholder="Search transcript" value="${searchTerm}" />
+						<span class="cpl-search-matches"></span>
+					</div>
+				</div>
 				<div class="cpl-modal-content"></div>
 			</div>
 		</div>
 	`)
 
+	const modal    = modalWrapper.find('.cpl-modal')
+	const closeBtn = modal.find('.cpl-modal-close')
+	const content  = modal.find('.cpl-modal-content')
+	const search   = modal.find('.cpl-search input')
+	
 	const decodeHTMLEntities = (text) => {
 		const textArea = document.createElement('textarea')
 		textArea.innerHTML = text
 		return textArea.value
 	}
-
-	const modal    = modalWrapper.find('.cpl-modal')
-	const closeBtn = modal.find('.cpl-modal-close')
-	const content  = modal.find('.cpl-modal-content')
-
+	
 	const closeModal = () => {
 		modalWrapper.removeClass('open')
 		setTimeout(() => {
@@ -500,11 +513,54 @@ jQuery($ => {
 		}, 300)
 	}
 
+	const highlight = (text, keyword) => {
+		// get rid of any existing highlights
+		text = text.replace(/<span class="highlight">(.*?)<\/span>/g, '$1')
+
+		if(!keyword) {
+			return {
+				matches: 0,
+				html: text
+			}
+		}
+
+		const regex = new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+		
+		let matches = 0
+		text = text.replace(regex, match => {
+			matches++
+			return `<span class="highlight">${match}</span>`
+		})
+		return {
+			matches,
+			html: text
+		}
+	}
+
+	const runHighlight = (text, keyword) => {	
+		const highlightData = highlight(text, keyword)
+
+		content.html(highlightData.html)
+		search.parent().find('.cpl-search-matches').text(
+			keyword ? `${highlightData.matches} matches` : ''
+		)
+
+		// scroll to first highlighted element
+		const highlighted = content.find('.highlight').first()
+		if(highlighted.length) {
+			highlighted[0].scrollIntoView({ block: 'center' })
+		}
+	}
+
+	const debouncedHighlight = debounce(runHighlight, 300)
+
 	modal.on('click', (e) => e.stopPropagation())
 
 	modalWrapper.on('click', () => closeModal())
 
 	closeBtn.on('click', () => closeModal())
+
+	search.on('input', (e) => debouncedHighlight(content.html(), e.target.value))
 
 	$(document).on('click', '.cpl-transcript-btn', function(e) {
 		e.preventDefault()
@@ -517,11 +573,10 @@ jQuery($ => {
 		modalWrapper.attr('style', 'display: block;')
 		modalWrapper.addClass('open')
 
-		wp.apiFetch({
-			path: `/wp/v2/${cplAdmin.postTypes.cpl_item.postType}/${postId}?_fields=cmb2`,
+		apiFetch({
+			path: `/wp/v2/${cplAdmin.postTypes.cpl_item.postType}/${postId}?_fields=meta.transcript`,
 		}).then(data => {
-			const text = data.cmb2.item_transcript.transcript
-			content.html(decodeHTMLEntities(text))
+			runHighlight(decodeHTMLEntities(data.meta.transcript), searchTerm)
 		}).catch(err => {
 			content.html('<div class="error">' + err.message + '</div>')
 		})
@@ -536,7 +591,7 @@ jQuery($ => {
  * Import transcript buttons
  */
 jQuery($ => {
-	$('.cpl-import-transcript-btn').on('click', function(e) {
+	$('td.column-transcript .cpl-import-transcript-btn').on('click', function(e) {
 		const url    = $(this).data('url')
 		const postId = url.split('post_id=')[1]
 
