@@ -151,8 +151,7 @@ class YouTube {
 		$transcript = apply_filters( 'cpl_fetch_transcript', $transcript, $post_id, $video_url );
 
 		// update post meta
-		$raw_text = implode( ' ', array_map( function( $item ) use ( $video_url ) {
-			$url_with_timestamp = add_query_arg( 't', floor( $item['offset'] ) . 's', $video_url );
+		$raw_text = implode( ' ', array_map( function( $item ) {
 			return '(t:' . floor( $item['offset'] ) . ') ' . $item['text'];
 		}, $transcript ) );
 
@@ -162,10 +161,17 @@ class YouTube {
 			$char_groups .= floor( $item['offset'] ) . 's' . strlen( $item['text'] ) . 'c';
 		}
 
-		// $raw_text = html_entity_decode( $raw_text );
-
 		update_post_meta( $post_id, 'transcript', $raw_text );
 		update_post_meta( $post_id, 'transcript_char_groups', $char_groups );
+
+		/**
+		 * Fires after a transcript has been imported
+		 *
+		 * @param string $raw_text Raw text of the transcript.
+		 * @param int    $post_id  Post ID.
+		 * @return void
+		 */
+		do_action( 'cpl_imported_transcript', $raw_text, $post_id );
 
 		return true;
 	}
@@ -253,6 +259,15 @@ class YouTube {
 				'offset'   => $results[1][$i],
 			];
 		}
+
+		/**
+		 * Array of YouTube transcript data
+		 *
+		 * @var array  $output   Array of YouTube transcript data.
+		 * @var string $video_id YouTube video ID.
+		 * @return array
+		 */
+		$output = apply_filters( 'cpl_fetch_youtube_transcript', $output, $video_id );
 
 		return $output;
 	}
