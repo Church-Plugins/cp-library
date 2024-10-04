@@ -478,6 +478,9 @@ jQuery($ => {
 	const searchParams = new URLSearchParams(window.location.search)
 	const searchTerm = searchParams.get('s') || ''
 
+	// cache fetched transcripts
+	const transcriptCache = new Map()
+
 	const modalWrapper = $(`
 		<div class="cpl-modal-wrapper">
 			<div class="cpl-modal cpl-transcript-modal" style="margin-left: auto; margin-right: auto;">
@@ -591,17 +594,23 @@ jQuery($ => {
 		modalWrapper.attr('style', 'display: block;')
 		modalWrapper.addClass('open')
 
-		apiFetch({
-			path: `/wp/v2/${cplAdmin.postTypes.cpl_item.postType}/${postId}?_fields=meta.transcript,cmb2.item_meta.video_url`,
-		}).then(data => {
-			// decode HTML entities
-			let transcript = decodeHTMLEntities(data.meta.transcript)
-			transcript = addTimestampLinks(data.cmb2.item_meta.video_url, 't', transcript)
-
-			runHighlight(transcript, searchTerm)
-		}).catch(err => {
-			content.html('<div class="error">' + err.message + '</div>')
-		})
+		if (transcriptCache.has(postId)) {
+			runHighlight(transcriptCache.get(postId), searchTerm) // use cached transcript
+			return
+		} else {
+			apiFetch({
+				path: `/wp/v2/${cplAdmin.postTypes.cpl_item.postType}/${postId}?_fields=meta.transcript,cmb2.item_meta.video_url`,
+			}).then(data => {
+				// decode HTML entities
+				let transcript = decodeHTMLEntities(data.meta.transcript)
+				transcript = addTimestampLinks(data.cmb2.item_meta.video_url, 't', transcript)
+				transcriptCache.set(postId, transcript) // save to cache
+	
+				runHighlight(transcript, searchTerm)
+			}).catch(err => {
+				content.html('<div class="error">' + err.message + '</div>')
+			})
+		}		
 	})
 
 	modalWrapper.attr('style', 'display: none;')

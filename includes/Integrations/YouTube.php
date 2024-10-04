@@ -62,13 +62,6 @@ class YouTube {
 			'show_in_rest'   => true,
 			'auth_callback'  => '__return_true',
 		] );
-		register_meta( 'post', 'transcript_char_groups', [
-			'object_subtype' => cp_library()->setup->post_types->item->post_type,
-			'type'           => 'string',
-			'single'         => true,
-			'show_in_rest'   => true,
-			'auth_callback'  => '__return_true',
-		] );
 	}	
 
 	/**
@@ -162,7 +155,6 @@ class YouTube {
 		}
 
 		update_post_meta( $post_id, 'transcript', $raw_text );
-		update_post_meta( $post_id, 'transcript_char_groups', $char_groups );
 
 		/**
 		 * Fires after a transcript has been imported
