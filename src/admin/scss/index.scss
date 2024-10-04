@@ -396,6 +396,30 @@
 }
 
 /* Highlighted text in transcript modal */
+.cpl-transcript-modal .cpl-modal-content {
+	line-height: 1.5;
+}
+
+.cpl-search input {
+	padding: 4px 12px;
+	border-radius: 4px;
+	border: 1px solid #ccc;
+	width: 100%;
+	max-width: 300px;
+}
+
+.cpl-transcript-modal .cpl-modal-header {
+	padding-bottom: 8px;
+}
+
 .cpl-modal-content .highlight {
 	background-color: #ff0;
+}
+
+.cpl-timestamp-tag {
+	padding: 2px 5px;
+	border-radius: 4px;
+	background-color: #f0f0f0;
+	color: #777;
+	text-decoration: none;
 }

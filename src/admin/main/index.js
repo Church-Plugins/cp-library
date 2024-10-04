@@ -480,7 +480,7 @@ jQuery($ => {
 
 	const modalWrapper = $(`
 		<div class="cpl-modal-wrapper">
-			<div class="cpl-modal" style="margin-left: auto; margin-right: auto;">
+			<div class="cpl-modal cpl-transcript-modal" style="margin-left: auto; margin-right: auto;">
 				<div class="cpl-modal-close">
 					<span class="material-icons-outlined">close</span>
 				</div>
@@ -511,6 +511,24 @@ jQuery($ => {
 		setTimeout(() => {
 			modalWrapper.attr('style', 'display: none;')
 		}, 300)
+	}
+
+	const formatTimestamp = (seconds) => {
+		const hours = Math.floor(seconds / 3600)
+		const minutes = Math.floor(seconds / 60) % 60
+		const secs = seconds % 60
+		let str = hours ? `${hours}:` : ''
+		str += `${minutes.toString().padStart(hours ? 2 : 1, '0')}:`
+		str += `${secs.toString().padStart(2, '0')}`
+		return str
+	}
+
+	const addTimestampLinks = (videoUrl, queryVar, transcript) => {
+		const url = new URL(videoUrl)
+		return transcript.replace(/\(t:(\d+)\)/g, (match, timestamp) => {
+			url.searchParams.set(queryVar, timestamp)
+			return `<a class="cpl-timestamp-tag" href="${url.toString()}" target="_blank" rel="noopener noreferrer">${formatTimestamp(timestamp)}</a>`
+		})
 	}
 
 	const highlight = (text, keyword) => {
@@ -574,9 +592,13 @@ jQuery($ => {
 		modalWrapper.addClass('open')
 
 		apiFetch({
-			path: `/wp/v2/${cplAdmin.postTypes.cpl_item.postType}/${postId}?_fields=meta.transcript`,
+			path: `/wp/v2/${cplAdmin.postTypes.cpl_item.postType}/${postId}?_fields=meta.transcript,cmb2.item_meta.video_url`,
 		}).then(data => {
-			runHighlight(decodeHTMLEntities(data.meta.transcript), searchTerm)
+			// decode HTML entities
+			let transcript = decodeHTMLEntities(data.meta.transcript)
+			transcript = addTimestampLinks(data.cmb2.item_meta.video_url, 't', transcript)
+
+			runHighlight(transcript, searchTerm)
 		}).catch(err => {
 			content.html('<div class="error">' + err.message + '</div>')
 		})
