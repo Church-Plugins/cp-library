@@ -1,6 +1,7 @@
 <?php
 namespace CP_Library;
 
+use CP_Connect\Integrations\Integration;
 use CP_Library\Admin\Settings;
 
 require_once __DIR__ . '/../includes/ChurchPlugins/Setup/Plugin.php';
@@ -63,6 +64,11 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 	 * @var Templates
 	 */
 	public $templates;
+
+	/**
+	 * @var Util\ActionQueue
+	 */
+	public $action_queue;
 
 	/**
 	 * Only make one instance of Init
@@ -315,9 +321,11 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 		}
 
 		Integrations\YouTube::get_instance();
+		Integrations\OpenAI::get_instance();
 
 		$this->modules = Modules\Init::get_instance();
 		$this->logging = new \ChurchPlugins\Logging( $this->get_id(), $this->is_debug_mode() );
+		$this->action_queue = new Util\ActionQueue();
 
 		require_once( "migrations.php" );
 	}

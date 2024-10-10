@@ -526,12 +526,31 @@ jQuery($ => {
 		return str
 	}
 
-	const addTimestampLinks = (videoUrl, queryVar, transcript) => {
-		const url = new URL(videoUrl)
-		return transcript.replace(/\(t:(\d+)\)/g, (match, timestamp) => {
-			url.searchParams.set(queryVar, timestamp)
-			return `<a class="cpl-timestamp-tag" href="${url.toString()}" target="_blank" rel="noopener noreferrer">${formatTimestamp(timestamp)}</a>`
-		})
+	const parseTranscript = (videoURL, queryVar, transcript) => {
+		const url = new URL(videoURL)
+
+		const lines = transcript.split('\n')
+
+		if(lines.length === 1) {
+			// if we don't have paragraphs, display timestamps inline
+			return transcript.replace(/\(t:(\d+)\)/g, (match, timestamp) => {
+				// subtract 1 second from timestamp just for some padding
+				url.searchParams.set(queryVar, Math.max(Number(timestamp) - 1, 0))
+				return `<a class="cpl-timestamp-tag" href="${url.toString()}" target="_blank" rel="noopener noreferrer">${formatTimestamp(timestamp)}</a>`
+			}	)
+		} else {
+			// display as paragraphs with timestamps at the beginning of each
+			return transcript.split('\n').map((line, i) => {
+				const timestamp = line.match(/\(t:(\d+)\)/) // gets the first timestamp in the line
+				const content = line.replace(/\(t:\d+\)/g, '')
+				if(timestamp) {
+					// subtract 1 second from timestamp just to make sure we begin at the start of the paragraph
+					url.searchParams.set(queryVar, Math.max(Number(timestamp[1]) - 1, 0))
+					return `<p><a class="cpl-timestamp-tag" href="${url.toString()}" target="_blank" rel="noopener noreferrer">${formatTimestamp(timestamp[1])}</a>${content}</p>`
+				}
+				return `<p>${content}</p>`
+			}).join('')
+		}		
 	}
 
 	const highlight = (text, keyword) => {
@@ -603,7 +622,7 @@ jQuery($ => {
 			}).then(data => {
 				// decode HTML entities
 				let transcript = decodeHTMLEntities(data.meta.transcript)
-				transcript = addTimestampLinks(data.cmb2.item_meta.video_url, 't', transcript)
+				transcript = parseTranscript(data.cmb2.item_meta.video_url, 't', transcript)
 				transcriptCache.set(postId, transcript) // save to cache
 	
 				runHighlight(transcript, searchTerm)
