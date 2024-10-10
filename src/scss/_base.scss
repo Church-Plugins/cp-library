@@ -1,0 +1,29 @@
+.cpl-pg-template {
+	max-width: 90vw;
+	width: var( --cp-content-width );
+	color: var(--cpl--text-color);
+	margin: var(--cp-gap--md) auto;
+
+	&.has-vertical-layout {
+		padding-top: 0;
+		padding-left: 0;
+		padding-right: 0;
+		margin-top: 0;
+	}
+
+	.cpl-pagination {
+		ul {
+			display: flex;
+			justify-content: center;
+
+			li > div:hover {
+				background: transparent;
+			}
+		}
+
+		button, div {
+			color: var(--cpl--text-color);
+		}
+
+	}
+}

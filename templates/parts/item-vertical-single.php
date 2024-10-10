@@ -44,6 +44,8 @@ try {
 			<?php the_content(); ?>
 		</div>
 
+		<?php \CP_Library\Templates::get_template_part( 'parts/item-single/transcript' ); ?>
+
 		<hr />
 
 		<a

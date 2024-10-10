@@ -35,6 +35,10 @@ class Item extends Controller{
 		return $this->filter( get_permalink( $this->post->ID ), __FUNCTION__ );
 	}
 
+	public function get_transcript() {
+		return $this->filter( get_post_meta( get_the_ID(), 'transcript', true ), __FUNCTION__ );
+	}
+
 	public function get_locations() {
 		if ( ! function_exists( 'cp_locations' ) ) {
 			return $this->filter( [], __FUNCTION__ );
@@ -855,6 +859,7 @@ class Item extends Controller{
 				'thumb'         => $this->get_thumbnail(),
 				'title'         => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
 				'desc'          => $this->get_content(),
+				'transcript'    => $this->get_transcript(),
 				'date'          => [
 					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
 					'timestamp' => $this->get_publish_date()

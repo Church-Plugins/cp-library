@@ -63,8 +63,8 @@ abstract class Block {
     }
 
     $this->block_name = $this->_namespace . $this->name;
-    $this->block_dir = CP_LIBRARY_PLUGIN_DIR . 'dist/blocks/' . $this->name;
-    $this->block_url = CP_LIBRARY_PLUGIN_URL . 'dist/blocks/' . $this->name;
+    $this->block_dir = CP_LIBRARY_PLUGIN_DIR . 'build/blocks/' . $this->name;
+    $this->block_url = CP_LIBRARY_DIST . 'blocks/' . $this->name;
 
     if( ! file_exists( $this->block_dir ) ) {
       throw new Exception( "Invalid block configuration. No build directory found for " . $this->block_name );

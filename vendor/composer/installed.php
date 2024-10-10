@@ -1,51 +1,41 @@
-<?php return array (
-  'root' => 
-  array (
-    'pretty_version' => 'dev-master',
-    'version' => 'dev-master',
-    'aliases' => 
-    array (
+<?php return array(
+    'root' => array(
+        'name' => 'churchplugins/cp-library',
+        'pretty_version' => 'dev-master',
+        'version' => 'dev-master',
+        'reference' => 'ee312b91bd862d8f262b503fe5fb210579f4e30e',
+        'type' => 'wordpress-plugin',
+        'install_path' => __DIR__ . '/../../',
+        'aliases' => array(),
+        'dev' => true,
     ),
-    'reference' => 'f6a7c42662b89364436e98820656d9e57640c009',
-    'name' => 'churchplugins/cp-library',
-  ),
-  'versions' => 
-  array (
-    'churchplugins/cp-library' => 
-    array (
-      'pretty_version' => 'dev-master',
-      'version' => 'dev-master',
-      'aliases' => 
-      array (
-      ),
-      'reference' => 'f6a7c42662b89364436e98820656d9e57640c009',
+    'versions' => array(
+        'churchplugins/cp-library' => array(
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
+            'reference' => 'ee312b91bd862d8f262b503fe5fb210579f4e30e',
+            'type' => 'wordpress-plugin',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'composer/installers' => array(
+            'pretty_version' => 'v2.3.0',
+            'version' => '2.3.0.0',
+            'reference' => '12fb2dfe5e16183de69e784a7b84046c43d97e8e',
+            'type' => 'composer-plugin',
+            'install_path' => __DIR__ . '/./installers',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'deliciousbrains/wp-background-processing' => array(
+            'pretty_version' => '1.3.1',
+            'version' => '1.3.1.0',
+            'reference' => '6d1e48165e461260075b9f161b3861c7278f71e7',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../deliciousbrains/wp-background-processing',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
     ),
-    'composer/installers' => 
-    array (
-      'pretty_version' => 'v2.2.0',
-      'version' => '2.2.0.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => 'c29dc4b93137acb82734f672c37e029dfbd95b35',
-    ),
-    'deliciousbrains/wp-background-processing' => 
-    array (
-      'pretty_version' => '1.1.1',
-      'version' => '1.1.1.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => 'ebbed762c42e70e76573ffbd36e591378ba5f2ee',
-    ),
-    'wpackio/enqueue' => 
-    array (
-      'pretty_version' => '3.5.0',
-      'version' => '3.5.0.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '944dd17df10e2e534e62ca3f5f20e550c2058a63',
-    ),
-  ),
 );

@@ -132,7 +132,7 @@ class Season extends Taxonomy  {
 	 * @author Tanner Moushey
 	 */
 	public function get_term_data() {
-		$file = Templates::get_template_hierarchy( '__data/seasons.json' );
+		$file = cp_library()->templates->get_template_hierarchy( '__data/seasons.json' );
 
 		if ( ! $file || ! Settings::get_advanced( 'season_terms_enabled', 1 ) ) {
 			return [];

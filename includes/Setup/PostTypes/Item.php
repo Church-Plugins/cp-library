@@ -71,7 +71,7 @@ class Item extends PostType  {
 		}, 5 );
 
 		if ( empty( $_GET['cpl-recovery'] ) ) {
-			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
+			add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override_variation' ], 10, 4 );
 		}
 
 		add_action( 'cmb2_sanitize_file', [ $this, 'sanitize_text_field' ], 10, 5 );
@@ -252,8 +252,10 @@ class Item extends PostType  {
 		$new_columns = [];
 		foreach( $columns as $key => $column ) {
 			if ( 'date' === $key ) {
-				$new_columns['item_data'] = $this->single_label . ' ' . __( 'Data', 'cp-library' );
+				$new_columns['item_data']  = $this->single_label . ' ' . __( 'Data', 'cp-library' );
+				$new_columns['transcript'] = __( 'Transcript', 'cp-library' );
 			}
+
 
 			$new_columns[ $key ] = $column;
 		}
@@ -261,6 +263,7 @@ class Item extends PostType  {
 		// in case date isn't set
 		if ( ! isset( $columns['date'] ) ) {
 			$new_columns['item_data'] = $this->single_label . ' ' . __( 'Data', 'cp-library' );
+			$new_columns['transcript'] = __( 'Transcript', 'cp-library' );
 		}
 
 		return $new_columns;
@@ -278,15 +281,41 @@ class Item extends PostType  {
 	 * @author Tanner Moushey
 	 */
 	public function item_data_column_cb( $column, $post_id ) {
+		try {
+			$item = new ItemController( $post_id );
+		} catch( Exception $e ) {
+			error_log( $e );
+			return;
+		}
+
 		switch( $column ) {
 			case 'item_data' :
-				try {
-					$item = new ItemController( $post_id );
+				printf( 'Video: %s <br />Audio: %s', ( $item->get_video()['value'] ) ? 'Yes' : 'No', ( $item->get_audio() ) ? 'Yes' : 'No' );
+				break;
+			case 'transcript':
+				$video_url  = $item->model->get_meta_value( 'video_url' );
+				$transcript = get_post_meta( $post_id, 'transcript', true );
 
-					printf( 'Video: %s <br />Audio: %s', ( $item->get_video()['value'] ) ? 'Yes' : 'No', ( $item->get_audio() ) ? 'Yes' : 'No' );
-				} catch ( Exception $e ) {
-					error_log( $e );
+				if ( ! empty( $transcript ) ) {
+					$output = '<button type="button" class="button cpl-transcript-btn" data-post-id="' . $post_id .  '">View</button>';
+				} else if ( $video_url && ( strpos( $video_url, 'youtube.com' ) !== false || strpos( $video_url, 'youtu.be' ) !== false ) ) {
+					$output = sprintf(
+						'<button type="button" class="button cpl-import-transcript-btn" data-url="%s">%s</button>',
+						add_query_arg(
+							[
+								'cp_action' => 'cpl_import_transcript',
+								'post_id'   => $post_id,
+							],
+							admin_url( 'admin-post.php' )
+						),
+						\ChurchPlugins\Helpers::get_icon( 'youtube' ) . esc_html__( 'Import', 'cp-library' )
+					);
+				} else {
+					$output = __( 'No', 'cp-library' );
 				}
+
+				echo $output;
+
 				break;
 		}
 	}
@@ -325,6 +354,7 @@ class Item extends PostType  {
 
 	public function register_metaboxes() {
 		$this->analytics();
+		$this->transcript();
 		$this->meta_details();
 	}
 
@@ -541,6 +571,32 @@ class Item extends PostType  {
 		] );
 	}
 
+	protected function transcript() {
+		$cmb = new_cmb2_box( [
+			'id'           => 'item_transcript',
+			'title'        => __( 'Transcript', 'cp-library' ),
+			'object_types' => [ $this->post_type ],
+			'context'      => 'normal',
+			'priority'     => 'low',
+			'show_names'   => false,
+		] );
+
+		$cmb->add_field( [
+			'name' => __( 'Transcript', 'cp-library' ),
+			'id'   => 'transcript',
+			'type' => 'wysiwyg',
+		] );
+
+		// This is a custom cmb2 field, it is managed in includes/Integrations/YouTube.php
+		$cmb->add_field( [
+			'name'         => __( 'Import from YouTube', 'cp-library' ),
+			'desc'         => __( 'Import transcript', 'cp-library' ),
+			'id'           => 'transcript_import',
+			'type'         => 'cpl_import_transcript_button',
+			'show_in_rest' => false
+		] );
+	}
+
 	public function analytics_cb( $field, $escaped_value, $object_id ) {
 		if ( ! $object_id || 'auto-draft' == get_post_status( $object_id ) ) {
 			return;
@@ -588,7 +644,7 @@ class Item extends PostType  {
 	 *
 	 * @author Tanner Moushey
 	 */
-	public function meta_get_override( $data, $object_id, $data_args, $field ) {
+	public function meta_get_override_variation( $data, $object_id, $data_args, $field ) {
 
 		// look for a source suffix
 		$source = str_replace( '_cpl_item_variation_', '', $data_args['field_id'] );

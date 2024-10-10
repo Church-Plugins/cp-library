@@ -59,7 +59,6 @@ class Shortcode
 
 		// An array of mappings from `shortcode` => `handler method`
 		$codes = [
-			'cpl_root'         => 'render_root',
 			'cpl_item_list'    => 'render_item_list',
 			'cpl_item'         => 'render_item',
 			'cp-sermon'        => 'render_item',
@@ -68,7 +67,7 @@ class Shortcode
 			'cpl_source_list'  => 'render_source_list',
 			'cpl_source'       => 'render_source',
 			'cpl_player'       => 'render_player',
-			'cp-sermons' => 'render_sermons_archive',
+			'cp-sermons'       => 'render_sermons_archive',
 		];
 
 		foreach( $codes as $shortcode => $handler ) {
@@ -99,26 +98,6 @@ class Shortcode
 		$output .= '
 		</script>
 		';
-
-		return $output;
-	}
-
-	/**
-	 * Renderer for the `cpl_root` shortcode - a top-level view
-	 *
-	 * @param Array $args
-	 * @return String
-	 * @author costmo
-	 */
-	public function render_root( $args ) {
-		$item_id = 0;
-		$path = get_query_var( 'item' );
-		if ( $path && $item = get_page_by_path( $path, OBJECT, 'cpl_item' ) ) {
-			$item_id = $item->ID;
-		}
-
-		$output  = self::staticScript( $args );
-		$output .= '<div id="' . CP_LIBRARY_UPREFIX . '_root" data-item-id="' . $item_id . '"></div>';
 
 		return $output;
 	}
@@ -183,9 +162,9 @@ class Shortcode
 		ob_start();
 
 		if ( 'alt' == $atts['template'] ) {
-			Templates::get_template_part( 'widgets/item-single--alt', $atts );
+			cp_library()->templates->get_template_part( 'widgets/item-single--alt', $atts );
 		} else {
-			Templates::get_template_part( 'widgets/item-single', $atts );
+			cp_library()->templates->get_template_part( 'widgets/item-single', $atts );
 		}
 
 		return ob_get_clean();
@@ -279,7 +258,7 @@ class Shortcode
 
 		ob_start();
 
-		Templates::get_template_part( 'archive' );
+		cp_library()->templates->get_template_part( 'archive' );
 
 		$content = ob_get_clean();
 		wp_reset_query();

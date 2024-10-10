@@ -10,3 +10,4 @@ yarn.lock
 .vscode
 app/templates/*.rt.js
 /package/
+cp-library.zip
