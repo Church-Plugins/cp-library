@@ -8,6 +8,7 @@
 namespace CP_Library\Adapters;
 
 // phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+use CP_Library\Controllers\Item;
 
 /**
  * SermonAudio adapter subclass
@@ -40,6 +41,68 @@ class SermonAudio extends Adapter {
 		$this->display_name = __( 'Sermon Audio', 'cp-library' );
 
 		parent::__construct();
+
+		add_filter( 'cpl_item_get_video', [ $this, 'video_redirect' ], 10, 2 );
+	}
+
+	/**
+	 * Check if SermonAudio url needs redirect
+	 *
+	 * @param $value
+	 * @param $item Item
+	 *
+	 * @return mixed
+	 * @since  1.5.0
+	 *
+	 * @author Tanner Moushey, 10/15/24
+	 */
+	public function video_redirect( $value, $item ) {
+
+		if ( empty( $value ) || empty( $value['value'] ) ) {
+			return $value;
+		}
+
+		if ( ! str_contains( $value['value'], 'sermonaudio.com' ) ) {
+			return $value;
+		}
+
+		$redirect  = get_post_meta( $item->post->ID, '_video_url_redirect', true );
+		$timestamp = get_post_meta( $item->post->ID, '_video_url_redirect_time', true );
+
+		if ( $redirect === 'found' ) {
+			return $value;
+		}
+
+		if ( $redirect && $timestamp && $timestamp + DAY_IN_SECONDS > time() ) {
+			$value['value'] = $redirect;
+			return $value;
+		}
+
+		// Perform a head request to get only headers
+		$response = wp_remote_head( $value['value'], [ 'redirection' => 0 ] ); // No redirection follow
+
+		// Check for WP error
+		if ( is_wp_error( $response ) ) {
+			return $value;
+		}
+
+		// Get the response code
+		$response_code = wp_remote_retrieve_response_code($response);
+
+		// Check if it's a redirect (3xx response code)
+		if ($response_code >= 300 && $response_code < 400) {
+			// Get the 'Location' header
+			$new_url = wp_remote_retrieve_header($response, 'location');
+
+			update_post_meta( $item->post->ID, '_video_url_redirect', $new_url );
+			update_post_meta( $item->post->ID, '_video_url_redirect_time', time() );
+
+			$value['value'] = $new_url;
+		} else {
+			update_post_meta( $item->post->ID, '_video_url_redirect', 'found' );
+		}
+
+		return $value;
 	}
 
 	/**
