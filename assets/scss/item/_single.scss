@@ -198,3 +198,46 @@
 		text-align: left;
 	}
 }
+
+.cpl-transcript {
+	margin: var(--cp-gap--md) auto;
+	padding-top: var(--cp-gap--md);
+	max-width: 60em;
+	border-top: 1px solid rgba( 0, 0, 0, .25 );
+
+	&--heading {
+		text-align: center;
+	}
+
+	&--toggle {
+		display: none;
+		margin: var(--cp-gap--sm) auto 0;
+	}
+
+	&--content {
+		position: relative;
+		padding: 0 var(--cp-gap--sm);
+	}
+
+	&.cpl-transcript--collapsed {
+		.cpl-transcript--content {
+			max-height: 9em;
+			overflow: hidden;
+
+			&:after {
+				content: '';
+				position: absolute;
+				bottom: -2px;
+				height: 10rem;
+				width: 100%;
+				left: 0;
+				backdrop-filter: blur(5px);
+				mask-image: linear-gradient(to top, rgba(0, 0, 0, 1), rgba(0, 0, 0, 0));
+			}
+		}
+
+		.cpl-transcript--toggle {
+			display: block;
+		}
+	}
+}

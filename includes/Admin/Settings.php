@@ -360,6 +360,16 @@ class Settings {
 //			'classes' => 'cp-radio-image',
 //		] );
 
+		$options->add_field( array(
+			'name' => __( 'Transcript', 'cp-library' ),
+			'id' => 'show_transcript',
+			'type'    => 'radio_inline',
+			'default' => 0,
+			'options' => [
+				1 => __( 'Show', 'cp-library' ),
+				0 => __( 'Hide', 'cp-library' ),
+			]
+		) );
 
 		$variation_sources = cp_library()->setup->variations->get_sources();
 		$desc              = __( 'Use this section to control the sermon variation functionality. Variations allows you to create multiple versions of a sermon with different speakers, media, etc. This is ideal for churches that deliver the same message from multiple locations each Sunday.', 'cp-library' );
@@ -916,6 +926,11 @@ class Settings {
 	 */
 	public function custom_button_form_field( $field, $escaped_value, $object_id, $object_type, $field_type_object ) {
 		$url = add_query_arg( isset( $field->args['query_args'] ) ? $field->args['query_args'] : array(), admin_url( 'admin-post.php' ) );
+
+		if ( ! empty( $field->args['name'] ) ) {
+			echo sprintf( '<h5 class="cmb2-metabox-title">%s</h5>', $field->args['name'] );
+		}
+
 		echo sprintf( '<button type="button" class="button cpl_admin_submit_button" data-url="%s">%s</button>', esc_url( $url ), $field->args['desc'] );
 	}
 }
