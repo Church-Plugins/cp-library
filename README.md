@@ -24,24 +24,19 @@ npm run build
 
 ### Change Log
 
-#### 1.5.0-beta4
+#### 1.5.0
 * Enhancement: Add initial support for block themes
 * Enhancement: Style updates
-
-#### 1.5.0-beta3
 * Enhancement: Improvements for Import process
 * Enhancement: Code Cleanup
 * Enhancement: Add initial debug logging
-* Bug Fix: Fix issue with SermonAudio import
-
-#### 1.5.0-beta2
 * Enhancement: Add transcript support to frontend
-
-#### 1.5.0-beta1
 * Enhancement: Add transcript support for Sermons
 * Enhancement: Add automatic transcript import from YouTube
 * Enhancement: Add support for SearchWP search engine in Sermon admin area
+* Enhancement: Follow SermonAudio redirects when needed
 * Bug Fix: Show correct thumbnail on single Sermon template
+* Bug Fix: Fix issue with SermonAudio import
 
 #### 1.4.10
 * Enhancement: Add support for image in Podcast feed <item>
