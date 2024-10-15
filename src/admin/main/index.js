@@ -621,7 +621,7 @@ jQuery($ => {
 				path: `/wp/v2/${cplAdmin.postTypes.cpl_item.postType}/${postId}?_fields=meta.transcript,cmb2.item_meta.video_url`,
 			}).then(data => {
 				// decode HTML entities
-				let transcript = decodeHTMLEntities(data.meta.transcript)
+				let transcript = decodeHTMLEntities(data?.meta?.transcript || '')
 				transcript = parseTranscript(data.cmb2.item_meta.video_url, 't', transcript)
 				transcriptCache.set(postId, transcript) // save to cache
 	
