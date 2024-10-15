@@ -8,6 +8,7 @@
 namespace CP_Library\Adapters;
 
 // phpcs:disable WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+use CP_Library\Controllers\Item;
 
 /**
  * SermonAudio adapter subclass
@@ -34,46 +35,88 @@ class SermonAudio extends Adapter {
 	 * Class constructor
 	 */
 	public function __construct() {
-		$this->base_url = 'https://api.sermonaudio.com/v2/node/sermons';
+		$this->base_url = 'https://api.sermonaudio.com/v2';
 
 		$this->type         = 'sermon_audio';
 		$this->display_name = __( 'Sermon Audio', 'cp-library' );
 
 		parent::__construct();
+
+		add_filter( 'cpl_item_get_video', [ $this, 'video_redirect' ], 10, 2 );
 	}
 
 	/**
-	 * Performs a hard pull
+	 * Check if SermonAudio url needs redirect
 	 *
-	 * @return void
+	 * @param $value
+	 * @param $item Item
+	 *
+	 * @return mixed
+	 * @since  1.5.0
+	 *
+	 * @author Tanner Moushey, 10/15/24
 	 */
-	public function hard_pull() {
-		if ( empty( $this->get_setting( 'broadcaster_id', false ) ) ) {
-			wp_send_json_error( array( 'error' => __( 'Invalid broadcaster ID', 'cp-library' ) ) );
+	public function video_redirect( $value, $item ) {
+
+		if ( empty( $value ) || empty( $value['value'] ) ) {
+			return $value;
 		}
 
-		try {
-			$sermons = $this->fetch_all_since_date();
-		} catch ( \ChurchPlugins\Exception $e ) {
-			wp_send_json_error( array( 'error' => $e->getMessage() ) );
+		if ( ! str_contains( $value['value'], 'sermonaudio.com' ) ) {
+			return $value;
 		}
 
-		$this->format_and_process( $sermons, true );
+		$redirect  = get_post_meta( $item->post->ID, '_video_url_redirect', true );
+		$timestamp = get_post_meta( $item->post->ID, '_video_url_redirect_time', true );
+
+		if ( $redirect === 'found' ) {
+			return $value;
+		}
+
+		if ( $redirect && $timestamp && $timestamp + DAY_IN_SECONDS > time() ) {
+			$value['value'] = $redirect;
+			return $value;
+		}
+
+		// Perform a head request to get only headers
+		$response = wp_remote_head( $value['value'], [ 'redirection' => 0 ] ); // No redirection follow
+
+		// Check for WP error
+		if ( is_wp_error( $response ) ) {
+			return $value;
+		}
+
+		// Get the response code
+		$response_code = wp_remote_retrieve_response_code($response);
+
+		// Check if it's a redirect (3xx response code)
+		if ($response_code >= 300 && $response_code < 400) {
+			// Get the 'Location' header
+			$new_url = wp_remote_retrieve_header($response, 'location');
+
+			update_post_meta( $item->post->ID, '_video_url_redirect', $new_url );
+			update_post_meta( $item->post->ID, '_video_url_redirect_time', time() );
+
+			$value['value'] = $new_url;
+		} else {
+			update_post_meta( $item->post->ID, '_video_url_redirect', 'found' );
+		}
+
+		return $value;
 	}
 
 	/**
 	 * Formats and enqueues items to be processed
 	 *
-	 * @param \stdClass[] $sermons The sermons to format and enqueue.
-	 * @param bool        $hard_pull Whether or not this is a hard pull.
+	 * @param \stdClass[] $items The items to format and enqueue.
 	 * @return void
 	 */
-	public function format_and_process( $sermons, $hard_pull = false ) {
-		$items      = array();
+	public function format_and_process( $items ) {
+		$sermons    = array();
 		$speakers   = array();
 		$item_types = array();
 
-		foreach ( $sermons as $sermon ) {
+		foreach ( $items as $sermon ) {
 			$item = $this->format_item( $sermon );
 
 			$item['attachments'] = array();
@@ -90,52 +133,100 @@ class SermonAudio extends Adapter {
 				$item['attachments']['cpl_item_type'] = [ $sermon->series->seriesID ];
 			}
 
-			$items[ $sermon->sermonID ] = $item;
+			$sermons[ $sermon->sermonID ] = $item;
 		}
 
 		// enqueues items to be processed
-		$this->enqueue( $items );
+		$this->enqueue( $sermons );
 
 		// enqueues attachments to be processed with the items
 		$this->add_attachments( $speakers, 'cpl_speaker' );
 		$this->add_attachments( $item_types, 'cpl_item_type' );
-		$this->process( $hard_pull );
+		$this->process_batch();
 	}
 
 	/**
-	 * Implements the pulling functionality used by the parent
+	 * Fetch most recently updated items from API
 	 *
-	 * @param int $amount The amount of items to pull.
-	 * @param int $page The page to pull from.
-	 * @return bool Whether or not there are more pages.
+	 * @param int $amount The amount of items to fetch.
+	 * @return array The most recent items.
 	 */
-	public function pull( int $amount, int $page ) {
+	public function get_recent_items( $amount ) {
 		$query = array(
-			'pageSize'      => $amount,
-			'page'          => $page,
-			'sortBy'        => 'updated',
-			'broadcasterID' => $this->get_setting( 'broadcaster_id', '' ),
+			'pageSize'               => $amount,
+			'broadcasterID'          => $this->get_setting( 'broadcaster_id', '' ),
+			'sortBy'                 => 'newest',
+			'preachedAfterTimestamp' => strtotime( $this->get_setting( 'ignore_before', 0 ) ),
+			'cache'                  => true
 		);
 
-		$data    = $this->get_results( $query );
-		$results = array_filter( $data->results, [ $this, 'is_valid_result' ] );
+		$data = $this->fetch( '/node/sermons', $query );
 
-		$this->format_and_process( $results, false );
+		if ( ! $data->results ) {
+			return [];
+		}
 
-		// whether or not there are more pages
-		return (bool) $data->next;
+		$sermon_ids = wp_list_pluck( $data->results, 'sermonID' );
+
+		$query = array(
+			'pageSize'        => 100,
+			'broadcasterID'   => $this->get_setting( 'broadcaster_id', '' ),
+			'liteBroadcaster' => true,
+			'sermonIDs'       => implode( ',', $sermon_ids ),
+		);
+
+		$data = $this->fetch( '/node/sermons', $query );
+
+		return $data->results ?? [];
 	}
 
 	/**
-	 * Gets results from sermon audio based on a query
+	 * Pull a batch of items from the source
 	 *
-	 * @param array $query The url query array.
+	 * @param int $batch The current batch number.
+	 * @return array|false The next batch of items to process, or false if there are no more items to process.
+	 */
+	public function get_next_batch( $batch ) {
+		$query = array(
+			'pageSize'               => 100,
+			'broadcasterID'          => $this->get_setting( 'broadcaster_id', '' ),
+			'sortBy'                 => 'oldest',
+			'page'                   => $batch,
+			'preachedAfterTimestamp' => strtotime( $this->get_setting( 'ignore_before', 0 ) ),
+			'cache'                  => true
+		);
+
+		$data = $this->fetch( '/node/sermons', $query );
+
+		if ( empty( $data->results ) ) {
+			return false;
+		}
+
+		$sermon_ids = wp_list_pluck( $data->results, 'sermonID' );
+
+		$query = array(
+			'pageSize'        => 100,
+			'broadcasterID'   => $this->get_setting( 'broadcaster_id', '' ),
+			'liteBroadcaster' => true,
+			'sermonIDs'       => implode( ',', $sermon_ids ),
+		);
+
+		$data = $this->fetch( '/node/sermons', $query );
+
+		return $data->results ? $data->results : false;
+	}
+
+	/**
+	 * Makes request to Sermon Audio API
+	 *
+	 * @param string $path The path to request.
+	 * @param array  $query Query arguments.
 	 * @return \stdClass The results from Sermon Audio.
 	 * @throws \ChurchPlugins\Exception If there is an error with the request.
-	 * @updated 1.4.1 Sermon Audio API now requires an API key as part of the request.
+	 * @since 1.5.0
 	 */
-	protected function get_results( $query ) {
-		$url = add_query_arg( $query, $this->base_url );
+	protected function fetch( $path, $query = [] ) {
+		$url = add_query_arg( $query, $this->base_url . $path );
 
 		$api_key = $this->get_setting( 'api_key', '' );
 
@@ -163,68 +254,6 @@ class SermonAudio extends Adapter {
 		}
 
 		return $data;
-	}
-
-	/**
-	 * Loads all results from sermon audio, looping through pages and accumulating data
-	 *
-	 * @param array $query The url query array
-	 * @return \stdClass[] The results from Sermon Audio
-	 */
-	protected function load_results( $query ) {
-		unset( $query['page'] );
-
-		$results = [];
-		$page = 1;
-
-		// loop through all pages
-		do {
-			$query['page'] = $page;
-			$data          = $this->get_results( $query );
-			$results       = array_merge( $results, $data->results );
-			$page++;
-		} while ( $data->next );
-
-		return $results;
-	}
-
-	/**
-	 * Loads all sermons since the user specified date. Sermon audio doesn't provide a simple way to do this, so some custom logic is required
-	 */
-	protected function fetch_all_since_date() {
-		$sermons = [];
-
-		$date = new \DateTime( $this->get_setting( 'ignore_before', '@0' ) );
-
-		$current_year = (int) gmdate( 'Y' );
-		$min_year     = (int) $date->format( 'Y' );
-
-		// loop through years up to the current date
-		for ( $year = $min_year; $year <= $current_year; $year++ ) {
-			$query = array(
-				'pageSize'      => 100,
-				'broadcasterID' => $this->get_setting( 'broadcaster_id', '' ),
-				'year'          => $year,
-			);
-
-			$results = $this->load_results( $query );
-			$results = array_filter( $results, [ $this, 'is_valid_result' ] );
-			$sermons = array_merge( $sermons, $results );
-		}
-
-		return $sermons;
-	}
-
-	/**
-	 * Checks if a sermon is valid, meaning it is after the specified cutoff date
-	 *
-	 * @param \stdClass $sermon The sermon to check
-	 * @return bool Whether or not the sermon is valid
-	 */
-	protected function is_valid_result( $sermon ) {
-		$min_date    = strtotime( $this->get_setting( 'ignore_before', '0' ) );
-		$sermon_date = strtotime( $sermon->preachDate );
-		return $sermon_date >= $min_date;
 	}
 
 	/**

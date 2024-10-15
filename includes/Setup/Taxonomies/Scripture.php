@@ -310,7 +310,7 @@ class Scripture extends Taxonomy  {
 	 * @author Tanner Moushey
 	 */
 	public function get_term_data() {
-		$file = Templates::get_template_hierarchy( '__data/scripture_detailed_20230427_124224.json' );
+		$file = cp_library()->templates->get_template_hierarchy( '__data/scripture_detailed_20230427_124224.json' );
 
 		if ( ! $file ) {
 			return [];

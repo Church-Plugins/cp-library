@@ -4,13 +4,9 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit75064bafaafea345fee1d28e3455e12d
+class ComposerStaticInit46bdfd12887e280afce0bd6fc1a32169
 {
     public static $prefixLengthsPsr4 = array (
-        'W' => 
-        array (
-            'WPackio\\' => 8,
-        ),
         'C' => 
         array (
             'Composer\\Installers\\' => 20,
@@ -19,10 +15,6 @@ class ComposerStaticInit75064bafaafea345fee1d28e3455e12d
     );
 
     public static $prefixDirsPsr4 = array (
-        'WPackio\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/wpackio/enqueue/inc',
-        ),
         'Composer\\Installers\\' => 
         array (
             0 => __DIR__ . '/..' . '/composer/installers/src/Composer/Installers',
@@ -42,9 +34,9 @@ class ComposerStaticInit75064bafaafea345fee1d28e3455e12d
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit75064bafaafea345fee1d28e3455e12d::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit75064bafaafea345fee1d28e3455e12d::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit75064bafaafea345fee1d28e3455e12d::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit46bdfd12887e280afce0bd6fc1a32169::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit46bdfd12887e280afce0bd6fc1a32169::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit46bdfd12887e280afce0bd6fc1a32169::$classMap;
 
         }, null, ClassLoader::class);
     }

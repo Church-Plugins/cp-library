@@ -288,10 +288,10 @@ class Convenience
 
 	/**
 	 * Returns the post type that is used as the main menu item
-	 * 
+	 *
 	 * @return string
 	 */
 	public static function get_primary_post_type() {
-		return \CP_Library\Admin\Settings::get_advanced( 'default_menu_item', 'item_type' ) === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
+		return \CP_Library\Admin\Settings::get_advanced( 'default_menu_item', 'item' ) === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
 	}
 }

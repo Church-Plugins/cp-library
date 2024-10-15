@@ -27,7 +27,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import DimensionControls from './dimension-controls';
 import Overlay from './overlay';
 import { getAllowedBlocks } from '../utils/allowed-blocks';
-import { PlayOverlayWrapper } from '../../app/src/Templates/PlayOverlay';
+import { PlayOverlayWrapper } from '../../src/app/Templates/PlayOverlay';
 
 export default function ItemGraphicEdit( {
 	clientId,

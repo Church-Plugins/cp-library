@@ -12,6 +12,8 @@ class Init {
 	 */
 	protected static $_instance;
 
+	public $sermon_import;
+
 	/**
 	 * Only make one instance of Init
 	 *
@@ -44,6 +46,7 @@ class Init {
 		Tools::get_instance();
 		Analytics\Init::get_instance();
 		Migrate\Init::get_instance();
+
 	}
 
 	/**
@@ -52,13 +55,15 @@ class Init {
 	 * @return void
 	 */
 	protected function actions() {
+		$this->sermon_import = new Import\ImportSermons();
+		$this->sermon_import::setup();
 	}
 
 	/** Actions ***************************************************/
 
 	/** Helpers ***************************************************/
 	public function get_admin_base_url() {
-		$post_type = Settings::get_advanced( 'default_menu_item', 'item_type' ) === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
+		$post_type = Settings::get_advanced( 'default_menu_item', 'item' ) === 'item_type' ? cp_library()->setup->post_types->item_type->post_type : cp_library()->setup->post_types->item->post_type;
 
 		// Default args
 		$args = array(
