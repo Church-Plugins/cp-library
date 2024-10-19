@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.5.1
+* Bug Fix: Better handling for icons
+
 #### 1.5.0
 * Enhancement: Add initial support for block themes
 * Enhancement: Style updates
