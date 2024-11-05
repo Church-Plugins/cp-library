@@ -47,22 +47,7 @@ class YouTube {
 		add_action( 'cmb2_render_cpl_import_transcript_button', [ $this, 'display_import_transcript_button' ], 10, 5 );
 		add_filter( 'bulk_actions-edit-cpl_item', [ $this, 'add_bulk_actions' ] );
 		add_filter( 'handle_bulk_actions-edit-cpl_item', [ $this, 'handle_bulk_actions' ], 10, 3 );
-		add_action( 'init', [ $this, 'register_meta' ] );
 	}
-
-	/**
-	 * Register meta fields.
-	 */
-	public function register_meta() {
-		// register post meta
-		register_meta( 'post', 'transcript', [
-			'object_subtype' => cp_library()->setup->post_types->item->post_type,
-			'type'           => 'string',
-			'single'         => true,
-			'show_in_rest'   => true,
-			'auth_callback'  => '__return_true',
-		] );
-	}	
 
 	/**
 	 * Handle transcript import request
