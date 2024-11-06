@@ -21,6 +21,13 @@ class OpenAI {
 	protected static $_instance;
 
 	/**
+	 * Whether the shutdown function has been registered
+	 *
+	 * @var bool
+	 */
+	protected $shutdown_registered = false;
+
+	/**
 	 * Get the singleton instance
 	 *
 	 * @return OpenAI
@@ -65,6 +72,7 @@ class OpenAI {
 
 		if ( ! empty( $api_key ) ) {
 			cp_library()->action_queue->add( 'ai_transcript', [ 'post_id' => $post_id ] );
+			cp_library()->logging->log( 'Enqueued transcript fetcher for post #' . $post_id );
 		}
 
 		return $transcript;
@@ -99,6 +107,11 @@ class OpenAI {
 		// the request will likely exceed the server timeout, so remove the time limit
 		set_time_limit( 0 );
 		ignore_user_abort( 1 );
+
+		if ( ! $this->shutdown_registered ) {
+			$this->shutdown_registered = true;
+			register_shutdown_function( [ $this, 'shutdown' ] );
+		}
 
 		// get the post's transcript from the database
 		$transcript = get_post_meta( $post_id, 'transcript', true );
@@ -163,5 +176,14 @@ class OpenAI {
 		$transcript = apply_filters( 'cpl_openai_fetched_transcript', $response['choices'][0]['message']['content'], $post_id );
 
 		update_post_meta( $post_id, 'transcript', $transcript );
+	}
+
+	/**
+	 * On some servers, calling set_time_limit(0) may not work
+	 * we can detect that here and log the error
+	 */
+	public function shutdown() {
+		$error = error_get_last();
+		cp_library()->logging->log( 'Script shutdown occurred: ' . $error['message'] );
 	}
 }
