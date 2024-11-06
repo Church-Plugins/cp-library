@@ -105,8 +105,7 @@ class OpenAI {
 		$model         = 'gpt-4o-mini';
 
 		// the request will likely exceed the server timeout, so remove the time limit
-		set_time_limit( 0 );
-		ignore_user_abort( 1 );
+		set_time_limit(0);
 
 		if ( ! $this->shutdown_registered ) {
 			$this->shutdown_registered = true;
@@ -144,28 +143,38 @@ class OpenAI {
 		 */
 		$args = apply_filters( 'cpl_openai_fetch_transcript_args', $args, $post_id );
 
-		$ch = curl_init( $endpoint );
-		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-		curl_setopt( $ch, CURLOPT_POST, true );
-		curl_setopt( $ch, CURLOPT_POSTFIELDS, json_encode( $args ) );
-		curl_setopt( $ch, CURLOPT_HTTPHEADER, [
-			'Content-Type: application/json',
-			'Authorization: Bearer ' . $api_key,
-		] );
-		curl_setopt( $ch, CURLOPT_TIMEOUT, 600 );		
-		$response = curl_exec( $ch );
 
-		if ( false === $response || curl_getinfo( $ch, CURLINFO_HTTP_CODE ) !== 200 ) {
- 			if ( false === $response ) {
-				cp_library()->logging->log( 'Failed to fetch transcript for post #' . $post_id . '. Curl error: ' . curl_error( $ch ) );
-			} else {
-				cp_library()->logging->log( 'Failed to fetch transcript for post #' . $post_id . '. HTTP code: ' . curl_getinfo( $ch, CURLINFO_HTTP_CODE ) . '.' );
+		try {
+			cp_library()->logging->log( 'Fetching transcript for post #' . $post_id . ' from OpenAI.' );
+
+			$ch = curl_init( $endpoint );
+			curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+			curl_setopt( $ch, CURLOPT_POST, true );
+			curl_setopt( $ch, CURLOPT_POSTFIELDS, json_encode( $args ) );
+			curl_setopt( $ch, CURLOPT_HTTPHEADER, [
+				'Content-Type: application/json',
+				'Authorization: Bearer ' . $api_key,
+			] );
+			curl_setopt( $ch, CURLOPT_TIMEOUT, 600 );		
+			$response = curl_exec( $ch );
+
+			cp_library()->logging->log( 'Transcript fetched for post #' . $post_id . ' from OpenAI.' );
+	
+			if ( false === $response || curl_getinfo( $ch, CURLINFO_HTTP_CODE ) !== 200 ) {
+				 if ( false === $response ) {
+					cp_library()->logging->log( 'Failed to fetch transcript for post #' . $post_id . '. Curl error: ' . curl_error( $ch ) );
+				} else {
+					cp_library()->logging->log( 'Failed to fetch transcript for post #' . $post_id . '. HTTP code: ' . curl_getinfo( $ch, CURLINFO_HTTP_CODE ) . '.' );
+				}
+				return;
 			}
+	
+			$response = json_decode( $response, true );
+		} catch ( \Exception $e ) {
+			cp_library()->logging->log( 'Failed to fetch transcript for post #' . $post_id . '. Exception: ' . $e->getMessage() );
 			return;
 		}
-
-		$response = json_decode( $response, true );
-
+		
 		/**
 		 * Filter the transcript fetched from OpenAI
 		 *
@@ -184,6 +193,9 @@ class OpenAI {
 	 */
 	public function shutdown() {
 		$error = error_get_last();
-		cp_library()->logging->log( 'Script shutdown occurred: ' . $error['message'] );
+
+		if ( $error ) {
+			cp_library()->logging->log( 'Script shutdown occurred: ' . $error['message'] );
+		}
 	}
 }
