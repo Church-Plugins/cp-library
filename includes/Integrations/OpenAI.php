@@ -59,7 +59,7 @@ class OpenAI {
 	 * Register actions
 	 */
 	protected function actions() {
-		add_filter( 'cpl_fetch_transcript', [ $this, 'enqueue_transcript_fetcher' ], 10, 2 );
+		add_action( 'cpl_imported_transcript', [ $this, 'enqueue_transcript_fetcher' ], 10, 2 );
 		$this->action_queue->on( 'process', [ $this, 'fetch_ai_transcript' ] );
 	}
 
@@ -83,8 +83,6 @@ class OpenAI {
 			$this->action_queue->save()->dispatch();
 			cp_library()->logging->log( 'Enqueued transcript fetcher for post #' . $post_id );
 		}
-
-		return $transcript;
 	}
 
 	/**
@@ -93,8 +91,6 @@ class OpenAI {
 	 * @param array $data
 	 */
 	public function fetch_ai_transcript( $data ) {
-		cp_library()->logging->log( 'Fetching transcript from OpenAI.' );
-
 		$post_id = $data['post_id'] ?? 0;
 		
 		if ( ! $post_id ) {
