@@ -28,6 +28,13 @@ class OpenAI {
 	protected $shutdown_registered = false;
 
 	/**
+	 * Action queue
+	 *
+	 * @var \CP_Library\Util\ActionQueue
+	 */
+	protected $action_queue;
+
+	/**
 	 * Get the singleton instance
 	 *
 	 * @return OpenAI
@@ -44,6 +51,7 @@ class OpenAI {
 	 * Class constructor
 	 */
 	public function __construct() {
+		$this->action_queue = new \CP_Library\Util\ActionQueue( 'fetch_ai_transcript' );
 		$this->actions();
 	}
 
@@ -52,7 +60,7 @@ class OpenAI {
 	 */
 	protected function actions() {
 		add_filter( 'cpl_fetch_transcript', [ $this, 'enqueue_transcript_fetcher' ], 10, 2 );
-		add_action( 'cpl_action_queue_process_ai_transcript', [ $this, 'fetch_ai_transcript' ] );
+		$this->action_queue->on( 'process', [ $this, 'fetch_ai_transcript' ] );
 	}
 
 	/**
@@ -71,7 +79,8 @@ class OpenAI {
 		$api_key = apply_filters( 'cpl_openai_api_key', '' );
 
 		if ( ! empty( $api_key ) ) {
-			cp_library()->action_queue->add( 'ai_transcript', [ 'post_id' => $post_id ] );
+			$this->action_queue->push_to_queue( [ 'post_id' => $post_id ] );
+			$this->action_queue->save()->dispatch();
 			cp_library()->logging->log( 'Enqueued transcript fetcher for post #' . $post_id );
 		}
 
@@ -84,6 +93,8 @@ class OpenAI {
 	 * @param array $data
 	 */
 	public function fetch_ai_transcript( $data ) {
+		cp_library()->logging->log( 'Fetching transcript from OpenAI.' );
+
 		$post_id = $data['post_id'] ?? 0;
 		
 		if ( ! $post_id ) {
