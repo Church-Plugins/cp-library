@@ -21,6 +21,20 @@ class OpenAI {
 	protected static $_instance;
 
 	/**
+	 * Whether the shutdown function has been registered
+	 *
+	 * @var bool
+	 */
+	protected $shutdown_registered = false;
+
+	/**
+	 * Action queue
+	 *
+	 * @var \CP_Library\Util\ActionQueue
+	 */
+	protected $action_queue;
+
+	/**
 	 * Get the singleton instance
 	 *
 	 * @return OpenAI
@@ -37,6 +51,7 @@ class OpenAI {
 	 * Class constructor
 	 */
 	public function __construct() {
+		$this->action_queue = new \CP_Library\Util\ActionQueue( 'fetch_ai_transcript' );
 		$this->actions();
 	}
 
@@ -44,8 +59,8 @@ class OpenAI {
 	 * Register actions
 	 */
 	protected function actions() {
-		add_filter( 'cpl_fetch_transcript', [ $this, 'enqueue_transcript_fetcher' ], 10, 2 );
-		add_action( 'cpl_action_queue_process_ai_transcript', [ $this, 'fetch_ai_transcript' ] );
+		add_action( 'cpl_imported_transcript', [ $this, 'enqueue_transcript_fetcher' ], 10, 2 );
+		$this->action_queue->on( 'process', [ $this, 'fetch_ai_transcript' ] );
 	}
 
 	/**
@@ -64,10 +79,10 @@ class OpenAI {
 		$api_key = apply_filters( 'cpl_openai_api_key', '' );
 
 		if ( ! empty( $api_key ) ) {
-			cp_library()->action_queue->add( 'ai_transcript', [ 'post_id' => $post_id ] );
+			$this->action_queue->push_to_queue( [ 'post_id' => $post_id ] );
+			$this->action_queue->save()->dispatch();
+			cp_library()->logging->log( 'Enqueued transcript fetcher for post #' . $post_id );
 		}
-
-		return $transcript;
 	}
 
 	/**
@@ -97,8 +112,12 @@ class OpenAI {
 		$model         = 'gpt-4o-mini';
 
 		// the request will likely exceed the server timeout, so remove the time limit
-		set_time_limit( 0 );
-		ignore_user_abort( 1 );
+		set_time_limit(0);
+
+		if ( ! $this->shutdown_registered ) {
+			$this->shutdown_registered = true;
+			register_shutdown_function( [ $this, 'shutdown' ] );
+		}
 
 		// get the post's transcript from the database
 		$transcript = get_post_meta( $post_id, 'transcript', true );
@@ -131,28 +150,38 @@ class OpenAI {
 		 */
 		$args = apply_filters( 'cpl_openai_fetch_transcript_args', $args, $post_id );
 
-		$ch = curl_init( $endpoint );
-		curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
-		curl_setopt( $ch, CURLOPT_POST, true );
-		curl_setopt( $ch, CURLOPT_POSTFIELDS, json_encode( $args ) );
-		curl_setopt( $ch, CURLOPT_HTTPHEADER, [
-			'Content-Type: application/json',
-			'Authorization: Bearer ' . $api_key,
-		] );
-		curl_setopt( $ch, CURLOPT_TIMEOUT, 600 );		
-		$response = curl_exec( $ch );
 
-		if ( false === $response || curl_getinfo( $ch, CURLINFO_HTTP_CODE ) !== 200 ) {
- 			if ( false === $response ) {
-				cp_library()->logging->log( 'Failed to fetch transcript for post #' . $post_id . '. Curl error: ' . curl_error( $ch ) );
-			} else {
-				cp_library()->logging->log( 'Failed to fetch transcript for post #' . $post_id . '. HTTP code: ' . curl_getinfo( $ch, CURLINFO_HTTP_CODE ) . '.' );
+		try {
+			cp_library()->logging->log( 'Fetching transcript for post #' . $post_id . ' from OpenAI.' );
+
+			$ch = curl_init( $endpoint );
+			curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
+			curl_setopt( $ch, CURLOPT_POST, true );
+			curl_setopt( $ch, CURLOPT_POSTFIELDS, json_encode( $args ) );
+			curl_setopt( $ch, CURLOPT_HTTPHEADER, [
+				'Content-Type: application/json',
+				'Authorization: Bearer ' . $api_key,
+			] );
+			curl_setopt( $ch, CURLOPT_TIMEOUT, 600 );		
+			$response = curl_exec( $ch );
+
+			cp_library()->logging->log( 'Transcript fetched for post #' . $post_id . ' from OpenAI.' );
+	
+			if ( false === $response || curl_getinfo( $ch, CURLINFO_HTTP_CODE ) !== 200 ) {
+				 if ( false === $response ) {
+					cp_library()->logging->log( 'Failed to fetch transcript for post #' . $post_id . '. Curl error: ' . curl_error( $ch ) );
+				} else {
+					cp_library()->logging->log( 'Failed to fetch transcript for post #' . $post_id . '. HTTP code: ' . curl_getinfo( $ch, CURLINFO_HTTP_CODE ) . '.' );
+				}
+				return;
 			}
+	
+			$response = json_decode( $response, true );
+		} catch ( \Exception $e ) {
+			cp_library()->logging->log( 'Failed to fetch transcript for post #' . $post_id . '. Exception: ' . $e->getMessage() );
 			return;
 		}
-
-		$response = json_decode( $response, true );
-
+		
 		/**
 		 * Filter the transcript fetched from OpenAI
 		 *
@@ -163,5 +192,17 @@ class OpenAI {
 		$transcript = apply_filters( 'cpl_openai_fetched_transcript', $response['choices'][0]['message']['content'], $post_id );
 
 		update_post_meta( $post_id, 'transcript', $transcript );
+	}
+
+	/**
+	 * On some servers, calling set_time_limit(0) may not work
+	 * we can detect that here and log the error
+	 */
+	public function shutdown() {
+		$error = error_get_last();
+
+		if ( $error ) {
+			cp_library()->logging->log( 'Script shutdown occurred: ' . $error['message'] );
+		}
 	}
 }

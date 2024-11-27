@@ -22,41 +22,75 @@ class ActionQueue extends \WP_Background_Process {
 	protected $prefix = 'cp_library';
 
 	/**
-	 * @var string
+	 * Class constructor
+	 *
+	 * @param string $action The action key
+	 * @since 1.5.2
 	 */
-	protected $action = 'fetch_queue';
+	public function __construct( $action ) {
+		$this->action = 'action_queue_' . $action;
+		parent::__construct();
+	}
 
 	/**
-	 * Enqueue an action
-	 *
-	 * @param string $action
-	 * @param array $data
+	 * @var array
 	 */
-	public function add( $action, $data ) {
-		$this->push_to_queue( [
-			'action' => $action,
-			'data'   => $data,
-		] );
-		$this->save()->dispatch();	
-	}
+	protected $listeners = [];
 
 	/**
 	 * Task to be run with each item
 	 */
 	protected function task( $data ) {
 		try {
-			/**
-			 * Run the action
-			 *
-			 * @param string $url
-			 * @param array $args
-			 */
-			do_action( 'cpl_action_queue_process_' . $data['action'], $data['data'] );
+			$this->trigger( 'process', $data );
 		} catch ( \Exception $e ) {
 			// Log the error
+			error_log( 'Error processing action in ActionQueue: ' . $this->action );
 			error_log( $e->getMessage() );
 		}
 		
 		return false;
+	}
+
+	/**
+	 * Trigger an event
+	 *
+	 * @param string $action
+	 * @param mixed ...$args
+	 */
+	public function trigger( $action, ...$args ) {
+		if ( isset( $this->listeners[ $action ] ) ) {
+			foreach ( $this->listeners[ $action ] as $callback ) {
+				call_user_func_array( $callback, $args );
+			}
+		}
+	}
+
+	/**
+	 * Register a listener for an action
+	 *
+	 * @param string $action
+	 * @param callable $callback
+	 */
+	public function on( $action, $callback ) {
+		if ( ! isset( $this->listeners[ $action ] ) ) {
+			$this->listeners[ $action ] = [];
+		}
+		$this->listeners[ $action ][] = $callback;
+	}
+
+	/**
+	 * Unregister a listener for an action
+	 *
+	 * @param string $action
+	 * @param callable $callback
+	 */
+	public function off( $action, $callback ) {
+		if ( isset( $this->listeners[ $action ] ) ) {
+			$key = array_search( $callback, $this->listeners[ $action ] );
+			if ( $key !== false ) {
+				unset( $this->listeners[ $action ][ $key ] );
+			}
+		}
 	}
 }
