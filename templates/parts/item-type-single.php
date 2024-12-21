@@ -133,7 +133,7 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 				'post_type' => cp_library()->setup->post_types->item->post_type,
 				'post__in' => $ids,
 				'orderby' => 'post__in',
-				'posts_per_page' => \CP_Library\Templates::posts_per_page( cp_library()->setup->post_types->item->post_type ),
+				'posts_per_page' => \CP_Library\Admin\Settings::get_item_type( 'items_per_page', 10 ),
 				'paged' => $page
 			) );
 			?>

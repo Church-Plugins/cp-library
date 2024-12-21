@@ -203,6 +203,7 @@ class ItemType extends PostType  {
 	}
 
 	public function item_item_type_query( $query ) {
+
 		// For ItemType/Series, order by metadata (contained item date)
 		if ( $query->is_main_query() ) {
 			if ( ! empty( $query->query_vars ) && ! empty( $query->query_vars['post_type'] ) && 'cpl_item_type' === $query->query_vars['post_type'] ) {
@@ -298,7 +299,7 @@ class ItemType extends PostType  {
 			return;
 		}
 
-		$query->set( 'posts_per_page', 12 );
+		$query->set( 'posts_per_page', Settings::get_item_type( 'per_page', 12 ) );
 	}
 
 	/**
