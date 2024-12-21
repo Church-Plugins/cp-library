@@ -82,15 +82,18 @@ abstract class Migration extends \WP_Background_Process {
 		try {
 			$this->migrate_item( $item );
 		} catch ( \ChurchPlugins\Exception $e ) {
-			error_log( $e->getMessage() );
-			$failed = true;
+			cp_library()->logging->log_exception( $e );
 			return false;
 		}
+
+		cp_library()->logging->log( "Item migrated ({$status['progress']} / {$status['migration_count']})" );
 
 		$status['progress']++;
 		if ( $status['progress'] >= $status['migration_count'] ) {
 			$status['status'] = 'complete';
+			cp_library()->logging->log( "Migration from {$this->name} complete" );
 		}
+
 		if ( $failed ) {
 			$status['failed']++;
 		}
@@ -105,11 +108,16 @@ abstract class Migration extends \WP_Background_Process {
 	 * @return void
 	 */
 	public function start_migration() {
+		cp_library()->logging->log( "Starting migration from {$this->name}" );
+
 		try {
 			$items = $this->get_migration_data();
 		} catch ( \ChurchPlugins\Exception $e ) {
+			cp_library()->logging->log_exception( $e );
 			wp_send_json_error( array( 'message' => $e->getMessage() ) );
 		}
+
+		cp_library()->logging->log( "Found " . count( $items ) . " items to migrate" );
 
 		set_transient(
 			"cpl_migration_status_{$this->type}",
@@ -126,6 +134,7 @@ abstract class Migration extends \WP_Background_Process {
 			$this->push_to_queue( $item );
 		}
 
+		// save the rest and dispatch if not already dispatched
 		if ( count( $items ) > 0 ) {
 			$this->save()->dispatch();
 		}
@@ -249,6 +258,7 @@ abstract class Migration extends \WP_Background_Process {
 			 */
 			do_action( 'cpl_migration_series_created', $item_type, $term, $item );
 		} catch ( \Exception $e ) {
+			cp_library()->logging->log_exception( $e );
 			return;
 		}
 	}
@@ -423,6 +433,7 @@ abstract class Migration extends \WP_Background_Process {
 			 */
 			do_action( 'cpl_migration_speaker_created', $speaker, $term, $item );
 		} catch ( Exception $e ) {
+			cp_library()->logging->log_exception( $e );
 			return;
 		}
 	}

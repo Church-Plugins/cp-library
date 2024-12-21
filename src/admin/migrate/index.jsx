@@ -1,7 +1,8 @@
 import React from 'react'
 import { createRoot } from '@wordpress/element'
-
 import Dashboard from './Dashboard'
+
+import './index.scss'
 
 const root = document.getElementById('cpl-migration-root')
 

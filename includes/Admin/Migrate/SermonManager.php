@@ -103,9 +103,9 @@ class SermonManager extends Migration {
 	public function get_migration_data() {
 		global $wpdb;
 
-		$posts = $wpdb->get_results(
+		$posts = $wpdb->get_col(
 			$wpdb->prepare(
-				"SELECT * FROM $wpdb->posts WHERE post_type = %s",
+				"SELECT ID FROM $wpdb->posts WHERE post_type = %s",
 				$this->post_type
 			)
 		);
@@ -119,6 +119,22 @@ class SermonManager extends Migration {
 	 * @param mixed $post The post to migrate.
 	 */
 	public function migrate_item( $post ) {
+		global $wpdb;
+
+		if ( is_numeric( $post ) ) {
+			$post = $wpdb->get_row(
+				$wpdb->prepare(
+					"SELECT * FROM $wpdb->posts WHERE ID = %d",
+					$post
+				)
+			);
+		}
+
+		if ( empty( $post ) ) {
+			cp_library()->logging->log( 'No post found for ID: ' . $post );
+			return;
+		}
+
 		$new_post_id = $this->maybe_insert_post( $post );
 
 		if ( ! $new_post_id ) {
@@ -196,7 +212,7 @@ class SermonManager extends Migration {
 				$this->add_topics_to_item( $item, $topics );
 			}
 		} catch ( Exception $e ) {
-			error_log( $e->getMessage() );
+			cp_library()->logging->log_exception( $e );
 		}
 	}
 

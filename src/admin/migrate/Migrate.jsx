@@ -78,10 +78,6 @@ export default function Migrate({ plugin, onComplete }) {
 		// kick off the progress check
 		checkProgress()
 	}
-	
-	useEffect(() => {
-		return () => clearInterval(intervalRef.current)
-	}, [])
 
 	const widthPercent = `${Math.max(0, Math.min(100, progress))}%`
 
@@ -92,7 +88,7 @@ export default function Migrate({ plugin, onComplete }) {
 				`Migrating content from ${plugin.name}` :
 				`Migration complete!`
 			}</h1>
-			
+
 			{
 				status === 'in_progress' &&
 				<>

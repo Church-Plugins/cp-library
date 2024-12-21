@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.5.2-beta.1
+* Bug Fix: Fix issue with SermonManager import
+
 #### 1.5.1
 * Bug Fix: Better handling for icons
 
