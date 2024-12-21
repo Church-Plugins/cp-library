@@ -75,6 +75,7 @@ class Item extends PostType  {
 		}
 
 		add_action( 'cmb2_sanitize_file', [ $this, 'sanitize_text_field' ], 10, 5 );
+		add_action( 'rest_api_init', [ $this, 'regiser_rest_fields'] );
 	}
 
 	/**
@@ -342,6 +343,10 @@ class Item extends PostType  {
 		$args              = parent::get_args();
 		$args['menu_icon'] = apply_filters( "{$this->post_type}_icon", 'dashicons-format-video' );
 		$args['supports'][] = 'excerpt';
+		$args['show_in_rest'] = true;
+
+		// make sure metadata appears in the REST API
+
 
 		// make hierarchical if we are using variations
 		if ( cp_library()->setup->variations->is_enabled() ) {
@@ -553,6 +558,21 @@ class Item extends PostType  {
 				'type' => 'application/pdf',
 			),
 		] );
+	}
+
+	/**
+	 * Register fields that should appear in the REST API
+	 *
+	 * @since 1.5.2
+	 */
+	public function regiser_rest_fields() {
+		register_rest_field(
+			$this->post_type,
+			'cpl_transcript',
+			[
+				'get_callback'    => fn( $object, $field_name, $request ) => get_post_meta( $object['id'], 'transcript', true )
+			]
+		);
 	}
 
 	protected function analytics() {

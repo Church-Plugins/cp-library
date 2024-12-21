@@ -66,11 +66,6 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 	public $templates;
 
 	/**
-	 * @var Util\ActionQueue
-	 */
-	public $action_queue;
-
-	/**
 	 * Only make one instance of Init
 	 *
 	 * @return Init
@@ -325,7 +320,6 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 
 		$this->modules = Modules\Init::get_instance();
 		$this->logging = new \ChurchPlugins\Logging( $this->get_id(), $this->is_debug_mode() );
-		$this->action_queue = new Util\ActionQueue();
 
 		require_once( "migrations.php" );
 	}

@@ -26,6 +26,7 @@ npm run build
 
 #### 1.5.2-beta.1
 * Bug Fix: Fix issue with SermonManager import
+* Bug Fix: Transcript & OpenAI parsing fix
 
 #### 1.5.1
 * Bug Fix: Better handling for icons
