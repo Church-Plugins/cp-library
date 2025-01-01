@@ -24,7 +24,11 @@ npm run build
 
 ### Change Log
 
-#### 1.5.2-beta.1
+#### 1.5.2
+* Enhancement: Update attachment icon for external resources
+* Enhancement: Add option for managing sermon and series per page count
+* Enhancement: Update styling for pagination
+* Enhancement: Add widget areas for sermon and series single and archive templates
 * Bug Fix: Fix issue with SermonManager import
 * Bug Fix: Transcript & OpenAI parsing fix
 
