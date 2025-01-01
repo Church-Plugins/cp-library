@@ -11,6 +11,7 @@ namespace CP_Library\Admin\Migrate;
 use CP_Library\Models\Item;
 use CP_Library\Models\ItemType;
 use CP_Library\Models\Speaker;
+use CP_Library\Models\ServiceType;
 use ChurchPlugins\Exception;
 
 /**
@@ -82,15 +83,18 @@ abstract class Migration extends \WP_Background_Process {
 		try {
 			$this->migrate_item( $item );
 		} catch ( \ChurchPlugins\Exception $e ) {
-			error_log( $e->getMessage() );
-			$failed = true;
+			cp_library()->logging->log_exception( $e );
 			return false;
 		}
+
+		cp_library()->logging->log( "Item migrated ({$status['progress']} / {$status['migration_count']})" );
 
 		$status['progress']++;
 		if ( $status['progress'] >= $status['migration_count'] ) {
 			$status['status'] = 'complete';
+			cp_library()->logging->log( "Migration from {$this->name} complete" );
 		}
+
 		if ( $failed ) {
 			$status['failed']++;
 		}
@@ -105,11 +109,16 @@ abstract class Migration extends \WP_Background_Process {
 	 * @return void
 	 */
 	public function start_migration() {
+		cp_library()->logging->log( "Starting migration from {$this->name}" );
+
 		try {
 			$items = $this->get_migration_data();
 		} catch ( \ChurchPlugins\Exception $e ) {
+			cp_library()->logging->log_exception( $e );
 			wp_send_json_error( array( 'message' => $e->getMessage() ) );
 		}
+
+		cp_library()->logging->log( "Found " . count( $items ) . " items to migrate" );
 
 		set_transient(
 			"cpl_migration_status_{$this->type}",
@@ -126,6 +135,7 @@ abstract class Migration extends \WP_Background_Process {
 			$this->push_to_queue( $item );
 		}
 
+		// save the rest and dispatch if not already dispatched
 		if ( count( $items ) > 0 ) {
 			$this->save()->dispatch();
 		}
@@ -249,6 +259,7 @@ abstract class Migration extends \WP_Background_Process {
 			 */
 			do_action( 'cpl_migration_series_created', $item_type, $term, $item );
 		} catch ( \Exception $e ) {
+			cp_library()->logging->log_exception( $e );
 			return;
 		}
 	}
@@ -303,8 +314,7 @@ abstract class Migration extends \WP_Background_Process {
 	 * @return int|false The new post ID or false if the post already exists or an error occurs.
 	 */
 	public function maybe_insert_post( $post ) {
-		$item_post_type      = cp_library()->setup->post_types->item->post_type;
-		$item_type_post_type = cp_library()->setup->post_types->item_type->post_type;
+		$item_post_type = cp_library()->setup->post_types->item->post_type;
 
 		$existing_item = current(
 			get_posts(
@@ -318,7 +328,7 @@ abstract class Migration extends \WP_Background_Process {
 		);
 
 		if ( $existing_item ) {
-			return false;
+			return $existing_item->ID;
 		}
 
 		$new_post = array(
@@ -410,8 +420,11 @@ abstract class Migration extends \WP_Background_Process {
 		}
 
 		try {
-			$speaker = Speaker::get_instance_from_origin( $post );
-			$item->update_speakers( array( $speaker->id ) );
+			$speakers = $item->get_speakers();
+			$speaker  = Speaker::get_instance_from_origin( $post );
+
+			$speakers[] = $speaker->id;
+			$item->update_speakers( array_unique( $speakers ) );
 
 			/**
 			 * Fires when a speaker has been successfully migrated from a term
@@ -423,6 +436,93 @@ abstract class Migration extends \WP_Background_Process {
 			 */
 			do_action( 'cpl_migration_speaker_created', $speaker, $term, $item );
 		} catch ( Exception $e ) {
+			cp_library()->logging->log_exception( $e );
+			return;
+		}
+	}
+
+	/**
+	 * Creates and manages service types coming from a taxonomy
+	 *
+	 * @param Item  $item The item being processed.
+	 * @param array $service_types The service types taxonomy terms.
+	 */
+	protected function add_service_types_from_terms( $item, $service_types ) {
+		foreach ( $service_types as $term ) {
+			$this->add_service_type_from_term( $item, $term );
+		}
+	}
+
+	/**
+	 * Creates and manages speakers coming from a taxonomy
+	 *
+	 * @param Item   $item The item being processed.
+	 * @param object $term The service type taxonomy term.
+	 *
+	 * @updated 1.5.2 added a filter for the post type arguments + an action hook for the newly created post
+	 */
+	protected function add_service_type_from_term( $item, $term ) {
+		$args = array(
+			'post_type'      => cp_library()->setup->post_types->service_type->post_type,
+			'posts_per_page' => 1,
+			'post_status'    => 'any',
+		);
+
+		$service_type_posts = get_posts( array_merge( $args, array( 'name' => $term->slug ) ) );
+		$post               = current( $service_type_posts );
+
+		// fallback to searching by title
+		if ( ! $post ) {
+			$service_type_posts = get_posts( array_merge( $args, array( 'title' => $term->name ) ) );
+			$post               = current( $service_type_posts );
+		}
+
+		if ( ! $post ) {
+			$args = array(
+				'post_title'   => $term->name,
+				'post_name'    => $term->slug,
+				'post_type'    => cp_library()->setup->post_types->service_type->post_type,
+				'post_content' => $term->description,
+				'post_status'  => 'publish',
+			);
+
+			/**
+			 * Creates a service type from a term
+			 *
+			 * @param array     $args The arguments for creating the service type.
+			 * @param \stdClass $term The term to create the series from.
+			 * @return array
+			 * @since 1.5.2
+			 */
+			$args = apply_filters( 'cpl_migration_service_type_from_term_args', $args, $term );
+
+			$post = wp_insert_post( $args );
+
+			if ( ! $post ) {
+				return;
+			}
+		} else {
+			$post = $post->ID;
+		}
+
+		try {
+			$service_types = $item->get_service_types();
+			$service_type  = ServiceType::get_instance_from_origin( $post );
+
+			$service_types[] = $service_type->id;
+			$item->update_service_types( array_unique( $service_types ) );
+
+			/**
+			 * Fires when a service type has been successfully migrated from a term
+			 *
+			 * @param Speaker   $speker The item type that was created.
+			 * @param \stdClass $term   The term that was used to create the service type.
+			 * @param Item      $item   The item that was created.
+			 * @since 1.5.2
+			 */
+			do_action( 'cpl_migration_speaker_created', $service_type, $term, $item );
+		} catch ( Exception $e ) {
+			cp_library()->logging->log_exception( $e );
 			return;
 		}
 	}

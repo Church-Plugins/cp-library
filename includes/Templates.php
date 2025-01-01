@@ -43,6 +43,98 @@ class Templates extends \ChurchPlugins\Templates {
 		parent::__construct();
 
 		add_action( 'cpl_after_archive', 'the_posts_pagination' );
+
+		// Add widget areas to single and archive templates
+		add_action( 'widgets_init', [ $this, 'register_sidebars' ] );
+
+		add_action( 'cpl_before_cpl_single_item', [ $this, 'item_before_sidebar' ] );
+		add_action( 'cpl_before_cpl_single_item-type', [ $this, 'item_type_before_sidebar' ] );
+
+		add_action( 'cpl_after_cpl_single_item', [ $this, 'item_after_sidebar' ] );
+		add_action( 'cpl_after_cpl_single_item-type', [ $this, 'item_type_after_sidebar' ] );
+
+		add_action( 'cpl_before_archive_item', [ $this, 'item_archive_before_sidebar' ] );
+		add_action( 'cpl_before_archive_item-type', [ $this, 'item_type_archive_before_sidebar' ] );
+
+		add_action( 'cpl_after_archive_item', [ $this, 'item_archive_after_sidebar' ] );
+		add_action( 'cpl_after_archive_item-type', [ $this, 'item_type_archive_after_sidebar' ] );
+	}
+
+	/**
+	 * Register sidebars for sermons and series
+	 *
+	 * @since  1.5.2
+	 *
+	 * @author Tanner Moushey, 12/31/24
+	 */
+	public function register_sidebars() {
+
+		$sidebars = [
+			'cpl-item-archive-before' => [ cp_library()->setup->post_types->item->single_label, __( 'archive', 'cp-library' ), __( 'before', 'cp-library' ) ],
+			'cpl-item-archive-after' => [ cp_library()->setup->post_types->item->single_label, __( 'archive', 'cp-library' ), __( 'after', 'cp-library' ) ],
+			'cpl-item-single-before' => [ cp_library()->setup->post_types->item->single_label, __( 'single', 'cp-library' ), __( 'before', 'cp-library' ) ],
+			'cpl-item-single-after' => [ cp_library()->setup->post_types->item->single_label, __( 'single', 'cp-library' ), __( 'after', 'cp-library' ) ],
+		];
+
+		if ( cp_library()->setup->post_types->item_type_enabled() ) {
+			$sidebars['cpl-item-type-archive-before'] = [ cp_library()->setup->post_types->item_type->single_label, __( 'archive', 'cp-library' ), __( 'before', 'cp-library' ) ];
+			$sidebars['cpl-item-type-archive-after'] = [ cp_library()->setup->post_types->item_type->single_label, __( 'archive', 'cp-library' ), __( 'after', 'cp-library' ) ];
+			$sidebars['cpl-item-type-single-before'] = [ cp_library()->setup->post_types->item_type->single_label, __( 'single', 'cp-library' ), __( 'before', 'cp-library' ) ];
+			$sidebars['cpl-item-type-single-after'] = [ cp_library()->setup->post_types->item_type->single_label, __( 'single', 'cp-library' ), __( 'after', 'cp-library' ) ];
+		}
+
+		foreach( $sidebars as $id => $args ) {
+			register_sidebar( [
+				'name'          => sprintf( '%s %s %s', $args[0], ucwords( $args[1] ), ucwords( $args[2] ) ),
+				'id'            => $id,
+				'description'   => sprintf( __( 'Widgets in this area will be shown %s the %s %s pages.', 'cp-library' ), $args[2], $args[0], $args[1] ),
+				'before_widget' => '<section id="%1$s" class="widget %2$s">',
+				'after_widget'  => '</section>',
+				'before_title'  => '<h2 class="widget-title">',
+				'after_title'   => '</h2>',
+			] );
+		}
+
+	}
+
+	public function item_archive_before_sidebar() {
+		$this->print_sidebar( 'cpl-item-archive-before' );
+	}
+
+	public function item_archive_after_sidebar() {
+		$this->print_sidebar( 'cpl-item-archive-after' );
+	}
+
+	public function item_before_sidebar() {
+		$this->print_sidebar( 'cpl-item-single-before' );
+	}
+
+	public function item_after_sidebar() {
+		$this->print_sidebar( 'cpl-item-single-after' );
+	}
+
+	public function item_type_archive_before_sidebar() {
+		$this->print_sidebar( 'cpl-item-type-archive-before' );
+	}
+
+	public function item_type_archive_after_sidebar() {
+		$this->print_sidebar( 'cpl-item-type-archive-after' );
+	}
+
+	public function item_type_before_sidebar() {
+		$this->print_sidebar( 'cpl-item-type-single-before' );
+	}
+
+	public function item_type_after_sidebar() {
+		$this->print_sidebar( 'cpl-item-type-single-after' );
+	}
+
+	protected function print_sidebar( $id ) {
+		if ( is_active_sidebar( $id ) ) {
+			echo '<div class="cpl-sidebar cpl-sidebar--' . str_replace( 'cpl-', '', $id ) . '">';
+			dynamic_sidebar( $id );
+			echo '</div>';
+		}
 	}
 
 	public function posts_per_page( $post_type = 'post' ) {

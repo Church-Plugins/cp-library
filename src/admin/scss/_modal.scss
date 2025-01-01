@@ -15,7 +15,7 @@
 	align-items: start;
 	padding: 10vh 2rem 2rem 10vh;
 	opacity: 0;
-	transition: opacity 0.3s ease-in-out;	
+	transition: opacity 0.3s ease-in-out;
 	box-sizing: border-box;
 
 	* {
@@ -24,7 +24,7 @@
 
 	.cpl-modal {
 		position: relative;
-		padding: 4rem;
+		padding: 2rem;
 		border-radius: 1rem;
 		background: #fff;
 		transform: translateY(-200px);
@@ -32,6 +32,7 @@
 		width: 800px;
 		max-width: calc(100vw - 4rem);
 		max-height: 80vh;
+		overflow: scroll;
 	}
 
 	.cpl-modal-content {
@@ -46,7 +47,7 @@
 	&.open .cpl-modal {
 		transform: translateY(0);
 	}
-	
+
 	.cpl-modal-close {
 		position: absolute;
 		top: 1rem;

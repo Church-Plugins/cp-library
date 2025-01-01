@@ -133,7 +133,7 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 				'post_type' => cp_library()->setup->post_types->item->post_type,
 				'post__in' => $ids,
 				'orderby' => 'post__in',
-				'posts_per_page' => \CP_Library\Templates::posts_per_page( cp_library()->setup->post_types->item->post_type ),
+				'posts_per_page' => \CP_Library\Admin\Settings::get_item_type( 'items_per_page', 10 ),
 				'paged' => $page
 			) );
 			?>
@@ -144,7 +144,7 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 
 			<?php wp_reset_postdata(); ?>
 
-			<div class="cpl-single-type--items--pagination et_smooth_scroll_disabled">
+			<nav class="cpl-single-type--items--pagination et_smooth_scroll_disabled navigation pagination" role="navigation" aria-label="Posts pagination">
 				<?php
 				echo paginate_links( array(
 					'base' => get_permalink() . '?cpl_page=%#%#cpl-single-type--items-title',
@@ -153,7 +153,7 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 					'total' => $item_query->max_num_pages
 				) );
 				?>
-			</div>
+			</nav>
 		</section>
 	<?php endif; ?>
 </div>

@@ -62,7 +62,7 @@ add_action( 'cpl_single_speaker_before', 'cpl_item_back' );
 
 	<?php wp_reset_postdata(); ?>
 
-	<div class="cpl-single-type--items--pagination et_smooth_scroll_disabled">
+	<nav class="cpl-single-type--items--pagination et_smooth_scroll_disabled navigation pagination" role="navigation" aria-label="Posts pagination">
 		<?php
 		echo paginate_links( array(
 			'base'    => get_permalink() . '?cpl_page=%#%',
@@ -71,7 +71,7 @@ add_action( 'cpl_single_speaker_before', 'cpl_item_back' );
 			'total'   => $item_query->max_num_pages
 		) );
 		?>
-	</div>
+	</nav>
 </div>
 
 <?php do_action( 'cpl_single_speaker_after', $speaker ); ?>

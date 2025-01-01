@@ -81,8 +81,20 @@ class Settings {
 		return self::get( $key, $default, 'cpl_item_options' );
 	}
 
+	public static function update_item( $key, $value ) {
+		$options = get_option( 'cpl_item_options', [] );
+		$options[ $key ] = $value;
+		update_option( 'cpl_item_options', $options );
+	}
+
 	public static function get_item_type( $key, $default = '' ) {
 		return self::get( $key, $default, 'cpl_item_type_options' );
+	}
+
+	public static function update_item_type( $key, $value ) {
+		$options = get_option( 'cpl_item_type_options', [] );
+		$options[ $key ] = $value;
+		update_option( 'cpl_item_type_options', $options );
 	}
 
 	public static function get_speaker( $key, $default = '' ) {
@@ -347,6 +359,23 @@ class Settings {
 			'classes' => 'cp-radio-image',
 		] );
 
+		if ( ! self::get_item( 'per_page' ) ) {
+			self::update_item( 'per_page', 10 );
+		}
+
+		$options->add_field( [
+			'name'            => sprintf( __( '%s Per Page', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'id'              => 'per_page',
+			'type'            => 'text_small',
+			'desc'            => __( 'The number of items to show per page on the archive page.', 'cp-library' ),
+			'attributes'      => array(
+				'type'    => 'number',
+				'pattern' => '\d*',
+			),
+			'sanitization_cb' => 'absint',
+			'escape_cb'       => 'absint',
+		] );
+
 //		$options->add_field( [
 //			'name'    => __( 'Archive Page Template', 'cp-library' ),
 //			'desc'    => '',
@@ -475,6 +504,40 @@ class Settings {
 				'16x9' => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-16x9.png" />' . __( 'Landscape (16:9)', 'cp-library' ),
 			],
 			'classes' => 'cp-radio-image',
+		] );
+
+		if ( ! self::get_item_type( 'per_page' ) ) {
+			self::update_item_type( 'per_page', 12 );
+		}
+
+		$options->add_field( [
+			'name'            => sprintf( __( '%s Per Page', 'cp-library' ), cp_library()->setup->post_types->item_type->plural_label ),
+			'id'              => 'per_page',
+			'type'            => 'text_small',
+			'desc'            => __( 'The number of items to show per page on the archive page.', 'cp-library' ),
+			'attributes'      => array(
+				'type'    => 'number',
+				'pattern' => '\d*',
+			),
+			'sanitization_cb' => 'absint',
+			'escape_cb'       => 'absint',
+		] );
+
+		if ( ! self::get_item_type( 'items_per_page' ) ) {
+			self::update_item_type( 'items_per_page', 10 );
+		}
+
+		$options->add_field( [
+			'name'            => sprintf( __( '%s Per %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label, cp_library()->setup->post_types->item_type->single_label ),
+			'id'              => 'items_per_page',
+			'type'            => 'text_small',
+			'desc'            => sprintf( __( 'The number of %s to show on the %s page.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label, cp_library()->setup->post_types->item_type->single_label ),
+			'attributes'      => array(
+				'type'    => 'number',
+				'pattern' => '\d*',
+			),
+			'sanitization_cb' => 'absint',
+			'escape_cb'       => 'absint',
 		] );
 
 		$options->add_field( [

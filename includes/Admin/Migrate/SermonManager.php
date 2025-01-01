@@ -103,9 +103,9 @@ class SermonManager extends Migration {
 	public function get_migration_data() {
 		global $wpdb;
 
-		$posts = $wpdb->get_results(
+		$posts = $wpdb->get_col(
 			$wpdb->prepare(
-				"SELECT * FROM $wpdb->posts WHERE post_type = %s",
+				"SELECT ID FROM $wpdb->posts WHERE post_type = %s",
 				$this->post_type
 			)
 		);
@@ -119,17 +119,34 @@ class SermonManager extends Migration {
 	 * @param mixed $post The post to migrate.
 	 */
 	public function migrate_item( $post ) {
+		global $wpdb;
+
+		if ( is_numeric( $post ) ) {
+			$post = $wpdb->get_row(
+				$wpdb->prepare(
+					"SELECT * FROM $wpdb->posts WHERE ID = %d",
+					$post
+				)
+			);
+		}
+
+		if ( empty( $post ) ) {
+			cp_library()->logging->log( 'No post found for ID: ' . $post );
+			return;
+		}
+
 		$new_post_id = $this->maybe_insert_post( $post );
 
 		if ( ! $new_post_id ) {
 			return;
 		}
 
-		$meta     = get_post_meta( $post->ID );
-		$series   = $this->get_terms( 'wpfc_sermon_series', $post->ID );
-		$speakers = $this->get_terms( 'wpfc_preacher', $post->ID );
-		$topics   = $this->get_terms( 'wpfc_sermon_topics', $post->ID );
-		$thumb    = get_post_thumbnail_id( $post->ID );
+		$meta          = get_post_meta( $post->ID );
+		$series        = $this->get_terms( 'wpfc_sermon_series', $post->ID );
+		$speakers      = $this->get_terms( 'wpfc_preacher', $post->ID );
+		$topics        = $this->get_terms( 'wpfc_sermon_topics', $post->ID );
+		$service_types = $this->get_terms( 'wpfc_service_type', $post->ID );
+		$thumb         = get_post_thumbnail_id( $post->ID );
 
 		$notes = (array) get_post_meta( $post->ID, 'sermon_notes', true );
 		$notes = array_merge( $notes, (array) get_post_meta( $post->ID, 'sermon_notes_multiple', true ) );
@@ -195,8 +212,12 @@ class SermonManager extends Migration {
 			if ( $topics ) {
 				$this->add_topics_to_item( $item, $topics );
 			}
+
+			if ( $service_types ) {
+				$this->add_service_types_from_terms( $item, $service_types );
+			}
 		} catch ( Exception $e ) {
-			error_log( $e->getMessage() );
+			cp_library()->logging->log_exception( $e );
 		}
 	}
 
@@ -212,6 +233,11 @@ class SermonManager extends Migration {
 	public function set_series_image( $series, $term ) {
 		$associations = get_option( 'sermon_image_plugin' );
 		$sanitized    = array();
+
+		if ( ! is_array( $associations ) ) {
+			return;
+		}
+
 		foreach ( $associations as $key => $value ) {
 			$key   = absint( $key );
 			$value = absint( $value );
@@ -239,6 +265,11 @@ class SermonManager extends Migration {
 	public function set_speaker_image( $speaker, $term ) {
 		$associations = get_option( 'sermon_image_plugin' );
 		$sanitized    = array();
+
+		if ( ! is_array( $associations ) ) {
+			return;
+		}
+
 		foreach ( $associations as $key => $value ) {
 			$key   = absint( $key );
 			$value = absint( $value );
