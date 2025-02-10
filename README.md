@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.5.3
+* Add cp-template shortcode for better page builder support
+
 #### 1.5.2
 * Enhancement: Update attachment icon for external resources
 * Enhancement: Add option for managing sermon and series per page count
