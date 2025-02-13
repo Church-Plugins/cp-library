@@ -21,7 +21,7 @@ use CP_Library\Models\Item;
  * @package CP_Library
  * @since 1.3.0
  */
-abstract class Adapter extends \WP_Background_Process {
+abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	/**
 	 * Used to identify the adapter
 	 *
