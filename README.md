@@ -25,7 +25,9 @@ npm run build
 ### Change Log
 
 #### 1.5.3
-* Add cp-template shortcode for better page builder support
+* Enhancement: Improve download functionality for sermon audio
+* Enhancement: Add cp-template shortcode for better page builder support
+* Bug Fix: Fix incompatibility with Astra Pro addon
 
 #### 1.5.2
 * Enhancement: Update attachment icon for external resources
