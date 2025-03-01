@@ -24,6 +24,12 @@ npm run build
 
 ### Change Log
 
+#### 1.5.3
+* Enhancement: Improve download functionality for sermon audio
+* Enhancement: Add cp-template shortcode for better page builder support
+* Bug Fix: Fix incompatibility with Astra Pro addon
+* Bug Fix: Custom per page count was not working for sermons
+
 #### 1.5.2
 * Enhancement: Update attachment icon for external resources
 * Enhancement: Add option for managing sermon and series per page count

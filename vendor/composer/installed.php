@@ -1,41 +1,33 @@
-<?php return array(
-    'root' => array(
-        'name' => 'churchplugins/cp-library',
-        'pretty_version' => 'dev-master',
-        'version' => 'dev-master',
-        'reference' => 'ee312b91bd862d8f262b503fe5fb210579f4e30e',
-        'type' => 'wordpress-plugin',
-        'install_path' => __DIR__ . '/../../',
-        'aliases' => array(),
-        'dev' => true,
+<?php return array (
+  'root' => 
+  array (
+    'pretty_version' => 'dev-master',
+    'version' => 'dev-master',
+    'aliases' => 
+    array (
     ),
-    'versions' => array(
-        'churchplugins/cp-library' => array(
-            'pretty_version' => 'dev-master',
-            'version' => 'dev-master',
-            'reference' => 'ee312b91bd862d8f262b503fe5fb210579f4e30e',
-            'type' => 'wordpress-plugin',
-            'install_path' => __DIR__ . '/../../',
-            'aliases' => array(),
-            'dev_requirement' => false,
-        ),
-        'composer/installers' => array(
-            'pretty_version' => 'v2.3.0',
-            'version' => '2.3.0.0',
-            'reference' => '12fb2dfe5e16183de69e784a7b84046c43d97e8e',
-            'type' => 'composer-plugin',
-            'install_path' => __DIR__ . '/./installers',
-            'aliases' => array(),
-            'dev_requirement' => false,
-        ),
-        'deliciousbrains/wp-background-processing' => array(
-            'pretty_version' => '1.3.1',
-            'version' => '1.3.1.0',
-            'reference' => '6d1e48165e461260075b9f161b3861c7278f71e7',
-            'type' => 'library',
-            'install_path' => __DIR__ . '/../deliciousbrains/wp-background-processing',
-            'aliases' => array(),
-            'dev_requirement' => false,
-        ),
+    'reference' => '164b51f4a96efdddcbe9675c4b814a29ef2a12c7',
+    'name' => 'churchplugins/cp-library',
+  ),
+  'versions' => 
+  array (
+    'churchplugins/cp-library' => 
+    array (
+      'pretty_version' => 'dev-master',
+      'version' => 'dev-master',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '164b51f4a96efdddcbe9675c4b814a29ef2a12c7',
     ),
+    'composer/installers' => 
+    array (
+      'pretty_version' => 'v2.2.0',
+      'version' => '2.2.0.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => 'c29dc4b93137acb82734f672c37e029dfbd95b35',
+    ),
+  ),
 );

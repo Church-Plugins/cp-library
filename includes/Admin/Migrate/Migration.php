@@ -19,7 +19,7 @@ use ChurchPlugins\Exception;
  *
  * @since 1.3.0
  */
-abstract class Migration extends \WP_Background_Process {
+abstract class Migration extends \ChurchPlugins\Utils\WP_Background_Process {
 	/**
 	 * The plugin name to migrate from
 	 *

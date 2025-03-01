@@ -7,7 +7,7 @@
 
 namespace CP_Library\Adapters;
 
-use WP_Async_Request;
+use \ChurchPlugins\Utils\WP_Async_Request;
 
 /**
  * Dispatcher class

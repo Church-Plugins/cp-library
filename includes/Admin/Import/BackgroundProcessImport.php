@@ -9,7 +9,7 @@
 namespace CP_Library\Admin\Import;
 
 use ChurchPlugins\Helpers;
-use WP_Background_Process;
+use ChurchPlugins\Utils\WP_Background_Process;
 use WP_Embed;
 use WP_Error;
 

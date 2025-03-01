@@ -4,6 +4,10 @@ $type = \CP_Library\Templates::get_type();
 if ( 'item' === $type ) {
 	$type .= \CP_Library\Admin\Settings::get_item( 'single_template', '' );
 }
+
+if ( ! have_posts() ) {
+	rewind_posts();
+}
 ?>
 
 <?php if ( have_posts() ) : ?>

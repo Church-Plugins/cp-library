@@ -51,6 +51,12 @@ export default function ShareButton({ item, variant = "outlined" }) {
 			'_blank',
 		);
 
+		// force download
+		link.setAttribute(
+			'download',
+			item.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3',
+		);
+
     // Append to html link element page
     document.body.appendChild(link);
 

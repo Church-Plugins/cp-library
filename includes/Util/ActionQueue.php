@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Class ActionQueue
  */
-class ActionQueue extends \WP_Background_Process {
+class ActionQueue extends \ChurchPlugins\Utils\WP_Background_Process {
 	/**
 	 * @var string
 	 */
@@ -48,7 +48,7 @@ class ActionQueue extends \WP_Background_Process {
 			error_log( 'Error processing action in ActionQueue: ' . $this->action );
 			error_log( $e->getMessage() );
 		}
-		
+
 		return false;
 	}
 
