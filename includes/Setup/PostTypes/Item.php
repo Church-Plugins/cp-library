@@ -115,7 +115,7 @@ class Item extends PostType  {
 			return;
 		}
 
-		$query->set( 'posts_per_page', Settings::get_item_type( 'per_page', 12 ) );
+		$query->set( 'posts_per_page', Settings::get_item( 'per_page', 12 ) );
 	}
 
 	/**
