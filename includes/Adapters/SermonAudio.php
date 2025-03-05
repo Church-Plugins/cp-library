@@ -133,7 +133,7 @@ class SermonAudio extends Adapter {
 				$item['attachments']['cpl_item_type'] = [ $sermon->series->seriesID ];
 			}
 
-			$sermons[ $sermon->sermonID ] = $item;
+			$sermons[ $sermon->sermonID ] = apply_filters( 'cp_library_sermon_audio_item', $item );
 		}
 
 		// enqueues items to be processed
@@ -263,10 +263,17 @@ class SermonAudio extends Adapter {
 	 * @return array The formatted sermon.
 	 */
 	public function format_item( $item ) {
+
+		if ( ! empty( $item->preachDate ) && $date = strtotime( $item->preachDate ) ) {
+			$post_date = gmdate( 'Y-m-d H:i:s', $date + 12 * HOUR_IN_SECONDS ); // set publish time to noon
+		} else {
+			$post_date = gmdate( 'Y-m-d H:i:s', $item->publishTimestamp );
+		}
+
 		$args = array(
 			'external_id'  => $item->sermonID,
 			'post_title'   => $item->displayTitle,
-			'post_date'    => gmdate( 'Y-m-d H:i:s', $item->publishTimestamp ),
+			'post_date'    => $post_date,
 			'post_status'  => 'publish',
 			'post_type'    => cp_library()->setup->post_types->item->post_type,
 			'post_content' => wp_kses_post( $item->moreInfoText ),

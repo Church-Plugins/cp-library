@@ -313,7 +313,7 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 
 				while ( $query->have_posts() ) {
 					$query->the_post();
-					Templates::get_template_part( 'parts/podcast-item' );
+					cp_library()->templates->get_template_part( 'parts/podcast-item' );
 				}
 
 				wp_reset_postdata();
@@ -321,7 +321,7 @@ echo '<?xml version="1.0" encoding="' . esc_attr( $charset ) . '"?>';
 		} else {
 			while ( have_posts() ) {
 				the_post();
-				Templates::get_template_part( 'parts/podcast-item' );
+				cp_library()->templates->get_template_part( 'parts/podcast-item' );
 			}
 		}
 		?>

@@ -15,7 +15,7 @@ if ( ! have_posts() ) {
 		<?php do_action( 'cpl_before_cpl_single_'  . $type ); ?>
 
 		<?php while( have_posts() ) : the_post(); ?>
-			<?php \CP_Library\Templates::get_template_part( "parts/$type-single" ); ?>
+			<?php cp_library()->templates->get_template_part( "parts/$type-single" ); ?>
 		<?php endwhile; ?>
 
 		<?php do_action( 'cpl_after_cpl_single_'  . $type ); ?>

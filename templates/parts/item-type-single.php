@@ -70,7 +70,7 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 		setup_postdata( $post );
 
 		$template = 'item' . \CP_Library\Admin\Settings::get_item( 'single_template', '' ) . '-single';
-		\CP_Library\Templates::get_template_part( "parts/$template" );
+		cp_library()->templates->get_template_part( "parts/$template" );
 
 		$post = $original_post;
 		wp_reset_postdata();
@@ -139,7 +139,7 @@ add_filter( 'post_type_link', 'cpl_item_type_item_link', 10, 2 );
 			?>
 
 			<?php while( $item_query->have_posts() ) : $item_query->the_post() ?>
-				<?php \CP_Library\Templates::get_template_part( "parts/item-list" ); ?>
+				<?php cp_library()->templates->get_template_part( "parts/item-list" ); ?>
 			<?php endwhile; ?>
 
 			<?php wp_reset_postdata(); ?>

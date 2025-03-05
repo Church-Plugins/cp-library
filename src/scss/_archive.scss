@@ -41,4 +41,16 @@
 		}
 	}
 
+	&--speaker {
+		.cpl-archive--list {
+			display: grid;
+			column-gap: var(--cp-gap--md);
+			grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));
+		}
+
+		.cpl-filter--toggle {
+			display: none;
+		}
+	}
+
 }

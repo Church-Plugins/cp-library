@@ -54,7 +54,7 @@ if ( empty( $item['variations'] ) ) {
 						<?php endif; ?>
 
 						<h2 class="cpl-single-item--title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h2>
-						<?php \CP_Library\Templates::get_template_part( 'parts/item-single/meta', $args ); ?>
+						<?php cp_library()->templates->get_template_part( 'parts/item-single/meta', $args ); ?>
 					</div>
 
 					<?php if ( ! empty( $resources ) ) : ?>

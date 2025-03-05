@@ -24,6 +24,11 @@ npm run build
 
 ### Change Log
 
+#### 1.5.4
+* Enhancement: Use "Preach Date" when importing from SermonAudio (instead of publish date)
+* Enhancement: Add template for Speaker Archive
+* Bug Fix: Some templates were throwing errors
+
 #### 1.5.3
 * Enhancement: Improve download functionality for sermon audio
 * Enhancement: Add cp-template shortcode for better page builder support
