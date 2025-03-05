@@ -38,7 +38,7 @@ if ( isset( $types[ $queried_post_type ] ) ) {
 					<div class="cpl-archive--list">
 						<?php while ( have_posts() ) : the_post(); if ( $type->post_type !== get_post_type() ) continue; $found = 1; ?>
 							<div class="cpl-archive--list--item">
-								<?php Templates::get_template_part( "parts/" . Templates::get_type() . "-list" ); ?>
+								<?php cp_library()->templates->get_template_part( "parts/" . Templates::get_type() . "-list" ); ?>
 							</div>
 						<?php endwhile; ?>
 					</div>

@@ -49,7 +49,7 @@ if ( $item->has_variations() ) {
 
 				<h3 class="cpl-list-item--title"><a href="<?php the_permalink(); ?>"><?php echo $item_data['title']; ?></a></h3>
 
-				<?php \CP_Library\Templates::get_template_part( 'parts/item-single/meta' ); ?>
+				<?php cp_library()->templates->get_template_part( 'parts/item-single/meta' ); ?>
 
 			</div>
 
@@ -79,7 +79,7 @@ if ( $item->has_variations() ) {
 					<div class="cpl-list-item--columns">
 						<div class="cpl-list-item--details">
 							<h6 class="cpl-list-item--variations--title"><?php echo $variant->get_variation_source_label(); ?></h6>
-							<?php \CP_Library\Templates::get_template_part( 'parts/item-single/info', [ 'item' => $variant_data ] ); ?>
+							<?php cp_library()->templates->get_template_part( 'parts/item-single/info', [ 'item' => $variant_data ] ); ?>
 						</div>
 
 						<div class="cpl_item_actions cpl-item--actions" data-item="<?php echo esc_attr( json_encode( $variant_player_data ) ); ?>"></div>
@@ -106,7 +106,7 @@ if ( $item->has_variations() ) {
 
 					<h3 class="cpl-list-item--title"><a href="<?php the_permalink(); ?>"><?php echo $item_data['title']; ?></a></h3>
 
-					<?php \CP_Library\Templates::get_template_part( 'parts/item-single/info' ); ?>
+					<?php cp_library()->templates->get_template_part( 'parts/item-single/info' ); ?>
 
 				</div>
 
@@ -114,7 +114,7 @@ if ( $item->has_variations() ) {
 
 			</div>
 
-			<?php \CP_Library\Templates::get_template_part( 'parts/item-single/meta' ); ?>
+			<?php cp_library()->templates->get_template_part( 'parts/item-single/meta' ); ?>
 		<?php endif; ?>
 
 	</div>

@@ -27,17 +27,17 @@ $classes = apply_filters( 'cpl_archive_classes', $classes, $type );
 	<div class="cpl-archive--container">
 
 		<div class="cpl-archive--container--filter">
-			<?php Templates::get_template_part( "parts/filter" ); ?>
+			<?php cp_library()->templates->get_template_part( "parts/filter" ); ?>
 		</div>
 
 		<div class="cpl-archive--container--list">
-			<?php Templates::get_template_part( "parts/filter-selected" ); ?>
+			<?php cp_library()->templates->get_template_part( "parts/filter-selected" ); ?>
 
 			<div class="cpl-archive--list">
 				<?php if ( have_posts() ) { ?>
 					<?php while( have_posts() ) : the_post();  ?>
 						<div class="cpl-archive--list--item">
-							<?php Templates::get_template_part( "parts/" . Templates::get_type() . "-list" ); ?>
+							<?php cp_library()->templates->get_template_part( "parts/" . Templates::get_type() . "-list" ); ?>
 						</div>
 					<?php endwhile; ?>
 				<?php } else if( !empty( $type ) && is_object( $type ) && !empty( $type->plural_label ) ) { ?>

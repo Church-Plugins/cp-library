@@ -30,21 +30,21 @@ try {
 	</div>
 
 	<div class="cpl-single-item--details">
-		<?php \CP_Library\Templates::get_template_part( 'parts/item-single/meta' ); ?>
+		<?php cp_library()->templates->get_template_part( 'parts/item-single/meta' ); ?>
 
 		<h1 class="cpl-single-item--title">
 			<?php the_title(); ?>
 		</h1>
 
-		<?php \CP_Library\Templates::get_template_part( 'parts/item-single/info' ); ?>
+		<?php cp_library()->templates->get_template_part( 'parts/item-single/info' ); ?>
 
-		<?php \CP_Library\Templates::get_template_part( 'parts/item-single/attachments' ); ?>
+		<?php cp_library()->templates->get_template_part( 'parts/item-single/attachments' ); ?>
 
 		<div class="cpl-single-item--desc">
 			<?php the_content(); ?>
 		</div>
 
-		<?php \CP_Library\Templates::get_template_part( 'parts/item-single/transcript' ); ?>
+		<?php cp_library()->templates->get_template_part( 'parts/item-single/transcript' ); ?>
 
 		<hr />
 

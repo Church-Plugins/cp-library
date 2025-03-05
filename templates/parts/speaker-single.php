@@ -57,7 +57,7 @@ add_action( 'cpl_single_speaker_before', 'cpl_item_back' );
 	<h3><?php echo sprintf( esc_html__( '%d %s by %s', 'cp-library' ), $item_query->found_posts, $label, get_the_title() ) ?></h3>
 
 	<?php while ( $item_query->have_posts() ) : $item_query->the_post() ?>
-		<?php \CP_Library\Templates::get_template_part( "parts/item-list" ); ?>
+		<?php cp_library()->templates->get_template_part( "parts/item-list" ); ?>
 	<?php endwhile; ?>
 
 	<?php wp_reset_postdata(); ?>
