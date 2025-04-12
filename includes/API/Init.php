@@ -3,6 +3,7 @@ namespace CP_Library\API;
 
 use CP_Library\API\Items as Items_API;
 use CP_Library\API\ItemTypes as ItemTypes_API;
+use CP_Library\API\ServiceTypes as ServiceTypes_API;
 use CP_Library\API\Sources as Sources_API;
 
 /**
@@ -19,6 +20,7 @@ class Init {
 
 	public $items;
 	public $item_types;
+	public $service_types;
 	public $sources;
 
 	/**
@@ -46,10 +48,11 @@ class Init {
 	 *
 	 */
 	protected function __construct() {
-		$this->items      = new Items_API();
-		$this->item_types = new ItemTypes_API();
-		$this->ajax       = AJAX::get_instance();
-		$this->sources = new Sources_API();
+		$this->items         = new Items_API();
+		$this->item_types    = new ItemTypes_API();
+		$this->service_types = new ServiceTypes_API();
+		$this->ajax          = AJAX::get_instance();
+		$this->sources       = new Sources_API();
 		add_action( 'rest_api_init', [ $this, 'load_api_routes' ] );
 		add_filter( 'posts_clauses', [ $this, 'upcoming_series_filter' ], 15, 2 );
 		add_filter( 'posts_clauses', [ $this, 'upcoming_sermons_filter' ], 15, 2 );
@@ -68,6 +71,7 @@ class Init {
 		$api_instance = [
 			$this->items,
 			$this->item_types,
+			$this->service_types,
 			$this->sources
 		];
 

@@ -44,6 +44,10 @@ class ServiceType extends PostType {
 		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'service_type_column' ] );
 		add_action( "manage_{$item_type}_posts_custom_column", [ $this, 'service_type_column_cb' ], 10, 2 );
 		add_action( 'pre_get_posts', [ $this, 'service_type_query' ] );
+		
+		// Add columns to service type list view
+		add_filter( "manage_{$this->post_type}_posts_columns", [ $this, 'service_type_list_columns' ], 20 );
+		add_action( "manage_{$this->post_type}_posts_custom_column", [ $this, 'service_type_list_column_cb' ], 10, 2 );
 
 		// Variations
 		add_filter( 'cpl_variations_sources', [ $this, 'variation_source' ] );
@@ -54,6 +58,59 @@ class ServiceType extends PostType {
 			add_action( 'cpl_save_item_source_' . $this->post_type, [ $this, 'variation_item_save' ], 10, 2 );
 		}
 
+	}
+	
+	/**
+	 * Add custom columns to the service type admin list view
+	 *
+	 * @param array $columns The existing columns
+	 * @return array Modified columns
+	 */
+	public function service_type_list_columns($columns) {
+		$new_columns = [];
+		foreach ($columns as $key => $column) {
+			if ('date' === $key) {
+				$new_columns['sermons'] = cp_library()->setup->post_types->item->plural_label;
+			}
+
+			$new_columns[$key] = $column;
+		}
+
+		// in case date isn't set
+		if (!isset($columns['date'])) {
+			$new_columns['sermons'] = cp_library()->setup->post_types->item->plural_label;
+		}
+
+		return $new_columns;
+	}
+
+	/**
+	 * Output content for the custom sermons count column
+	 *
+	 * @param string $column The column name
+	 * @param int $post_id The post ID
+	 */
+	public function service_type_list_column_cb($column, $post_id) {
+		switch ($column) {
+			case 'sermons':
+				try {
+					$service_type = ServiceType_Model::get_instance_from_origin($post_id);
+					$items = $service_type->get_all_items();
+
+					if (empty($items)) {
+						_e('—', 'cp-library');
+					} else {
+						$url = add_query_arg([
+							'post_type' => cp_library()->setup->post_types->item->post_type,
+							'service-type' => $service_type->id
+						], admin_url('edit.php'));
+						echo sprintf('<a href="%s">%s</a>', $url, count($items));
+					}
+				} catch (\Exception $e) {
+					_e('—', 'cp-library');
+				}
+				break;
+		}
 	}
 
 	/**
@@ -84,6 +141,24 @@ class ServiceType extends PostType {
 
 	public function register_metaboxes() {
 		$this->item_service_type();
+		$this->service_type_options();
+	}
+
+	protected function service_type_options() {
+		$cmb = new_cmb2_box( array(
+			'id'           => 'cpl_service_type_options',
+			'object_types' => [ $this->post_type ],
+			'title'        => __( 'Service Type Options', 'cp-library' ),
+			'context'      => 'normal',
+			'priority'     => 'default',
+		) );
+
+		$cmb->add_field( [
+			'name' => __( 'Exclude from Main List', 'cp-library' ),
+			'desc' => __( 'When checked, sermons with this service type will not appear in the main sermon list. They will still appear in service type archives.', 'cp-library' ),
+			'id'   => 'exclude_from_main_list',
+			'type' => 'checkbox',
+		] );
 	}
 
 	protected function item_service_type() {
@@ -353,5 +428,15 @@ class ServiceType extends PostType {
 		}
 	}
 
+	/**
+	 * Get a ServiceType controller instance for a post ID
+	 *
+	 * @since 1.6.0
+	 * @param int $post_id The post ID
+	 * @return \CP_Library\Controllers\ServiceType
+	 */
+	public function get_controller($post_id) {
+		return new \CP_Library\Controllers\ServiceType($post_id);
+	}
 
 }

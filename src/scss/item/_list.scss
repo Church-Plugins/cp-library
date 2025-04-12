@@ -192,6 +192,7 @@
 				position: absolute;
 				height: 100%;
 				width: 100%;
+				object-fit: cover;
 			}
 		}
 
@@ -311,6 +312,18 @@
 
 				.cpl-list-item--details {
 					justify-content: center;
+				}
+			}
+		}
+
+		@include media-breakpoint-down(md) {
+			.cpl-list-item--thumb {
+				&--canvas {
+					padding: 0;
+					position: absolute;
+					height: auto;
+					width: 100%;
+					aspect-ratio: 1 / 1;
 				}
 			}
 		}

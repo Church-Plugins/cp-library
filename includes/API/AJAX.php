@@ -47,6 +47,28 @@ class AJAX {
 	protected function actions() {
 		add_action( 'wp_ajax_nopriv_cpl_dropdown_facet', array( $this, 'render_dropdown_filter' ) );
 		add_action( 'wp_ajax_cpl_dropdown_facet', array( $this, 'render_dropdown_filter' ) );
+		add_action( 'wp_ajax_cpl_check_visibility_inheritance', array( $this, 'check_visibility_inheritance' ) );
+	}
+	
+	/**
+	 * AJAX handler to check if a sermon inherits visibility from parent entities
+	 */
+	public function check_visibility_inheritance() {
+		// Verify nonce
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'cpl_visibility_nonce' ) ) {
+			wp_send_json_error( array( 'message' => 'Invalid nonce' ) );
+		}
+		
+		// Get post ID
+		$post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+		if ( ! $post_id ) {
+			wp_send_json_error( array( 'message' => 'Invalid post ID' ) );
+		}
+		
+		// Get visibility inheritance
+		$inheritance = cp_library()->setup->visibility->get_visibility_inheritance( $post_id );
+		
+		wp_send_json_success( $inheritance );
 	}
 
 	/**
