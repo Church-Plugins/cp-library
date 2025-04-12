@@ -108,13 +108,14 @@ if ( $item->has_variations() ) {
 
 					<?php cp_library()->templates->get_template_part( 'parts/item-single/info' ); ?>
 
+					<?php cp_library()->templates->get_template_part( 'parts/item-single/meta' ); ?>
+
 				</div>
 
 				<div class="cpl_item_actions cpl-item--actions" data-item="<?php echo esc_attr( json_encode( $player_data ) ); ?>" ></div>
 
 			</div>
 
-			<?php cp_library()->templates->get_template_part( 'parts/item-single/meta' ); ?>
 		<?php endif; ?>
 
 	</div>

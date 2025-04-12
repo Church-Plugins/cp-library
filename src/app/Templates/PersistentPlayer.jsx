@@ -97,7 +97,7 @@ export default function PersistentPlayer(props) {
 
 			if (!playerInstance.current) {
 				setLoading(true);
-			}	
+			}
     }
 
 		api.listen('CPL_HANDOVER_TO_PERSISTENT', handleMessage);
@@ -295,8 +295,8 @@ export default function PersistentPlayer(props) {
 
 		    <Box className="persistentPlayer__info" flex={1} display="flex" flexDirection="column" marginLeft={1} marginRight={1}>
 			    <Box display="flex" flexDirection="row" alignItems="center" fontSize={14} >
-				    <Box marginRight={1} maxWidth={"1.5em"}><Logo /></Box>
-				    <Box><a href={item.permalink} dangerouslySetInnerHTML = {{ __html: item.title }} style={{ color: 'inherit' }}></a></Box>
+				    <Box marginRight={1} maxWidth={"1.5em"} flexShrink={"0"}><Logo /></Box>
+				    <Box overflow={"hidden"}><a href={item.permalink} dangerouslySetInnerHTML = {{ __html: item.title }} style={{ color: 'inherit', whiteSpace: 'nowrap', textOverflow: 'ellipsis', display: 'block', overflow: 'hidden' }}></a></Box>
 			    </Box>
           <Box display="flex" flexDirection="row" alignItems="center">
 

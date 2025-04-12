@@ -44,7 +44,7 @@ export default function Actions({ item, callback }) {
 
 	return (
 		<Box className="cpl-list-item--actions" ref={callback}>
-			<Box className="cpl-list-item--actions--buttons cpl-touch-hide">
+			<Box className="cpl-list-item--actions--buttons">
 				{!!item.video.value && (
 					// when an href is provided, the onclick is ignored and an anchor tag is rendered instead of a button
 					<PlayVideo onClick={playVideo} href={isVideoURL ? false : item.permalink} />
@@ -53,9 +53,6 @@ export default function Actions({ item, callback }) {
 					<PlayAudio onClick={playAudio} href={isAudioURL ? false : item.permalink} />
 				)}
 			</Box>
-			<IconButton className="cpl-list-item--to-item cpl-touch-only" onClick={viewItem}>
-				<ChevronRight/>
-			</IconButton>
 		</Box>
 	);
 }

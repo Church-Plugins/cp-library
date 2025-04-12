@@ -1,7 +1,7 @@
-$gap: min(3.5%, var(--cp-gap--sm, 1rem));
-
 .cpl-list-item {
-	padding: var(--cp-gap--md);
+	--cpl-list-item-gap: min(3.5vw, var(--cp-gap--sm, 1rem));
+	--cpl-list-item-padding: var(--cp-gap--md);
+	padding: 0;
 	position: relative;
 	background: transparent;
 	overflow: hidden;
@@ -10,9 +10,9 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 	border-radius: var(--cp-border-radius);
 	display: flex;
 	flex-direction: row;
+	gap: var(--cpl-list-item-gap);
 
 	&--main {
-		margin-left: $gap;
 		display: flex;
 		flex-flow: column;
 		justify-content: space-evenly;
@@ -24,6 +24,7 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 		display: flex;
 		flex-flow: row;
 		width: 100%;
+		gap: var(--cpl-list-item-gap);
 	}
 
 	&:before {
@@ -48,6 +49,7 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 		cursor: pointer;
 		overflow: hidden;
 		border-radius: var(--cp-border-radius-sm);
+		padding: var(--cpl-list-item-padding) 0 var(--cpl-list-item-padding) var(--cpl-list-item-padding);
 
 		&--canvas {
 			width: 100%;
@@ -73,23 +75,25 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 
 	&--thumb {
 		flex: 0 0 17%;
+		position: relative;
 	}
 
 	&--details {
 		flex: 1 1 auto;
 		display: flex;
 		flex-direction: column;
-		//padding: var(--cp-ui--gap-y--sm);
 		justify-content: space-between;
 		overflow: hidden;
+		gap: calc(var(--cp-gap--sm) / 2);
+		padding: var(--cpl-list-item-padding) 0;
 
 		> * {
-			margin-bottom: var(--cp-gap-base);
+			margin-bottom: 0;
 		}
 	}
 
 	&--title {
-		margin-bottom: var(--cp-gap-base);
+		margin-bottom: 0;
 		font-size: min(3.75vw, var(--cp-font-size-h5));
 		line-height: 1.5;
 		overflow: hidden;
@@ -103,8 +107,9 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 
 	.cpl-meta {
 		font-size: min(2.75vw, var(--cp-font-size--sm));
-		margin-top: 0;
-		margin-right: $gap;
+		margin-top: auto;
+		margin-bottom: 0;
+		padding-top: var(--cp-gap-base);
 		flex-flow: row;
 		overflow: hidden;
 
@@ -122,6 +127,7 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 		display: flex;
 		height: 100%;
 		align-self: center;
+		padding: var(--cpl-list-item-padding) var(--cpl-list-item-padding) var(--cpl-list-item-padding) 0;
 
 		button.cpl-list-item--to-item {
 			color: currentColor;
@@ -138,11 +144,7 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 	&--actions--buttons {
 		padding: var(--cp-ui--gap-y--sm);
 		display: flex;
-
-		> * {
-			margin-left: var(--cp-gap-base);
-		}
-
+		gap: var(--cp-gap-base);
 	}
 
 	.cpl-meta,
@@ -158,15 +160,43 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 		}
 	}
 
+	.cpl-meta {
+		> * {
+			border: none;
+			padding: 0;
+		}
+	}
+
 	@include media-breakpoint-down(md) {
-		margin-top: min(3.5%,1rem);
-		padding: min(3.5%,1rem);
-		overflow: visible;
-		padding-right: 1.5em;
+		--cpl-list-item-padding: var(--cpl-list-item-gap);
+		margin-top: var(--cpl-list-item-gap);
 
 		.cpl-meta,
 		.cpl-info {
 			font-size: min(2.75vw, var(--cp-font-size--sm));
+
+			> * {
+				display: none;
+			}
+
+			> *:first-child, > *:nth-child(2) {
+				display: flex;
+			}
+		}
+
+		&--thumb {
+			padding: 0;
+
+			&--canvas {
+				padding: 0;
+				position: absolute;
+				height: 100%;
+				width: 100%;
+			}
+		}
+
+		&--title {
+			line-height: 1;
 		}
 
 		.cpl-info:first-child {
@@ -185,13 +215,23 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 
 		}
 
+		.cpl-list-item--actions--buttons {
+			padding: 0;
+			flex-flow: column;
+			align-items: stretch;
+
+			button {
+				width: 100%;
+			}
+		}
+
 		.cpl-item--actions {
-			position: absolute;
-			right: -0.5em;
-			top: 50%;
-			margin-top: -1em;
-			background: white;
-			border-radius: 100px;
+			//position: absolute;
+			//right: -0.5em;
+			//top: 50%;
+			//margin-top: -1em;
+			//background: white;
+			//border-radius: 100px;
 		}
 	}
 
@@ -201,9 +241,53 @@ $gap: min(3.5%, var(--cp-gap--sm, 1rem));
 			margin-bottom: 0;
 		}
 
+		.cpl-info,
+		.cpl-meta {
+			> *:not(:first-child) {
+				display: none;
+			}
+
+			> *:first-child {
+				max-width: 100%;
+			}
+		}
+
+		.cpl-meta {
+			padding: 0;
+		}
+
 		.cpl-item--info {
 			.cpl-item--locations {
 				display: none;
+			}
+		}
+
+		.cpl-list-item--actions {
+			padding: 0;
+
+			.cpl-list-item--actions--buttons {
+				justify-content: stretch;
+				gap: 0;
+
+				> * {
+					display: inline-flex;
+					flex-grow: 1;
+				}
+
+				button {
+
+					&.cpl-button--outlined {
+						border: none;
+					}
+
+					svg {
+						margin: 0;
+					}
+
+					span {
+						display: none;
+					}
+				}
 			}
 		}
 	}
