@@ -1,0 +1,790 @@
+<?php
+
+namespace CP_Library;
+
+use ChurchPlugins\Helpers;
+use CP_Library\Admin\Settings;
+
+/**
+ * Filters class for managing sermon filters across different contexts
+ *
+ * @since 1.6.0
+ */
+class Filters {
+
+	/**
+	 * Singleton instance
+	 *
+	 * @var Filters
+	 */
+	private static $instance = null;
+
+	/**
+	 * Registered filter types
+	 *
+	 * @var array
+	 */
+	private $filter_types = [];
+
+	/**
+	 * Registered contexts
+	 *
+	 * @var array
+	 */
+	private $contexts = [];
+
+	/**
+	 * Get the singleton instance
+	 *
+	 * @return Filters
+	 */
+	public static function get_instance() {
+		if ( null === self::$instance ) {
+			self::$instance = new self();
+		}
+
+		return self::$instance;
+	}
+
+	/**
+	 * Private constructor
+	 */
+	private function __construct() {
+		$this->actions();
+	}
+
+	/**
+	 * Setup actions and filters
+	 */
+	private function actions() {
+		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
+		add_action( 'wp_ajax_cpl_filter_options', [ $this, 'ajax_get_filter_options' ] );
+		add_action( 'wp_ajax_nopriv_cpl_filter_options', [ $this, 'ajax_get_filter_options' ] );
+		add_action( 'init', [ $this, 'init' ], 20 );
+	}
+
+	public function init() {
+		$this->register_default_filter_types();
+		$this->register_default_contexts();
+	}
+
+	/**
+	 * Enqueue scripts and styles for filters
+	 */
+	public function enqueue_scripts() {
+		cp_library()->enqueue_asset( 'filters', ['jquery'], CP_LIBRARY_PLUGIN_VERSION, false, true );
+	}
+
+	/**
+	 * Register default filter types
+	 */
+	private function register_default_filter_types() {
+		// Register taxonomy filters
+		$taxonomies = cp_library()->setup->taxonomies->get_objects();
+		foreach ( $taxonomies as $tax ) {
+			// Skip if taxonomy object is null
+			if ( ! $tax || ! isset( $tax->taxonomy ) ) {
+				continue;
+			}
+
+			$this->register_filter_type( $tax->taxonomy, [
+				'label'    => $tax->single_label,
+				'type'     => 'taxonomy',
+				'taxonomy' => $tax->taxonomy,
+			] );
+		}
+
+		// Register speaker filter
+		if ( cp_library()->setup->post_types->speaker_enabled() ) {
+			$this->register_filter_type( 'speaker', [
+				'label'       => cp_library()->setup->post_types->speaker->single_label,
+				'type'        => 'source',
+				'source_type' => 'speaker',
+			] );
+		}
+
+		// Register service type filter
+		if ( cp_library()->setup->post_types->service_type_enabled() ) {
+			$this->register_filter_type( 'service-type', [
+				'label'       => cp_library()->setup->post_types->service_type->single_label,
+				'type'        => 'source',
+				'source_type' => 'service_type',
+			] );
+		}
+	}
+
+	/**
+	 * Register default contexts
+	 */
+	private function register_default_contexts() {
+		// Archive context
+		$this->register_context( 'archive', [
+			'label' => __( 'Archive', 'cp-library' ),
+		] );
+
+		// Service Type context
+		$this->register_context( 'service-type', [
+			'label' => __( 'Service Type', 'cp-library' ),
+		] );
+	}
+
+	/**
+	 * Register a filter type
+	 *
+	 * @param string $id   Filter type ID
+	 * @param array  $args Filter type arguments
+	 */
+	public function register_filter_type( $id, $args ) {
+		$this->filter_types[ $id ] = wp_parse_args( $args, [
+			'label'          => '',
+			'type'           => 'custom',
+			'query_callback' => null,
+		] );
+	}
+
+	/**
+	 * Get all registered filter types
+	 *
+	 * @return array
+	 */
+	public function get_filter_types() {
+		return $this->filter_types;
+	}
+
+	/**
+	 * Get a specific filter type
+	 *
+	 * @param string $id Filter type ID
+	 *
+	 * @return array|null
+	 */
+	public function get_filter_type( $id ) {
+		return isset( $this->filter_types[ $id ] ) ? $this->filter_types[ $id ] : null;
+	}
+
+	/**
+	 * Register a context
+	 *
+	 * @param string $id   Context ID
+	 * @param array  $args Context arguments
+	 */
+	public function register_context( $id, $args ) {
+		$this->contexts[ $id ] = wp_parse_args( $args, [
+			'label'          => '',
+			'query_callback' => null,
+		] );
+	}
+
+	/**
+	 * Get a specific context
+	 *
+	 * @param string $id Context ID
+	 *
+	 * @return array|null
+	 */
+	public function get_context( $id ) {
+		return isset( $this->contexts[ $id ] ) ? $this->contexts[ $id ] : null;
+	}
+
+	/**
+	 * Get all registered contexts
+	 *
+	 * @return array
+	 */
+	public function get_contexts() {
+		return $this->contexts;
+	}
+
+	/**
+	 * AJAX handler for getting filter options
+	 */
+	public function ajax_get_filter_options() {
+		// Start time for performance tracking
+		$start_time = microtime(true);
+
+		// Get parameters
+		$filter_type = sanitize_text_field( $_POST['filter_type'] ?? '' );
+		$context     = sanitize_text_field( $_POST['context'] ?? 'archive' );
+		$args        = isset( $_POST['args'] ) ? $_POST['args'] : [];
+		$query_vars  = isset( $_POST['query_vars'] ) ? $_POST['query_vars'] : [];
+		$selected    = isset( $_POST['selected'] ) ? $_POST['selected'] : [];
+
+		// Validate filter type
+		if ( ! isset( $this->filter_types[ $filter_type ] ) ) {
+			wp_send_json_error( [ 'message' => __( 'Invalid filter type.', 'cp-library' ) ] );
+		}
+
+		// Initialize AJAX args
+		$ajax_args = ['args' => $args];
+		
+		// Handle service-type context
+		if ($context === 'service-type' && isset($args['service_type_id'])) {
+			$ajax_args['service_type_id'] = $args['service_type_id'];
+			$ajax_args['context_args'] = ['service_type_id' => $args['service_type_id']];
+		}
+		
+		// Check if we have any active filters (beside the current one)
+		$has_active_filters = false;
+		foreach ($query_vars as $key => $value) {
+			if ($key !== $filter_type && $key !== 'post_type' && $key !== 'post_status' && !empty($value)) {
+				$has_active_filters = true;
+				break;
+			}
+		}
+		
+		// Only run filtering query if we actually have active filters
+		if ($has_active_filters) {
+			// Create a simplified query with just the essential parameters
+			$query_args = [
+				'post_type'              => cp_library()->setup->post_types->item->post_type,
+				'post_status'            => 'publish',
+				'no_found_rows'          => true,
+				'posts_per_page'         => -1, // Get all posts to ensure accurate counts
+				'fields'                 => 'ids',
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			];
+			
+			// Add taxonomy filters (but skip the current filter type)
+			$taxonomies = ['cpl_scripture', 'cpl_topic', 'cpl_season'];
+			$has_filters = false;
+			
+			foreach ($taxonomies as $taxonomy) {
+				if ($taxonomy === $filter_type) {
+					continue; // Skip current filter type
+				}
+				
+				if (isset($query_vars[$taxonomy]) && !empty($query_vars[$taxonomy])) {
+					if (!isset($query_args['tax_query'])) {
+						$query_args['tax_query'] = [];
+					}
+					
+					$query_args['tax_query'][] = [
+						'taxonomy' => $taxonomy,
+						'field'    => 'slug',
+						'terms'    => $query_vars[$taxonomy],
+					];
+					
+					$has_filters = true;
+				}
+			}
+			
+			// Add speaker filter if active and not the current filter type
+			if (isset($query_vars['speaker']) && !empty($query_vars['speaker']) && $filter_type !== 'speaker') {
+				$query_args['cpl_speakers'] = $query_vars['speaker'];
+				$has_filters = true;
+			}
+			
+			// Add service-type filter if active and not the current filter type
+			if (isset($query_vars['service-type']) && !empty($query_vars['service-type']) && $filter_type !== 'service-type') {
+				$query_args['cpl_service_types'] = $query_vars['service-type'];
+				$has_filters = true;
+			}
+			
+			// Add search if active
+			if (isset($query_vars['s']) && !empty($query_vars['s'])) {
+				$query_args['s'] = sanitize_text_field($query_vars['s']);
+				$has_filters = true;
+			}
+			
+			// Only run query if we have actual filters
+			if ($has_filters) {
+				// Get filtered post IDs
+				$query = new \WP_Query($query_args);
+				$filtered_post_ids = $query->posts;
+				wp_reset_postdata();
+				
+				if (!empty($filtered_post_ids)) {
+					$ajax_args['post__in'] = $filtered_post_ids;
+				} else {
+					// No results found for these filters
+					$ajax_args['post__in'] = [0];  // Force empty results
+				}
+			}
+		}
+
+		// Get filter options
+		$options = $this->get_filter_options( $filter_type, $context, $ajax_args );
+
+		// Return results
+		wp_send_json_success( [
+			'options' => $options,
+		] );
+	}
+
+	/**
+	 * Get filter options for a specific filter type and context
+	 *
+	 * @param string $filter_type Filter type ID
+	 * @param string $context     Context ID
+	 * @param array  $args        Additional arguments
+	 *
+	 * @return array
+	 */
+	public function get_filter_options( $filter_type, $context = 'archive', $args = [] ) {
+		$filter_config = $this->get_filter_type( $filter_type );
+		if ( ! $filter_config ) {
+			return [];
+		}
+
+		// Default args
+		$args = wp_parse_args( $args, [
+			'post__in'  => [],
+			'post_type' => cp_library()->setup->post_types->item->post_type,
+			'threshold' => (int) Settings::get_advanced( 'filter_count_threshold', 3 ),
+		] );
+
+		// Different default for scripture
+		$default_order_by = 'cpl_scripture' === $filter_type ? 'name' : 'sermon_count';
+		$args['order_by'] = Settings::get_advanced( 'sort_' . $filter_type, $default_order_by );
+
+		// Add filter-specific args
+		$args['facet_type'] = $filter_type;
+		$args['context'] = $context;
+
+		// Process context-specific args
+		if ( $context === 'service-type' ) {
+			// Check different potential locations for the service_type_id
+			if (isset($args['service_type_id'])) {
+				// Already set
+			} elseif (isset($args['args']) && isset($args['args']['service_type_id'])) {
+				// From AJAX request
+				$args['service_type_id'] = $args['args']['service_type_id'];
+			} elseif (isset($args['context_args']) && isset($args['context_args']['service_type_id'])) {
+				// From direct function call
+				$args['service_type_id'] = $args['context_args']['service_type_id'];
+			}
+
+			// If we're in service-type context, filter sermon IDs by this service type
+			if ( isset($args['service_type_id']) && empty( $args['post__in'] ) ) {
+				global $wpdb;
+				// Get all sermon IDs for this service type
+				$sql = $wpdb->prepare(
+					"SELECT item_id FROM {$wpdb->prefix}cp_source_meta sm
+					INNER JOIN {$wpdb->prefix}cp_source_type st ON sm.source_type_id = st.id
+					WHERE st.title = 'service_type' AND sm.source_id = %d",
+					$args['service_type_id']
+				);
+				$item_ids = $wpdb->get_col( $sql );
+				
+				// Check if query was successful and returned results
+				if ( $item_ids && !empty( $item_ids ) ) {
+					$args['post__in'] = $item_ids;
+				} else {
+					// Log for debugging
+					if ( defined('WP_DEBUG') && WP_DEBUG ) {
+						error_log('CP Library: No items found for service type ID: ' . $args['service_type_id']);
+						error_log('CP Library SQL: ' . $sql);
+						error_log('CP Library Last SQL Error: ' . $wpdb->last_error);
+					}
+					// Set post__in to an impossible value to return no results
+					// This prevents SQL errors when no matching items exist
+					$args['post__in'] = [0];
+				}
+			}
+		}
+
+		// Check cache first
+		$options = $this->get_cached_options( $filter_type, $context, $args );
+		if ( false !== $options ) {
+			return $options;
+		}
+
+		// Get options based on filter type
+		switch ( $filter_config['type'] ) {
+			case 'taxonomy':
+				$options = $this->get_taxonomy_options( $filter_config, $args );
+				break;
+			case 'source':
+				$options = $this->get_source_options( $filter_config, $args );
+				break;
+			case 'custom':
+				$options = $this->get_custom_options( $filter_config, $args );
+				break;
+			default:
+				$options = [];
+		}
+
+		// Apply filters
+		$options = apply_filters( 'cpl_filter_options', $options, $filter_type, $context, $args );
+		$options = apply_filters( "cpl_filter_options_{$filter_type}", $options, $context, $args );
+
+		// Cache the results
+		$this->cache_options( $filter_type, $context, $args, $options );
+
+		return $options;
+	}
+
+	/**
+	 * Get cached filter options
+	 *
+	 * @param string $filter_type Filter type ID
+	 * @param string $context     Context ID
+	 * @param array  $args        Additional arguments
+	 *
+	 * @return array|false
+	 */
+	private function get_cached_options( $filter_type, $context, $args ) {
+		// Skip cache if post__in is set, as this means we're using selected filters
+		// and need fresh counts based on current selections
+		if (!empty($args['post__in'])) {
+			return false;
+		}
+		
+		// Get relevant model for cache management
+		$model_class = $args['post_type'] === cp_library()->setup->post_types->item->post_type
+			? 'CP_Library\Models\Item'
+			: 'CP_Library\Models\ItemType';
+
+		// Try to get from cache
+		$cache_key   = md5( $filter_type . '_' . $context . '_' . serialize( $args ) . '_' . $model_class::get_last_changed() );
+		$cache_group = $model_class::get_prop( 'cache_group' );
+
+		return wp_cache_get( $cache_key, $cache_group );
+	}
+
+	/**
+	 * Cache filter options
+	 *
+	 * @param string $filter_type Filter type ID
+	 * @param string $context     Context ID
+	 * @param array  $args        Additional arguments
+	 * @param array  $options     The options to cache
+	 */
+	private function cache_options( $filter_type, $context, $args, $options ) {
+		// Skip caching if post__in is set, as this means we're using selected filters
+		// and these results shouldn't be cached as they're specific to the current selection
+		if (!empty($args['post__in'])) {
+			return;
+		}
+		
+		// Get relevant model for cache management
+		$model_class = $args['post_type'] === cp_library()->setup->post_types->item->post_type
+			? 'CP_Library\Models\Item'
+			: 'CP_Library\Models\ItemType';
+
+		// Set cache
+		$cache_key   = md5( $filter_type . '_' . $context . '_' . serialize( $args ) . '_' . $model_class::get_last_changed() );
+		$cache_group = $model_class::get_prop( 'cache_group' );
+
+		wp_cache_set( $cache_key, $options, $cache_group, WEEK_IN_SECONDS );
+	}
+
+	/**
+	 * Get taxonomy filter options
+	 *
+	 * @param array $filter_config Filter type configuration
+	 * @param array $args          Additional arguments
+	 *
+	 * @return array
+	 */
+	private function get_taxonomy_options( $filter_config, $args ) {
+		global $wpdb;
+
+		// Special case: If we know there are no matching posts
+		if (isset($args['post__in']) && $args['post__in'] === [0]) {
+			return [];
+		}
+
+		$order_by = ( $args['order_by'] === 'count' ) ? 'count DESC' : 'title ASC';
+
+		// Check the post__in array size - build different queries for performance
+		if (empty($args['post__in'])) {
+			// No filtered IDs - standard query
+			$query = "SELECT
+				t.name AS title,
+				t.term_id AS id,
+				t.slug AS value,
+				COUNT(p.ID) AS count
+			FROM
+				{$wpdb->terms} AS t
+			INNER JOIN
+				{$wpdb->term_taxonomy} AS tt ON t.term_id = tt.term_id AND tt.taxonomy = %s
+			LEFT JOIN
+				{$wpdb->term_relationships} AS tr ON tt.term_taxonomy_id = tr.term_taxonomy_id
+			LEFT JOIN
+				{$wpdb->posts} AS p ON tr.object_id = p.ID AND p.post_type = %s AND p.post_status = 'publish'
+			GROUP BY 
+				t.term_id 
+			HAVING 
+				count >= %d 
+			ORDER BY 
+				{$order_by}";
+				
+			$query = $wpdb->prepare(
+				$query,
+				$filter_config['taxonomy'],
+				$args['post_type'],
+				$args['threshold']
+			);
+		} else {
+			// Filtered IDs - optimize for large post__in arrays
+			
+			// If post__in is too large, we need a more efficient approach
+			// to avoid query timeouts with large IN() clauses
+			if (count($args['post__in']) > 1000) {
+				// Create a temporary table for better performance with large datasets
+				$tmp_table_name = $wpdb->prefix . 'tmp_filter_ids_' . md5(microtime());
+				
+				// Create temporary table
+				$wpdb->query("CREATE TEMPORARY TABLE {$tmp_table_name} (ID bigint PRIMARY KEY)");
+				
+				// Insert IDs in chunks to avoid query limits
+				$chunks = array_chunk($args['post__in'], 500);
+				foreach ($chunks as $chunk) {
+					$values = implode(',', array_map(function($id) {
+						return '(' . absint($id) . ')';
+					}, $chunk));
+					
+					$wpdb->query("INSERT INTO {$tmp_table_name} (ID) VALUES " . $values);
+				}
+				
+				// Use the temp table in our query
+				$query = "SELECT
+					t.name AS title,
+					t.term_id AS id,
+					t.slug AS value,
+					COUNT(p.ID) AS count
+				FROM
+					{$wpdb->terms} AS t
+				INNER JOIN
+					{$wpdb->term_taxonomy} AS tt ON t.term_id = tt.term_id AND tt.taxonomy = %s
+				LEFT JOIN
+					{$wpdb->term_relationships} AS tr ON tt.term_taxonomy_id = tr.term_taxonomy_id
+				LEFT JOIN
+					{$wpdb->posts} AS p ON tr.object_id = p.ID AND p.post_type = %s AND p.post_status = 'publish'
+				INNER JOIN
+					{$tmp_table_name} AS tmp ON p.ID = tmp.ID
+				GROUP BY 
+					t.term_id 
+				HAVING 
+					count >= %d 
+				ORDER BY 
+					{$order_by}";
+					
+				$query = $wpdb->prepare(
+					$query,
+					$filter_config['taxonomy'],
+					$args['post_type'],
+					$args['threshold']
+				);
+				
+				// Get results
+				$options = $wpdb->get_results($query);
+				
+				// Clean up temp table
+				$wpdb->query("DROP TEMPORARY TABLE IF EXISTS {$tmp_table_name}");
+				
+				// Return results early since we already executed the query
+				return $options ?: [];
+			} else {
+				// For smaller post__in arrays, use standard IN clause
+				$query = "SELECT
+					t.name AS title,
+					t.term_id AS id,
+					t.slug AS value,
+					COUNT(p.ID) AS count
+				FROM
+					{$wpdb->terms} AS t
+				INNER JOIN
+					{$wpdb->term_taxonomy} AS tt ON t.term_id = tt.term_id AND tt.taxonomy = %s
+				LEFT JOIN
+					{$wpdb->term_relationships} AS tr ON tt.term_taxonomy_id = tr.term_taxonomy_id
+				LEFT JOIN
+					{$wpdb->posts} AS p ON tr.object_id = p.ID AND p.post_type = %s AND p.post_status = 'publish'
+					AND p.ID IN (" . implode(',', array_map('absint', $args['post__in'])) . ")
+				GROUP BY 
+					t.term_id 
+				HAVING 
+					count >= %d 
+				ORDER BY 
+					{$order_by}";
+					
+				$query = $wpdb->prepare(
+					$query,
+					$filter_config['taxonomy'],
+					$args['post_type'],
+					$args['threshold']
+				);
+			}
+		}
+
+		$options = $wpdb->get_results( $query );
+
+		// Special handling for scripture sorting
+		if ( $filter_config['taxonomy'] === 'cpl_scripture' && $args['order_by'] === 'name' ) {
+			usort( $options, function ( $a, $b ) {
+				$book_order = array_values( cp_library()->setup->taxonomies->scripture->get_terms() );
+				$index_a    = array_search( $a->title, $book_order );
+				$index_b    = array_search( $b->title, $book_order );
+
+				if ( $index_a === false || $index_b === false ) {
+					return 0;
+				}
+
+				return $index_a - $index_b;
+			} );
+		}
+
+		return $options ?: [];
+	}
+
+	/**
+	 * Get source filter options (speakers, service types)
+	 *
+	 * @param array $filter_config Filter type configuration
+	 * @param array $args          Additional arguments
+	 *
+	 * @return array
+	 */
+	private function get_source_options( $filter_config, $args ) {
+		global $wpdb;
+
+		$order_by = ( $args['order_by'] === 'count' ) ? 'count DESC' : 'title ASC';
+
+		// Build the SQL query with proper context handling
+		$sql = 'SELECT
+            source.id AS value,
+            source.title AS title,
+            COUNT(sermon.id) AS count
+        FROM
+            %1$s AS source
+        LEFT JOIN
+            %2$s AS meta ON meta.source_id = source.id
+        INNER JOIN
+            %3$s AS type ON meta.source_type_id = type.id AND type.title = "%4$s"
+        LEFT JOIN
+            %5$s AS sermon ON meta.item_id = sermon.id';
+
+		// Add WHERE clause for post__in if needed
+		if ( ! empty( $args['post__in'] ) ) {
+			$sql .= ' WHERE sermon.id IN (' . implode( ',', array_map( 'absint', $args['post__in'] ) ) . ')';
+		}
+
+		// Handle service-type context specifically
+		if ( isset( $args['context'] ) && $args['context'] === 'service-type' && isset( $args['service_type_id'] ) ) {
+			$service_type_join = ' AND sermon.id IN (
+				SELECT item_id FROM ' . $wpdb->prefix . 'cp_source_meta sm
+				INNER JOIN ' . $wpdb->prefix . 'cp_source_type st ON sm.source_type_id = st.id
+				WHERE st.title = "service_type" AND sm.source_id = %d
+			)';
+
+			// Add join condition based on whether we already have a WHERE clause
+			if ( ! empty( $args['post__in'] ) ) {
+				$sql .= $wpdb->prepare( $service_type_join, $args['service_type_id'] );
+			} else {
+				$sql .= $wpdb->prepare( ' WHERE 1=1' . $service_type_join, $args['service_type_id'] );
+			}
+		}
+
+		// Complete the query
+		$sql .= ' GROUP BY source.id HAVING count >= %d ORDER BY ' . $order_by;
+
+		$sql = $wpdb->prepare(
+			$sql,
+			$wpdb->prefix . 'cp_source',
+			$wpdb->prefix . 'cp_source_meta',
+			$wpdb->prefix . 'cp_source_type',
+			$filter_config['source_type'],
+			$wpdb->prefix . 'cpl_item',
+			$args['threshold']
+		);
+
+		$options = $wpdb->get_results( $sql );
+
+		return $options ?: [];
+	}
+
+	/**
+	 * Get custom filter options
+	 *
+	 * @param array $filter_config Filter type configuration
+	 * @param array $args          Additional arguments
+	 *
+	 * @return array
+	 */
+	private function get_custom_options( $filter_config, $args ) {
+		// If a custom callback is provided, use it
+		if ( isset( $filter_config['query_callback'] ) && is_callable( $filter_config['query_callback'] ) ) {
+			return call_user_func( $filter_config['query_callback'], $args );
+		}
+
+		return [];
+	}
+
+	/**
+	 * Render filter form
+	 *
+	 * @param array $args Filter form arguments
+	 */
+	public function render_filter_form( $args = [] ) {
+		// Parse args
+		$args = wp_parse_args( $args, [
+			'context'          => 'archive',
+			'context_args'     => [],
+			'disabled_filters' => Settings::get_advanced( 'disable_filters', [] ),
+			'show_search'      => true,
+			'container_class'  => '',
+		] );
+
+		// Get disabled filters
+		$disabled_filters = $args['disabled_filters'];
+
+		// Get available filter types (excluding disabled ones)
+		$filter_types = array_filter( $this->filter_types, function ( $id ) use ( $disabled_filters ) {
+			return ! in_array( $id, $disabled_filters );
+		}, ARRAY_FILTER_USE_KEY );
+
+		$context_args = '';
+		if ( isset( $args['context_args'] ) && is_array( $args['context_args'] ) ) {
+			foreach ( $args['context_args'] as $key => $value ) {
+				$context_args .= sprintf( ' data-%s="%s"', sanitize_title( str_replace( '_', '-', $key ) ), esc_attr( $value ) );
+			}
+		}
+
+		// Start output buffer
+		ob_start();
+
+		// Load template with variables in scope
+		cp_library()->templates->get_template_part('parts/filters/form', [
+			'filter_types' => $filter_types,
+			'context_args' => $context_args,
+			'context_args_data' => $args['context_args'],
+			'context' => $args['context'],
+			'container_class' => $args['container_class'],
+			'show_search' => $args['show_search'],
+			'disabled_filters' => $disabled_filters
+		]);
+
+		return ob_get_clean();
+	}
+
+	/**
+	 * Render selected filters
+	 *
+	 * @param array $args Selected filters arguments
+	 */
+	public function render_selected_filters( $args = [] ) {
+		// Parse args
+		$args = wp_parse_args( $args, [
+			'context'      => 'archive',
+			'context_args' => [],
+		] );
+
+		// Get request parameters
+		$get = $_GET;
+		$uri = explode( '?', $_SERVER['REQUEST_URI'] ?? '?' )[0];
+
+		// Start output buffer
+		ob_start();
+
+		// Load template with variables in scope
+		cp_library()->templates->get_template_part('parts/filters/selected', [
+			'args' => $args,
+			'get' => $get,
+			'uri' => $uri
+		]);
+
+		return ob_get_clean();
+	}
+}

@@ -76,6 +76,9 @@ class ItemType extends PostType  {
 		add_filter( 'post_updated_messages', [ $this, 'post_update_messages' ] );
 		add_filter( "{$this->post_type}_slug", [ $this, 'custom_slug' ] );
 
+		// Register facets
+		// add_action( 'cpl_register_facets', [ $this, 'register_facets' ] );
+
 		add_filter( "manage_{$item}_posts_columns", [ $this, 'item_data_column' ] );
 		add_action( "manage_{$item}_posts_custom_column", [ $this, 'item_data_column_cb' ], 10, 2 );
 
@@ -776,5 +779,116 @@ class ItemType extends PostType  {
 		$messages['post'][98] = sprintf( __( '%s was set to publish it contains %s', 'cp-library' ), get_the_title( $post->ID ), Item::get_instance()->plural_label );
 
 		return $messages;
+	}
+
+	/**
+	 * Register series (item type) facet
+	 *
+	 * @param \CP_Library\Filters $filters The filters instance
+	 */
+	public function register_facets( $filters ) {
+		$filters->register_facet( 'series', [
+			'label'           => $this->single_label,
+			'param'           => 'facet-series',
+			'query_var'       => 'cpl_item_type',
+			'type'            => 'series',
+			'public'          => true,
+			'query_callback'  => [ $this, 'facet_query_callback' ],
+			'options_callback' => [ $this, 'get_facet_options' ],
+		]);
+	}
+
+	/**
+	 * Get series options for facet dropdown
+	 *
+	 * @param array $args Arguments for facet options
+	 * @return array Options in format required by facet system
+	 */
+	public function get_facet_options( $args = [] ) {
+		$args = wp_parse_args( $args, [
+			'threshold'  => 1,
+			'orderby'    => 'count',
+			'query_vars' => [],
+		]);
+
+		// Get all enabled series with associated item counts
+		try {
+			$series = \CP_Library\Models\ItemType::get_all([
+				'order_by'  => $args['orderby'] === 'count' ? 'item_count' : 'title',
+				'order'     => $args['orderby'] === 'count' ? 'DESC' : 'ASC',
+				'threshold' => $args['threshold'],
+			]);
+
+			// Format for facet system
+			$options = [];
+			foreach ( $series as $item_type ) {
+				// Skip if below threshold or has no items
+				if ( $item_type->item_count < $args['threshold'] ) {
+					continue;
+				}
+
+				$options[] = [
+					'id'    => $item_type->origin_id,
+					'value' => $item_type->origin_id,
+					'title' => $item_type->title,
+					'count' => $item_type->item_count,
+				];
+			}
+
+			return $options;
+		} catch ( \Exception $e ) {
+			error_log( $e );
+			return [];
+		}
+	}
+
+	/**
+	 * Query callback for series facet
+	 *
+	 * @param \WP_Query $query  The query object
+	 * @param array     $values The facet values
+	 * @param array     $config The facet configuration
+	 */
+	public function facet_query_callback( $query, $values, $config ) {
+		if ( empty( $values ) ) {
+			return;
+		}
+
+		// Convert to array if it's not already
+		if ( ! is_array( $values ) ) {
+			$values = [ $values ];
+		}
+
+		// Convert values to integers
+		$values = array_map( 'absint', $values );
+
+		// Use the same logic as item_type_param_query method
+		try {
+			$items = [];
+
+			foreach ( $values as $type_id ) {
+				$type = Model::get_instance_from_origin( $type_id );
+				$series_items = array_map( 'absint', wp_list_pluck( $type->get_items(), 'origin_id' ) );
+				$items = array_merge( $items, $series_items );
+			}
+
+			if ( ! empty( $items ) ) {
+				$post_in = $query->get( 'post__in', [] );
+
+				// If post__in is already set, we need to find the intersection
+				if ( ! empty( $post_in ) ) {
+					$items = array_intersect( $post_in, $items );
+
+					// If there's no intersection, add a dummy ID to ensure no results
+					if ( empty( $items ) ) {
+						$items = [ '-1' ];
+					}
+				}
+
+				$query->set( 'post__in', $items );
+			}
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
 	}
 }

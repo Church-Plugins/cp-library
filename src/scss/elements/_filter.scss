@@ -15,9 +15,20 @@
 			}
 		}
 	}
+	
+	&--toggle {
+		&--button {
+			&.disabled {
+				opacity: 0.5;
+				pointer-events: none;
+				cursor: default;
+			}
+		}
+	}
 
 	&--has-dropdown {
 		position: relative;
+		display: none; /* Hide dropdowns by default until AJAX loads */
 
 		&.open {
 			.cpl-filter--dropdown {
@@ -29,6 +40,10 @@
 			opacity: 0.5;
 			pointer-events: none;
 			display: none !important;
+		}
+		
+		&.initialized {
+			display: block; /* Show dropdowns after they're ready */
 		}
 	}
 
@@ -86,6 +101,7 @@
 		flex-basis: 8rem;
 		overflow: hidden;
 		max-width: 12rem;
+		display: block !important; /* Always show search */
 
 		@include media-breakpoint-down(md) {
 			max-width: 100%;

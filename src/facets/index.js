@@ -1,5 +1,6 @@
 jQuery($ => {
 	$(document).ready(function () {
+		return;
 
 		var $filter = $('.cpl-filter');
 

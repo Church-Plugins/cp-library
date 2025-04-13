@@ -29,6 +29,8 @@ New to CP Sermon Library? Start here:
 - [Transcripts](timestamps-and-transcripts.md#managing-sermon-transcripts) - Add searchable transcripts
 - [Sermon Variations](sermon-variations.md) - Multiple service types and contexts
 - [Persistent Player](advanced-features.md#using-the-persistent-audio-player) - Site-wide audio player
+- [Service Types](service-types.md) - Categorize sermons by service
+- [Advanced Filtering](filter-system.md) - Filter system for all contexts
 
 ### Podcasting
 - [Podcast Setup Guide](podcast-setup-guide.md) - Complete podcast walkthrough

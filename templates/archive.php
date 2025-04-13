@@ -27,11 +27,19 @@ $classes = apply_filters( 'cpl_archive_classes', $classes, $type );
 	<div class="cpl-archive--container">
 
 		<div class="cpl-archive--container--filter">
-			<?php cp_library()->templates->get_template_part( "parts/filter" ); ?>
+			<?php
+			// Use the new filter system for archive context
+			echo cp_library()->filters->render_filter_form([
+				'context' => 'archive',
+				'container_class' => 'cpl-archive-filter',
+			]);
+			?>
 		</div>
 
 		<div class="cpl-archive--container--list">
-			<?php cp_library()->templates->get_template_part( "parts/filter-selected" ); ?>
+			<?php echo cp_library()->filters->render_selected_filters([
+				'context' => 'archive',
+			]); ?>
 
 			<div class="cpl-archive--list">
 				<?php if ( have_posts() ) { ?>

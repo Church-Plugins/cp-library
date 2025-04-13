@@ -45,6 +45,66 @@ class Speaker extends PostType {
 		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'speaker_column' ] );
 		add_action( "manage_{$item_type}_posts_custom_column", [ $this, 'speaker_column_cb' ], 10, 2 );
 		add_action( 'pre_get_posts', [ $this, 'speaker_query' ] );
+
+		// Register facets
+		add_action( 'cpl_register_facets', [ $this, 'register_facets' ] );
+	}
+
+	/**
+	 * Register speaker facet
+	 *
+	 * @param \CP_Library\Filters $filters The filters instance
+	 */
+	public function register_facets( $filters ) {
+		$filters->register_facet( 'speaker', [
+			'label'           => $this->single_label,
+			'param'           => 'facet-speaker',
+			'query_var'       => 'cpl_speakers',
+			'type'            => 'source',
+			'source_type'     => 'speaker',
+			'public'          => true,
+			'query_callback'  => [ $this, 'facet_query_callback' ],
+		]);
+	}
+
+	/**
+	 * Query callback for speaker facet
+	 *
+	 * @param \WP_Query $query  The query object
+	 * @param array     $values The facet values
+	 * @param array     $config The facet configuration
+	 */
+	public function facet_query_callback( $query, $values, $config ) {
+		if ( empty( $values ) ) {
+			return;
+		}
+
+		// Use the same logic as speaker_query method
+		if ( ! is_array( $values ) ) {
+			$values = [ $values ];
+		}
+
+		$post_in_orig = $query->get( 'post__in' );
+		$post_in = [];
+
+		foreach ( $values as $speaker_id ) {
+			$speaker_id = absint( $speaker_id );
+
+			try {
+				$speaker = Speaker_Model::get_instance( $speaker_id );
+				$post_in = array_merge( $post_in, $speaker->get_all_items() );
+			} catch ( Exception $e ) {
+				error_log( $e );
+			}
+		}
+
+		if ( ! empty( $post_in ) ) {
+			if ( ! empty( $post_in_orig ) ) {
+				$post_in = array_intersect( $post_in_orig, $post_in );
+				$post_in[] = '-1'; // Ensure we still get no results if there's no intersection
+			}
+			$query->set( 'post__in', $post_in );
+		}
 	}
 
 	/**

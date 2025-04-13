@@ -44,10 +44,13 @@ class ServiceType extends PostType {
 		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'service_type_column' ] );
 		add_action( "manage_{$item_type}_posts_custom_column", [ $this, 'service_type_column_cb' ], 10, 2 );
 		add_action( 'pre_get_posts', [ $this, 'service_type_query' ] );
-		
+
 		// Add columns to service type list view
 		add_filter( "manage_{$this->post_type}_posts_columns", [ $this, 'service_type_list_columns' ], 20 );
 		add_action( "manage_{$this->post_type}_posts_custom_column", [ $this, 'service_type_list_column_cb' ], 10, 2 );
+
+		// Register facets
+		add_action( 'cpl_register_facets', [ $this, 'register_facets' ] );
 
 		// Variations
 		add_filter( 'cpl_variations_sources', [ $this, 'variation_source' ] );
@@ -59,7 +62,7 @@ class ServiceType extends PostType {
 		}
 
 	}
-	
+
 	/**
 	 * Add custom columns to the service type admin list view
 	 *
@@ -437,6 +440,64 @@ class ServiceType extends PostType {
 	 */
 	public function get_controller($post_id) {
 		return new \CP_Library\Controllers\ServiceType($post_id);
+	}
+
+	/**
+	 * Register service type facet
+	 *
+	 * @param \CP_Library\Filters $filters The filters instance
+	 */
+	public function register_facets( $filters ) {
+		$filters->register_facet( 'service-type', [
+			'label'           => $this->single_label,
+			'param'           => 'facet-service-type',
+			'query_var'       => 'cpl_service_types',
+			'type'            => 'source',
+			'source_type'     => 'service_type',
+			'public'          => true,
+			'query_callback'  => [ $this, 'facet_query_callback' ],
+		]);
+	}
+
+	/**
+	 * Query callback for service type facet
+	 *
+	 * @param \WP_Query $query  The query object
+	 * @param array     $values The facet values
+	 * @param array     $config The facet configuration
+	 */
+	public function facet_query_callback( $query, $values, $config ) {
+		if ( empty( $values ) ) {
+			return;
+		}
+
+		// Use the same logic as service_type_query method
+		if ( ! is_array( $values ) ) {
+			$values = [ $values ];
+		}
+
+		$post_in_orig = $query->get( 'post__in' );
+		$post_in = [];
+
+		foreach( $values as $type_id ) {
+			$type_id = absint( $type_id );
+
+			try {
+				$type = ServiceType_Model::get_instance( $type_id );
+				$post_in = array_merge( $post_in, $type->get_all_items() );
+			} catch ( Exception $e ) {
+				error_log( $e );
+			}
+		}
+
+		if ( ! empty( $post_in ) ) {
+			if ( ! empty( $post_in_orig ) ) {
+				$post_in = array_intersect( $post_in_orig, $post_in );
+				$post_in[] = '-1'; // Ensure we still get no results if there's no intersection
+			}
+
+			$query->set( 'post__in', $post_in );
+		}
 	}
 
 }

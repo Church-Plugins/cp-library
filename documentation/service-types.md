@@ -1,16 +1,96 @@
-# Service Types Data Architecture
+# Service Types
 
-This document provides a comprehensive overview of the Service Types feature in CP Library, focusing on its data architecture, relationships, and implementation details.
+This document provides a comprehensive overview of the Service Types feature in CP Library, covering both user functionality and technical implementation details.
 
-## Overview
+## User Guide
 
-Service Types in CP Library allow churches to categorize sermons based on different service contexts (such as Sunday Morning, Youth Service, etc.). They serve as the foundation for the sermon variations system, enabling different versions of the same sermon for multiple service contexts.
+### Overview
 
-## Database Structure
+Service Types allow you to categorize sermons by the type of service they were delivered in (e.g., Sunday Morning, Youth Service, etc.). This feature is particularly useful for churches that hold multiple services with different formats.
+
+### Enabling Service Types
+
+Service Types are disabled by default. To enable them:
+
+1. Navigate to Library → Settings → Post Types
+2. Find the "Service Types" section
+3. Toggle "Enable Service Types" to On
+4. Customize the singular and plural labels if desired
+5. Save changes
+
+### Creating Service Types
+
+Once enabled, you can create service types:
+
+1. Navigate to Library → Service Types
+2. Click "Add New"
+3. Enter a name for the service type (e.g., "Sunday Morning")
+4. Add a description if desired
+5. Upload a featured image (optional)
+6. Click "Publish"
+
+### Assigning Service Types to Sermons
+
+To assign a service type to a sermon:
+
+1. Edit a sermon
+2. Find the "Service Type" box in the sidebar
+3. Select one or more service types
+4. Update the sermon
+
+### Service Type Archives
+
+Each service type has its own archive page that displays all sermons for that service type. The URL format is:
+
+```
+/sermons/service-type/[service-type-slug]/
+```
+
+### Filtering by Service Type
+
+The sermon archive includes a Service Type filter that allows visitors to filter sermons by service type.
+
+### Service Type Templates
+
+Service Type archives use a dedicated template that:
+
+1. Displays the service type title and description
+2. Shows all sermons assigned to that service type
+3. Provides filtering options specific to that service type's sermons
+4. Excludes the Service Type filter (since you're already viewing by service type)
+
+### Visibility Control
+
+Service Types include visibility control options:
+
+1. Edit a service type
+2. Find the "Service Type Options" meta box
+3. Check "Exclude from Main List" to hide sermons with this service type from the main sermon list
+4. Save changes
+
+Sermons with hidden service types will:
+- Not appear in the main sermon list
+- Still appear in the service type's own archive
+- Be accessible via direct links
+- Appear in series and other taxonomy archives
+
+### Advanced Filter Controls
+
+When viewing a Service Type archive, the filter system automatically:
+
+1. Only shows filter options relevant to sermons in that service type
+2. Disables the Service Type filter
+3. Applies any selected filters only to the current service type's sermons
+
+For more details on the filter system, see the [Filter System Documentation](filter-system.md).
+
+## Technical Implementation
+
+### Database Structure
 
 The Service Type functionality uses a hybrid data architecture combining WordPress posts with custom tables:
 
-### Custom Tables
+#### Custom Tables
 
 1. **cp_source**
    - Primary table storing basic information about service types
@@ -28,13 +108,13 @@ The Service Type functionality uses a hybrid data architecture combining WordPre
    - Key fields: `id`, `origin_id`, `title`, `parent_id`, `published`, `updated`
    - Each service type is associated with a type_id for 'service_type'
 
-### WordPress Integration
+#### WordPress Integration
 
 - Each service type has a WordPress post with post type `cpl_service_type`
 - The `origin_id` field in the custom table links to the WordPress post ID
 - This integration provides both custom data storage and WordPress admin UI
 
-## Model Implementation
+### Model Implementation
 
 The `ServiceType` model extends the base `Source` model from the Church Plugins framework:
 
@@ -55,9 +135,30 @@ Key methods in the model include:
 - `update()`, `insert()` - Creates/updates service type records
 - `add_type()` - Adds type metadata to associate with 'service_type'
 
-## Data Relationships
+### Controller Implementation
 
-### Relationship to Sermons (Items)
+Service Types now use the MVC pattern with dedicated controllers:
+
+```php
+namespace CP_Library\Controllers;
+
+class ServiceType extends Controller {
+    // Methods for accessing service type data
+    public function get_content() {...}
+    public function get_title() {...}
+    public function get_permalink() {...}
+    public function get_thumbnail() {...}
+    public function get_items() {...}
+    public function get_items_count() {...}
+    public function get_api_data() {...}
+}
+```
+
+The controller provides a clean API for templates to access service type data without directly interacting with the model.
+
+### Data Relationships
+
+#### Relationship to Sermons (Items)
 
 Service Types can be assigned to sermon items through a many-to-many relationship:
 
@@ -66,7 +167,7 @@ Service Types can be assigned to sermon items through a many-to-many relationshi
 3. The relationship uses the key 'source_item' to connect items to service types
 4. Items can query their service types using `get_service_types()`
 
-### Service Types as Variation Sources
+#### Service Types as Variation Sources
 
 Service Types serve as the foundation for sermon variations:
 
@@ -75,40 +176,16 @@ Service Types serve as the foundation for sermon variations:
 3. Variations track different speakers, media files, and timestamps
 4. The relationship is managed through the `variation_source()`, `variation_source_items()`, `variation_item_source()`, and `variation_item_save()` methods
 
-## Data Flow
+### Filter Integration
 
-The data flow for Service Types follows this pattern:
+Service Types are fully integrated with the new context-aware filter system:
 
-1. **Creation**:
-   - WordPress post is created in the `wp_posts` table
-   - Entry added to `cp_source` table with matching `origin_id`
-   - Entry added to `cp_source_meta` with 'source_type' key
+1. Service Type archives use the 'service-type' context for filters
+2. The system automatically adjusts filter options based on the current service type
+3. The Service Type filter is automatically disabled in service type contexts
+4. Custom SQL queries efficiently retrieve filter options relevant to the service type
 
-2. **Assignment to Sermons**:
-   - Service types are selected via the sermon edit screen
-   - Relationship stored in `cp_source_meta` with 'source_item' key
-   - Data accessible via `Item::get_service_types()`
-
-3. **Variations**:
-   - When using service types for variations, each sermon can have multiple versions
-   - Each variation is a separate post linked to the parent sermon
-   - Service type ID stored in the variation's metadata
-
-4. **Querying**:
-   - Custom query handlers modify `WP_Query` to filter sermons by service type
-   - This applies to both the admin interface and frontend displays
-
-## Configuration and Settings
-
-Service Types are configurable through several settings:
-
-- **Enable/Disable**: Service Types feature can be toggled
-- **Labels**: Singular/plural labels are customizable
-- **Default Service Type**: A default service type can be specified
-- **Variations**: Service Types can be enabled as variation sources
-- **Display Options**: Controls how service types appear in templates and filters
-
-## Best Practices for Implementation
+### Best Practices for Implementation
 
 When working with Service Types in custom code, follow these best practices:
 
@@ -119,18 +196,22 @@ When working with Service Types in custom code, follow these best practices:
 
 2. **Getting a Single Service Type**:
    ```php
-   $service_type = new \CP_Library\Models\ServiceType($id);
+   // Using the controller (preferred for templates)
+   $service_type = new \CP_Library\Controllers\ServiceType($id);
+   
+   // Using the model (for data manipulation)
+   $service_type_model = new \CP_Library\Models\ServiceType($id);
    ```
 
 3. **Getting Items for a Service Type**:
    ```php
-   $service_type = new \CP_Library\Models\ServiceType($id);
-   $items = $service_type->get_all_items();
+   $service_type = new \CP_Library\Controllers\ServiceType($id);
+   $items = $service_type->get_items();
    ```
 
 4. **Getting Service Types for an Item**:
    ```php
-   $item = new \CP_Library\Models\Item($item_id);
+   $item = new \CP_Library\Controllers\Item($item_id);
    $service_types = $item->get_service_types();
    ```
 
@@ -140,14 +221,11 @@ When working with Service Types in custom code, follow these best practices:
    $item->update_service_types([$service_type_id]);
    ```
 
-## Performance Considerations
+### Performance Considerations
 
 When working with Service Types, consider these performance factors:
 
-1. **Caching**: Service type relationships can be cached for better performance
-2. **Query Optimization**: Custom queries should use the relationship tables directly for complex operations
+1. **Caching**: Service type relationships are cached for better performance
+2. **Query Optimization**: Custom queries use the relationship tables directly for complex operations
 3. **Variations Impact**: Using many variations increases database load and should be monitored
-
-## Conclusion
-
-The Service Type architecture in CP Library uses a hybrid approach combining WordPress posts with custom tables. This provides both the familiar WordPress admin UI and optimized data storage for complex relationships. The system is designed to be flexible, allowing churches to organize sermons across different service contexts while maintaining relationships between sermon variations.
+4. **Filter Optimization**: The filter system uses caching and lazy loading to maintain performance

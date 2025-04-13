@@ -202,6 +202,7 @@ Navigate to Library → Settings → Advanced to adjust:
 - Filter sorting (by count or alphabetically)
 - Minimum count threshold for filters
 - Show/hide count numbers
+- Disable specific filters
 - Control filter display on mobile
 
 ### Customizing Filter Labels
@@ -210,6 +211,15 @@ Customize the labels used in filters:
 1. Navigate to Library → Settings → Post Types
 2. Adjust the labels for Series, Speaker, Topics, etc.
 3. These changes will be reflected in the filter UI
+
+### Filter Contexts
+
+Filters are now context-aware and work in multiple locations:
+- Main sermon archive
+- Service Type pages
+- Custom templates
+
+For detailed documentation on the filter system, see [Filter System Documentation](filter-system.md).
 
 ## Widget Areas
 

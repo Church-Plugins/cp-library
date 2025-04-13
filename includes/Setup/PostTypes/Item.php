@@ -116,6 +116,11 @@ class Item extends PostType  {
 		}
 
 		$query->set( 'posts_per_page', Settings::get_item( 'per_page', 12 ) );
+		
+		// Handle custom search parameter
+		if ( !empty( $_GET['cpl_search'] ) ) {
+			$query->set( 's', sanitize_text_field( $_GET['cpl_search'] ) );
+		}
 	}
 
 	/**
