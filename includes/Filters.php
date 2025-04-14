@@ -191,7 +191,6 @@ class Filters {
 			'taxonomy'     => $taxonomy,
 			'hierarchical' => $taxonomy_object ? $taxonomy_object->hierarchical : false,
 			'query_callback' => [ $this, 'query_taxonomy_facet' ],
-			'options_callback' => [ $this, 'get_taxonomy_options' ],
 		]);
 
 		$this->register_facet( $taxonomy, $args );
@@ -284,6 +283,28 @@ class Filters {
 			$query_vars = $this->convert_query_vars_to_facet_params( $query_vars );
 		}
 
+		$query_vars['no_found_rows']          = true;
+		$query_vars['posts_per_page']         = 9999;
+		$query_vars['fields']                 = 'ids';
+		$query_vars['update_post_meta_cache'] = false;
+		$query_vars['update_post_term_cache'] = false;
+
+		$terms = $query_vars[ $facet_id ] ?? array();
+
+		if ( ( $query_vars['taxonomy'] ?? false ) === $facet['type'] ) {
+			unset( $query_vars['taxonomy'] );
+		}
+
+		if ( in_array( ( $query_vars['term'] ?? false ), $terms, true ) ) {
+			unset( $query_vars['term'] );
+		}
+
+		unset( $query_vars[ $facet_id ] );
+		unset( $query_vars['paged'] );
+		unset( $query_vars['post_parent'] );
+
+		$query_vars = apply_filters( 'cpl_filter_query_vars', $query_vars, $facet_id, $context );
+
 		// Fallback to old method for backward compatibility
 		$options = $this->get_filter_options( $facet_id, $context, array(
 			'selected'   => $selected,
@@ -336,11 +357,11 @@ class Filters {
 
 		// Build query args based on context
 		$query_args = [
-			'post_type'      => 'cpl_item',
-			'post_status'    => 'publish',
-			'posts_per_page' => 9999,
-			'fields'         => 'ids',
-			'no_found_rows'  => true,
+			'post_type'              => 'cpl_item',
+			'post_status'            => 'publish',
+			'posts_per_page'         => 9999,
+			'fields'                  => 'ids',
+			'no_found_rows'          => true,
 			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
 		];
@@ -380,6 +401,14 @@ class Filters {
 		$query = new \WP_Query( $query_args );
 		$item_ids = $query->posts;
 
+		$options_args = [
+			'taxonomy'     => $facet['taxonomy'] ?? '',
+			'threshold'    => (int) Settings::get_advanced( 'filter_count_threshold', 3 ),
+			'context'      => $context,
+			'context_args' => $args,
+			'post__in'     => $item_ids
+		];
+
 		// Get options based on facet type
 		$options = [];
 
@@ -389,12 +418,19 @@ class Filters {
 				'threshold'  => (int) Settings::get_advanced( 'filter_count_threshold', 3 ),
 				'context'    => $context,
 				'context_args' => $args,
-				'item_ids' => $item_ids
+				'post__in' => $item_ids
 			]);
 		}
 
 		switch ( $facet['type'] ) {
 			case 'taxonomy':
+				return $this->get_terms( [
+					'taxonomy'   => $facet['taxonomy'] ?? '',
+					'threshold'  => (int) Settings::get_advanced( 'filter_count_threshold', 3 ),
+					'context'    => $context,
+					'context_args' => $args,
+					'post__in' => $item_ids
+				] );
 				// Get taxonomy filter options
 				$taxonomy = $facet['taxonomy'];
 
@@ -904,56 +940,6 @@ class Filters {
 
 		// Set the meta query
 		$query->set( 'meta_query', $meta_query );
-	}
-
-	/**
-	 * Get taxonomy facet options
-	 *
-	 * @param array $args Arguments
-	 * @return array Options
-	 */
-	public function get_taxonomy_options( $args = [] ) {
-		$args = wp_parse_args( $args, [
-			'taxonomy'   => '',
-			'threshold'  => 1,
-			'orderby'    => 'count',
-			'order'      => 'DESC',
-			'hide_empty' => true,
-		]);
-
-		if ( empty( $args['taxonomy'] ) ) {
-			return [];
-		}
-
-		// Get terms
-		$terms = get_terms([
-			'taxonomy'   => $args['taxonomy'],
-			'hide_empty' => $args['hide_empty'],
-			'orderby'    => $args['orderby'],
-			'order'      => $args['order'],
-		]);
-
-		if ( is_wp_error( $terms ) || empty( $terms ) ) {
-			return [];
-		}
-
-		// Format terms as options
-		$options = [];
-		foreach ( $terms as $term ) {
-			// Skip terms with fewer items than threshold
-			if ( $term->count < $args['threshold'] ) {
-				continue;
-			}
-
-			$options[] = [
-				'id'    => $term->term_id,
-				'value' => $term->slug,
-				'title' => $term->name,
-				'count' => $term->count,
-			];
-		}
-
-		return $options;
 	}
 
 	/**
