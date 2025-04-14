@@ -119,8 +119,10 @@ export default function Player({ item }) {
 		setCurrentMedia( url || ('video' === mode ? currentItem.video.value : currentItem.audio) );
 		setIsPlaying(false);
 
-		// give the player a chance to initialize before we set it to play
-		setTimeout(() => { setIsPlaying(true); }, 50 );
+		// Use requestAnimationFrame for more reliable timing than setTimeout
+		requestAnimationFrame(() => {
+			setIsPlaying(true);
+		});
 	};
 
 	const updatePlaybackRate = () => {

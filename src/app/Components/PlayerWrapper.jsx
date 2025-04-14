@@ -185,6 +185,35 @@ function PlayerWrapper({ item, mode, ...props }, ref) {
       onProgress={handleProgress}
       onSeek={handleSeek}
       progressInterval={100}
+      config={{
+        youtube: {
+          playerVars: { 
+            playsinline: 1,    // Enable inline playback (critical for iOS)
+            rel: 0,            // Don't show related videos
+            controls: 0,       // Hide YouTube controls
+            showinfo: 0,       // Hide video title and info
+            modestbranding: 1, // Minimal YouTube branding
+            iv_load_policy: 3, // Hide annotations
+            disablekb: 1,      // Disable keyboard controls
+            enablejsapi: 1,    // Enable JavaScript API
+            autohide: 1,       // Hide controls after play begins
+            fs: 0,             // Disable fullscreen button
+            origin: window.location.origin // Set origin for improved security
+          }
+        },
+        vimeo: {
+          playerOptions: {
+            playsinline: true,
+            controls: false,   // Hide Vimeo controls
+            autopause: false   // Prevent autopause when other videos play
+          }
+        },
+        file: {
+          attributes: {
+            controlsList: "nodownload" // Prevent download option
+          }
+        }
+      }}
     />
   )
 }
