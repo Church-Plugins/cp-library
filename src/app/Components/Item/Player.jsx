@@ -12,6 +12,7 @@ import OpenInFull from "@mui/icons-material/OpenInFull";
 import PlayCircleOutline from "@mui/icons-material/PlayCircleOutline";
 import Slider from '@mui/material/Slider';
 import IconButton from '@mui/material/IconButton';
+import CircularProgress from '@mui/material/CircularProgress';
 import ReactDOM from 'react-dom';
 import screenfull from 'screenfull';
 import formatDuration from '../../utils/formatDuration';
@@ -31,6 +32,18 @@ export default function Player({ item }) {
   const [playbackRate, setPlaybackRate] = useState(1 );
 	const [displayBg, setDisplayBG]   = useState( {backgroundColor: "#C4C4C4"} );
 	const [showFSControls, setShowFSControls]   = useState( false );
+  // Add new state for player loading/ready state
+  const [loadingState, setLoadingState] = useState('initial'); // 'initial', 'loading', 'ready', 'playing'
+  const playbackDetectionTimeout = useRef(null);
+
+  // Add cleanup for timeouts
+  useEffect(() => {
+    return () => {
+      if (playbackDetectionTimeout.current) {
+        clearTimeout(playbackDetectionTimeout.current);
+      }
+    };
+  }, []);
 	const itemContainer = useRef(false);
   // Keep frequently-updated states (mainly the progress from the media player) as a ref so they
   // don't trigger re-render.
@@ -69,9 +82,9 @@ export default function Player({ item }) {
 		}
 	};
 
-	useEffect(() => { 
+	useEffect(() => {
 		if(mode) {
-			showControls() 
+			showControls()
 		}
 	}, [mode]);
 
@@ -90,7 +103,7 @@ export default function Player({ item }) {
 		setIsPlaying( false );
 		setMode( false );
 		setShowFSControls( false );
-		
+
 		api.passToPersistentPlayer({
 			item         : mediaState.current.item,
 			mode         : mediaState.current.mode,
@@ -100,6 +113,15 @@ export default function Player({ item }) {
 	};
 
 	const updateItemState = ({ url, ...data }) => {
+		// If it's audio, always use persistent player
+		if (data.mode === 'audio') {
+			api.passToPersistentPlayer({
+				...data,
+				url: url
+			});
+			return;
+		}
+		
 		if(persistentPlayerIsActive) {
 			if(isURL( url )) {
 				api.passToPersistentPlayer( data )
@@ -114,15 +136,55 @@ export default function Player({ item }) {
 	}
 
 	const updateMode = (mode, url = null) => {
+		// If it's audio, send to persistent player instead of local player
+		if (mode === 'audio') {
+			api.passToPersistentPlayer({
+				item: currentItem,
+				mode: 'audio',
+				url: url || currentItem.audio,
+				isPlaying: true,
+				playedSeconds: 0.0,
+			});
+			return;
+		}
+		
+		// Set loading state first
+		setLoadingState('loading');
+
+		// Execute existing initialization
 		setMode(mode);
 		setPlayedSeconds(0);
-		setCurrentMedia( url || ('video' === mode ? currentItem.video.value : currentItem.audio) );
+		// Only use video media for local player
+		setCurrentMedia( url || currentItem.video.value );
 		setIsPlaying(false);
 
-		// Use requestAnimationFrame for more reliable timing than setTimeout
-		requestAnimationFrame(() => {
-			setIsPlaying(true);
-		});
+		// Instead of automatically setting isPlaying=true, start detection
+		clearTimeout(playbackDetectionTimeout.current);
+
+		// Use a tracking variable outside the closure to prevent stale state
+		const detectionId = Math.random(); // Unique ID for this detection cycle
+		window._playbackDetectionId = detectionId;
+
+		// Set a timeout to check if playback started
+		playbackDetectionTimeout.current = setTimeout(() => {
+			console.log("Playback detection timeout fired, checking if playing");
+
+			// Only proceed if this is still the current detection cycle
+			if (window._playbackDetectionId === detectionId) {
+				// If we're still in loading state, switch to ready
+				setLoadingState('ready');
+				setIsPlaying(false); // Ensure player is paused
+				console.log("Switching to ready state, player initialized but not playing");
+			}
+		}, 2500); // 2.5 seconds should be sufficient
+
+		// Use requestAnimationFrame for more reliable timing
+		// For non-iOS, automatically attempt to play
+		if (!navigator.userAgent.match(/iPad|iPhone|iPod/)) {
+			requestAnimationFrame(() => {
+				setIsPlaying(true);
+			});
+		}
 	};
 
 	const updatePlaybackRate = () => {
@@ -211,7 +273,9 @@ export default function Player({ item }) {
 	const shouldDisplayThumbnail = (
 		( mode === false ) ||
 		( !currentMedia )  ||
-		( mode === 'audio' && ! isSoundcloud )
+		( mode === 'audio' && ! isSoundcloud ) ||
+		// Show thumbnail for pre-initialized players that aren't yet playing
+		(loadingState === 'ready')
 	)
 
   return (
@@ -240,8 +304,27 @@ export default function Player({ item }) {
 										height="100%"
 										onMouseMove={onMouseMove}
 								>
-									{
-										mode && currentItem &&
+									{/* Add loading indicator when in loading state */}
+										{loadingState === 'loading' && (
+											<Box
+												sx={{
+													position: 'absolute',
+													top: 0,
+													left: 0,
+													width: '100%',
+													height: '100%',
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													backgroundColor: 'rgba(0,0,0,0.5)',
+													zIndex: 30
+												}}
+											>
+												<CircularProgress sx={{ color: 'white' }} />
+											</Box>
+										)}
+
+										{mode && currentItem &&
 										<PlayerWrapper
 											key={`${mode}-${currentItem.id}`}
 											mode={mode}
@@ -254,7 +337,15 @@ export default function Player({ item }) {
 											controls={false}
 											playbackRate={playbackRate}
 											playing={isPlaying}
-											onPlay={() => setIsPlaying(true)}
+											onPlay={() => {
+												console.log("Player started playing");
+												setIsPlaying(true);
+												setLoadingState('playing');
+												// Clear any pending detection timeout
+												clearTimeout(playbackDetectionTimeout.current);
+												// Reset detection ID to invalidate any pending checks
+												window._playbackDetectionId = null;
+											}}
 											onPause={() => setIsPlaying(false)}
 											onDuration={duration => {
 												setDuration(duration);
@@ -267,7 +358,19 @@ export default function Player({ item }) {
 									}
 
 									{!mode ? null : (
-										<Box className="itemPlayer__video__playWrap" onClick={() => setIsPlaying(!isPlaying)}></Box>
+										<Box
+											className="itemPlayer__video__playWrap"
+											onClick={() => {
+												if (loadingState === 'ready') {
+													// If player is initialized but not playing, just set playing state
+													setIsPlaying(true);
+													setLoadingState('playing');
+												} else {
+													// Otherwise toggle play state
+													setIsPlaying(!isPlaying);
+												}
+											}}
+										></Box>
 									)}
 
 									<Box className="itemPlayer__controlsWrapper cpl-touch-hide" style={{ display: showFSControls ? undefined : 'none' }}>
@@ -276,7 +379,24 @@ export default function Player({ item }) {
 												justifyContent="space-around" margin="auto">
 
 											<Box display="flex" alignItems="center">
-												<PlayPause autoFocus isLoading={isPlaying && playedSeconds == 0} flex={0} padding={2} isPlaying={isPlaying} circleIcon={false} onClick={() => setIsPlaying(!isPlaying)}/>
+												<PlayPause
+													autoFocus
+													isLoading={isPlaying && playedSeconds == 0}
+													flex={0}
+													padding={2}
+													isPlaying={isPlaying}
+													circleIcon={false}
+													onClick={() => {
+														if (loadingState === 'ready') {
+															// If player is initialized but not playing, just set playing state
+															setIsPlaying(true);
+															setLoadingState('playing');
+														} else {
+															// Otherwise toggle play state
+															setIsPlaying(!isPlaying);
+														}
+													}}
+												/>
 											</Box>
 
 											<IconButton
@@ -359,8 +479,8 @@ export default function Player({ item }) {
 									</Box>
 								</Box>
 								</> :
-								<Box 
-									className='itemDetail__audio' 
+								<Box
+									className='itemDetail__audio'
 									display='flex'
 									alignItems='center'
 									justifyContent='center'
@@ -390,20 +510,28 @@ export default function Player({ item }) {
 												{isPlaying ? (
 													<></>
 												) : (
-													<PlayCircleOutline onClick={() => {
-														let defaultMode = ( currentItem.video.value ) ? 'video' : 'audio';
-
-														if (persistentPlayerIsActive) {
-															api.passToPersistentPlayer({
-																item         : mediaState.current.item,
-																mode         : defaultMode,
-																isPlaying    : true,
-																playedSeconds: 0.0,
-															});
-														} else {
-															updateMode( defaultMode );
-														}
-													}} sx={{fontSize: 75}}/>
+													<>
+														{currentItem.video?.value ? (
+															<PlayCircleOutline onClick={(e) => {
+																// Only allow video playback with this control
+																if (persistentPlayerIsActive) {
+																	api.passToPersistentPlayer({
+																		item         : mediaState.current.item,
+																		mode         : 'video',
+																		isPlaying    : true,
+																		playedSeconds: 0.0,
+																	});
+																} else if (loadingState === 'ready') {
+																	// If player is initialized but not playing, just set playing state
+																	setIsPlaying(true);
+																	setLoadingState('playing');
+																} else {
+																	// First click - initialize player
+																	updateMode('video');
+																}
+															}} sx={{fontSize: 75}}/>
+														) : null}
+													</>
 												)}
 											</>
 										) : (
@@ -420,9 +548,9 @@ export default function Player({ item }) {
 						))
 						.map((variation) => {
 							return (
-								<Controls 
-									item={ variation } 
-									key={ variation.id } 
+								<Controls
+									item={ variation }
+									key={ variation.id }
 									isVariation={true}
 									handleSelect={ (data) => {
 										setCurrentItem( variation )
@@ -502,7 +630,21 @@ export default function Player({ item }) {
 			         </IconButton>
 
 			         <Box display="flex" alignItems="center">
-				         <PlayPause autoFocus isLoading={isPlaying && playedSeconds == 0} isPlaying={isPlaying} onClick={() => setIsPlaying(!isPlaying)}/>
+				         <PlayPause
+					         autoFocus
+					         isLoading={isPlaying && playedSeconds == 0}
+					         isPlaying={isPlaying}
+					         onClick={() => {
+						         if (loadingState === 'ready') {
+							         // If player is initialized but not playing, just set playing state
+							         setIsPlaying(true);
+							         setLoadingState('playing');
+						         } else {
+							         // Otherwise toggle play state
+							         setIsPlaying(!isPlaying);
+						         }
+					         }}
+				         />
 			         </Box>
 			         <IconButton size='large' onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')} aria-label='Skip 30 seconds'>
 				         <Forward30 fontSize="inherit"/>

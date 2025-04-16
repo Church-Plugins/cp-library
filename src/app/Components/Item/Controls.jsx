@@ -3,6 +3,7 @@ import PlayVideo from "../../Elements/Buttons/PlayVideo";
 import PlayAudio from "../../Elements/Buttons/PlayAudio";
 import ShareButton from "./ShareButton";
 import { isURL } from "../../utils/helpers";
+import api from "../../api";
 
 export default function Controls({ isVariation, item, handleSelect }) {
 	const containerClass   = isVariation ? ' cpl-is-variation' : '';
@@ -22,6 +23,11 @@ export default function Controls({ isVariation, item, handleSelect }) {
         <Box className="itemDetail__playVideo">
           <PlayVideo
             onClick={() => {
+              // If persistent player is playing audio, close it first
+              if (api.isPersistentPlayerPlaying()) {
+                api.closePersistentPlayer();
+              }
+              
               handleSelect({
                 item         : item,
                 mode         : isURL(item.video.value) ? 'video' : 'embed',
@@ -39,7 +45,20 @@ export default function Controls({ isVariation, item, handleSelect }) {
         <Box className="itemDetail__playAudio" >
           <PlayAudio
             onClick={() => {
-              handleSelect({
+              // Always pass to PersistentPlayer for audio
+              // But first stop any video playback
+              if (handleSelect) {
+                // Stop video playback if it's playing
+                handleSelect({
+                  item: item,
+                  mode: false, // Set mode to false to stop playback
+                  url: '',
+                  isPlaying: false,
+                  playedSeconds: 0.0,
+                });
+              }
+              
+              api.passToPersistentPlayer({
                 item         : item,
                 mode         : isURL(item.audio) ? 'audio' : 'embed',
                 url          : item.audio,

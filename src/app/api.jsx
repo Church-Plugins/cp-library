@@ -105,6 +105,17 @@ class CP_Library {
 	playerIsActive() {
 		return window.top.document.body.classList.contains('cpl-persistent-player');
 	}
+	
+	/**
+	 * Whether the persistent player is currently playing.
+	 * This is a convenience method that checks if the player is active.
+	 * More detailed state would require communication with the PersistentPlayer component.
+	 *
+	 * @returns {boolean}
+	 */
+	isPersistentPlayerPlaying() {
+		return this.playerIsActive();
+	}
 
 	/**
 	 * Open the player in fullscreen.

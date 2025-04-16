@@ -45,6 +45,8 @@ function PlayerWrapper({ item, mode, ...props }, ref) {
   const intervalRef = useRef(null)
   /** @type {{ current: number }} */
   const lastProgressPosition = useRef(0)
+  /** @type {{ current: any }} */
+  const playerRef = useRef(null)
 
   const [rand] = useState(Math.random)
 
@@ -94,6 +96,99 @@ function PlayerWrapper({ item, mode, ...props }, ref) {
   const handleSeek = (seconds) => {
     props.onSeek?.(seconds)
   }
+  
+  /** Handle playback rate changes */
+  useEffect(() => {
+    // Skip it if no player or playback rate
+    if (!playerRef.current || !props.playbackRate) {
+      return;
+    }
+    
+    // Function to mark playback rate as not supported
+    const markUnsupported = () => {
+      if (props.onPlaybackRateSupported) {
+        props.onPlaybackRateSupported(false);
+      }
+    };
+    
+    try {
+      // First, determine if we're dealing with YouTube video
+      // YouTube is known to have issues with playback rate for some videos
+      const internalPlayer = playerRef.current.getInternalPlayer ? playerRef.current.getInternalPlayer() : null;
+      const isYouTube = internalPlayer && 
+                       (internalPlayer.getVideoUrl || // YouTube API method
+                        (internalPlayer.src && internalPlayer.src.includes('youtube')));
+                        
+      // For YouTube players, we need to check if playback rate is allowed for this specific video
+      if (isYouTube) {
+        try {
+          // We need to wrap this in a Promise to handle YouTube API quirks
+          // Use Promise constructor to catch all errors and prevent them from bubbling up
+          new Promise((resolve, reject) => {
+            try {
+              // Try setting the playback rate
+              if (internalPlayer.setPlaybackRate) {
+                internalPlayer.setPlaybackRate(props.playbackRate);
+                
+                // If we got here, it worked
+                if (props.onPlaybackRateSupported) {
+                  props.onPlaybackRateSupported(true);
+                }
+                resolve();
+              } else {
+                markUnsupported();
+                resolve(); // Resolve instead of reject to avoid uncaught promises
+              }
+            } catch (innerError) {
+              // YouTube error for restricted videos
+              markUnsupported();
+              // Don't propagate the error, just handle it
+              if (console && console.debug) {
+                console.debug("Playback rate not supported for this video:", innerError.message);
+              }
+              resolve(); // Resolve the promise even though there was an error
+            }
+          }).catch((err) => {
+            // Any error in the promise should mark as unsupported
+            markUnsupported();
+            // Log error but don't let it bubble up to console as an uncaught error
+            if (console && console.debug) {
+              console.debug("Error setting playback rate:", err);
+            }
+          });
+        } catch (youtubeError) {
+          markUnsupported();
+        }
+      } 
+      // For non-YouTube players
+      else {
+        if (internalPlayer && internalPlayer.setPlaybackRate) {
+          try {
+            internalPlayer.setPlaybackRate(props.playbackRate);
+            if (props.onPlaybackRateSupported) {
+              props.onPlaybackRateSupported(true);
+            }
+          } catch (error) {
+            markUnsupported();
+          }
+        } else if (playerRef.current.setPlaybackRate) {
+          try {
+            playerRef.current.setPlaybackRate(props.playbackRate);
+            if (props.onPlaybackRateSupported) {
+              props.onPlaybackRateSupported(true);
+            }
+          } catch (error) {
+            markUnsupported();
+          }
+        } else {
+          markUnsupported();
+        }
+      }
+    } catch (outerError) {
+      // Any unexpected error should mark as unsupported
+      markUnsupported();
+    }
+  }, [props.playbackRate, playerRef.current]);
 
   const handleUnmount = () => {
     clearInterval(intervalRef.current)
@@ -178,7 +273,16 @@ function PlayerWrapper({ item, mode, ...props }, ref) {
   return (
     <VideoPlayer
       {...props}
-      ref={ref}
+      ref={(player) => {
+        // Store player in our ref
+        playerRef.current = player;
+        // Also pass it to the forwarded ref
+        if (typeof ref === 'function') {
+          ref(player);
+        } else if (ref) {
+          ref.current = player;
+        }
+      }}
       onPlay={handlePlay}
       onPause={handlePause}
       onDuration={handleDuration}
