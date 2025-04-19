@@ -9,6 +9,8 @@ import Cancel from '@mui/icons-material/Cancel';
 import Forward30 from '@mui/icons-material/Forward30';
 import Replay10 from '@mui/icons-material/Replay10';
 import OpenInFull from '@mui/icons-material/OpenInFull';
+import VolumeOff from '@mui/icons-material/VolumeOff';
+import VolumeUp from '@mui/icons-material/VolumeUp';
 import useBreakpoints from '../Hooks/useBreakpoints';
 import formatDuration from '../utils/formatDuration';
 import { cplLog, cplMarker } from '../utils/helpers';
@@ -36,6 +38,8 @@ export default function PersistentPlayer (props) {
 	const [playerInstance, setPlayerInstance] = useListenerRef(null, (value) => value && setLoading(false));
 	const [userInteractionToken, setUserInteractionToken] = useState(null);
 	const [isMutedPlayback, setIsMutedPlayback] = useState(false);
+	const [showMutedNotice, setShowMutedNotice] = useState(false);
+	const [audioUnlocked, setAudioUnlocked] = useState(false);
 
 	// Check if this is iOS
 	const isIOS = useRef(/iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -71,6 +75,42 @@ export default function PersistentPlayer (props) {
 			default:
 				setPlaybackRate(1);
 				break;
+		}
+	};
+	
+	// Function to manually unmute on iOS
+	const handleUnmuteOnIOS = () => {
+		if (!playerInstance.current) return;
+		
+		// Get internal player
+		const internalPlayer = playerInstance.current.getInternalPlayer();
+		
+		if (!internalPlayer) return;
+		
+		try {
+			// For YouTube players
+			if (typeof internalPlayer.unMute === 'function') {
+				internalPlayer.unMute();
+				
+				if (typeof internalPlayer.setVolume === 'function') {
+					internalPlayer.setVolume(100);
+				}
+				
+				setIsMutedPlayback(false);
+				setShowMutedNotice(false);
+				setAudioUnlocked(true);
+			}
+			// For HTML5 video/audio players
+			else if (internalPlayer.muted !== undefined) {
+				internalPlayer.muted = false;
+				internalPlayer.volume = 1.0;
+				
+				setIsMutedPlayback(false);
+				setShowMutedNotice(false);
+				setAudioUnlocked(true);
+			}
+		} catch (e) {
+			console.debug("Error while unmuting:", e);
 		}
 	};
 
@@ -134,6 +174,45 @@ export default function PersistentPlayer (props) {
 			playerInstance.current.seekTo(playedSeconds);
 		}
 	}, [loading]);
+	
+	// Monitor for iOS muted playback
+	useEffect(() => {
+		// Only check for iOS devices and only when playing
+		if (isIOS.current && isPlaying && !showMutedNotice) {
+			// Set a timer to check if the audio/video is actually playing with sound
+			const checkTimer = setTimeout(() => {
+				if (!playerInstance.current) return;
+				
+				const internalPlayer = playerInstance.current.getInternalPlayer();
+				
+				// Check if audio is muted on YouTube
+				if (internalPlayer && typeof internalPlayer.isMuted === 'function') {
+					const isMuted = internalPlayer.isMuted();
+					if (isMuted) {
+						console.log("Detected muted YouTube playback on iOS");
+						setShowMutedNotice(true);
+						setIsMutedPlayback(true);
+					} else {
+						// Audio is working
+						setAudioUnlocked(true);
+					}
+				}
+				// For HTML5 video/audio
+				else if (internalPlayer && internalPlayer.muted !== undefined) {
+					if (internalPlayer.muted) {
+						console.log("Detected muted HTML5 media playback on iOS");
+						setShowMutedNotice(true);
+						setIsMutedPlayback(true);
+					} else {
+						// Audio is working
+						setAudioUnlocked(true);
+					}
+				}
+			}, 500); // Check after 500ms
+			
+			return () => clearTimeout(checkTimer);
+		}
+	}, [isPlaying, showMutedNotice]);
 
 	// Store received video/audio URL for use in PlayerWrapper
 	const [mediaUrl, setMediaUrl] = useState(null);
@@ -317,6 +396,34 @@ export default function PersistentPlayer (props) {
 				      height="100%"
 				      onMouseMove={onMouseMove}
 				 >
+					 {showMutedNotice && (
+						 <Box
+							 className="muted-playback-notification"
+							 onClick={handleUnmuteOnIOS}
+							 sx={{
+								 position: 'absolute',
+								 top: '50%',
+								 left: '50%',
+								 transform: 'translate(-50%, -50%)',
+								 backgroundColor: 'rgba(0,0,0,0.8)',
+								 color: 'white',
+								 padding: '1rem',
+								 borderRadius: '0.5rem',
+								 textAlign: 'center',
+								 zIndex: 35,
+								 cursor: 'pointer',
+								 maxWidth: '80%',
+								 display: 'flex',
+								 flexDirection: 'column',
+								 alignItems: 'center',
+								 gap: '0.5rem'
+							 }}
+						 >
+							 <VolumeOff sx={{ fontSize: 32 }} />
+							 <span>Tap here to enable sound</span>
+						 </Box>
+					 )}
+					 
 					 <PlayerWrapper
 						 key={`${mode}-${item.id}`}
 						 mode={mode}
@@ -330,9 +437,20 @@ export default function PersistentPlayer (props) {
 						 playing={!loading && isPlaying}
 						 playbackRate={playbackRate}
 						 userInteractionToken={userInteractionToken}
-						 onPlay={() => { setIsPlaying(true); setIsMutedPlayback(false); }}
+						 onPlay={() => { 
+							 setIsPlaying(true); 
+							 setIsMutedPlayback(false);
+							 setShowMutedNotice(false);
+						 }}
 						 onPause={() => setIsPlaying(false)}
-						 onMutedPlayback={(isMuted) => { setIsMutedPlayback(isMuted); setIsPlaying(false); }}
+						 onMutedPlayback={(isMuted) => { 
+							 setIsMutedPlayback(isMuted);
+							 // Show notification for iOS users when video is muted
+							 if (isMuted && isIOS.current) {
+								 setShowMutedNotice(true);
+							 }
+							 setIsPlaying(false); 
+						 }}
 						 onDuration={duration => {
 							 setDuration(duration);
 							 playerInstance.current.seekTo(playedSeconds, 'seconds');
@@ -557,6 +675,32 @@ export default function PersistentPlayer (props) {
 
 				{mode === 'audio' &&
 				 <Box>
+					 {showMutedNotice && (
+						 <Box
+							 className="muted-playback-notification"
+							 onClick={handleUnmuteOnIOS}
+							 sx={{
+								 position: 'fixed',
+								 bottom: '5rem',
+								 left: '50%',
+								 transform: 'translateX(-50%)',
+								 backgroundColor: 'rgba(0,0,0,0.8)',
+								 color: 'white',
+								 padding: '0.75rem',
+								 borderRadius: '0.5rem',
+								 textAlign: 'center',
+								 zIndex: 35,
+								 cursor: 'pointer',
+								 display: 'flex',
+								 alignItems: 'center',
+								 gap: '0.5rem'
+							 }}
+						 >
+							 <VolumeOff fontSize="small" />
+							 <span>Tap to enable sound</span>
+						 </Box>
+					 )}
+					 
 					 <PlayerWrapper
 						 key={`${mode}-${item.id}`}
 						 mode={mode}
@@ -569,9 +713,20 @@ export default function PersistentPlayer (props) {
 						 playing={!loading && isPlaying}
 						 playbackRate={playbackRate}
 						 userInteractionToken={userInteractionToken}
-						 onPlay={() => { setIsPlaying(true); setIsMutedPlayback(false); }}
+						 onPlay={() => { 
+							 setIsPlaying(true); 
+							 setIsMutedPlayback(false);
+							 setShowMutedNotice(false);
+						 }}
 						 onPause={() => setIsPlaying(false)}
-						 onMutedPlayback={(isMuted) => { setIsMutedPlayback(isMuted); setIsPlaying(false); }}
+						 onMutedPlayback={(isMuted) => { 
+							 setIsMutedPlayback(isMuted);
+							 // Show notification for iOS users when audio is muted
+							 if (isMuted && isIOS.current) {
+								 setShowMutedNotice(true);
+							 }
+							 setIsPlaying(false); 
+						 }}
 						 onDuration={duration => {
 							 setDuration(duration);
 							 if (playedSeconds > 0) {
