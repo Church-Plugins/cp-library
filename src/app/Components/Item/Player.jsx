@@ -71,14 +71,25 @@ export default function Player({ item }) {
 	};
 
 	const showControls = () => {
-		if ( ! isDesktop && ! screenfull.isFullscreen ) {
+		// Check if screenfull is properly initialized
+		if (!screenfull || typeof screenfull.isFullscreen !== 'boolean') {
+			// If screenfull isn't available, always show controls on videos
+			if ('video' === mode) {
+				setShowFSControls(true);
+				setTimeout(() => setShowFSControls(false), 4000);
+			}
+			return;
+		}
+	
+		// Otherwise use normal fullscreen detection
+		if (!isDesktop && !screenfull.isFullscreen) {
 			return;
 		}
 
-		setShowFSControls( true );
+		setShowFSControls(true);
 
-		if ( 'video' === mode ) {
-			setTimeout(() => setShowFSControls( false ), 4000 );
+		if ('video' === mode) {
+			setTimeout(() => setShowFSControls(false), 4000);
 		}
 	};
 
@@ -90,8 +101,90 @@ export default function Player({ item }) {
 
 	const handleClickFullscreen = () => {
 		cplLog(item.id, 'fullscreen');
-		const instance = ReactDOM.findDOMNode(playerInstance.current);
-		screenfull.request( instance.parentElement );
+		
+		try {
+			// First check if we can detect YouTube specifically
+			// YouTube has its own fullscreen mechanism that works more reliably
+			if (playerInstance.current) {
+				const internalPlayer = playerInstance.current.getInternalPlayer();
+				
+				// Check if it's a YouTube player
+				const isYouTube = internalPlayer && 
+					(typeof internalPlayer.getVideoUrl === 'function' || 
+					(internalPlayer.src && internalPlayer.src.toString().includes('youtube')));
+				
+				if (isYouTube) {
+					// For YouTube, try to call the YouTube-specific API
+					if (typeof internalPlayer.getIframe === 'function') {
+						const iframe = internalPlayer.getIframe();
+						
+						// Send a postMessage to enable fullscreen
+						if (iframe && iframe.contentWindow) {
+							iframe.contentWindow.postMessage('{"event":"command","func":"enterFullScreen","args":""}', '*');
+							return false;
+						}
+					}
+					
+					// Alternative YouTube method
+					if (typeof internalPlayer.setSize === 'function') {
+						// Get document dimensions
+						const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+						const height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+						
+						// Set player to full window size
+						internalPlayer.setSize(width, height);
+						return false;
+					}
+				}
+			}
+			
+			// If YouTube-specific methods failed or it's not a YouTube player, try screenfull
+			if (screenfull && screenfull.isEnabled) {
+				// Get the video container element
+				const instance = ReactDOM.findDOMNode(playerInstance.current);
+				const videoContainer = instance ? instance.closest('.itemDetail__featureImage') || instance.parentElement : null;
+				
+				if (videoContainer) {
+					// Request fullscreen on the video container
+					screenfull.request(videoContainer);
+					return false;
+				} else if (instance) {
+					// Fallback to the instance itself
+					screenfull.request(instance);
+					return false;
+				}
+			} else {
+				// If screenfull isn't available
+				
+				// Try native fullscreen API for HTML5 video
+				if (playerInstance.current) {
+					const internalPlayer = playerInstance.current.getInternalPlayer();
+					
+					// For HTML5 video element
+					if (internalPlayer && typeof internalPlayer.requestFullscreen === 'function') {
+						internalPlayer.requestFullscreen();
+						return false;
+					}
+					
+					// iOS Safari specific method
+					if (internalPlayer && typeof internalPlayer.webkitEnterFullscreen === 'function') {
+						internalPlayer.webkitEnterFullscreen();
+						return false;
+					}
+					
+					// Alternative webkit method
+					if (internalPlayer && typeof internalPlayer.webkitRequestFullscreen === 'function') {
+						internalPlayer.webkitRequestFullscreen();
+						return false;
+					}
+				}
+				
+				console.warn('Fullscreen is not supported in this browser');
+			}
+		} catch (error) {
+			console.error('Error entering fullscreen:', error);
+		}
+		
 		return false;
 	};
 

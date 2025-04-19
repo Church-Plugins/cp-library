@@ -463,7 +463,7 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
             disablekb: 1,      // Disable keyboard controls
             enablejsapi: 1,    // Enable JavaScript API (REQUIRED for unmuting)
             autohide: 1,       // Hide controls after play begins
-            fs: 0,             // Disable fullscreen button
+            fs: 1,             // Enable fullscreen button
             origin: window.location.origin, // Set origin for improved security
             
             // Always start muted (required for iOS autoplay)
