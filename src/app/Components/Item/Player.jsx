@@ -198,6 +198,24 @@ export default function Player({ item }) {
 	};
 
 	const handleClickPersistent = () => {
+		// Check if the persistent player is already active with this video playing
+		if (api.playerIsActive()) {
+			// Get the current player DOM node
+			const playerNode = window.top.document.getElementById('cpl_persistent_player');
+			
+			// Only toggle play/pause if this is the same video currently playing
+			if (playerNode && playerNode.querySelector('.title-text a')?.innerHTML === currentItem.title) {
+				// Just toggle play/pause instead of opening a new player
+				const event = new CustomEvent('message');
+				event.data = {
+					action: 'CPL_TOGGLE_PLAY',
+					item: currentItem
+				};
+				window.top.dispatchEvent(event);
+				return;
+			}
+		}
+		
 		// Check if this is iOS - using the same method as PersistentPlayer
 		const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
 			(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);

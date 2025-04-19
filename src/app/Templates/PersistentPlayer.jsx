@@ -125,22 +125,27 @@ export default function PersistentPlayer (props) {
 	useEffect(() => {
 		api.triggerEvent('CPL_PERSISTENT_PLAYER_MOUNTED', {item});
 
+		// Handle toggle play message from Actions component
+		const handleTogglePlay = (e) => {
+			if (e.data && e.data.action === 'CPL_TOGGLE_PLAY') {
+				setIsPlaying(!isPlaying);
+			}
+		};
+		
+		// Add listener for toggle play event
+		window.top.addEventListener('message', handleTogglePlay);
+
 		// For iOS devices, set up a direct document-level touch handler
 		// This helps maintain audio permissions throughout the session
 		if (isIOS.current) {
-
-
 			// Function to handle unmuting when user interacts with the page
 			const handleIOSInteraction = (e) => {
 				// Only handle once we have a player instance
 				if (playerInstance?.current) {
-
-
 					// Try to unmute the player
 					const internalPlayer = playerInstance.current.getInternalPlayer();
 					if (internalPlayer) {
 						if (typeof internalPlayer.unMute === 'function') {
-
 							internalPlayer.unMute();
 
 							if (typeof internalPlayer.setVolume === 'function') {
@@ -159,14 +164,16 @@ export default function PersistentPlayer (props) {
 			return () => {
 				document.removeEventListener('touchstart', handleIOSInteraction);
 				document.removeEventListener('click', handleIOSInteraction);
+				window.top.removeEventListener('message', handleTogglePlay);
 				api.triggerEvent('CPL_PERSISTENT_PLAYER_UNMOUNTED');
 			};
 		}
 
 		return () => {
+			window.top.removeEventListener('message', handleTogglePlay);
 			api.triggerEvent('CPL_PERSISTENT_PLAYER_UNMOUNTED');
 		};
-	}, []);
+	}, [isPlaying]);
 
 	// Seek to the correct position when the player is ready
 	useEffect(() => {

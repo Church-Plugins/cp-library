@@ -80,7 +80,7 @@ export function isURL(string) {
 
 /**
  * Attempts to unmute a YouTube player with various fallback approaches specifically for iOS
- * 
+ *
  * @param {Object} player - The YouTube player instance
  * @param {boolean} [setupInterval=false] - Whether to set up an interval to repeatedly try unmuting
  * @param {string} [source='unknown'] - Source of the unmute call for debugging
@@ -91,11 +91,11 @@ export function forceUnmuteYouTubePlayer(player, setupInterval = false, source =
     console.log(`[DEBUG:${source}] forceUnmuteYouTubePlayer called with null player`);
     return null;
   }
-  
+
   // Detect platform for logging
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  
+
   console.log(`[DEBUG:${source}] forceUnmuteYouTubePlayer START on ${isIOS ? 'iOS' : 'non-iOS'} device`);
   console.log(`[DEBUG:${source}] Player methods available:`, {
     unMute: typeof player.unMute === 'function',
@@ -104,7 +104,7 @@ export function forceUnmuteYouTubePlayer(player, setupInterval = false, source =
     hasH: !!player.h,
     hasHMuted: player.h && player.h.muted !== undefined
   });
-  
+
   try {
     // Special workaround for iOS YouTube embeds
     if (isIOS) {
@@ -122,37 +122,37 @@ export function forceUnmuteYouTubePlayer(player, setupInterval = false, source =
           console.log(`[DEBUG:${source}] Error creating iOS audio unlocker:`, e);
         }
       }
-      
+
       // For iOS, we need to use both the player API and direct iframe access
       console.log(`[DEBUG:${source}] Using iOS-specific unmuting approaches`);
     }
-    
+
     // Try standard unmute
     if (typeof player.unMute === 'function') {
       console.log(`[DEBUG:${source}] Calling player.unMute()`);
       // Try multiple times for iOS (some devices need this)
       player.unMute();
-      
+
       // For iOS, make multiple unmute calls with slight delay between
       if (isIOS) {
         setTimeout(() => player.unMute(), 10);
         setTimeout(() => player.unMute(), 100);
       }
-      
+
       // Try to check muted state if available
       if (typeof player.isMuted === 'function') {
         const muted = player.isMuted();
         console.log(`[DEBUG:${source}] After unMute, player.isMuted() = ${muted}`);
-        
+
         // If still muted, try more direct approach with the iframe
         if (muted && typeof player.getIframe === 'function') {
           try {
             const iframe = player.getIframe();
             console.log(`[DEBUG:${source}] Iframe found:`, !!iframe);
-            
+
             if (iframe && iframe.contentWindow) {
               console.log(`[DEBUG:${source}] Direct iframe access approach`);
-              
+
               // Try directly posting messages to the iframe in different formats
               // Format 1: JSON string
               try {
@@ -161,7 +161,7 @@ export function forceUnmuteYouTubePlayer(player, setupInterval = false, source =
                   func: 'unMute',
                   args: []
                 }), '*');
-                
+
                 iframe.contentWindow.postMessage(JSON.stringify({
                   event: 'command',
                   func: 'setVolume',
@@ -170,15 +170,15 @@ export function forceUnmuteYouTubePlayer(player, setupInterval = false, source =
               } catch (err) {
                 console.log(`[DEBUG:${source}] Error posting JSON message to iframe:`, err);
               }
-              
-              // Format 2: Direct string 
+
+              // Format 2: Direct string
               try {
                 iframe.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*');
                 iframe.contentWindow.postMessage('{"event":"command","func":"setVolume","args":[100]}', '*');
               } catch (err) {
                 console.log(`[DEBUG:${source}] Error posting string message to iframe:`, err);
               }
-              
+
               // Format 3: YouTube API specific format
               try {
                 const ytEvent = {
@@ -187,7 +187,7 @@ export function forceUnmuteYouTubePlayer(player, setupInterval = false, source =
                   channel: 'widget'
                 };
                 iframe.contentWindow.postMessage(JSON.stringify(ytEvent), '*');
-                
+
                 // Follow with mute commands
                 setTimeout(() => {
                   const unmuteCmd = {
@@ -209,46 +209,39 @@ export function forceUnmuteYouTubePlayer(player, setupInterval = false, source =
         }
       }
     }
-    
+
     // Set volume to max
     if (typeof player.setVolume === 'function') {
-      console.log(`[DEBUG:${source}] Calling player.setVolume(100)`);
       player.setVolume(100);
-      
+
       // Try to check volume if available
       if (typeof player.getVolume === 'function') {
         const volume = player.getVolume();
-        console.log(`[DEBUG:${source}] After setVolume, player.getVolume() = ${volume}`);
       }
     }
-    
+
     // Try to access internal properties (YouTube iframe API hack)
     if (player.h && player.h.muted !== undefined) {
       const oldValue = player.h.muted;
-      console.log(`[DEBUG:${source}] Setting player.h.muted = false (was ${oldValue})`);
       player.h.muted = false;
     }
-    
+
     // Access underlying iframe document if possible
     try {
       const frame = player.getIframe();
       if (frame && frame.contentWindow) {
-        console.log(`[DEBUG:${source}] Sending postMessage to iframe`);
         frame.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*');
       }
     } catch (e) {
-      console.log(`[DEBUG:${source}] Error accessing iframe:`, e);
     }
-    
+
     // Set up repeated unmuting for iOS if requested
     // This is needed because iOS is particularly stubborn
     if (setupInterval) {
       if (isIOS) {
-        console.log(`[DEBUG:${source}] Setting up unmuting RAF and interval for iOS`);
-        
+
         // Try again after a short delay with requestAnimationFrame
         requestAnimationFrame(() => {
-          console.log(`[DEBUG:${source}] RAF callback executing`);
           if (player) {
             if (typeof player.unMute === 'function') {
               player.unMute();
@@ -258,34 +251,30 @@ export function forceUnmuteYouTubePlayer(player, setupInterval = false, source =
             }
           }
         });
-        
+
         // Set up an interval to keep trying to unmute
         const unmutingInterval = setInterval(() => {
-          console.log(`[DEBUG:${source}] Interval unmute attempt`);
           if (player) {
             if (typeof player.unMute === 'function') {
               player.unMute();
               // Try to check muted state if available
               if (typeof player.isMuted === 'function') {
                 const muted = player.isMuted();
-                console.log(`[DEBUG:${source}] In interval, player.isMuted() = ${muted}`);
               }
             }
             if (typeof player.setVolume === 'function') {
               player.setVolume(100);
             }
           } else {
-            console.log(`[DEBUG:${source}] Clearing interval - player no longer available`);
             clearInterval(unmutingInterval);
           }
         }, 300);
-        
+
         // Clear interval after 3 seconds to avoid memory leaks
         setTimeout(() => {
-          console.log(`[DEBUG:${source}] Cleaning up interval after timeout`);
           clearInterval(unmutingInterval);
         }, 3000);
-        
+
         return unmutingInterval;
       } else {
         console.log(`[DEBUG:${source}] Not setting up interval - not an iOS device`);
@@ -294,7 +283,6 @@ export function forceUnmuteYouTubePlayer(player, setupInterval = false, source =
   } catch (e) {
     console.error(`[DEBUG:${source}] Error in forceUnmuteYouTubePlayer:`, e);
   }
-  
-  console.log(`[DEBUG:${source}] forceUnmuteYouTubePlayer END`);
+
   return null;
 }

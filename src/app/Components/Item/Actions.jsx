@@ -28,36 +28,49 @@ export default function Actions({ item, callback }) {
 	};
 
 	const playVideo = (e) => {
-		console.log('Actions: playVideo called from user interaction');
-		
+
 		e.stopPropagation();
 		e.preventDefault(); // Prevent any default actions
-		
+
+		// Check if the persistent player is already active with this video playing
+		if (api.playerIsActive()) {
+			// Get the current player DOM node
+			const playerNode = window.top.document.getElementById('cpl_persistent_player');
+			
+			// Only toggle play/pause if this is the same video currently playing
+			if (playerNode && playerNode.querySelector('.title-text a')?.innerHTML === item.title) {
+				// Just toggle play/pause instead of opening a new player
+				const event = new CustomEvent('message');
+				event.data = {
+					action: 'CPL_TOGGLE_PLAY',
+					item: item
+				};
+				window.top.dispatchEvent(event);
+				return;
+			}
+		}
+
 		// Capture user interaction at the earliest possible moment
-		const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+		const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
 		            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-		
-		console.log(`Actions: Detected ${isIOS ? 'iOS' : 'non-iOS'} device`);
-		
+
 		// Create user interaction token with timestamp for tracking
 		const userInteractionToken = Date.now();
-		
+
 		// Store the token in a global scope to maintain the user interaction context
 		window._cplUserInteractions = window._cplUserInteractions || {};
 		window._cplUserInteractions[userInteractionToken] = true;
-		
+
 		// For iOS, we need a simple approach to maintain the gesture chain
 		if (isIOS) {
 			try {
-				console.log('Actions: Setting up iOS audio context');
 				// Create/resume audio context - crucial for iOS audio unlock
 				window._cplAudioContext = window._cplAudioContext || new (window.AudioContext || window.webkitAudioContext)();
-				
+
 				if (window._cplAudioContext.state === 'suspended') {
-					console.log('Actions: Resuming suspended audio context');
 					window._cplAudioContext.resume();
 				}
-				
+
 				// Create a quick silent sound (needed for iOS)
 				const silentSource = window._cplAudioContext.createOscillator();
 				const gain = window._cplAudioContext.createGain();
@@ -66,9 +79,8 @@ export default function Actions({ item, callback }) {
 				gain.connect(window._cplAudioContext.destination);
 				silentSource.start();
 				silentSource.stop(window._cplAudioContext.currentTime + 0.01); // Very short duration
-				
+
 				// IMMEDIATELY call the API - this is critical for iOS gesture chain
-				console.log('Actions: Direct call to persistent player for iOS');
 				api.passToPersistentPlayer({
 					item,
 					mode: 'video',
@@ -79,7 +91,7 @@ export default function Actions({ item, callback }) {
 				});
 			} catch (err) {
 				console.log('Actions: Error with iOS handling:', err);
-				
+
 				// Fallback to direct call
 				api.passToPersistentPlayer({
 					item,
@@ -92,7 +104,6 @@ export default function Actions({ item, callback }) {
 			}
 		} else {
 			// Standard approach for non-iOS
-			console.log('Actions: Calling passToPersistentPlayer directly');
 			api.passToPersistentPlayer({
 				item,
 				mode: 'video',
@@ -107,10 +118,9 @@ export default function Actions({ item, callback }) {
 			() => jQuery( '.MuiSlider-root.MuiSlider-marked .MuiSlider-mark' ).attr( 'title', 'Jump to Sermon' ),
 			1500
 		);
-		
+
 		// Clean up the token after a reasonable timeout to prevent memory leaks
 		setTimeout(() => {
-			console.log('Actions: Cleaning up interaction tokens');
 			if (window._cplUserInteractions && window._cplUserInteractions[userInteractionToken]) {
 				delete window._cplUserInteractions[userInteractionToken];
 			}
@@ -118,20 +128,37 @@ export default function Actions({ item, callback }) {
 	};
 
 	const playAudio = (e) => {
-		console.log('Actions: playAudio called from user interaction');
-		
+
 		e.stopPropagation();
 		e.preventDefault(); // Prevent any default actions
-		
+
+		// Check if the persistent player is already active with this audio playing
+		if (api.playerIsActive()) {
+			// Get the current player DOM node
+			const playerNode = window.top.document.getElementById('cpl_persistent_player');
+			
+			// Only toggle play/pause if this is the same audio currently playing
+			if (playerNode && playerNode.querySelector('.title-text a')?.innerHTML === item.title) {
+				// Just toggle play/pause instead of opening a new player
+				const event = new CustomEvent('message');
+				event.data = {
+					action: 'CPL_TOGGLE_PLAY',
+					item: item
+				};
+				window.top.dispatchEvent(event);
+				return;
+			}
+		}
+
 		// Check if this is iOS for consistent handling
-		const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+		const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
 					(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-		
+
 		// Create user interaction token for both iOS and non-iOS
 		const userInteractionToken = Date.now();
 		window._cplUserInteractions = window._cplUserInteractions || {};
 		window._cplUserInteractions[userInteractionToken] = true;
-		
+
 		// For iOS, create an audio context to maintain the user gesture chain
 		if (isIOS) {
 			try {
@@ -144,7 +171,7 @@ export default function Actions({ item, callback }) {
 				console.log('Actions: Error with iOS audio context:', err);
 			}
 		}
-		
+
 		// Immediate call to persistent player - consistent with video approach
 		api.passToPersistentPlayer({
 			item,
@@ -154,7 +181,7 @@ export default function Actions({ item, callback }) {
 			userInteractionToken: userInteractionToken,
 			isIOS: isIOS,
 		});
-		
+
 		// Clean up token after a timeout
 		setTimeout(() => {
 			if (window._cplUserInteractions && window._cplUserInteractions[userInteractionToken]) {
@@ -166,7 +193,7 @@ export default function Actions({ item, callback }) {
 	// Ensure we're correctly determining if this is a URL video (should use onClick) or not (should use href)
 	// We want isVideoURL to be TRUE when it's a video URL, which means href should be FALSE to use onClick
 	const isVideoURL = item.video && item.video.value && typeof item.video.value === 'string' && isURL(item.video.value);
-	
+
 	// Similarly for audio, make sure we handle it properly
 	const isAudioURL = item.audio && typeof item.audio === 'string' && isURL(item.audio);
 

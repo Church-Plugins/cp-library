@@ -54,23 +54,29 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
 
   // Track first play
   const firstPlayRef = useRef(true);
-  
+
   // Check if this is iOS
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  
+
   const handlePlay = () => {
     props.onPlay?.()
-    
+
     // Get the internal player
     const internalPlayer = playerRef.current?.getInternalPlayer();
-    
-    // Force pause and show muted notice ONLY on iOS for first video play
-    if (firstPlayRef.current && mode === 'video' && internalPlayer && isIOS) {
+
+    // Only show special handling for iframe-based players on iOS
+    // Check if this is a YouTube or Vimeo player (they use iframe and have special methods)
+    const isIframePlayer = internalPlayer && (
+      typeof internalPlayer.pauseVideo === 'function' || // YouTube
+      typeof internalPlayer.getIframe === 'function' ||  // YouTube/Vimeo
+      (internalPlayer.nodeName === 'IFRAME') // Generic iframe detection
+    );
+
+    // Force pause and show muted notice ONLY on iOS for first video play with iframe players
+    if (firstPlayRef.current && mode === 'video' && internalPlayer && isIOS && isIframePlayer) {
       firstPlayRef.current = false;
-      
-      // Pause shortly to let the user tap again for audio permissions
-      
+
       // Brief timeout to let the player start, then pause and show notice
       setTimeout(() => {
         // Pause the player
@@ -79,19 +85,19 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
         } else if (typeof internalPlayer.pause === 'function') {
           internalPlayer.pause();
         }
-        
+
         // Show notice about enabling audio
         if (props.onMutedPlayback) {
           props.onMutedPlayback(true);
         }
       }, 200);
-      
+
       return; // Skip the rest on first play
     } else if (firstPlayRef.current) {
-      // Mark as not first play for non-iOS devices too
+      // Mark as not first play for all other cases
       firstPlayRef.current = false;
     }
-    
+
     if (playerRef.current && internalPlayer) {
       // For YouTube
       if (typeof internalPlayer.unMute === 'function') {
@@ -303,45 +309,43 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
   useEffect(() => {
     // Only proceed if we have a player reference
     if (!playerRef.current) return;
-    
+
     // Get internal player instance
     const internalPlayer = playerRef.current.getInternalPlayer();
     if (!internalPlayer) return;
-    
+
     // Check if this is iOS
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    
+
     // Check for token - either directly provided or from global storage
     const hasToken = userInteractionToken || window._activeUserInteractionToken;
-    const validToken = hasToken && window._cplUserInteractions && 
-                     (userInteractionToken ? window._cplUserInteractions[userInteractionToken] : 
+    const validToken = hasToken && window._cplUserInteractions &&
+                     (userInteractionToken ? window._cplUserInteractions[userInteractionToken] :
                       window._cplUserInteractions[window._activeUserInteractionToken]);
-                  
+
     // If we have a valid user interaction token, use it to handle playback with unmuting
     if (validToken) {
-      console.log('PlayerWrapper: Valid user interaction detected, handling direct playback');
-      
+
       // For YouTube videos
       if (typeof internalPlayer.unMute === 'function') {
         try {
           // Unified approach for both iOS and non-iOS
           // This simplified sequence works better across platforms
-          console.log('PlayerWrapper: Executing YouTube unmute and play sequence');
-          
+
           // 1. Unmute immediately (critical for iOS)
           internalPlayer.unMute();
-          
+
           // 2. Set volume to max (important step)
           if (typeof internalPlayer.setVolume === 'function') {
             internalPlayer.setVolume(100);
           }
-          
+
           // 3. Play immediately after unmute
           if (typeof internalPlayer.playVideo === 'function') {
             internalPlayer.playVideo();
           }
-          
+
           // For iOS, we use requestAnimationFrame for better reliability
           if (isIOS) {
             requestAnimationFrame(() => {
@@ -366,7 +370,7 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
         // Set volume to max and unmute
         internalPlayer.volume = 1.0;
         internalPlayer.muted = false;
-        
+
         // Use the Promise-based API for playback
         const playPromise = internalPlayer.play();
         if (playPromise !== undefined) {
@@ -378,7 +382,7 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
           });
         }
       }
-    } 
+    }
     // For non-token cases (autoplay/background loading)
     else {
       // For all browsers, try unmuting immediately (no delay)
@@ -465,21 +469,28 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
             autohide: 1,       // Hide controls after play begins
             fs: 1,             // Enable fullscreen button
             origin: window.location.origin, // Set origin for improved security
-            
-            // Always start muted (required for iOS autoplay)
-            mute: 1
+
+            // Start muted for iOS (required for iframe autoplay)
+            // This is required for YouTube videos on iOS specifically
+            mute: isIOS ? 1 : 0
           }
         },
         vimeo: {
           playerOptions: {
             playsinline: true,
             controls: false,   // Hide Vimeo controls
-            autopause: false   // Prevent autopause when other videos play
+            autopause: false,  // Prevent autopause when other videos play
+            // Vimeo also needs muted for iOS autoplay
+            muted: isIOS
           }
         },
         file: {
           attributes: {
-            controlsList: "nodownload" // Prevent download option
+            controlsList: "nodownload", // Prevent download option
+            // Direct video files don't need to start muted
+            // This allows them to play with audio on first tap
+            muted: false,
+            playsInline: true  // Important for iOS to play inline
           }
         }
       }}
