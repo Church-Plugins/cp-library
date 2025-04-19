@@ -362,7 +362,6 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
             });
           }
         } catch (e) {
-          console.debug('Error during YouTube playback:', e);
         }
       }
       // For HTML5 video/audio elements
@@ -375,7 +374,6 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
         const playPromise = internalPlayer.play();
         if (playPromise !== undefined) {
           playPromise.catch(error => {
-            console.debug('Playback with audio failed:', error);
             // Fall back to muted playback
             internalPlayer.muted = true;
             internalPlayer.play();
@@ -400,7 +398,6 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
           internalPlayer.volume = 1.0;
         }
       } catch (e) {
-        console.debug('Error during unmute:', e);
       }
     }
   }, [playerRef.current, userInteractionToken]);

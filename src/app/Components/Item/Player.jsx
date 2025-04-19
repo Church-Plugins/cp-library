@@ -40,9 +40,9 @@ export default function Player({ item }) {
   const [showMutedNotice, setShowMutedNotice] = useState(false); // Show notification for iOS users about audio
   const [audioUnlocked, setAudioUnlocked] = useState(false); // Track if audio is unlocked on iOS
   const playbackDetectionTimeout = useRef(null);
-  
+
   // Check if running on iOS for special audio handling
-  const isIOS = useRef(/iPad|iPhone|iPod/.test(navigator.userAgent) || 
+  const isIOS = useRef(/iPad|iPhone|iPod/.test(navigator.userAgent) ||
                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
   // Add cleanup for timeouts
@@ -89,7 +89,7 @@ export default function Player({ item }) {
 			}
 			return;
 		}
-	
+
 		// Otherwise use normal fullscreen detection
 		if (!isDesktop && !screenfull.isFullscreen) {
 			return;
@@ -110,49 +110,49 @@ export default function Player({ item }) {
 
 	const handleClickFullscreen = () => {
 		cplLog(item.id, 'fullscreen');
-		
+
 		try {
 			// First check if we can detect YouTube specifically
 			// YouTube has its own fullscreen mechanism that works more reliably
 			if (playerInstance.current) {
 				const internalPlayer = playerInstance.current.getInternalPlayer();
-				
+
 				// Check if it's a YouTube player
-				const isYouTube = internalPlayer && 
-					(typeof internalPlayer.getVideoUrl === 'function' || 
+				const isYouTube = internalPlayer &&
+					(typeof internalPlayer.getVideoUrl === 'function' ||
 					(internalPlayer.src && internalPlayer.src.toString().includes('youtube')));
-				
+
 				if (isYouTube) {
 					// For YouTube, try to call the YouTube-specific API
 					if (typeof internalPlayer.getIframe === 'function') {
 						const iframe = internalPlayer.getIframe();
-						
+
 						// Send a postMessage to enable fullscreen
 						if (iframe && iframe.contentWindow) {
 							iframe.contentWindow.postMessage('{"event":"command","func":"enterFullScreen","args":""}', '*');
 							return false;
 						}
 					}
-					
+
 					// Alternative YouTube method
 					if (typeof internalPlayer.setSize === 'function') {
 						// Get document dimensions
 						const width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 						const height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-						
+
 						// Set player to full window size
 						internalPlayer.setSize(width, height);
 						return false;
 					}
 				}
 			}
-			
+
 			// If YouTube-specific methods failed or it's not a YouTube player, try screenfull
 			if (screenfull && screenfull.isEnabled) {
 				// Get the video container element
 				const instance = ReactDOM.findDOMNode(playerInstance.current);
 				const videoContainer = instance ? instance.closest('.itemDetail__featureImage') || instance.parentElement : null;
-				
+
 				if (videoContainer) {
 					// Request fullscreen on the video container
 					screenfull.request(videoContainer);
@@ -164,36 +164,36 @@ export default function Player({ item }) {
 				}
 			} else {
 				// If screenfull isn't available
-				
+
 				// Try native fullscreen API for HTML5 video
 				if (playerInstance.current) {
 					const internalPlayer = playerInstance.current.getInternalPlayer();
-					
+
 					// For HTML5 video element
 					if (internalPlayer && typeof internalPlayer.requestFullscreen === 'function') {
 						internalPlayer.requestFullscreen();
 						return false;
 					}
-					
+
 					// iOS Safari specific method
 					if (internalPlayer && typeof internalPlayer.webkitEnterFullscreen === 'function') {
 						internalPlayer.webkitEnterFullscreen();
 						return false;
 					}
-					
+
 					// Alternative webkit method
 					if (internalPlayer && typeof internalPlayer.webkitRequestFullscreen === 'function') {
 						internalPlayer.webkitRequestFullscreen();
 						return false;
 					}
 				}
-				
+
 				console.warn('Fullscreen is not supported in this browser');
 			}
 		} catch (error) {
 			console.error('Error entering fullscreen:', error);
 		}
-		
+
 		return false;
 	};
 
@@ -202,7 +202,7 @@ export default function Player({ item }) {
 		if (api.playerIsActive()) {
 			// Get the current player DOM node
 			const playerNode = window.top.document.getElementById('cpl_persistent_player');
-			
+
 			// Only toggle play/pause if this is the same video currently playing
 			if (playerNode && playerNode.querySelector('.title-text a')?.innerHTML === currentItem.title) {
 				// Just toggle play/pause instead of opening a new player
@@ -215,28 +215,28 @@ export default function Player({ item }) {
 				return;
 			}
 		}
-		
+
 		// Check if this is iOS - using the same method as PersistentPlayer
-		const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+		const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
 			(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-		
+
 		// Create a user interaction token to maintain iOS audio permissions
 		const userInteractionToken = Date.now().toString();
-		
+
 		// Store it globally so it can be accessed when the persistent player initializes
 		if (isIOSDevice) {
 			// Create a global interaction registry if it doesn't exist
 			if (!window._cplUserInteractions) {
 				window._cplUserInteractions = {};
 			}
-			
+
 			// Store this interaction context
 			window._cplUserInteractions[userInteractionToken] = true;
-			
+
 			// For iOS, attempt to unlock audio context first if we have a player
 			if (playerInstance.current && typeof playerInstance.current.getInternalPlayer === 'function') {
 				const internalPlayer = playerInstance.current.getInternalPlayer();
-				
+
 				// Try to unmute first - necessary for iOS
 				if (internalPlayer) {
 					// For YouTube
@@ -247,7 +247,7 @@ export default function Player({ item }) {
 								internalPlayer.setVolume(100);
 							}
 						} catch (e) {
-							console.debug("Error unmuting before persistent player:", e);
+							// Silently continue
 						}
 					}
 					// For HTML5 video/audio
@@ -255,7 +255,7 @@ export default function Player({ item }) {
 						try {
 							internalPlayer.muted = false;
 							internalPlayer.volume = 1.0;
-							
+
 							// For iOS Safari, sometimes a quick play/pause can help unlock audio permissions
 							if (typeof internalPlayer.play === 'function') {
 								const playPromise = internalPlayer.play();
@@ -272,12 +272,12 @@ export default function Player({ item }) {
 								}
 							}
 						} catch (e) {
-							console.debug("Error prepping HTML5 player for iOS:", e);
+							// Silently continue
 						}
 					}
 				}
 			}
-			
+
 			// Clean up old interaction tokens after a while
 			setTimeout(() => {
 				if (window._cplUserInteractions && window._cplUserInteractions[userInteractionToken]) {
@@ -285,10 +285,10 @@ export default function Player({ item }) {
 				}
 			}, 5000);
 		}
-		
+
 		// Store the current state to be used when handing over to persistent player
-		mediaState.current = { 
-			...mediaState.current, 
+		mediaState.current = {
+			...mediaState.current,
 			item: currentItem,
 			mode: mode,
 			playedSeconds: playedSeconds,
@@ -316,7 +316,7 @@ export default function Player({ item }) {
 			userInteractionToken: userInteractionToken,
 			audioUnlocked: mediaState.current.audioUnlocked
 		});
-		
+
 		// For iOS devices, clean up the local player after a slight delay
 		// This helps maintain the user interaction context for autoplay
 		if (isIOSDevice) {
@@ -383,14 +383,14 @@ export default function Player({ item }) {
 
 		// Set a timeout to check if playback started
 		playbackDetectionTimeout.current = setTimeout(() => {
-			console.log("Playback detection timeout fired, checking if playing");
+
 
 			// Only proceed if this is still the current detection cycle
 			if (window._playbackDetectionId === detectionId) {
 				// If we're still in loading state, switch to ready
 				setLoadingState('ready');
 				setIsPlaying(false); // Ensure player is paused
-				console.log("Switching to ready state, player initialized but not playing");
+
 			}
 		}, 2500); // 2.5 seconds should be sufficient
 
@@ -419,25 +419,25 @@ export default function Player({ item }) {
 				break;
 		}
 	};
-	
+
 	// Function to manually unmute on iOS
 	const handleUnmuteOnIOS = () => {
 		if (!playerInstance.current) return;
-		
+
 		// Get internal player
 		const internalPlayer = playerInstance.current.getInternalPlayer();
-		
+
 		if (!internalPlayer) return;
-		
+
 		try {
 			// For YouTube players
 			if (typeof internalPlayer.unMute === 'function') {
 				internalPlayer.unMute();
-				
+
 				if (typeof internalPlayer.setVolume === 'function') {
 					internalPlayer.setVolume(100);
 				}
-				
+
 				setIsMuted(false);
 				setShowMutedNotice(false);
 				setAudioUnlocked(true);
@@ -446,13 +446,13 @@ export default function Player({ item }) {
 			else if (internalPlayer.muted !== undefined) {
 				internalPlayer.muted = false;
 				internalPlayer.volume = 1.0;
-				
+
 				setIsMuted(false);
 				setShowMutedNotice(false);
 				setAudioUnlocked(true);
 			}
 		} catch (e) {
-			console.debug("Error while unmuting:", e);
+			// Silently continue
 		}
 	};
 
@@ -481,7 +481,7 @@ export default function Player({ item }) {
   useEffect(() => {
     mediaState.current = { ...mediaState.current, item: currentItem, mode };
   }, [item, currentItem, mode])
-  
+
   // Monitor for iOS muted playback
   useEffect(() => {
     // Only check for iOS devices and only when playing video
@@ -489,14 +489,14 @@ export default function Player({ item }) {
       // Set a timer to check if the video is actually playing with sound
       const checkTimer = setTimeout(() => {
         if (!playerInstance.current) return;
-        
+
         const internalPlayer = playerInstance.current.getInternalPlayer();
-        
+
         // Check if audio is muted on YouTube
         if (internalPlayer && typeof internalPlayer.isMuted === 'function') {
           const isMuted = internalPlayer.isMuted();
           if (isMuted) {
-            console.log("Detected muted YouTube playback on iOS");
+
             setShowMutedNotice(true);
             setIsMuted(true);
           } else {
@@ -507,7 +507,7 @@ export default function Player({ item }) {
         // For HTML5 video
         else if (internalPlayer && internalPlayer.muted !== undefined) {
           if (internalPlayer.muted) {
-            console.log("Detected muted HTML5 video playback on iOS");
+
             setShowMutedNotice(true);
             setIsMuted(true);
           } else {
@@ -516,7 +516,7 @@ export default function Player({ item }) {
           }
         }
       }, 500); // Check after 500ms
-      
+
       return () => clearTimeout(checkTimer);
     }
   }, [isPlaying, mode, showMutedNotice]);
@@ -582,7 +582,7 @@ export default function Player({ item }) {
 						<Box
 							className="itemDetail__featureImage"
 							position="relative"
-							paddingTop="56.26%"
+							paddingTop={ screenfull.isFullscreen ? 0 : "56.26%" }
 							backgroundColor={mode === "audio" ? "#C4C4C4" : "transparent"}
 						>
 							{
@@ -615,7 +615,7 @@ export default function Player({ item }) {
 												<CircularProgress sx={{ color: 'white' }} />
 											</Box>
 										)}
-										
+
 										{/* Add muted notification for iOS users */}
 										{showMutedNotice && (
 											<Box
@@ -659,7 +659,7 @@ export default function Player({ item }) {
 											playbackRate={playbackRate}
 											playing={isPlaying}
 											onPlay={() => {
-												console.log("Player started playing");
+
 												setIsPlaying(true);
 												setLoadingState('playing');
 												// Clear any pending detection timeout

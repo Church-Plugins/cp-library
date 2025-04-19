@@ -110,7 +110,7 @@ export default function PersistentPlayer (props) {
 				setAudioUnlocked(true);
 			}
 		} catch (e) {
-			console.debug("Error while unmuting:", e);
+			// Silently continue
 		}
 	};
 
@@ -196,7 +196,7 @@ export default function PersistentPlayer (props) {
 				if (internalPlayer && typeof internalPlayer.isMuted === 'function') {
 					const isMuted = internalPlayer.isMuted();
 					if (isMuted) {
-						console.log("Detected muted YouTube playback on iOS");
+						
 						setShowMutedNotice(true);
 						setIsMutedPlayback(true);
 					} else {
@@ -207,7 +207,7 @@ export default function PersistentPlayer (props) {
 				// For HTML5 video/audio
 				else if (internalPlayer && internalPlayer.muted !== undefined) {
 					if (internalPlayer.muted) {
-						console.log("Detected muted HTML5 media playback on iOS");
+						
 						setShowMutedNotice(true);
 						setIsMutedPlayback(true);
 					} else {

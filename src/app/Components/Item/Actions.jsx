@@ -90,8 +90,6 @@ export default function Actions({ item, callback }) {
 					isIOS: true,
 				});
 			} catch (err) {
-				console.log('Actions: Error with iOS handling:', err);
-
 				// Fallback to direct call
 				api.passToPersistentPlayer({
 					item,
@@ -168,7 +166,7 @@ export default function Actions({ item, callback }) {
 					window._cplAudioContext.resume();
 				}
 			} catch (err) {
-				console.log('Actions: Error with iOS audio context:', err);
+				// Silently continue
 			}
 		}
 
