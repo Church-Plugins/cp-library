@@ -34,6 +34,7 @@ export default function PersistentPlayer (props) {
 	const [mode, setMode] = useState();
 	const [supportsPlaybackRate, setSupportsPlaybackRate] = useState(true);
 	const [playerInstance, setPlayerInstance] = useListenerRef(null, (value) => value && setLoading(false));
+	const [userInteractionToken, setUserInteractionToken] = useState(null);
 
 	const onMouseMove = (e) => {
 		if (showFSControls) {
@@ -97,6 +98,11 @@ export default function PersistentPlayer (props) {
 			setMode(data.mode);
 			setPlayedSeconds(data.playedSeconds);
 			setIsPlaying(data.playedSeconds > 0 ? false : data.isPlaying);
+			
+			// Store the user interaction token if provided
+			if (data.userInteractionToken) {
+				setUserInteractionToken(data.userInteractionToken);
+			}
 
 			if (!playerInstance.current) {
 				setLoading(true);
@@ -111,14 +117,63 @@ export default function PersistentPlayer (props) {
 	}, []);
 
 	useEffect(() => {
-		if (!loading) {
-			if (typeof playerInstance?.current.getInternalPlayer?.()?.play === 'function') {
-				playerInstance.current.getInternalPlayer().play();
+		if (!loading && playerInstance?.current) {
+			// Use the user interaction token if available
+			if (userInteractionToken && window._cplUserInteractions && window._cplUserInteractions[userInteractionToken]) {
+				// This is crucial - execute this code synchronously within the same user interaction flow
+				const internalPlayer = playerInstance.current.getInternalPlayer();
+				
+				// Handle YouTube videos specifically
+				if (internalPlayer && typeof internalPlayer.playVideo === 'function') {
+					// For YouTube, we need to explicitly unmute and then play
+					internalPlayer.unMute();
+					internalPlayer.playVideo();
+				} 
+				// Handle HTML5 video elements
+				else if (internalPlayer && typeof internalPlayer.play === 'function') {
+					internalPlayer.muted = false;
+					// Use the Promise-based API for HTML5 video
+					const playPromise = internalPlayer.play();
+					if (playPromise !== undefined) {
+						playPromise.catch(error => {
+							console.debug('Auto-play with sound was prevented:', error);
+							// Fall back to muted autoplay which is more widely supported
+							internalPlayer.muted = true;
+							internalPlayer.play();
+						});
+					}
+				} else {
+					// Default behavior for other player types
+					setIsPlaying(true);
+				}
 			} else {
-				setIsPlaying(true);
+				// Default behavior without user interaction token
+				const internalPlayer = playerInstance.current.getInternalPlayer();
+				
+				// For non-iOS browsers, ensure sound is unmuted
+				const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+				
+				if (!isIOS) {
+					// Handle YouTube
+					if (internalPlayer && typeof internalPlayer.unMute === 'function') {
+						internalPlayer.unMute();
+					}
+					// Handle HTML5 video
+					else if (internalPlayer && typeof internalPlayer.play === 'function') {
+						internalPlayer.muted = false;
+					}
+				}
+				
+				// Continue with playback
+				if (typeof playerInstance?.current.getInternalPlayer?.()?.play === 'function') {
+					playerInstance.current.getInternalPlayer().play();
+				} else {
+					setIsPlaying(true);
+				}
 			}
 		}
-	}, [loading]);
+	}, [loading, userInteractionToken]);
 
 	useEffect(() => {
 		// Since item and mode are different pieces of state that are set separately, we wait until both
@@ -178,6 +233,7 @@ export default function PersistentPlayer (props) {
 						 controls={false}
 						 playing={!loading && isPlaying}
 						 playbackRate={playbackRate}
+						 userInteractionToken={userInteractionToken}
 						 onPlay={() => setIsPlaying(true)}
 						 onPause={() => setIsPlaying(false)}
 						 onDuration={duration => {
@@ -311,13 +367,10 @@ export default function PersistentPlayer (props) {
 							}}
 							onChangeCommitted={(_, value) => {
 								setIsPlaying(false);
-								setTimeout(
-									() => {
-										setPlayedSeconds(value);
-										playerInstance.current.seekTo(playedSeconds);
-										setIsPlaying(true);
-									}, 5
-								);
+								// Execute synchronously to maintain iOS gesture chain
+								setPlayedSeconds(value);
+								playerInstance.current.seekTo(value); // Use 'value' directly instead of state
+								setIsPlaying(true);
 							}}
 						/>
 					</Box>
@@ -418,6 +471,7 @@ export default function PersistentPlayer (props) {
 						 height="0"
 						 playing={!loading && isPlaying}
 						 playbackRate={playbackRate}
+						 userInteractionToken={userInteractionToken}
 						 onPlay={() => setIsPlaying(true)}
 						 onPause={() => setIsPlaying(false)}
 						 onDuration={duration => {

@@ -56,13 +56,15 @@ class CP_Library {
 	 * @param {string} args.mode The mode to pass to the player. One of 'audio' or 'video'.
 	 * @param {boolean} args.isPlaying Whether the player should start playing immediately.
 	 * @param {number} args.playedSeconds The number of seconds to start playing from.
+	 * @param {number} [args.userInteractionToken] Token to maintain user interaction context.
 	 */
-	passToPersistentPlayer({ item, mode, isPlaying, playedSeconds }) {
+	passToPersistentPlayer({ item, mode, isPlaying, playedSeconds, userInteractionToken }) {
 		this.triggerEvent('CPL_OPEN_PERSISTENT_PLAYER', {
 			item,
 			mode,
 			isPlaying,
 			playedSeconds,
+			userInteractionToken,
 		});
 
 		setTimeout(() => {
@@ -71,6 +73,7 @@ class CP_Library {
 				mode,
 				isPlaying,
 				playedSeconds,
+				userInteractionToken,
 			});
 		}, 50);
 

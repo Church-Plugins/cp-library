@@ -5,6 +5,18 @@
 		bottom: 0;
 		right: 0;
 		z-index: 5100;
+		
+		// iOS compatibility: Disable transitions for iOS devices for better gesture handling
+		@supports (-webkit-touch-callout: none) {
+			.MuiSlider-thumb, .MuiSlider-track {
+				transition: none !important;
+			}
+			
+			.persistentPlayer__video__controls {
+				opacity: 1 !important;
+				transition: none !important;
+			}
+		}
 
 		&.is_desktop {
 			.persistentPlayer__video__controls {
@@ -287,4 +299,5 @@
 			}
 		}
 	}
+	
 }
