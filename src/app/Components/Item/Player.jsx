@@ -567,72 +567,111 @@ export default function Player({ item }) {
 
 	        {mode && (
 	         <Box className="itemPlayer__controlsWrapper cpl-touch-only">
-		         <Box className="itemPlayer__progress" flex={1} display="flex" flexDirection="column" >
-			         <Box display="flex" flexDirection="row" alignItems="center">
-
+		         {/* Timeline at the top with no gap */}
+		         <Box className="timeline-container">
+			         <Box className="timeline-slider">
 				         <Slider
 					         min={0}
 					         defaultValue={0}
 					         max={duration}
 					         step={.01}
-					         size="medium"
+					         size="small"
 					         value={playedSeconds}
-					         sx={{padding: '10px 0 !important'}}
 					         marks={videoMarks}
+					         aria-label="Seek to position in playback"
 					         onChange={(_, value) => {
 						         setIsPlaying(false);
 
+						         // Slider clicked
 						         if (_ && _.type && 'mousedown' === _.type) {
 							         setPlayedSeconds(value);
 							         playerInstance.current.seekTo(playedSeconds);
-						         } else {
+						         } else { // Slider dragged/otherwise moved
 							         throttleScroll(value);
 						         }
 					         }}
 					         onChangeCommitted={(_, value) => {
-						         setIsPlaying(false);
-						         setTimeout(
-							         () => {
-								         setPlayedSeconds(value);
-								         playerInstance.current.seekTo(playedSeconds);
-								         setIsPlaying(true);
-							         }
-						         );
+						         // Execute synchronously to maintain iOS gesture chain
+						         setPlayedSeconds(value);
+						         playerInstance.current.seekTo(value); // Use 'value' directly
+						         setIsPlaying(true);
 					         }}
 				         />
-
-			         </Box>
-			         <Box className="itemPlayer__duration" display="flex" flexDirection="row" justifyContent="space-between">
-				         <Box
-					         display="flex"
-					         justifyContent="flex-start"
-				         >
-					         {formatDuration(playedSeconds)}
-				         </Box>
-				         <Box
-					         display="flex"
-					         justifyContent="flex-end"
-				         >
-					         -{formatDuration(duration - playedSeconds)}
-				         </Box>
 			         </Box>
 		         </Box>
 
-		         <Box className="itemPlayer__controls" display="flex" flexDirection="row"
-		              justifyContent="space-around" margin="auto">
-
-			         <Box className="itemPlayer__controls__rate" display="flex" alignItems="center" onClick={updatePlaybackRate}>
-				         <span>{playbackRate}x</span>
+		         {/* Time and controls row */}
+		         <Box className="time-controls-row">
+			         <Box className="title-container">
+				         <Box className="logo-container"><Logo/></Box>
+				         <Box className="title-text">
+					         <a href={currentItem.permalink} dangerouslySetInnerHTML={{__html: currentItem.title}}></a>
+				         </Box>
 			         </Box>
 
-			         <IconButton size="large" onClick={() => playerInstance.current.seekTo(playedSeconds - 10, 'seconds')} aria-label='Back 10 seconds'>
-				         <Replay10 fontSize="inherit"/>
-			         </IconButton>
+			         <Box className="time-display">
+				         <span className="time-current">{formatDuration(playedSeconds)}</span>
+				         <span className="time-separator"> / </span>
+				         <span className="time-total">{formatDuration(duration)}</span>
+			         </Box>
 
-			         <Box display="flex" alignItems="center">
+			         <Box className="action-buttons">
+				         {mode === 'video' && (
+					         <IconButton
+						         className="fullscreen-button"
+						         onClick={handleClickFullscreen}
+						         aria-label="Open in fullscreen"
+						         size="small"
+					         >
+						         <OpenInFull fontSize="small"/>
+					         </IconButton>
+				         )}
+				         <IconButton
+					         className="persistent-player-button"
+					         onClick={handleClickPersistent}
+					         aria-label="Open in persistent player"
+					         size="small"
+					         sx={{transform: 'scaley(-1)'}}
+				         >
+					         <PictureInPicture fontSize="small"/>
+				         </IconButton>
+			         </Box>
+		         </Box>
+
+		         {/* Container for controls */}
+		         <Box className="controls-content">
+			         {/* Player controls */}
+			         <Box className="player-controls">
+				         {playbackRate !== 1 && (
+					         <Box
+						         className="speed-control"
+						         onClick={updatePlaybackRate}
+					         >
+						         {playbackRate}×
+					         </Box>
+				         )}
+
+				         <IconButton
+					         onClick={() => playerInstance.current.seekTo(playedSeconds - 10, 'seconds')}
+					         aria-label="Back 10 seconds"
+					         size="small"
+				         >
+					         <Replay10 fontSize="small"/>
+				         </IconButton>
+
+				         <IconButton
+					         onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')}
+					         aria-label="Skip 30 seconds"
+					         size="small"
+				         >
+					         <Forward30 fontSize="small"/>
+				         </IconButton>
+
 				         <PlayPause
 					         autoFocus
 					         isLoading={isPlaying && playedSeconds == 0}
+					         flex={0}
+					         padding={2}
 					         isPlaying={isPlaying}
 					         onClick={() => {
 						         if (loadingState === 'ready') {
@@ -646,14 +685,7 @@ export default function Player({ item }) {
 					         }}
 				         />
 			         </Box>
-			         <IconButton size='large' onClick={() => playerInstance.current.seekTo(playedSeconds + 30, 'seconds')} aria-label='Skip 30 seconds'>
-				         <Forward30 fontSize="inherit"/>
-			         </IconButton>
-			         <IconButton size="large" sx={{transform: 'scaley(-1)'}}
-			                     onClick={handleClickPersistent}><PictureInPicture fontSize="inherit"/></IconButton>
-
 		         </Box>
-
 	         </Box>
 
 	        )}

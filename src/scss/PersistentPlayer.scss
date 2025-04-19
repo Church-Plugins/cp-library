@@ -296,6 +296,10 @@
 				.close-button {
 					color: rgba(0, 0, 0, 0.6);
 				}
+
+				.persistent-player-button {
+					color: rgba(0, 0, 0, 0.6);
+				}
 			}
 		}
 
@@ -323,6 +327,212 @@
 		}
 	}
 
+}
+
+/* Apply persistent player styling to the in-page player in touch mode */
+.itemPlayer__controlsWrapper.cpl-touch-only {
+	--cp-control-padding: var(--cp-gap-base);
+	background: #fff;
+	color: #000;
+	width: 100%;
+	max-width: 100%;
+	display: flex;
+	flex-direction: column;
+	border-top: 1px solid rgba(0, 0, 0, 0.1);
+	padding-bottom: var(--cp-control-padding);
+
+	// Enhanced iOS compatibility: Disable transitions and improve touch response
+	@supports (-webkit-touch-callout: none) {
+		.MuiSlider-thumb, .MuiSlider-track, .MuiSlider-rail {
+			transition: none !important;
+		}
+
+		// Increase touch targets for iOS
+		.MuiIconButton-root {
+			min-width: 44px;
+			min-height: 44px;
+			touch-action: manipulation;
+		}
+	}
+
+	img {
+		max-width: 100%;
+		width: auto;
+		height: auto;
+		display: block;
+	}
+
+	button {
+		svg {
+			color: var(--cp-button--bg);
+
+			&:first-child {
+				margin: auto;
+			}
+		}
+	}
+
+	/* Timeline at the top */
+	.timeline-container {
+		width: 100%;
+		display: flex;
+		align-items: center;
+
+		.timeline-slider {
+			flex: 1;
+
+			.MuiSlider-root {
+				padding: 0 !important;
+				border-radius: 0;
+				height: 5px;
+				display: block;
+
+				.MuiSlider-thumb {
+					width: 10px;
+					height: 10px;
+
+					&:hover, &.Mui-focusVisible {
+						box-shadow: none;
+					}
+				}
+
+				.MuiSlider-rail {
+					opacity: 0.3;
+				}
+
+				.MuiSlider-track {
+					border: none;
+				}
+
+				// Marks for sermon timestamps
+				.MuiSlider-mark {
+					width: 1px;
+					height: 5px;
+					border-radius: 0;
+					background-color: rgba(0, 0, 0, 0.5);
+				}
+			}
+		}
+	}
+
+	/* Time and controls row */
+	.time-controls-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0 var(--cp-control-padding);
+
+		.title-container {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			font-size: 14px;
+			flex: 1 1 auto;
+			min-width: 0;
+
+			.logo-container {
+				margin-right: var(--cp-control-padding);
+				max-width: 1.5em;
+				flex-shrink: 0;
+			}
+
+			.title-text {
+				overflow: hidden;
+
+				a {
+					color: inherit;
+					white-space: nowrap;
+					text-overflow: ellipsis;
+					display: block;
+					overflow: hidden;
+				}
+			}
+		}
+
+		.time-display {
+			font-size: 0.75rem;
+			color: rgba(0, 0, 0, 0.7);
+			line-height: 1.5;
+			margin: 0 1rem;
+
+			.time-current, .time-total {
+				font-variant-numeric: tabular-nums;
+			}
+
+			.time-separator {
+				color: rgba(0, 0, 0, 0.4);
+				margin: 0 2px;
+			}
+		}
+
+		.action-buttons {
+			display: flex;
+			align-items: center;
+
+			.MuiIconButton-root {
+				padding: 4px;
+				margin-left: 5px;
+
+				svg {
+					font-size: 16px;
+				}
+			}
+
+			.fullscreen-button,
+			.persistent-player-button {
+				color: rgba(0, 0, 0, 0.6);
+			}
+		}
+	}
+
+	/* Container for controls */
+	.controls-content {
+		padding: 0 var(--cp-control-padding);
+
+		/* Player controls */
+		.player-controls {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-content: center;
+			flex: 0 0 auto;
+			gap: var(--cp-control-padding);
+
+			button:not(:hover) {
+				background: transparent !important;
+			}
+
+			.speed-control {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 0.85rem;
+				background-color: rgba(0, 0, 0, 0.05);
+				border-radius: 4px;
+				padding: 0 .5em;
+				cursor: pointer;
+				font-weight: 500;
+				transition: background-color 0.2s ease;
+
+				&:hover {
+					background-color: rgba(0, 0, 0, 0.1);
+				}
+			}
+		}
+	}
+
+	/* Mark labels for timestamps */
+	.MuiSlider-markLabel {
+		z-index: 1;
+		background-color: white;
+		border: 1px solid black;
+		margin-top: -12px;
+		font-size: 0.5rem;
+		padding: 2px 6px;
+		border-radius: 3px;
+		text-transform: uppercase;
+		font-weight: bolder;
+	}
 }
 
 .muted-playback-notification {
