@@ -178,6 +178,10 @@
 					flex: 0 0 auto;
 					gap: var(--cp-control-padding);
 
+					button:not(:hover) {
+						background: transparent !important;
+					}
+
 					.speed-control {
 						display: flex;
 						align-items: center;
@@ -221,7 +225,7 @@
 			.time-display {
 				font-size: 0.75rem;
 				color: rgba(0, 0, 0, 0.7);
-				line-height: 1;
+				line-height: 1.5;
 
 				.time-current, .time-total {
 					font-variant-numeric: tabular-nums;
@@ -236,6 +240,10 @@
 			.action-buttons {
 				display: flex;
 				align-items: center;
+				position: absolute;
+				top: 0;
+				right: calc( var(--cp-control-padding) * .5 );
+				transform: translateY(-100%);
 
 				.MuiIconButton-root {
 					padding: 4px;

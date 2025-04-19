@@ -78,7 +78,7 @@ function PlayerWrapper({ item, mode, ...props }, ref) {
   /**
    * @param {import("react-player/base").OnProgressProps} data
    */
-  const handleProgress = (data) => {    
+  const handleProgress = (data) => {
     props.onProgress?.(data)
 
     if(!watchData.current) return
@@ -96,29 +96,29 @@ function PlayerWrapper({ item, mode, ...props }, ref) {
   const handleSeek = (seconds) => {
     props.onSeek?.(seconds)
   }
-  
+
   /** Handle playback rate changes */
   useEffect(() => {
     // Skip it if no player or playback rate
     if (!playerRef.current || !props.playbackRate) {
       return;
     }
-    
+
     // Function to mark playback rate as not supported
     const markUnsupported = () => {
       if (props.onPlaybackRateSupported) {
         props.onPlaybackRateSupported(false);
       }
     };
-    
+
     try {
       // First, determine if we're dealing with YouTube video
       // YouTube is known to have issues with playback rate for some videos
       const internalPlayer = playerRef.current.getInternalPlayer ? playerRef.current.getInternalPlayer() : null;
-      const isYouTube = internalPlayer && 
+      const isYouTube = internalPlayer &&
                        (internalPlayer.getVideoUrl || // YouTube API method
                         (internalPlayer.src && internalPlayer.src.includes('youtube')));
-                        
+
       // For YouTube players, we need to check if playback rate is allowed for this specific video
       if (isYouTube) {
         try {
@@ -129,7 +129,7 @@ function PlayerWrapper({ item, mode, ...props }, ref) {
               // Try setting the playback rate
               if (internalPlayer.setPlaybackRate) {
                 internalPlayer.setPlaybackRate(props.playbackRate);
-                
+
                 // If we got here, it worked
                 if (props.onPlaybackRateSupported) {
                   props.onPlaybackRateSupported(true);
@@ -159,7 +159,7 @@ function PlayerWrapper({ item, mode, ...props }, ref) {
         } catch (youtubeError) {
           markUnsupported();
         }
-      } 
+      }
       // For non-YouTube players
       else {
         if (internalPlayer && internalPlayer.setPlaybackRate) {
@@ -247,7 +247,7 @@ function PlayerWrapper({ item, mode, ...props }, ref) {
 
   useEffect(() => {
     const watchedVideos = getWatchedVideos()
-    
+
     const video = watchedVideos.find(v => {
       return v.id === compoundId
     })
@@ -291,7 +291,8 @@ function PlayerWrapper({ item, mode, ...props }, ref) {
       progressInterval={100}
       config={{
         youtube: {
-          playerVars: { 
+          playerVars: {
+						autoplay: 1,
             playsinline: 1,    // Enable inline playback (critical for iOS)
             rel: 0,            // Don't show related videos
             controls: 0,       // Hide YouTube controls

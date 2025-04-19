@@ -332,7 +332,7 @@ export default function PersistentPlayer (props) {
 					</Box>
 
 					<Box className="action-buttons">
-						{mode === 'video' && (
+						{false && mode === 'video' && ( // disable fullscreen for persistent player
 							<IconButton
 								className="fullscreen-button"
 								onClick={handleClickFullscreen}
