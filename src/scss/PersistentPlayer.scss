@@ -1,39 +1,228 @@
-.persistentPlayer {
+/* Common player control styles */
+.cpl-player-controls-base {
+	--cp-control-padding: var(--cp-gap-base);
+	background: #fff;
+	color: #000;
+	display: flex;
+	flex-direction: column;
 
+	// Enhanced iOS compatibility: Disable transitions and improve touch response
+	@supports (-webkit-touch-callout: none) {
+		.MuiSlider-thumb, .MuiSlider-track, .MuiSlider-rail {
+			transition: none !important;
+		}
+
+		// Increase touch targets for iOS
+		.MuiIconButton-root {
+			//min-width: 44px;
+			//min-height: 44px;
+			touch-action: manipulation;
+		}
+
+		// Improve YouTube iframe visibility
+		iframe {
+			z-index: 30 !important;
+			opacity: 1 !important;
+			transform: translateZ(0);
+		}
+	}
+
+	img {
+		max-width: 100%;
+		width: auto;
+		height: auto;
+		display: block;
+	}
+
+	button {
+		svg {
+			color: var(--cp-button--bg);
+
+			&:first-child {
+				margin: auto;
+			}
+		}
+	}
+
+	// Timeline at the top
+	.timeline-container {
+		width: 100%;
+		display: flex;
+		align-items: center;
+
+		.timeline-slider {
+			flex: 1;
+
+			.MuiSlider-root {
+				padding: 0 !important;
+				border-radius: 0;
+				height: 5px;
+				display: block;
+
+				.MuiSlider-thumb {
+					width: 10px;
+					height: 10px;
+
+					&:hover, &.Mui-focusVisible {
+						box-shadow: none;
+					}
+				}
+
+				.MuiSlider-rail {
+					opacity: 0.3;
+				}
+
+				.MuiSlider-track {
+					border: none;
+				}
+
+				// Marks for sermon timestamps
+				.MuiSlider-mark {
+					width: 1px;
+					height: 5px;
+					border-radius: 0;
+					background-color: rgba(0, 0, 0, 0.5);
+				}
+			}
+		}
+	}
+
+	// Time and title row
+	.time-controls-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0 var(--cp-control-padding);
+
+		.title-container {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			font-size: 14px;
+			flex: 1 1 auto; // Allow grow and shrink
+			min-width: 0;
+
+			.logo-container {
+				margin-right: var(--cp-control-padding);
+				max-width: 1.5em;
+				flex-shrink: 0;
+			}
+
+			.title-text {
+				overflow: hidden;
+
+				a {
+					color: inherit;
+					white-space: nowrap;
+					text-overflow: ellipsis;
+					display: block;
+					overflow: hidden;
+				}
+			}
+		}
+
+		.time-display {
+			font-size: 0.75rem;
+			color: rgba(0, 0, 0, 0.7);
+			line-height: 1.5;
+			flex-shrink: 0;
+
+			.time-current, .time-total {
+				font-variant-numeric: tabular-nums;
+			}
+
+			.time-separator {
+				color: rgba(0, 0, 0, 0.4);
+				margin: 0 2px;
+			}
+		}
+
+		.action-buttons {
+			display: flex;
+			align-items: center;
+
+			.MuiIconButton-root {
+				padding: 4px;
+				margin-left: 5px;
+
+				svg {
+					font-size: 16px;
+				}
+			}
+
+			.fullscreen-button,
+			.persistent-player-button,
+			.close-button {
+				color: rgba(0, 0, 0, 0.6);
+			}
+		}
+	}
+
+	// Container for controls
+	.controls-content {
+		padding: 0 var(--cp-control-padding) var(--cp-control-padding);
+
+		.player-controls {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			flex: 0 0 auto;
+			gap: var(--cp-control-padding);
+
+			button:not(:hover) {
+				background: transparent !important;
+			}
+
+			.speed-control {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 0.85rem;
+				background-color: rgba(0, 0, 0, 0.05);
+				border-radius: 4px;
+				padding: 0 .5em;
+				cursor: pointer;
+				font-weight: 500;
+				transition: background-color 0.2s ease;
+
+				&:hover {
+					background-color: rgba(0, 0, 0, 0.1);
+				}
+			}
+		}
+	}
+
+	// Mark labels for timestamps
+	.MuiSlider-markLabel {
+		z-index: 1;
+		background-color: white;
+		border: 1px solid black;
+		margin-top: -12px;
+		font-size: 0.5rem;
+		padding: 2px 6px;
+		border-radius: 3px;
+		text-transform: uppercase;
+		font-weight: bolder;
+	}
+}
+
+/* Persistent Player styles */
+.persistentPlayer {
 	&__root {
 		position: fixed;
 		bottom: 0;
 		right: 0;
 		z-index: 5100;
 
-		// Enhanced iOS compatibility: Disable transitions and improve touch response
+		// Remove hover effects which can cause delays in iOS
 		@supports (-webkit-touch-callout: none) {
-			.MuiSlider-thumb, .MuiSlider-track, .MuiSlider-rail {
-				transition: none !important;
+			.video-clickable-overlay:hover {
+				background: transparent !important;
 			}
 
 			.persistentPlayer__video__controls {
 				opacity: 1 !important;
 				transition: none !important;
-			}
-
-			// Increase touch targets for iOS
-			.MuiIconButton-root {
-				min-width: 44px;
-				min-height: 44px;
-				touch-action: manipulation;
-			}
-
-			// Remove hover effects which can cause delays
-			.video-clickable-overlay:hover {
-				background: transparent !important;
-			}
-
-			// Improve YouTube iframe visibility
-			iframe {
-				z-index: 30 !important;
-				opacity: 1 !important;
-				transform: translateZ(0);
 			}
 		}
 
@@ -100,73 +289,25 @@
 	}
 
 	&__controls {
-		--cp-control-padding: var(--cp-gap-base);
-		background: #fff;
-		color: #000;
+		@extend .cpl-player-controls-base;
 		width: 470px;
 		max-width: 100%;
-		display: flex;
-		flex-direction: column;
 
 		@media screen and (max-width: 767px) {
 			//--cp-control-padding: calc( var(--cp-gap--sm) * .5);
 		}
 
-		img {
-			max-width: 100%;
-			width: auto;
-			height: auto;
-			display: block;
-		}
-
-		button {
-			svg {
-				color: var(--cp-button--bg);
-
-				&:first-child {
-					margin: auto;
-				}
+		// Specific overrides for persistent player
+		.time-controls-row {
+			.action-buttons {
+				position: absolute;
+				top: 0;
+				right: calc( var(--cp-control-padding) * .5 );
+				transform: translateY(-100%);
 			}
 		}
 
-		// Timeline at the top
-		.timeline-container {
-			width: 100%;
-			display: flex;
-			align-items: center;
-
-			.timeline-slider {
-				flex: 1;
-
-				.MuiSlider-root {
-					padding: 0 !important;
-					border-radius: 0;
-					height: 5px;
-					display: block;
-
-					.MuiSlider-thumb {
-						width: 10px;
-						height: 10px;
-
-						&:hover, &.Mui-focusVisible {
-							box-shadow: none;
-						}
-					}
-
-					.MuiSlider-rail {
-						opacity: 0.3;
-					}
-				}
-			}
-
-		}
-
-		// Container for content below timeline
 		.controls-content {
-			padding: 0 var(--cp-control-padding) var(--cp-control-padding);
-
-
-			// Title row
 			.title-row {
 				display: flex;
 				flex-direction: row;
@@ -174,135 +315,22 @@
 				justify-content: space-around;
 				flex-wrap: wrap;
 				gap: var(--cp-control-padding);
-
-				// Title and logo container
-
-				// Player controls - shown in the middle on desktop, below title on mobile
-				.player-controls {
-					display: flex;
-					flex-direction: row;
-					align-items: center;
-					justify-content: flex-end;
-					flex: 0 0 auto;
-					gap: var(--cp-control-padding);
-
-					button:not(:hover) {
-						background: transparent !important;
-					}
-
-					.speed-control {
-						display: flex;
-						align-items: center;
-						justify-content: center;
-						font-size: 0.85rem;
-						background-color: rgba(0, 0, 0, 0.05);
-						border-radius: 4px;
-						padding: 0 .5em;
-						cursor: pointer;
-						font-weight: 500;
-						transition: background-color 0.2s ease;
-
-						&:hover {
-							background-color: rgba(0, 0, 0, 0.1);
-						}
-					}
-				}
-
-				// Controls container (fullscreen, close)
-				.controls-container {
-					display: flex;
-					align-items: center;
-					flex: 0 0 auto; // Don't grow or shrink
-
-					.fullscreen-button {
-						margin-right: 0.5rem;
-					}
-				}
-
 			}
 
-		}
-
-		// Time and controls row below timeline
-		.time-controls-row {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-			padding: 0 var(--cp-control-padding);
-
-			.title-container {
-				display: flex;
-				flex-direction: row;
-				align-items: center;
-				font-size: 14px;
-				flex: 1 1 auto; // Allow grow and shrink
-				min-width: 0;
-
-				.logo-container {
-					margin-right: var(--cp-control-padding);
-					max-width: 1.5em;
-					flex-shrink: 0;
-				}
-
-				.title-text {
-					overflow: hidden;
-
-					a {
-						color: inherit;
-						white-space: nowrap;
-						text-overflow: ellipsis;
-						display: block;
-						overflow: hidden;
-					}
-				}
+			.player-controls {
+				justify-content: flex-end;
 			}
 
-			.time-display {
-				font-size: 0.75rem;
-				color: rgba(0, 0, 0, 0.7);
-				line-height: 1.5;
-
-				.time-current, .time-total {
-					font-variant-numeric: tabular-nums;
-				}
-
-				.time-separator {
-					color: rgba(0, 0, 0, 0.4);
-					margin: 0 2px;
-				}
-			}
-
-			.action-buttons {
+			.controls-container {
 				display: flex;
 				align-items: center;
-				position: absolute;
-				top: 0;
-				right: calc( var(--cp-control-padding) * .5 );
-				transform: translateY(-100%);
-
-				.MuiIconButton-root {
-					padding: 4px;
-					margin-left: 5px;
-
-					svg {
-						font-size: 16px;
-					}
-				}
+				flex: 0 0 auto; // Don't grow or shrink
 
 				.fullscreen-button {
-					color: rgba(0, 0, 0, 0.6);
-				}
-
-				.close-button {
-					color: rgba(0, 0, 0, 0.6);
-				}
-
-				.persistent-player-button {
-					color: rgba(0, 0, 0, 0.6);
+					margin-right: 0.5rem;
 				}
 			}
 		}
-
 	}
 
 	&__duration {
@@ -310,231 +338,29 @@
 		margin-top: -.5em;
 		opacity: .5;
 	}
-
-	&__info {
-		span {
-			&.MuiSlider-markLabel {
-				z-index: 1;
-				background-color: white;
-				border: 1px solid black;
-				margin-top: -12px;
-				font-size: 0.5rem;
-				padding: 2px 6px;
-				border-radius: 3px;
-				text-transform: uppercase;
-				font-weight: bolder;
-			}
-		}
-	}
-
 }
 
-/* Apply persistent player styling to the in-page player in touch mode */
+/* In-page player mobile controls */
 .itemPlayer__controlsWrapper.cpl-touch-only {
-	--cp-control-padding: var(--cp-gap-base);
-	background: #fff;
-	color: #000;
+	@extend .cpl-player-controls-base;
 	width: 100%;
 	max-width: 100%;
-	display: flex;
-	flex-direction: column;
 	border-top: 1px solid rgba(0, 0, 0, 0.1);
 	padding-bottom: var(--cp-control-padding);
 
-	// Enhanced iOS compatibility: Disable transitions and improve touch response
-	@supports (-webkit-touch-callout: none) {
-		.MuiSlider-thumb, .MuiSlider-track, .MuiSlider-rail {
-			transition: none !important;
-		}
-
-		// Increase touch targets for iOS
-		.MuiIconButton-root {
-			min-width: 44px;
-			min-height: 44px;
-			touch-action: manipulation;
-		}
-	}
-
-	img {
-		max-width: 100%;
-		width: auto;
-		height: auto;
-		display: block;
-	}
-
-	button {
-		svg {
-			color: var(--cp-button--bg);
-
-			&:first-child {
-				margin: auto;
-			}
-		}
-	}
-
-	/* Timeline at the top */
-	.timeline-container {
-		width: 100%;
-		display: flex;
-		align-items: center;
-
-		.timeline-slider {
-			flex: 1;
-
-			.MuiSlider-root {
-				padding: 0 !important;
-				border-radius: 0;
-				height: 5px;
-				display: block;
-
-				.MuiSlider-thumb {
-					width: 10px;
-					height: 10px;
-
-					&:hover, &.Mui-focusVisible {
-						box-shadow: none;
-					}
-				}
-
-				.MuiSlider-rail {
-					opacity: 0.3;
-				}
-
-				.MuiSlider-track {
-					border: none;
-				}
-
-				// Marks for sermon timestamps
-				.MuiSlider-mark {
-					width: 1px;
-					height: 5px;
-					border-radius: 0;
-					background-color: rgba(0, 0, 0, 0.5);
-				}
-			}
-		}
-	}
-
-	/* Time and controls row */
+	// Mobile-specific overrides
 	.time-controls-row {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 0 var(--cp-control-padding);
-
-		.title-container {
-			display: flex;
-			flex-direction: row;
-			align-items: center;
-			font-size: 14px;
-			flex: 1 1 auto;
-			min-width: 0;
-
-			.logo-container {
-				margin-right: var(--cp-control-padding);
-				max-width: 1.5em;
-				flex-shrink: 0;
-			}
-
-			.title-text {
-				overflow: hidden;
-
-				a {
-					color: inherit;
-					white-space: nowrap;
-					text-overflow: ellipsis;
-					display: block;
-					overflow: hidden;
-				}
-			}
-		}
-
-		.time-display {
-			font-size: 0.75rem;
-			color: rgba(0, 0, 0, 0.7);
-			line-height: 1.5;
-			margin: 0 1rem;
-
-			.time-current, .time-total {
-				font-variant-numeric: tabular-nums;
-			}
-
-			.time-separator {
-				color: rgba(0, 0, 0, 0.4);
-				margin: 0 2px;
-			}
-		}
-
-		.action-buttons {
-			display: flex;
-			align-items: center;
-
-			.MuiIconButton-root {
-				padding: 4px;
-				margin-left: 5px;
-
-				svg {
-					font-size: 16px;
-				}
-			}
-
-			.fullscreen-button,
-			.persistent-player-button {
-				color: rgba(0, 0, 0, 0.6);
-			}
-		}
+		margin-bottom: 10px;
 	}
 
-	/* Container for controls */
 	.controls-content {
-		padding: 0 var(--cp-control-padding);
-
-		/* Player controls */
 		.player-controls {
-			display: flex;
-			flex-direction: row;
-			align-items: center;
 			justify-content: center;
-			flex: 0 0 auto;
-			gap: var(--cp-control-padding);
-
-			button:not(:hover) {
-				background: transparent !important;
-			}
-
-			.speed-control {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				font-size: 0.85rem;
-				background-color: rgba(0, 0, 0, 0.05);
-				border-radius: 4px;
-				padding: 0 .5em;
-				cursor: pointer;
-				font-weight: 500;
-				transition: background-color 0.2s ease;
-
-				&:hover {
-					background-color: rgba(0, 0, 0, 0.1);
-				}
-			}
 		}
-	}
-
-	/* Mark labels for timestamps */
-	.MuiSlider-markLabel {
-		z-index: 1;
-		background-color: white;
-		border: 1px solid black;
-		margin-top: -12px;
-		font-size: 0.5rem;
-		padding: 2px 6px;
-		border-radius: 3px;
-		text-transform: uppercase;
-		font-weight: bolder;
 	}
 }
 
+/* Notification for muted playback */
 .muted-playback-notification {
 	position: absolute;
 	top: 50%;

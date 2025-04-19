@@ -121,7 +121,7 @@ export default function Player({ item }) {
 			});
 			return;
 		}
-		
+
 		if(persistentPlayerIsActive) {
 			if(isURL( url )) {
 				api.passToPersistentPlayer( data )
@@ -147,7 +147,7 @@ export default function Player({ item }) {
 			});
 			return;
 		}
-		
+
 		// Set loading state first
 		setLoadingState('loading');
 
@@ -615,41 +615,18 @@ export default function Player({ item }) {
 				         <span className="time-total">{formatDuration(duration)}</span>
 			         </Box>
 
-			         <Box className="action-buttons">
-				         {mode === 'video' && (
-					         <IconButton
-						         className="fullscreen-button"
-						         onClick={handleClickFullscreen}
-						         aria-label="Open in fullscreen"
-						         size="small"
-					         >
-						         <OpenInFull fontSize="small"/>
-					         </IconButton>
-				         )}
-				         <IconButton
-					         className="persistent-player-button"
-					         onClick={handleClickPersistent}
-					         aria-label="Open in persistent player"
-					         size="small"
-					         sx={{transform: 'scaley(-1)'}}
-				         >
-					         <PictureInPicture fontSize="small"/>
-				         </IconButton>
-			         </Box>
 		         </Box>
 
 		         {/* Container for controls */}
 		         <Box className="controls-content">
 			         {/* Player controls */}
 			         <Box className="player-controls">
-				         {playbackRate !== 1 && (
-					         <Box
-						         className="speed-control"
-						         onClick={updatePlaybackRate}
-					         >
-						         {playbackRate}×
-					         </Box>
-				         )}
+				         <Box
+					         className="speed-control"
+					         onClick={updatePlaybackRate}
+				         >
+					         {playbackRate}×
+				         </Box>
 
 				         <IconButton
 					         onClick={() => playerInstance.current.seekTo(playedSeconds - 10, 'seconds')}
@@ -684,6 +661,26 @@ export default function Player({ item }) {
 						         }
 					         }}
 				         />
+
+				         {mode === 'video' && (
+					         <IconButton
+						         className="fullscreen-button"
+						         onClick={handleClickFullscreen}
+						         aria-label="Open in fullscreen"
+						         size="small"
+					         >
+						         <OpenInFull fontSize="small"/>
+					         </IconButton>
+				         )}
+				         <IconButton
+					         className="persistent-player-button"
+					         onClick={handleClickPersistent}
+					         aria-label="Open in persistent player"
+					         size="small"
+					         sx={{transform: 'scaley(-1)'}}
+				         >
+					         <PictureInPicture fontSize="small"/>
+				         </IconButton>
 			         </Box>
 		         </Box>
 	         </Box>
