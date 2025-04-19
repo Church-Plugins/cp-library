@@ -12,6 +12,7 @@ import Cookies from 'js-cookie'
  *  item: object
  *  mode: string
  *  userInteractionToken?: number
+ *  onMutedPlayback?: (isMuted: boolean) => void
  * }} PlayerWrapperProps
  */
 
@@ -51,23 +52,58 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
 
   const [rand] = useState(Math.random)
 
+  // Track first play
+  const firstPlayRef = useRef(true);
+  
+  // Check if this is iOS
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  
   const handlePlay = () => {
     props.onPlay?.()
-
-    // Unmute on play for non-iOS browsers
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     
-    if (!isIOS && playerRef.current) {
-      const internalPlayer = playerRef.current.getInternalPlayer();
+    // Get the internal player
+    const internalPlayer = playerRef.current?.getInternalPlayer();
+    
+    // Force pause and show muted notice ONLY on iOS for first video play
+    if (firstPlayRef.current && mode === 'video' && internalPlayer && isIOS) {
+      firstPlayRef.current = false;
       
+      // Pause shortly to let the user tap again for audio permissions
+      
+      // Brief timeout to let the player start, then pause and show notice
+      setTimeout(() => {
+        // Pause the player
+        if (typeof internalPlayer.pauseVideo === 'function') {
+          internalPlayer.pauseVideo();
+        } else if (typeof internalPlayer.pause === 'function') {
+          internalPlayer.pause();
+        }
+        
+        // Show notice about enabling audio
+        if (props.onMutedPlayback) {
+          props.onMutedPlayback(true);
+        }
+      }, 200);
+      
+      return; // Skip the rest on first play
+    } else if (firstPlayRef.current) {
+      // Mark as not first play for non-iOS devices too
+      firstPlayRef.current = false;
+    }
+    
+    if (playerRef.current && internalPlayer) {
       // For YouTube
-      if (internalPlayer && typeof internalPlayer.unMute === 'function') {
+      if (typeof internalPlayer.unMute === 'function') {
         internalPlayer.unMute();
+        if (typeof internalPlayer.setVolume === 'function') {
+          internalPlayer.setVolume(100);
+        }
       }
       // For HTML5 video
-      else if (internalPlayer && internalPlayer.muted !== undefined) {
+      else if (internalPlayer.muted !== undefined) {
         internalPlayer.muted = false;
+        internalPlayer.volume = 1.0;
       }
     }
 
@@ -265,69 +301,107 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
 
   // Handle user interaction token for direct player control
   useEffect(() => {
-    // Only proceed if we have both a player and a valid user interaction token
-    if (playerRef.current && userInteractionToken && 
-        window._cplUserInteractions && window._cplUserInteractions[userInteractionToken]) {
+    // Only proceed if we have a player reference
+    if (!playerRef.current) return;
+    
+    // Get internal player instance
+    const internalPlayer = playerRef.current.getInternalPlayer();
+    if (!internalPlayer) return;
+    
+    // Check if this is iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    
+    // Check for token - either directly provided or from global storage
+    const hasToken = userInteractionToken || window._activeUserInteractionToken;
+    const validToken = hasToken && window._cplUserInteractions && 
+                     (userInteractionToken ? window._cplUserInteractions[userInteractionToken] : 
+                      window._cplUserInteractions[window._activeUserInteractionToken]);
+                  
+    // If we have a valid user interaction token, use it to handle playback with unmuting
+    if (validToken) {
+      console.log('PlayerWrapper: Valid user interaction detected, handling direct playback');
       
-      const internalPlayer = playerRef.current.getInternalPlayer();
-      
-      // For YouTube videos - special handling for iOS
-      if (internalPlayer && internalPlayer.getVideoUrl && typeof internalPlayer.unMute === 'function') {
-        // Check if this is iOS
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-                     
-        // This is critical for iOS - must happen within the same user interaction flow
-        // For iOS, we need to follow a strict order of operations in the same synchronous call stack
-        if (isIOS) {
-          // First unmute - crucial step for iOS
+      // For YouTube videos
+      if (typeof internalPlayer.unMute === 'function') {
+        try {
+          // Unified approach for both iOS and non-iOS
+          // This simplified sequence works better across platforms
+          console.log('PlayerWrapper: Executing YouTube unmute and play sequence');
+          
+          // 1. Unmute immediately (critical for iOS)
           internalPlayer.unMute();
           
-          // Then play immediately after - must be in the same event cycle
-          if (typeof internalPlayer.playVideo === 'function') {
-            // Use requestAnimationFrame to ensure this happens before the next repaint
-            // but still within the same user gesture context
-            requestAnimationFrame(() => {
-              internalPlayer.playVideo();
-            });
+          // 2. Set volume to max (important step)
+          if (typeof internalPlayer.setVolume === 'function') {
+            internalPlayer.setVolume(100);
           }
-        } else {
-          // Non-iOS devices can use the simpler approach
-          internalPlayer.unMute();
+          
+          // 3. Play immediately after unmute
           if (typeof internalPlayer.playVideo === 'function') {
             internalPlayer.playVideo();
           }
+          
+          // For iOS, we use requestAnimationFrame for better reliability
+          if (isIOS) {
+            requestAnimationFrame(() => {
+              if (internalPlayer) {
+                // Double-check mute state
+                if (typeof internalPlayer.isMuted === 'function' && internalPlayer.isMuted()) {
+                  internalPlayer.unMute();
+                }
+                // Make sure it's playing
+                if (typeof internalPlayer.playVideo === 'function') {
+                  internalPlayer.playVideo();
+                }
+              }
+            });
+          }
+        } catch (e) {
+          console.debug('Error during YouTube playback:', e);
         }
       }
-      // For HTML5 video elements
-      else if (internalPlayer && typeof internalPlayer.play === 'function') {
+      // For HTML5 video/audio elements
+      else if (typeof internalPlayer.play === 'function') {
+        // Set volume to max and unmute
+        internalPlayer.volume = 1.0;
         internalPlayer.muted = false;
-        internalPlayer.play().catch(error => {
-          console.debug('Playback with audio failed:', error);
-          // Fall back to muted playback
-          internalPlayer.muted = true;
-          internalPlayer.play();
-        });
+        
+        // Use the Promise-based API for playback
+        const playPromise = internalPlayer.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.debug('Playback with audio failed:', error);
+            // Fall back to muted playback
+            internalPlayer.muted = true;
+            internalPlayer.play();
+          });
+        }
       }
-    } else if (playerRef.current) {
-      // For non-token cases, still ensure we unmute the player (for desktop browsers)
-      // This handles the case where videos are initially muted for iOS compatibility
-      // but need to be unmuted for other browsers
-      const internalPlayer = playerRef.current.getInternalPlayer();
-      
-      // Small delay to let the player initialize
-      setTimeout(() => {
-        // For YouTube
-        if (internalPlayer && typeof internalPlayer.unMute === 'function') {
+    } 
+    // For non-token cases (autoplay/background loading)
+    else {
+      // For all browsers, try unmuting immediately (no delay)
+      try {
+        if (typeof internalPlayer.unMute === 'function') {
+          // For YouTube
           internalPlayer.unMute();
+          if (typeof internalPlayer.setVolume === 'function') {
+            internalPlayer.setVolume(100);
+          }
         }
         // For HTML5 video
-        else if (internalPlayer && typeof internalPlayer.play === 'function') {
+        else if (internalPlayer.muted !== undefined) {
           internalPlayer.muted = false;
+          internalPlayer.volume = 1.0;
         }
-      }, 500);
+      } catch (e) {
+        console.debug('Error during unmute:', e);
+      }
     }
   }, [playerRef.current, userInteractionToken]);
+
+  // We handle iOS-specific behavior directly in the handlePlay function
 
   useEffect(() => {
     const watchedVideos = getWatchedVideos()
@@ -354,9 +428,12 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
     }
   }, [])
 
+  // Extract any custom props that React Player doesn't recognize
+  const { onMutedPlayback, ...standardProps } = props;
+
   return (
     <VideoPlayer
-      {...props}
+      {...standardProps}
       ref={(player) => {
         // Store player in our ref
         playerRef.current = player;
@@ -375,38 +452,23 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
       progressInterval={100}
       config={{
         youtube: {
-          playerVars: (() => {
-            // Check if this is iOS
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+          playerVars: {
+            // Common configurations for all platforms
+            autoplay: 1,       // Must be first
+            playsinline: 1,    // Enable inline playback (critical for iOS)
+            rel: 0,            // Don't show related videos
+            showinfo: 0,       // Hide video title and info
+            modestbranding: 1, // Minimal YouTube branding
+            iv_load_policy: 3, // Hide annotations
+            disablekb: 1,      // Disable keyboard controls
+            enablejsapi: 1,    // Enable JavaScript API (REQUIRED for unmuting)
+            autohide: 1,       // Hide controls after play begins
+            fs: 0,             // Disable fullscreen button
+            origin: window.location.origin, // Set origin for improved security
             
-            // Base configuration for all browsers
-            const config = {
-              autoplay: 1,
-              playsinline: 1,    // Enable inline playback (critical for iOS)
-              rel: 0,            // Don't show related videos
-              controls: 0,       // Hide YouTube controls
-              showinfo: 0,       // Hide video title and info
-              modestbranding: 1, // Minimal YouTube branding
-              iv_load_policy: 3, // Hide annotations
-              disablekb: 1,      // Disable keyboard controls
-              enablejsapi: 1,    // Enable JavaScript API
-              autohide: 1,       // Hide controls after play begins
-              fs: 0,             // Disable fullscreen button
-              origin: window.location.origin, // Set origin for improved security
-            };
-            
-            // iOS-specific settings
-            if (isIOS) {
-              config.webkitPlaysinline = 1; // iOS-specific setting
-              config.mute = 1;             // Required for iOS autoplay
-            } else {
-              // For non-iOS, we don't need to start muted
-              config.mute = 0;
-            }
-            
-            return config;
-          })()
+            // Always start muted (required for iOS autoplay)
+            mute: 1
+          }
         },
         vimeo: {
           playerOptions: {

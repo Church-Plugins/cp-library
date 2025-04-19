@@ -35,6 +35,11 @@ export default function PersistentPlayer (props) {
 	const [supportsPlaybackRate, setSupportsPlaybackRate] = useState(true);
 	const [playerInstance, setPlayerInstance] = useListenerRef(null, (value) => value && setLoading(false));
 	const [userInteractionToken, setUserInteractionToken] = useState(null);
+	const [isMutedPlayback, setIsMutedPlayback] = useState(false);
+
+	// Check if this is iOS
+	const isIOS = useRef(/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
 	const onMouseMove = (e) => {
 		if (showFSControls) {
@@ -80,6 +85,44 @@ export default function PersistentPlayer (props) {
 	useEffect(() => {
 		api.triggerEvent('CPL_PERSISTENT_PLAYER_MOUNTED', {item});
 
+		// For iOS devices, set up a direct document-level touch handler
+		// This helps maintain audio permissions throughout the session
+		if (isIOS.current) {
+
+
+			// Function to handle unmuting when user interacts with the page
+			const handleIOSInteraction = (e) => {
+				// Only handle once we have a player instance
+				if (playerInstance?.current) {
+
+
+					// Try to unmute the player
+					const internalPlayer = playerInstance.current.getInternalPlayer();
+					if (internalPlayer) {
+						if (typeof internalPlayer.unMute === 'function') {
+
+							internalPlayer.unMute();
+
+							if (typeof internalPlayer.setVolume === 'function') {
+								internalPlayer.setVolume(100);
+							}
+						}
+					}
+				}
+			};
+
+			// Add event listeners for various user interactions
+			document.addEventListener('touchstart', handleIOSInteraction, {once: true});
+			document.addEventListener('click', handleIOSInteraction, {once: true});
+
+			// Clean up event listeners on unmount
+			return () => {
+				document.removeEventListener('touchstart', handleIOSInteraction);
+				document.removeEventListener('click', handleIOSInteraction);
+				api.triggerEvent('CPL_PERSISTENT_PLAYER_UNMOUNTED');
+			};
+		}
+
 		return () => {
 			api.triggerEvent('CPL_PERSISTENT_PLAYER_UNMOUNTED');
 		};
@@ -94,19 +137,31 @@ export default function PersistentPlayer (props) {
 
 	useEffect(() => {
 		function handleMessage (data) {
+				// Received handover message
+
+			// Capture token immediately before any state updates
+			let token = data.userInteractionToken;
+
+			// Check for previously stored token (set in API)
+			if (!token && window._activeUserInteractionToken) {
+				token = window._activeUserInteractionToken;
+
+			}
+
+			// Process essential data immediately
 			setItem(data.item);
 			setMode(data.mode);
 			setPlayedSeconds(data.playedSeconds);
 			setIsPlaying(data.playedSeconds > 0 ? false : data.isPlaying);
-			
-			// Store the user interaction token if provided
-			if (data.userInteractionToken) {
-				setUserInteractionToken(data.userInteractionToken);
+
+			// Store the user interaction token
+			if (token) {
+
+				setUserInteractionToken(token);
 			}
 
-			if (!playerInstance.current) {
-				setLoading(true);
-			}
+			// We do all state updates together to avoid multiple renders
+			// The useEffect triggered by these state changes will handle player initialization
 		}
 
 		api.listen('CPL_HANDOVER_TO_PERSISTENT', handleMessage);
@@ -122,21 +177,49 @@ export default function PersistentPlayer (props) {
 			if (userInteractionToken && window._cplUserInteractions && window._cplUserInteractions[userInteractionToken]) {
 				// This is crucial - execute this code synchronously within the same user interaction flow
 				const internalPlayer = playerInstance.current.getInternalPlayer();
-				
+
 				// Handle YouTube videos specifically
 				if (internalPlayer && typeof internalPlayer.playVideo === 'function') {
-					// For YouTube, we need to explicitly unmute and then play
-					internalPlayer.unMute();
+					// Simple sequence for both iOS and non-iOS (but especially critical for iOS):
+					// 1. Unmute - must happen first and synchronously
+
+					if (typeof internalPlayer.unMute === 'function') {
+						internalPlayer.unMute();
+					}
+
+					// 2. Set volume to max
+					if (typeof internalPlayer.setVolume === 'function') {
+
+						internalPlayer.setVolume(100);
+					}
+
+					// 3. Play the video immediately after unmuting
+
 					internalPlayer.playVideo();
-				} 
+
+					// For iOS only: Follow up with requestAnimationFrame
+					if (isIOS.current) {
+						requestAnimationFrame(() => {
+							if (internalPlayer) {
+								// Double check mute state
+								if (typeof internalPlayer.isMuted === 'function' && internalPlayer.isMuted()) {
+									internalPlayer.unMute();
+								}
+								// Make sure it's playing
+								internalPlayer.playVideo();
+							}
+						});
+					}
+				}
 				// Handle HTML5 video elements
 				else if (internalPlayer && typeof internalPlayer.play === 'function') {
 					internalPlayer.muted = false;
+					internalPlayer.volume = 1.0;
 					// Use the Promise-based API for HTML5 video
 					const playPromise = internalPlayer.play();
 					if (playPromise !== undefined) {
 						playPromise.catch(error => {
-							console.debug('Auto-play with sound was prevented:', error);
+							// Auto-play with sound was prevented - fallback to muted;
 							// Fall back to muted autoplay which is more widely supported
 							internalPlayer.muted = true;
 							internalPlayer.play();
@@ -149,12 +232,9 @@ export default function PersistentPlayer (props) {
 			} else {
 				// Default behavior without user interaction token
 				const internalPlayer = playerInstance.current.getInternalPlayer();
-				
+
 				// For non-iOS browsers, ensure sound is unmuted
-				const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-				
-				if (!isIOS) {
+				if (!isIOS.current) {
 					// Handle YouTube
 					if (internalPlayer && typeof internalPlayer.unMute === 'function') {
 						internalPlayer.unMute();
@@ -164,7 +244,7 @@ export default function PersistentPlayer (props) {
 						internalPlayer.muted = false;
 					}
 				}
-				
+
 				// Continue with playback
 				if (typeof playerInstance?.current.getInternalPlayer?.()?.play === 'function') {
 					playerInstance.current.getInternalPlayer().play();
@@ -234,8 +314,9 @@ export default function PersistentPlayer (props) {
 						 playing={!loading && isPlaying}
 						 playbackRate={playbackRate}
 						 userInteractionToken={userInteractionToken}
-						 onPlay={() => setIsPlaying(true)}
+						 onPlay={() => { setIsPlaying(true); setIsMutedPlayback(false); }}
 						 onPause={() => setIsPlaying(false)}
+						 onMutedPlayback={(isMuted) => { setIsMutedPlayback(isMuted); setIsPlaying(false); }}
 						 onDuration={duration => {
 							 setDuration(duration);
 							 playerInstance.current.seekTo(playedSeconds, 'seconds');
@@ -310,8 +391,7 @@ export default function PersistentPlayer (props) {
 										 }}
 										 onChangeCommitted={(_, value) => {
 											 setIsPlaying(true);
-											 playerInstance.current.seekTo(playedSeconds);
-											 setPlayedSeconds(value);
+											 playerInstance.current.seekTo(value);
 										 }}
 									 />
 
@@ -366,10 +446,9 @@ export default function PersistentPlayer (props) {
 								}
 							}}
 							onChangeCommitted={(_, value) => {
-								setIsPlaying(false);
 								// Execute synchronously to maintain iOS gesture chain
 								setPlayedSeconds(value);
-								playerInstance.current.seekTo(value); // Use 'value' directly instead of state
+								playerInstance.current.seekTo(value); // Use 'value' directly
 								setIsPlaying(true);
 							}}
 						/>
@@ -378,6 +457,13 @@ export default function PersistentPlayer (props) {
 
 				{/* Time and controls row */}
 				<Box className="time-controls-row">
+					<Box className="title-container">
+						<Box className="logo-container"><Logo/></Box>
+						<Box className="title-text">
+							<a href={item.permalink} dangerouslySetInnerHTML={{__html: item.title}}></a>
+						</Box>
+					</Box>
+
 					<Box className="time-display">
 						<span className="time-current">{formatDuration(playedSeconds)}</span>
 						<span className="time-separator"> / </span>
@@ -404,18 +490,13 @@ export default function PersistentPlayer (props) {
 							<Cancel fontSize="small"/>
 						</IconButton>
 					</Box>
+
 				</Box>
 
 				{/* Container for title/close and controls */}
 				<Box className="controls-content">
 					{/* Title row with integrated player controls */}
 					<Box className="title-row">
-						<Box className="title-container">
-							<Box className="logo-container"><Logo/></Box>
-							<Box className="title-text">
-								<a href={item.permalink} dangerouslySetInnerHTML={{__html: item.title}}></a>
-							</Box>
-						</Box>
 
 						{/* Player controls - will be positioned based on screen size */}
 						<Box className="player-controls">
@@ -472,8 +553,9 @@ export default function PersistentPlayer (props) {
 						 playing={!loading && isPlaying}
 						 playbackRate={playbackRate}
 						 userInteractionToken={userInteractionToken}
-						 onPlay={() => setIsPlaying(true)}
+						 onPlay={() => { setIsPlaying(true); setIsMutedPlayback(false); }}
 						 onPause={() => setIsPlaying(false)}
+						 onMutedPlayback={(isMuted) => { setIsMutedPlayback(isMuted); setIsPlaying(false); }}
 						 onDuration={duration => {
 							 setDuration(duration);
 							 if (playedSeconds > 0) {

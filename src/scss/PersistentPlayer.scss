@@ -5,20 +5,41 @@
 		bottom: 0;
 		right: 0;
 		z-index: 5100;
-		
-		// iOS compatibility: Disable transitions for iOS devices for better gesture handling
+
+		// Enhanced iOS compatibility: Disable transitions and improve touch response
 		@supports (-webkit-touch-callout: none) {
-			.MuiSlider-thumb, .MuiSlider-track {
+			.MuiSlider-thumb, .MuiSlider-track, .MuiSlider-rail {
 				transition: none !important;
 			}
-			
+
 			.persistentPlayer__video__controls {
 				opacity: 1 !important;
 				transition: none !important;
 			}
+
+			// Increase touch targets for iOS
+			.MuiIconButton-root {
+				min-width: 44px;
+				min-height: 44px;
+				touch-action: manipulation;
+			}
+
+			// Remove hover effects which can cause delays
+			.video-clickable-overlay:hover {
+				background: transparent !important;
+			}
+
+			// Improve YouTube iframe visibility
+			iframe {
+				z-index: 30 !important;
+				opacity: 1 !important;
+				transform: translateZ(0);
+			}
 		}
 
 		&.is_desktop {
+			max-width: 470px;
+
 			.persistentPlayer__video__controls {
 				opacity: 0;
 
@@ -79,7 +100,7 @@
 	}
 
 	&__controls {
-		--cp-control-padding: var(--cp-gap--sm);
+		--cp-control-padding: var(--cp-gap-base);
 		background: #fff;
 		color: #000;
 		width: 470px;
@@ -88,7 +109,7 @@
 		flex-direction: column;
 
 		@media screen and (max-width: 767px) {
-			--cp-control-padding: calc( var(--cp-gap--sm) * .5);
+			//--cp-control-padding: calc( var(--cp-gap--sm) * .5);
 		}
 
 		img {
@@ -144,6 +165,7 @@
 		.controls-content {
 			padding: 0 var(--cp-control-padding) var(--cp-control-padding);
 
+
 			// Title row
 			.title-row {
 				display: flex;
@@ -154,32 +176,6 @@
 				gap: var(--cp-control-padding);
 
 				// Title and logo container
-				.title-container {
-					display: flex;
-					flex-direction: row;
-					align-items: center;
-					font-size: 14px;
-					flex: 1 1 auto; // Allow grow and shrink
-					min-width: 0;
-
-					.logo-container {
-						margin-right: var(--cp-control-padding);
-						max-width: 1.5em;
-						flex-shrink: 0;
-					}
-
-					.title-text {
-						overflow: hidden;
-
-						a {
-							color: inherit;
-							white-space: nowrap;
-							text-overflow: ellipsis;
-							display: block;
-							overflow: hidden;
-						}
-					}
-				}
 
 				// Player controls - shown in the middle on desktop, below title on mobile
 				.player-controls {
@@ -233,6 +229,33 @@
 			justify-content: space-between;
 			align-items: center;
 			padding: 0 var(--cp-control-padding);
+
+			.title-container {
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+				font-size: 14px;
+				flex: 1 1 auto; // Allow grow and shrink
+				min-width: 0;
+
+				.logo-container {
+					margin-right: var(--cp-control-padding);
+					max-width: 1.5em;
+					flex-shrink: 0;
+				}
+
+				.title-text {
+					overflow: hidden;
+
+					a {
+						color: inherit;
+						white-space: nowrap;
+						text-overflow: ellipsis;
+						display: block;
+						overflow: hidden;
+					}
+				}
+			}
 
 			.time-display {
 				font-size: 0.75rem;
@@ -299,5 +322,25 @@
 			}
 		}
 	}
-	
+
+}
+
+.muted-playback-notification {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background-color: rgba(0, 0, 0, 0.7);
+	color: white;
+	padding: 1rem;
+	border-radius: 0.5rem;
+	text-align: center;
+	z-index: 35;
+	pointer-events: none;
+	animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
 }

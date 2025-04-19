@@ -58,30 +58,36 @@ class CP_Library {
 	 * @param {number} args.playedSeconds The number of seconds to start playing from.
 	 * @param {number} [args.userInteractionToken] Token to maintain user interaction context.
 	 */
-	passToPersistentPlayer({ item, mode, isPlaying, playedSeconds, userInteractionToken }) {
-		this.triggerEvent('CPL_OPEN_PERSISTENT_PLAYER', {
+	passToPersistentPlayer({ item, mode, isPlaying, playedSeconds, userInteractionToken, isIOS }) {
+		// Store token for immediate access globally
+		if (userInteractionToken) {
+			window._activeUserInteractionToken = userInteractionToken;
+		}
+		
+		// Include all parameters when triggering events
+		const params = {
 			item,
 			mode,
 			isPlaying,
 			playedSeconds,
 			userInteractionToken,
-		});
+			isIOS
+		};
+		
+		// Create the player container immediately
+		this.triggerEvent('CPL_OPEN_PERSISTENT_PLAYER', params);
 
+		// Ensure player mounting completes before sending handover
+		// A very short timeout ensures DOM updates before handover
 		setTimeout(() => {
-			this.triggerEvent('CPL_HANDOVER_TO_PERSISTENT', {
-				item,
-				mode,
-				isPlaying,
-				playedSeconds,
-				userInteractionToken,
-			});
-		}, 50);
+			this.triggerEvent('CPL_HANDOVER_TO_PERSISTENT', params);
+		}, 10);
 
-		cplLog( item.id, 'persistent' );
+		cplLog(item.id, 'persistent');
 
 		// also log a play action if we are not currently playing
-		if ( ! (playedSeconds > 0) ) {
-			cplLog( item.id, 'play' );
+		if (!(playedSeconds > 0)) {
+			cplLog(item.id, 'play');
 		}
 	}
 
