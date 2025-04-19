@@ -10,6 +10,8 @@ import Forward30 from "@mui/icons-material/Forward30";
 import Replay10 from "@mui/icons-material/Replay10";
 import OpenInFull from "@mui/icons-material/OpenInFull";
 import PlayCircleOutline from "@mui/icons-material/PlayCircleOutline";
+import VolumeOff from "@mui/icons-material/VolumeOff";
+import VolumeUp from "@mui/icons-material/VolumeUp";
 import Slider from '@mui/material/Slider';
 import IconButton from '@mui/material/IconButton';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -29,12 +31,19 @@ export default function Player({ item }) {
 	const [loading, setLoading] = useState(true);
   const [playedSeconds, setPlayedSeconds] = useState(0.0);
   const [duration, setDuration] = useState(0.0);
-  const [playbackRate, setPlaybackRate] = useState(1 );
+  const [playbackRate, setPlaybackRate] = useState(1);
 	const [displayBg, setDisplayBG]   = useState( {backgroundColor: "#C4C4C4"} );
 	const [showFSControls, setShowFSControls]   = useState( false );
   // Add new state for player loading/ready state
   const [loadingState, setLoadingState] = useState('initial'); // 'initial', 'loading', 'ready', 'playing'
+  const [isMuted, setIsMuted] = useState(false); // Track muted state
+  const [showMutedNotice, setShowMutedNotice] = useState(false); // Show notification for iOS users about audio
+  const [audioUnlocked, setAudioUnlocked] = useState(false); // Track if audio is unlocked on iOS
   const playbackDetectionTimeout = useRef(null);
+  
+  // Check if running on iOS for special audio handling
+  const isIOS = useRef(/iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
   // Add cleanup for timeouts
   useEffect(() => {
@@ -206,6 +215,51 @@ export default function Player({ item }) {
 			// Store this interaction context
 			window._cplUserInteractions[userInteractionToken] = true;
 			
+			// For iOS, attempt to unlock audio context first if we have a player
+			if (playerInstance.current && typeof playerInstance.current.getInternalPlayer === 'function') {
+				const internalPlayer = playerInstance.current.getInternalPlayer();
+				
+				// Try to unmute first - necessary for iOS
+				if (internalPlayer) {
+					// For YouTube
+					if (typeof internalPlayer.unMute === 'function') {
+						try {
+							internalPlayer.unMute();
+							if (typeof internalPlayer.setVolume === 'function') {
+								internalPlayer.setVolume(100);
+							}
+						} catch (e) {
+							console.debug("Error unmuting before persistent player:", e);
+						}
+					}
+					// For HTML5 video/audio
+					else if (internalPlayer.muted !== undefined) {
+						try {
+							internalPlayer.muted = false;
+							internalPlayer.volume = 1.0;
+							
+							// For iOS Safari, sometimes a quick play/pause can help unlock audio permissions
+							if (typeof internalPlayer.play === 'function') {
+								const playPromise = internalPlayer.play();
+								if (playPromise !== undefined) {
+									playPromise.then(() => {
+										setTimeout(() => {
+											if (typeof internalPlayer.pause === 'function') {
+												internalPlayer.pause();
+											}
+										}, 50);
+									}).catch(() => {
+										// Ignore play errors - we're just trying to unlock audio
+									});
+								}
+							}
+						} catch (e) {
+							console.debug("Error prepping HTML5 player for iOS:", e);
+						}
+					}
+				}
+			}
+			
 			// Clean up old interaction tokens after a while
 			setTimeout(() => {
 				if (window._cplUserInteractions && window._cplUserInteractions[userInteractionToken]) {
@@ -221,6 +275,7 @@ export default function Player({ item }) {
 			mode: mode,
 			playedSeconds: playedSeconds,
 			url: mode === 'video' ? currentItem.video.value : currentItem.audio,
+			audioUnlocked: audioUnlocked || !isMuted // Pass along audio permission state
 		};
 
 		// For iOS devices, we need to delay cleaning up the local player
@@ -240,7 +295,8 @@ export default function Player({ item }) {
 			playedSeconds: mediaState.current.playedSeconds,
 			url: mediaState.current.url,
 			isIOS: isIOSDevice,
-			userInteractionToken: userInteractionToken
+			userInteractionToken: userInteractionToken,
+			audioUnlocked: mediaState.current.audioUnlocked
 		});
 		
 		// For iOS devices, clean up the local player after a slight delay
@@ -250,7 +306,7 @@ export default function Player({ item }) {
 				setIsPlaying(false);
 				setMode(false);
 				setShowFSControls(false);
-			}, 50);
+			}, 100); // Slightly longer delay to ensure proper handover
 		}
 	};
 
@@ -345,6 +401,42 @@ export default function Player({ item }) {
 				break;
 		}
 	};
+	
+	// Function to manually unmute on iOS
+	const handleUnmuteOnIOS = () => {
+		if (!playerInstance.current) return;
+		
+		// Get internal player
+		const internalPlayer = playerInstance.current.getInternalPlayer();
+		
+		if (!internalPlayer) return;
+		
+		try {
+			// For YouTube players
+			if (typeof internalPlayer.unMute === 'function') {
+				internalPlayer.unMute();
+				
+				if (typeof internalPlayer.setVolume === 'function') {
+					internalPlayer.setVolume(100);
+				}
+				
+				setIsMuted(false);
+				setShowMutedNotice(false);
+				setAudioUnlocked(true);
+			}
+			// For HTML5 video/audio players
+			else if (internalPlayer.muted !== undefined) {
+				internalPlayer.muted = false;
+				internalPlayer.volume = 1.0;
+				
+				setIsMuted(false);
+				setShowMutedNotice(false);
+				setAudioUnlocked(true);
+			}
+		} catch (e) {
+			console.debug("Error while unmuting:", e);
+		}
+	};
 
 	// log initial play
 	useEffect(() => {
@@ -371,6 +463,45 @@ export default function Player({ item }) {
   useEffect(() => {
     mediaState.current = { ...mediaState.current, item: currentItem, mode };
   }, [item, currentItem, mode])
+  
+  // Monitor for iOS muted playback
+  useEffect(() => {
+    // Only check for iOS devices and only when playing video
+    if (isIOS.current && isPlaying && mode === 'video' && !showMutedNotice) {
+      // Set a timer to check if the video is actually playing with sound
+      const checkTimer = setTimeout(() => {
+        if (!playerInstance.current) return;
+        
+        const internalPlayer = playerInstance.current.getInternalPlayer();
+        
+        // Check if audio is muted on YouTube
+        if (internalPlayer && typeof internalPlayer.isMuted === 'function') {
+          const isMuted = internalPlayer.isMuted();
+          if (isMuted) {
+            console.log("Detected muted YouTube playback on iOS");
+            setShowMutedNotice(true);
+            setIsMuted(true);
+          } else {
+            // Audio is working
+            setAudioUnlocked(true);
+          }
+        }
+        // For HTML5 video
+        else if (internalPlayer && internalPlayer.muted !== undefined) {
+          if (internalPlayer.muted) {
+            console.log("Detected muted HTML5 video playback on iOS");
+            setShowMutedNotice(true);
+            setIsMuted(true);
+          } else {
+            // Audio is working
+            setAudioUnlocked(true);
+          }
+        }
+      }, 500); // Check after 500ms
+      
+      return () => clearTimeout(checkTimer);
+    }
+  }, [isPlaying, mode, showMutedNotice]);
 
   // When unmounted, if media is still playing, hand it off to the persistent player.
   useLayoutEffect(() => {
@@ -381,10 +512,11 @@ export default function Player({ item }) {
           mode: mediaState.current.mode,
           isPlaying: true,
           playedSeconds: mediaState.current.playedSeconds,
+          audioUnlocked: audioUnlocked // Pass audio state
         });
       }
     }
-  }, [])
+  }, [audioUnlocked])
 
   useEffect(() => {
     if ( item?.thumb ) {
@@ -465,6 +597,35 @@ export default function Player({ item }) {
 												<CircularProgress sx={{ color: 'white' }} />
 											</Box>
 										)}
+										
+										{/* Add muted notification for iOS users */}
+										{showMutedNotice && (
+											<Box
+												className="muted-playback-notification"
+												onClick={handleUnmuteOnIOS}
+												sx={{
+													position: 'absolute',
+													top: '50%',
+													left: '50%',
+													transform: 'translate(-50%, -50%)',
+													backgroundColor: 'rgba(0,0,0,0.8)',
+													color: 'white',
+													padding: '1rem',
+													borderRadius: '0.5rem',
+													textAlign: 'center',
+													zIndex: 35,
+													cursor: 'pointer',
+													maxWidth: '80%',
+													display: 'flex',
+													flexDirection: 'column',
+													alignItems: 'center',
+													gap: '0.5rem'
+												}}
+											>
+												<VolumeOff sx={{ fontSize: 32 }} />
+												<span>Tap here to enable sound</span>
+											</Box>
+										)}
 
 										{mode && currentItem &&
 										<PlayerWrapper
@@ -487,6 +648,8 @@ export default function Player({ item }) {
 												clearTimeout(playbackDetectionTimeout.current);
 												// Reset detection ID to invalidate any pending checks
 												window._playbackDetectionId = null;
+												// Reset muted notification when playing begins
+												setShowMutedNotice(false);
 											}}
 											onPause={() => setIsPlaying(false)}
 											onDuration={duration => {
@@ -495,6 +658,13 @@ export default function Player({ item }) {
 												setIsPlaying(true);
 											}}
 											onProgress={progress => setPlayedSeconds(progress.playedSeconds)}
+											onMutedPlayback={(isMuted) => {
+												// Show notification for iOS users when video is muted
+												setIsMuted(isMuted);
+												if (isMuted && isIOS.current) {
+													setShowMutedNotice(true);
+												}
+											}}
 											progressInterval={100}
 										/>
 									}
