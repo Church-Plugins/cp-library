@@ -96,20 +96,69 @@ export default function Player({ item }) {
 	};
 
 	const handleClickPersistent = () => {
-		mediaState.current = { ...mediaState.current, item: currentItem };
-		mediaState.current = { ...mediaState.current, mode: mode };
-		mediaState.current = { ...mediaState.current, playedSeconds: playedSeconds };
+		// Check if this is iOS - using the same method as PersistentPlayer
+		const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+			(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+		
+		// Create a user interaction token to maintain iOS audio permissions
+		const userInteractionToken = Date.now().toString();
+		
+		// Store it globally so it can be accessed when the persistent player initializes
+		if (isIOSDevice) {
+			// Create a global interaction registry if it doesn't exist
+			if (!window._cplUserInteractions) {
+				window._cplUserInteractions = {};
+			}
+			
+			// Store this interaction context
+			window._cplUserInteractions[userInteractionToken] = true;
+			
+			// Clean up old interaction tokens after a while
+			setTimeout(() => {
+				if (window._cplUserInteractions && window._cplUserInteractions[userInteractionToken]) {
+					delete window._cplUserInteractions[userInteractionToken];
+				}
+			}, 5000);
+		}
+		
+		// Store the current state to be used when handing over to persistent player
+		mediaState.current = { 
+			...mediaState.current, 
+			item: currentItem,
+			mode: mode,
+			playedSeconds: playedSeconds,
+			url: mode === 'video' ? currentItem.video.value : currentItem.audio,
+		};
 
-		setIsPlaying( false );
-		setMode( false );
-		setShowFSControls( false );
+		// For iOS devices, we need to delay cleaning up the local player
+		// until after we pass to the persistent player to maintain the user interaction context
+		if (!isIOSDevice) {
+			// Clean up local player (non-iOS)
+			setIsPlaying(false);
+			setMode(false);
+			setShowFSControls(false);
+		}
 
+		// Pass to persistent player with complete information
 		api.passToPersistentPlayer({
-			item         : mediaState.current.item,
-			mode         : mediaState.current.mode,
-			isPlaying    : true,
+			item: mediaState.current.item,
+			mode: mediaState.current.mode,
+			isPlaying: true,
 			playedSeconds: mediaState.current.playedSeconds,
+			url: mediaState.current.url,
+			isIOS: isIOSDevice,
+			userInteractionToken: userInteractionToken
 		});
+		
+		// For iOS devices, clean up the local player after a slight delay
+		// This helps maintain the user interaction context for autoplay
+		if (isIOSDevice) {
+			setTimeout(() => {
+				setIsPlaying(false);
+				setMode(false);
+				setShowFSControls(false);
+			}, 50);
+		}
 	};
 
 	const updateItemState = ({ url, ...data }) => {

@@ -93,6 +93,7 @@
 		justify-content: space-between;
 		align-items: center;
 		padding: 0 var(--cp-control-padding);
+		min-height: 2em;
 
 		.title-container {
 			display: flex;
@@ -347,11 +348,6 @@
 	max-width: 100%;
 	border-top: 1px solid rgba(0, 0, 0, 0.1);
 	padding-bottom: var(--cp-control-padding);
-
-	// Mobile-specific overrides
-	.time-controls-row {
-		margin-bottom: 10px;
-	}
 
 	.controls-content {
 		.player-controls {

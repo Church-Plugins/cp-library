@@ -39,7 +39,7 @@ export default function PersistentPlayer (props) {
 
 	// Check if this is iOS
 	const isIOS = useRef(/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+	                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
 	const onMouseMove = (e) => {
 		if (showFSControls) {
@@ -135,6 +135,9 @@ export default function PersistentPlayer (props) {
 		}
 	}, [loading]);
 
+	// Store received video/audio URL for use in PlayerWrapper
+	const [mediaUrl, setMediaUrl] = useState(null);
+	
 	useEffect(() => {
 		function handleMessage (data) {
 				// Received handover message
@@ -145,7 +148,21 @@ export default function PersistentPlayer (props) {
 			// Check for previously stored token (set in API)
 			if (!token && window._activeUserInteractionToken) {
 				token = window._activeUserInteractionToken;
-
+			}
+			
+			// Store URL if provided
+			if (data.url) {
+				setMediaUrl(data.url);
+			}
+			
+			// Special handling for iOS devices
+			if (data.isIOS) {
+				// For iOS, we need to ensure the interaction context is preserved
+				// and that the player elements are fully initialized
+				setTimeout(() => {
+					// Force a refresh of the loading state to ensure DOM is ready
+					setLoading(true);
+				}, 0);
 			}
 
 			// Process essential data immediately
@@ -156,7 +173,6 @@ export default function PersistentPlayer (props) {
 
 			// Store the user interaction token
 			if (token) {
-
 				setUserInteractionToken(token);
 			}
 
@@ -307,7 +323,7 @@ export default function PersistentPlayer (props) {
 						 item={item}
 						 ref={setPlayerInstance}
 						 className="itemDetail__video"
-						 url={item.video.value}
+						 url={mediaUrl || (item.video && item.video.value)}
 						 width="100%"
 						 height="100%"
 						 controls={false}
@@ -547,7 +563,7 @@ export default function PersistentPlayer (props) {
 						 item={item}
 						 ref={setPlayerInstance}
 						 controls={false}
-						 url={item.audio}
+						 url={mediaUrl || item.audio}
 						 width="0"
 						 height="0"
 						 playing={!loading && isPlaying}
