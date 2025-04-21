@@ -1,0 +1,167 @@
+// Filter accessibility styles
+
+// Screen reader text utility class
+.screen-reader-text {
+  border: 0;
+  clip: rect(1px, 1px, 1px, 1px);
+  clip-path: inset(50%);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+  word-wrap: normal !important;
+  
+  &:focus {
+    background-color: #eee;
+    clip: auto !important;
+    clip-path: none;
+    color: #444;
+    display: block;
+    font-size: 1em;
+    height: auto;
+    left: 5px;
+    line-height: normal;
+    padding: 15px 23px 14px;
+    text-decoration: none;
+    top: 5px;
+    width: auto;
+    z-index: 100000;
+  }
+}
+
+// Focus styles for better keyboard navigation
+.cpl-filter *:focus-visible {
+  outline: 2px solid #0073aa;
+  outline-offset: 2px;
+}
+
+// Filter container accessibility enhancements
+.cpl-filter {
+  // Loading indicator for AJAX requests
+  &-loading-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.8);
+    z-index: 5;
+    
+    .cpl-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top-color: #0073aa;
+      animation: spinner 0.8s linear infinite;
+      
+      @keyframes spinner {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    }
+  }
+  
+  // Selected filters
+  &--filters {
+    // Enhance the selected filters for better accessibility
+    &--filter {
+      display: inline-flex;
+      align-items: center;
+      
+      // Add visible focus state
+      &:focus {
+        outline: 2px solid #0073aa;
+        outline-offset: 2px;
+      }
+      
+      // Remove button 
+      .cpl-filter-remove {
+        margin-left: 0.5rem;
+      }
+      
+      // Category label for context
+      .cpl-filter-category {
+        font-weight: bold;
+        margin-right: 0.25rem;
+      }
+    }
+  }
+  
+  // Dropdown accessibility enhancements
+  &--dropdown {
+    // When dropdown has role="menu"
+    &[role="menu"] {
+      padding: 0.5rem;
+      
+      // Loading state with aria-live region
+      .cpl-filter--loading {
+        padding: 1rem;
+        text-align: center;
+      }
+    }
+    
+    // Menuitem for keyboard navigation
+    label[role="menuitem"] {
+      padding: 0.5rem;
+      border-radius: 4px;
+      margin-bottom: 0.25rem;
+      
+      &:focus {
+        outline: 2px solid #0073aa;
+        outline-offset: -2px;
+        background-color: #f7f7f7;
+      }
+    }
+  }
+  
+  // Search input accessibility
+  &--search {
+    &--box {
+      input[aria-label] {
+        // Enhanced focus state
+        &:focus {
+          outline: 2px solid #0073aa;
+          outline-offset: -2px;
+        }
+      }
+      
+      button[aria-label] {
+        // Enhanced focus state
+        &:focus {
+          outline: 2px solid #0073aa;
+          outline-offset: -2px;
+        }
+      }
+    }
+  }
+  
+  // SR live region for announcements
+  &--sr-live-region {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+}
+
+// Pagination accessibility enhancements
+.cpl-pagination[role="navigation"] {
+  [role="button"] {
+    // Enhanced focus state for pagination links
+    &:focus {
+      outline: 2px solid #0073aa;
+      outline-offset: 2px;
+    }
+  }
+}
