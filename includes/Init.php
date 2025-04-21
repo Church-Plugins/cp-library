@@ -144,7 +144,10 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 
 		Download::get_instance();
 		$this->templates = Templates::get_instance();
-		$this->filters = Filters::get_instance();
+
+		// Initialize the filter system
+		$filters_init = Filters\Init::get_instance();
+		$this->filters = Filters\Filters::get_instance(); // Compatibility layer
 
 		include_once( CP_LIBRARY_INCLUDES . '/CLI/CP_Migrate.php' );
 	}

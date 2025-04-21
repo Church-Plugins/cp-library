@@ -21,6 +21,14 @@ if ( $item->has_variations() ) {
 ?>
 
 <div <?php post_class( $classes ); ?>>
+    <?php 
+    // Add structured data for SEO if we're on a filtered page
+    if (function_exists('cpl_has_active_filters') && cpl_has_active_filters()) {
+        global $wp_query;
+        $position = $wp_query->current_post + 1;
+        echo cpl_item_structured_data(get_post(), $position);
+    }
+    ?>
 
 	<div class="cpl-list-item--thumb" onclick="window.location = jQuery(this).parent().find('.cpl-list-item--title a').attr('href');">
 		<div class="cpl-list-item--thumb--canvas" style="background: url(<?php echo esc_url( $item_data['thumb'] ); ?>) 0% 0% / cover;">

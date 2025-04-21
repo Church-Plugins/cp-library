@@ -29,25 +29,33 @@ $classes = apply_filters( 'cpl_archive_classes', $classes, $type );
 		<div class="cpl-archive--container--filter">
 			<?php
 			// Use the new filter system for archive context
-			echo cp_library()->filters->render_filter_form([
+			use CP_Library\Filters\TemplateHelpers;
+
+			echo TemplateHelpers::render_current_filters([
 				'context' => 'archive',
 				'container_class' => 'cpl-archive-filter',
+				'template' => 'list',
 			]);
 			?>
 		</div>
 
 		<div class="cpl-archive--container--list">
-			<?php echo cp_library()->filters->render_selected_filters([
-				'context' => 'archive',
-			]); ?>
+			<?php do_action( 'cpl_before_archive_list' ); ?>
+			<?php do_action( 'cpl_before_archive_' . $type . '_list' ); ?>
 
 			<div class="cpl-archive--list">
 				<?php if ( have_posts() ) { ?>
-					<?php while( have_posts() ) : the_post();  ?>
+					<?php
+                    $position = 1;
+                    while( have_posts() ) : the_post();
+                    ?>
 						<div class="cpl-archive--list--item">
 							<?php cp_library()->templates->get_template_part( "parts/" . Templates::get_type() . "-list" ); ?>
 						</div>
-					<?php endwhile; ?>
+					<?php
+                    $position++;
+                    endwhile;
+                    ?>
 				<?php } else if( !empty( $type ) && is_object( $type ) && !empty( $type->plural_label ) ) { ?>
 						<p><?php printf( __( "No %s found.", 'cp-library' ), $type->plural_label ); ?></p>
 				<?php }; ?>

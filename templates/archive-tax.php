@@ -30,6 +30,26 @@ if ( isset( $types[ $queried_post_type ] ) ) {
 	<?php endif; ?>
 
 	<div class="cpl-archive--container">
+		
+		<div class="cpl-archive--container--filter">
+			<?php
+			// Use the new filter system for taxonomy context
+			use CP_Library\Filters\TemplateHelpers;
+			
+			$taxonomy = $term->taxonomy;
+			$taxonomy_context = 'taxonomy';
+			
+			echo TemplateHelpers::render_current_filters([
+				'context' => $taxonomy_context,
+				'context_args' => [
+					'taxonomy' => $taxonomy,
+					'term' => $term->slug,
+				],
+				'container_class' => 'cpl-archive-filter',
+				'template' => 'list',
+			]);
+			?>
+		</div>
 
 		<div class="cpl-archive--container--list">
 			<?php foreach( $types as $type ) : $found = 0; ?>

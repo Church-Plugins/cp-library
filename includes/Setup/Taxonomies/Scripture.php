@@ -342,4 +342,23 @@ class Scripture extends Taxonomy  {
 		return false;
 	}
 
+	/**
+	 * Sort terms by scripture order - static utility method
+	 *
+	 * @param $a
+	 * @param $b
+	 *
+	 * @return int|string
+	 */
+	public function sort_scripture( $a, $b ) {
+		$book_order = array_values( $this->get_terms() );
+		$index_a = array_search( $a->title, $book_order );
+		$index_b = array_search( $b->title, $book_order );
+
+		if ( $index_a === false || $index_b === false ) {
+			return 0;
+		}
+
+		return $index_a - $index_b;
+	}
 }

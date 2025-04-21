@@ -1,4 +1,3 @@
-
 (function($) {
 
 	let transcripts = function() {

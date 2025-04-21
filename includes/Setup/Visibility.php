@@ -57,7 +57,7 @@ class Visibility {
 		}
 
 		add_action( 'init', [ $this, 'register_taxonomy' ], 9 );
-		add_action( 'pre_get_posts', [ $this, 'filter_query' ] );
+		add_action( 'pre_get_posts', [ $this, 'filter_query' ], 500 );
 
 		// Hook into entity types for UI
 		add_action( 'cmb2_admin_init', [ $this, 'add_metaboxes' ] );
@@ -240,6 +240,7 @@ class Visibility {
 	 * Filter the main query to respect visibility
 	 */
 	public function filter_query( $query ) {
+
 		// Allow developers to bypass visibility filtering
 		if ( apply_filters( 'cpl_bypass_visibility_filtering', false, $query ) ) {
 			return;

@@ -2,6 +2,26 @@
 
 This document explains the CP Sermon Library's filter system, its capabilities, and how to use it effectively in different contexts.
 
+> **New in Version 1.6.0**: The filter system has been completely refactored to support multiple post types (sermons and series), with improved accessibility, error handling, and SEO features. For migration from previous versions, see [Filter System Migration](filter-system-migration.md).
+
+## New Features in 1.6.0
+
+- **Multi-Post Type Support**: Filter both sermons and series content
+- **Enhanced Accessibility**: Full keyboard navigation and screen reader support
+- **SEO Optimization**: Structured data and canonical URL management
+- **Improved Error Handling**: Standardized error handling throughout
+- **Developer Friendly**: More extensible architecture
+
+## Additional Documentation
+
+For information specific to the new filter system features:
+
+- [Filter System Reference](filter-system-reference.md) - Quick reference guide
+- [Filter System Migration](filter-system-migration.md) - Upgrade from legacy filters
+- [Filter System Examples](filter-system-examples.md) - Code examples
+- [SEO Enhancements](seo-enhancements.md) - SEO features for filters
+- [Error Handling](error-handling.md) - Error management system
+
 ## User Documentation
 
 ### Filter Functionality Overview

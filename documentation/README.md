@@ -30,7 +30,10 @@ New to CP Sermon Library? Start here:
 - [Sermon Variations](sermon-variations.md) - Multiple service types and contexts
 - [Persistent Player](advanced-features.md#using-the-persistent-audio-player) - Site-wide audio player
 - [Service Types](service-types.md) - Categorize sermons by service
-- [Advanced Filtering](filter-system.md) - Filter system for all contexts
+- [Filter System](filter-system.md) - Advanced content filtering
+- [Filter SEO](seo-enhancements.md) - SEO optimization for filtered content
+- [Filter Migration](filter-system-migration.md) - Upgrading to new filter system 
+- [Filter Code Examples](filter-system-examples.md) - Code snippets and patterns
 
 ### Podcasting
 - [Podcast Setup Guide](podcast-setup-guide.md) - Complete podcast walkthrough

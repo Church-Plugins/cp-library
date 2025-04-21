@@ -15,7 +15,7 @@
 			}
 		}
 	}
-	
+
 	&--toggle {
 		&--button {
 			&.disabled {
@@ -24,6 +24,12 @@
 				cursor: default;
 			}
 		}
+	}
+
+	&--dropdown-container {
+		display: flex;
+		flex-flow: row wrap;
+		gap: var(--cp-gap--sm);
 	}
 
 	&--has-dropdown {
@@ -41,7 +47,7 @@
 			pointer-events: none;
 			display: none !important;
 		}
-		
+
 		&.initialized {
 			display: block; /* Show dropdowns after they're ready */
 		}
@@ -152,12 +158,6 @@
 			padding: 0 .5em;
 			margin-right: .5em;
 			text-decoration: none;
-
-			&:before {
-				content: '\e5cd';
-				font-family: 'Material Icons Outlined';
-				margin: 0 0.25em 0 -0.25em;
-			}
 		}
 	}
 }
