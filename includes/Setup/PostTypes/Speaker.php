@@ -39,7 +39,7 @@ class Speaker extends PostType {
 		parent::add_actions();
 
 		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
-		
+
 		// Handle all meta updates (both CMB2 and direct WordPress functions)
 		add_action( 'updated_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
 		add_action( 'added_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
@@ -219,7 +219,7 @@ class Speaker extends PostType {
 	 * @param int $object_id Post ID
 	 * @param string $meta_key Meta key
 	 * @param mixed $meta_value Meta value
-	 * 
+	 *
 	 * @since 1.6.0
 	 */
 	public function handle_updated_meta( $meta_id, $object_id, $meta_key, $meta_value ) {
@@ -227,15 +227,15 @@ class Speaker extends PostType {
 		if ( 'cpl_speaker' !== $meta_key ) {
 			return;
 		}
-		
+
 		// Get post type of the object
 		$post_type = get_post_type( $object_id );
-		
+
 		// Only process sermon post type
 		if ( Item::get_instance()->post_type !== $post_type ) {
 			return;
 		}
-		
+
 		try {
 			$item = ItemModel::get_instance_from_origin( $object_id );
 			$speaker_ids = $this->process_speaker_data( $meta_value );
@@ -244,28 +244,31 @@ class Speaker extends PostType {
 			error_log( 'CP Library Speaker Meta Update: ' . $e->getMessage() );
 		}
 	}
-	
+
 	/**
 	 * Process speaker data from metadata
-	 * 
+	 *
 	 * @param mixed $data Speaker data (IDs or title strings)
 	 * @return array Array of speaker IDs
 	 */
 	protected function process_speaker_data( $data ) {
+		global $wpdb;
 		$speaker_ids = [];
-		
+
 		// If single value, convert to array
 		if ( !is_array( $data ) ) {
 			$data = [ $data ];
 		}
-		
+
 		foreach ( $data as $value ) {
 			if ( is_numeric( $value ) ) {
 				// Already a speaker ID
 				$speaker_ids[] = absint( $value );
 			} else if ( is_string( $value ) && ! empty( $value ) ) {
 				// Try to find speaker by title
-				$speaker = get_page_by_title( $value, OBJECT, $this->post_type );
+				$value = sanitize_text_field( $value );
+				$speaker = $wpdb->get_row( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND (post_title = %s OR post_name = %s) AND post_status = 'publish' LIMIT 1", $this->post_type, $value, $value ) );
+
 				if ( $speaker ) {
 					try {
 						$speaker_model = \CP_Library\Models\Speaker::get_instance_from_origin( $speaker->ID );
@@ -276,7 +279,7 @@ class Speaker extends PostType {
 				}
 			}
 		}
-		
+
 		return $speaker_ids;
 	}
 

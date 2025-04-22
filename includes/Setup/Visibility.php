@@ -65,10 +65,8 @@ class Visibility {
 		// JavaScript for admin
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_admin_scripts' ] );
 
-		// Save actions
-		add_action( 'save_post_cpl_item', [ $this, 'update_item_visibility' ] );
-		add_action( 'save_post_cpl_item_type', [ $this, 'update_item_type_visibility' ] );
-		add_action( 'save_post_cpl_service_type', [ $this, 'update_service_type_visibility' ] );
+		// Save actions. Run after CMB2
+		add_action( 'save_post', [ $this, 'maybe_update_visibility' ], 100 );
 	}
 
 	/**
@@ -468,16 +466,41 @@ class Visibility {
 	}
 
 	/**
-	 * Update sermon visibility when saved
+	 * Check if the visibility should be updated when saving a post
 	 *
-	 * @param int $post_id The post ID
+	 * @param $post_id
+	 *
+	 * @since  1.6.0
+	 *
+	 * @author Tanner Moushey, 4/22/25
 	 */
-	public function update_item_visibility( $post_id ) {
+	public function maybe_update_visibility( $post_id ) {
 		// Skip if not on admin screen or doing autosave
 		if ( ! is_admin() || defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 			return;
 		}
 
+		switch( get_post_type( $post_id ) ) {
+			case 'cpl_item':
+				$this->update_item_visibility( $post_id );
+				break;
+			case 'cpl_item_type':
+				$this->update_item_type_visibility( $post_id );
+				break;
+			case 'cpl_service_type':
+				$this->update_service_type_visibility( $post_id );
+				break;
+			default:
+				break;
+		}
+	}
+
+	/**
+	 * Update sermon visibility when saved
+	 *
+	 * @param int $post_id The post ID
+	 */
+	public function update_item_visibility( $post_id ) {
 		// Check if should be visible based on parent entities
 		$should_be_visible = $this->should_be_visible( $post_id );
 
@@ -497,11 +520,6 @@ class Visibility {
 	 * @param int $post_id The post ID
 	 */
 	public function update_item_type_visibility( $post_id ) {
-		// Skip if not on admin screen or doing autosave
-		if ( ! is_admin() || defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
 		$exclude_from_main_list = isset( $_POST['exclude_from_main_list'] ) ? true : false;
 
 		// Set visibility for the series itself
@@ -519,11 +537,6 @@ class Visibility {
 	 * @param int $post_id The post ID
 	 */
 	public function update_service_type_visibility( $post_id ) {
-		// Skip if not on admin screen or doing autosave
-		if ( ! is_admin() || defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-			return;
-		}
-
 		$exclude_from_main_list = isset( $_POST['exclude_from_main_list'] ) ? true : false;
 
 		// Set visibility for the service type itself

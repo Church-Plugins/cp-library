@@ -38,7 +38,7 @@ class ServiceType extends PostType {
 		parent::add_actions();
 
 		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
-		
+
 		// Handle all meta updates (both CMB2 and direct WordPress functions)
 		add_action( 'updated_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
 		add_action( 'added_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
@@ -147,24 +147,6 @@ class ServiceType extends PostType {
 
 	public function register_metaboxes() {
 		$this->item_service_type();
-		$this->service_type_options();
-	}
-
-	protected function service_type_options() {
-		$cmb = new_cmb2_box( array(
-			'id'           => 'cpl_service_type_options',
-			'object_types' => [ $this->post_type ],
-			'title'        => __( 'Service Type Options', 'cp-library' ),
-			'context'      => 'normal',
-			'priority'     => 'default',
-		) );
-
-		$cmb->add_field( [
-			'name' => __( 'Exclude from Main List', 'cp-library' ),
-			'desc' => __( 'When checked, sermons with this service type will not appear in the main sermon list. They will still appear in service type archives.', 'cp-library' ),
-			'id'   => 'exclude_from_main_list',
-			'type' => 'checkbox',
-		] );
 	}
 
 	protected function item_service_type() {
@@ -242,7 +224,7 @@ class ServiceType extends PostType {
 	 * @param int $object_id Post ID
 	 * @param string $meta_key Meta key
 	 * @param mixed $meta_value Meta value
-	 * 
+	 *
 	 * @since 1.6.0
 	 */
 	public function handle_updated_meta( $meta_id, $object_id, $meta_key, $meta_value ) {
@@ -250,15 +232,15 @@ class ServiceType extends PostType {
 		if ( 'cpl_service_type' !== $meta_key ) {
 			return;
 		}
-		
+
 		// Get post type of the object
 		$post_type = get_post_type( $object_id );
-		
+
 		// Only process sermon post type
 		if ( Item::get_instance()->post_type !== $post_type ) {
 			return;
 		}
-		
+
 		try {
 			$item = ItemModel::get_instance_from_origin( $object_id );
 			$service_type_ids = $this->process_service_type_data( $meta_value );
@@ -267,28 +249,31 @@ class ServiceType extends PostType {
 			error_log( 'CP Library Service Type Meta Update: ' . $e->getMessage() );
 		}
 	}
-	
+
 	/**
 	 * Process service type data from metadata
-	 * 
+	 *
 	 * @param mixed $data Service type data (IDs or title strings)
 	 * @return array Array of service type IDs
 	 */
 	protected function process_service_type_data( $data ) {
+		global $wpdb;
 		$service_type_ids = [];
-		
+
 		// If single value, convert to array
 		if ( !is_array( $data ) ) {
 			$data = [ $data ];
 		}
-		
+
 		foreach ( $data as $value ) {
 			if ( is_numeric( $value ) ) {
 				// Already a service type ID
 				$service_type_ids[] = absint( $value );
 			} else if ( is_string( $value ) && ! empty( $value ) ) {
-				// Try to find service type by title
-				$service_type = get_page_by_title( $value, OBJECT, $this->post_type );
+				// Try to find service type by post_title or post_name
+				$value = sanitize_text_field( $value );
+				$service_type = $wpdb->get_row( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND (post_title = %s OR post_name = %s) AND post_status = 'publish' LIMIT 1", $this->post_type, $value, $value ) );
+
 				if ( $service_type ) {
 					try {
 						$service_type_model = \CP_Library\Models\ServiceType::get_instance_from_origin( $service_type->ID );
@@ -299,7 +284,7 @@ class ServiceType extends PostType {
 				}
 			}
 		}
-		
+
 		return $service_type_ids;
 	}
 

@@ -70,7 +70,7 @@ class ItemType extends PostType  {
 		add_action( 'shutdown', [ $this, 'save_post_date'], 99 );
 		add_action( 'save_post', [ $this, 'post_date' ] );
 		add_action( 'pre_get_posts', [ $this, 'default_posts_per_page' ] );
-		
+
 		// Handle all meta updates (both CMB2 and direct WordPress functions)
 		add_action( 'updated_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
 		add_action( 'added_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
@@ -464,7 +464,7 @@ class ItemType extends PostType  {
 	 * @param int $object_id Post ID
 	 * @param string $meta_key Meta key
 	 * @param mixed $meta_value Meta value
-	 * 
+	 *
 	 * @since 1.6.0
 	 */
 	public function handle_updated_meta( $meta_id, $object_id, $meta_key, $meta_value ) {
@@ -472,15 +472,15 @@ class ItemType extends PostType  {
 		if ( 'cpl_series' !== $meta_key ) {
 			return;
 		}
-		
+
 		// Get post type of the object
 		$post_type = get_post_type( $object_id );
-		
+
 		// Only process sermon post type
 		if ( Item::get_instance()->post_type !== $post_type ) {
 			return;
 		}
-		
+
 		try {
 			$item = ItemModel::get_instance_from_origin( $object_id );
 			$series_ids = $this->process_series_data( $meta_value );
@@ -489,28 +489,31 @@ class ItemType extends PostType  {
 			error_log( 'CP Library Series Meta Update: ' . $e->getMessage() );
 		}
 	}
-	
+
 	/**
 	 * Process series data from metadata
-	 * 
+	 *
 	 * @param mixed $data Series data (IDs or title strings)
 	 * @return array Array of series IDs
 	 */
 	protected function process_series_data( $data ) {
+		global $wpdb;
 		$series_ids = [];
-		
+
 		// If single value, convert to array
 		if ( !is_array( $data ) ) {
 			$data = [ $data ];
 		}
-		
+
 		foreach ( $data as $value ) {
 			if ( is_numeric( $value ) ) {
 				// Already a series ID
 				$series_ids[] = absint( $value );
 			} else if ( is_string( $value ) && ! empty( $value ) ) {
 				// Try to find series by title
-				$series = get_page_by_title( $value, OBJECT, $this->post_type );
+				$value  = sanitize_text_field( $value );
+				$series = $wpdb->get_row( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND (post_title = %s OR post_name = %s) AND post_status = 'publish' LIMIT 1", $this->post_type, $value, $value ) );
+
 				if ( $series ) {
 					try {
 						$series_model = \CP_Library\Models\ItemType::get_instance_from_origin( $series->ID );
@@ -521,7 +524,7 @@ class ItemType extends PostType  {
 				}
 			}
 		}
-		
+
 		return $series_ids;
 	}
 

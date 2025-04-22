@@ -325,6 +325,7 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 
 		Integrations\YouTube::get_instance();
 		Integrations\OpenAI::get_instance();
+		Integrations\WPAllImport::get_instance();
 
 		$this->modules = Modules\Init::get_instance();
 		$this->logging = new \ChurchPlugins\Logging( $this->get_id(), $this->is_debug_mode() );
