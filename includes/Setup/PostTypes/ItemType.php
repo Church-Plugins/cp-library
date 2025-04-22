@@ -69,8 +69,11 @@ class ItemType extends PostType  {
 
 		add_action( 'shutdown', [ $this, 'save_post_date'], 99 );
 		add_action( 'save_post', [ $this, 'post_date' ] );
-		add_filter( 'cmb2_save_field_cpl_series', [ $this, 'save_item_series' ], 10, 3 );
 		add_action( 'pre_get_posts', [ $this, 'default_posts_per_page' ] );
+		
+		// Handle all meta updates (both CMB2 and direct WordPress functions)
+		add_action( 'updated_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
+		add_action( 'added_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
 		add_action( 'pre_get_posts', [ $this, 'item_item_type_query' ] );
 		add_action( 'pre_get_posts', [ $this, 'item_type_param_query' ] );
 		add_filter( 'post_updated_messages', [ $this, 'post_update_messages' ] );
@@ -455,26 +458,71 @@ class ItemType extends PostType  {
 	}
 
 	/**
-	 * Save item series to the item_meta table
+	 * Handle meta updates for series field
 	 *
-	 * @since  1.0.0
-	 * @updated 1.1.0 Fix error when value was not set
-	 *
-	 * @author Tanner Moushey
+	 * @param int $meta_id ID of the meta value
+	 * @param int $object_id Post ID
+	 * @param string $meta_key Meta key
+	 * @param mixed $meta_value Meta value
+	 * 
+	 * @since 1.6.0
 	 */
-	public function save_item_series( $updated, $actions, $field ) {
-		$series = [];
-
-		if ( isset( $field->data_to_save[ $field->id( true ) ] ) && is_array( $field->data_to_save[ $field->id( true ) ] ) ) {
-			$series = array_map( 'absint', $field->data_to_save[ $field->id( true ) ] );
+	public function handle_updated_meta( $meta_id, $object_id, $meta_key, $meta_value ) {
+		// Only process our specific meta key
+		if ( 'cpl_series' !== $meta_key ) {
+			return;
 		}
-
+		
+		// Get post type of the object
+		$post_type = get_post_type( $object_id );
+		
+		// Only process sermon post type
+		if ( Item::get_instance()->post_type !== $post_type ) {
+			return;
+		}
+		
 		try {
-			$item = ItemModel::get_instance_from_origin( $field->object_id );
-			$item->update_types( $series );
+			$item = ItemModel::get_instance_from_origin( $object_id );
+			$series_ids = $this->process_series_data( $meta_value );
+			$item->update_types( $series_ids );
 		} catch ( Exception $e ) {
-			error_log( $e );
+			error_log( 'CP Library Series Meta Update: ' . $e->getMessage() );
 		}
+	}
+	
+	/**
+	 * Process series data from metadata
+	 * 
+	 * @param mixed $data Series data (IDs or title strings)
+	 * @return array Array of series IDs
+	 */
+	protected function process_series_data( $data ) {
+		$series_ids = [];
+		
+		// If single value, convert to array
+		if ( !is_array( $data ) ) {
+			$data = [ $data ];
+		}
+		
+		foreach ( $data as $value ) {
+			if ( is_numeric( $value ) ) {
+				// Already a series ID
+				$series_ids[] = absint( $value );
+			} else if ( is_string( $value ) && ! empty( $value ) ) {
+				// Try to find series by title
+				$series = get_page_by_title( $value, OBJECT, $this->post_type );
+				if ( $series ) {
+					try {
+						$series_model = \CP_Library\Models\ItemType::get_instance_from_origin( $series->ID );
+						$series_ids[] = $series_model->id;
+					} catch ( Exception $e ) {
+						error_log( 'CP Library Series Lookup: ' . $e->getMessage() );
+					}
+				}
+			}
+		}
+		
+		return $series_ids;
 	}
 
 	/**
