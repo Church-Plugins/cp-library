@@ -518,7 +518,7 @@ class CPLibraryFilter {
 			action     : 'cpl_filter_options',
 			filter_type: facetType,
 			context    : context,
-			selected   : selected,
+			selected   : selectedArray,
 			post_type  : this.config.postType, // Include post type in the request
 			args       : this.config.contextArgs,
 			query_vars : this.buildQueryVars(currentFilters, facetType),
@@ -560,7 +560,9 @@ class CPLibraryFilter {
 						let html = '';
 						response.data.options.forEach(option => {
 							// Ensure both values are strings for comparison
-							const isChecked = selected.map(val => val.toString()).includes(option.value.toString());
+							// Make sure selectedArray is treated as an array
+							const optionValueStr = option.value.toString();
+							const isChecked = selectedArray.length > 0 && selectedArray.some(val => val.toString() === optionValueStr);
 							const showCount = window.cplVars?.show_filter_count !== 'hide';
 
 							// Get the param name from response data if available, or use a prefixed version
