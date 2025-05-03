@@ -150,13 +150,14 @@
 	&--filters {
 		display: flex;
 		margin-bottom: 2rem;
+		flex-flow: row wrap;
+		gap: .5rem;
 
 		&--filter {
 			border: 1px solid;
 			border-radius: 20px;
 			display: inline-flex;
 			padding: 0 .5em;
-			margin-right: .5em;
 			text-decoration: none;
 		}
 	}

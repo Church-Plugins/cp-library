@@ -1,5 +1,6 @@
 <?php
 use ChurchPlugins\Helpers;
+use CP_Library\Admin\Settings;
 
 global $post;
 $original_post = $post;
@@ -18,10 +19,26 @@ $classes = [ 'cpl-list-item' ];
 if ( $item->has_variations() ) {
 	$classes[] = 'cpl-list-item--has-variations';
 }
+
+if ( $ratio = Settings::get_item( 'image_ratio', Settings::get_item_type( 'image_ratio' ) ) ) {
+	$classes[] = 'cpl-list-item--ratio-' . $ratio;
+}
+
+if ( $series = $item->get_types() ) {
+	foreach( $series as $s ) {
+		$classes[] = 'cpl-list-item--series-' . $s['origin_id'];
+	}
+}
+
+if ( $service_types = $item->get_service_types() ) {
+	foreach( $service_types as $s ) {
+		$classes[] = 'cpl-list-item--service-type-' . $s['origin_id'];
+	}
+}
 ?>
 
 <div <?php post_class( $classes ); ?>>
-    <?php 
+    <?php
     // Add structured data for SEO if we're on a filtered page
     if (function_exists('cpl_has_active_filters') && cpl_has_active_filters()) {
         global $wp_query;
@@ -31,11 +48,9 @@ if ( $item->has_variations() ) {
     ?>
 
 	<div class="cpl-list-item--thumb" onclick="window.location = jQuery(this).parent().find('.cpl-list-item--title a').attr('href');">
-		<div class="cpl-list-item--thumb--canvas" style="background: url(<?php echo esc_url( $item_data['thumb'] ); ?>) 0% 0% / cover;">
-			<?php if ( $item_data['thumb'] ) : ?>
-				<img alt="<?php esc_attr( $item_data['title'] ); ?>" src="<?php echo esc_url( $item_data['thumb'] ); ?>">
-			<?php endif; ?>
-		</div>
+		<?php if ( $item_data['thumb'] ) : ?>
+			<img alt="<?php esc_attr( $item_data['title'] ); ?>" src="<?php echo esc_url( $item_data['thumb'] ); ?>">
+		<?php endif; ?>
 	</div>
 
 	<div class="cpl-list-item--main">

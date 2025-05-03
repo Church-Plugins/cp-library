@@ -329,6 +329,21 @@ class Settings {
 		$template_items = apply_filters( 'cp_library_template_items', $template_items );
 
 		$options->add_field( [
+			'name'    => __( 'Image Aspect Ratio', 'cp-library' ),
+			'desc'    => __( 'Enforce a consistent image ratio in the Grid view.', 'cp-library' ),
+			'id'      => 'image_ratio',
+			'type'    => 'radio_inline',
+			'default' => '',
+			'options' => [
+				''     => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-none.png" />' . __( 'Use Series Aspect Ratio', 'cp-library' ),
+				'1x1'  => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-1x1.png" />' . __( 'Square (1:1)', 'cp-library' ),
+				'4x3'  => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-4x3.png" />' . __( 'Standard (4:3)', 'cp-library' ),
+				'16x9' => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-16x9.png" />' . __( 'Landscape (16:9)', 'cp-library' ),
+			],
+			'classes' => 'cp-radio-image',
+		] );
+
+		$options->add_field( [
 			'name' => __( 'Info Items', 'cp-library' ),
 			'desc' => __( 'The items to show under the title on the single view, grid view, and list view.', 'cp-library' ),
 			'id'   => 'info_items',

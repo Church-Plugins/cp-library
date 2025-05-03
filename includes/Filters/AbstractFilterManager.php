@@ -82,7 +82,7 @@ abstract class AbstractFilterManager {
 		add_action( 'wp_ajax_nopriv_cpl_filter_options', [ $this, 'ajax_get_filter_options' ] );
 
 		// Add pre_get_posts hook to modify queries based on facets
-		add_action( 'pre_get_posts', [ $this, 'apply_facet_filters' ] );
+		add_action( 'pre_get_posts', [ $this, 'apply_facet_filters' ], 5 );
 
 		// Capture query context for applicable post types
 		add_action( 'pre_get_posts', [ $this, 'capture_query_context' ], 950 ); // Run early
@@ -481,7 +481,7 @@ abstract class AbstractFilterManager {
 
 		// Try to get cached options
 		$cached_options = $this->get_cached_options( $facet_id, $context, $args );
-		if ( 0 && false !== $cached_options ) {
+		if ( false !== $cached_options ) {
 			return $cached_options;
 		}
 

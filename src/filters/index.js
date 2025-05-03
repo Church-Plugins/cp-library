@@ -307,9 +307,21 @@ class CPLibraryFilter {
 			const urlParams = this.formatQueryParams(params);
 			const currentFilters = this.getCurrentFilters();
 
-			// Merge URL params and current form state, prioritizing form state
+			// Get the parameter name for this facet type
+			const paramName = `facet-${facetType}`;
+			
+			// Try different ways to find selected values:
+			// 1. From current form state using facet type as key
+			// 2. From current form state using parameter name 
+			// 3. From URL params using facet type as key
+			// 4. From URL params using parameter name
+			// 5. Default to empty array if nothing found
 			const selected = (
-				currentFilters[facetType] || urlParams[facetType] || []
+				currentFilters[facetType] || 
+				currentFilters[paramName] || 
+				urlParams[facetType] || 
+				urlParams[paramName] || 
+				[]
 			);
 
 			// Load filter options via AJAX with the current state of all filters
@@ -486,11 +498,14 @@ class CPLibraryFilter {
 	 * @param {Element} dropdown The dropdown element
 	 * @param {string} facetType The facet type
 	 * @param {string} context The context
-	 * @param {Array} selected Currently selected values
+	 * @param {Array|string} selected Currently selected values
 	 */
 	loadFilterOptions (dropdown, facetType, context, selected) {
 		// Get current filter selections from the form
 		const currentFilters = this.getCurrentFilters();
+		
+		// Ensure selected is always an array
+		const selectedArray = Array.isArray(selected) ? selected : (selected ? [selected] : []);
 
 		// Mark as loading
 		dropdown.parentElement.classList.add('loading');
@@ -544,7 +559,8 @@ class CPLibraryFilter {
 						// Build options HTML
 						let html = '';
 						response.data.options.forEach(option => {
-							const isChecked = selected.includes(option.value.toString());
+							// Ensure both values are strings for comparison
+							const isChecked = selected.map(val => val.toString()).includes(option.value.toString());
 							const showCount = window.cplVars?.show_filter_count !== 'hide';
 
 							// Get the param name from response data if available, or use a prefixed version

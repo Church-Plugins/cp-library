@@ -39,9 +39,11 @@ class TemplateHelpers {
             'template'        => 'grid',
             'taxonomies'      => [ 'cpl_scripture', 'cpl_topic', 'cpl_season' ],
             'speaker'         => true,
-            'service_type'    => Settings::get_item( 'enable_service_types', false ),
+            'service_type'    => Settings::get_item( 'enable_service_types', true ),
             'year'            => true,
         ];
+
+		$disabled_filters = Settings::get_advanced( 'disabled_filters', [] );
 
         $args = wp_parse_args( $args, $defaults );
 

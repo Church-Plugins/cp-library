@@ -54,7 +54,7 @@ class SourceFacet extends AbstractFacet {
                 'speaker'      => __( 'Speaker', 'cp-library' ),
                 'service_type' => __( 'Service Type', 'cp-library' ),
             ];
-            
+
             $this->label = $labels[$this->source_type] ?? ucwords( str_replace( '_', ' ', $this->source_type ) );
         }
     }
@@ -74,7 +74,7 @@ class SourceFacet extends AbstractFacet {
      * @param \WP_Query $query        The query to modify
      * @param array     $values       The filter values to apply
      * @param array     $facet_config The facet configuration
-     * 
+     *
      * @return void
      */
     public function apply_to_query( $query, $values, $facet_config ) {
@@ -84,17 +84,7 @@ class SourceFacet extends AbstractFacet {
 
         switch ( $this->source_type ) {
             case 'speaker':
-                // Get meta query
-                $meta_query = $query->get( 'meta_query' ) ?: [];
-
-                // Add speaker query
-                $meta_query[] = [
-                    'key'     => 'cp_speaker',
-                    'value'   => $values,
-                    'compare' => 'IN',
-                ];
-
-                $query->set( 'meta_query', $meta_query );
+                $query->set( 'cpl_speakers', $values );
                 break;
 
             case 'service_type':
@@ -117,7 +107,7 @@ class SourceFacet extends AbstractFacet {
      *                     - threshold: Minimum count to include
      *                     - post__in: Limit to these post IDs
      *                     - context: Current filter context
-     * 
+     *
      * @return array Array of option objects
      */
     public function get_options( $args ) {
@@ -147,7 +137,7 @@ class SourceFacet extends AbstractFacet {
         $sql = $wpdb->prepare(
             "SELECT
                 source.id,
-                source.id AS value,
+                source.origin_id AS value,
                 source.title AS title,
                 COUNT(sermon.id) AS count
             FROM
@@ -155,7 +145,7 @@ class SourceFacet extends AbstractFacet {
             LEFT JOIN
                 %2\$s AS meta ON meta.source_id = source.id
             INNER JOIN
-                %3\$s AS type ON meta.source_type_id = type.id AND type.title = %4\$s
+                %3\$s AS type ON meta.source_type_id = type.id AND type.title = '%4\$s'
             LEFT JOIN
                 %5\$s AS sermon ON meta.item_id = sermon.id AND {$where_clause}
             GROUP BY
@@ -176,10 +166,10 @@ class SourceFacet extends AbstractFacet {
 
         return $this->format_options( $results ?: [] );
     }
-    
+
     /**
      * Get the display value for a selected source
-     * 
+     *
      * @param string $value The source ID
      * @param array $facet_config The facet configuration
      * @return string The source title
@@ -189,17 +179,17 @@ class SourceFacet extends AbstractFacet {
             // Handle different source types
             switch ($this->source_type) {
                 case 'speaker':
-                    $source = \CP_Library\Models\Speaker::get_instance($value);
+                    $source = \CP_Library\Models\Speaker::get_instance_from_origin($value);
                     break;
-                
+
                 case 'service_type':
-                    $source = \CP_Library\Models\ServiceType::get_instance($value);
+                    $source = \CP_Library\Models\ServiceType::get_instance_from_origin($value);
                     break;
-                
+
                 default:
                     return $value;
             }
-            
+
             return $source->title;
         } catch (\Exception $e) {
             return $value; // Fallback if source can't be loaded
