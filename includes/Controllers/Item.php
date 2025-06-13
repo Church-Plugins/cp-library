@@ -679,13 +679,17 @@ class Item extends Controller{
 			}
 
 			return array(
-				'title'     => sprintf( '%s: %s', $this->get_title(), $item->get_variation_source_label() ),
-				'variation' => $item->get_variation_source_label(),
-				'id'        => $item->get_variation_source_id(),
-				'audio'     => $item->get_audio(),
-				'video'     => $item->get_video(),
-				'speakers'  => $item->get_speakers(),
-				'permalink' => $this->get_permalink()
+				'title'          => sprintf( '%s: %s', $this->get_title(), $item->get_variation_source_label() ),
+				'variation'      => $item->get_variation_source_label(),
+				'variationImage' => [
+					'thumb' => get_the_post_thumbnail_url( $item->get_variation_source_id(), 'thumbnail' ),
+					'full'  => get_the_post_thumbnail_url( $item->get_variation_source_id(), 'full' )
+				],
+				'id'             => $item->get_variation_source_id(),
+				'audio'          => $item->get_audio(),
+				'video'          => $item->get_video(),
+				'speakers'       => $item->get_speakers(),
+				'permalink'      => $this->get_permalink()
 			);
 		}, $variations );
 

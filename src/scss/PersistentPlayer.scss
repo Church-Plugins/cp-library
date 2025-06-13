@@ -265,6 +265,12 @@
 		height: 0;
 		background: #000;
 
+		.itemDetail__video {
+			iframe {
+				margin: 0;
+			}
+		}
+
 		& + .persistentPlayer__controls {
 			border-radius: 0;
 		}

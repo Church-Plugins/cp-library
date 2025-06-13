@@ -398,7 +398,9 @@ class Items extends WP_REST_Controller {
 			try {
 				$item = new Item( $post->ID );
 
-				$data = $item->get_api_data();
+				// Check if include_variations parameter is set
+				$include_variations = $request->get_param( 'include_variations' ) === 'true';
+				$data = $item->get_api_data( $include_variations );
 
 				$return_value['items'][] = $data;
 			} catch ( Exception $e ) {
@@ -432,7 +434,9 @@ class Items extends WP_REST_Controller {
 
 			$item = new Item( $item_id );
 
-			$data = $item->get_api_data();
+			// Check if include_variations parameter is set
+			$include_variations = $request->get_param( 'include_variations' ) === 'true';
+			$data = $item->get_api_data( $include_variations );
 		} catch ( Exception $e ) {
 			$data = [
 				'id' => $item_id,

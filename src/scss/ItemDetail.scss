@@ -47,6 +47,10 @@
 
 	&__video {
 
+		iframe {
+			margin: 0;
+		}
+
 		&__controls {
 			z-index: 20;
 			position: absolute;
