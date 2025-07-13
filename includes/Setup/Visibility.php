@@ -59,6 +59,10 @@ class Visibility {
 		add_action( 'init', [ $this, 'register_taxonomy' ], 9 );
 		add_action( 'pre_get_posts', [ $this, 'filter_query' ], 500 );
 
+		// handle shortcodes
+		add_filter( 'pre_do_shortcode_tag', [ $this, 'maybe_filter_shortcode' ], 10, 2 );
+		add_filter( 'do_shortcode_tag', [ $this, 'remove_filter' ], 10, 2 );
+
 		// Hook into entity types for UI
 		add_action( 'cmb2_admin_init', [ $this, 'add_metaboxes' ] );
 
@@ -67,6 +71,23 @@ class Visibility {
 
 		// Save actions. Run after CMB2
 		add_action( 'save_post', [ $this, 'maybe_update_visibility' ], 100 );
+	}
+
+	public function maybe_filter_shortcode( $value, $tag ) {
+		if ( str_contains( $tag, 'cp' ) ) {
+			add_filter( 'cpl_bypass_visibility_filtering', [ $this, '_return_false' ] );
+		}
+
+		return $value;
+	}
+
+	public function remove_filter( $output ) {
+		remove_filter( 'cpl_bypass_visibility_filtering', [ $this, '_return_false' ] );
+		return $output;
+	}
+
+	public function _return_false() {
+		return false;
 	}
 
 	/**
@@ -239,13 +260,8 @@ class Visibility {
 	 */
 	public function filter_query( $query ) {
 
-		// Allow developers to bypass visibility filtering
-		if ( apply_filters( 'cpl_bypass_visibility_filtering', false, $query ) ) {
-			return;
-		}
-
 		// Only apply on the frontend main query
-		if ( is_admin() || ! $query->is_main_query() ) {
+		if ( apply_filters( 'cpl_bypass_visibility_filtering', is_admin() || ! $query->is_main_query(), $query ) ) {
 			return;
 		}
 

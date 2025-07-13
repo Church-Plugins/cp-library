@@ -376,6 +376,10 @@ class Items extends WP_REST_Controller {
 			$args['cpl_hide_upcoming'] = true;
 		}
 
+		if ( !empty( $request->get_param( 'cpl_service_types' ) ) ) {
+			$args['cpl_service_types'] = $request->get_param( 'cpl_service_types' );
+		}
+
 		// $posts = get_posts( $args );
 		if( $page = $request->get_param( 'p' ) ) {
 			$args['paged'] = absint( $page );
