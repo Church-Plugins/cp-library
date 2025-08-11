@@ -312,9 +312,9 @@ class Items extends WP_REST_Controller {
 						"
 						SELECT		origin_id
 						FROM 		$table, $meta_table
-						WHERE		$meta_table.`key` IN ( %s, %s ) AND
+						WHERE		$meta_table.`key` IN ( %s, %s, %s ) AND
 									$table.`id` = $meta_table.item_id",
-						'video_id_vimeo', 'video_id_facebook'
+						'video_id_vimeo', 'video_id_facebook', 'video_url'
 					);
 				}
 
