@@ -267,4 +267,46 @@ Custom tables are used alongside WordPress tables:
 - React for frontend components
 - Material UI for UI components
 
+## Documentation Sync System
+
+This plugin uses an automated documentation sync system that publishes markdown files to https://docs.churchplugins.com
+
+### Documentation Structure
+
+```
+cp-library/
+├── docs/                    # SYNCED to WordPress
+│   ├── config.json         # Plugin metadata & category mapping
+│   ├── README.md           # Documentation guide (not synced)
+│   ├── .image-cache.json   # Image upload cache (auto-generated)
+│   ├── assets/             # Images (auto-uploaded to WP)
+│   └── *.md                # Documentation articles (synced)
+└── documentation/          # LEGACY docs (for reference only)
+```
+
+### Quick Reference
+
+**Sync all documentation:**
+```bash
+php sync-docs.php --plugin=cp-library
+```
+
+**Preview changes (dry run):**
+```bash
+php sync-docs.php --plugin=cp-library --dry-run
+```
+
+**Add new documentation:**
+1. Create markdown file in `docs/` folder
+2. Add YAML frontmatter (title, slug, status)
+3. Place images in `docs/assets/`
+4. Run sync script
+
+### Important Notes
+
+- Documentation syncs to WordPress category: "CP Sermons" (ID: 7)
+- Articles matched by `slug` field in frontmatter
+- Images automatically upload to WordPress Media Library
+- See `/DOCS-SYNC-GUIDE.md` for complete documentation
+
 This document will be updated as the plugin evolves.
