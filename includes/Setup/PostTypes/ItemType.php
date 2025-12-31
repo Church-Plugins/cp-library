@@ -571,7 +571,7 @@ class ItemType extends PostType  {
 						'post_type'    => Item::get_instance()->post_type,
 						'post_status'  => 'publish',
 						'post_title'   => $item_data['title'],
-						'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ),
+						'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ? $item_data['date'] : current_time( 'timestamp' ) ),
 						'post_content' => $item_data['content'],
 					] );
 				} else {
@@ -680,6 +680,12 @@ class ItemType extends PostType  {
 	 * @author Tanner Moushey
 	 */
 	protected function get_series_items( $data, $object_id, $source = '' ) {
+		// Don't try to load model for auto-drafts (they don't exist in custom tables yet)
+		$post_status = get_post_status( $object_id );
+		if ( $post_status === 'auto-draft' || ! $post_status ) {
+			return [];
+		}
+
 		$series = Model::get_instance_from_origin( $object_id );
 		$data   = [];
 
