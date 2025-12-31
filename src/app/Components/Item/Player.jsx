@@ -39,9 +39,10 @@ export default function Player({ item }) {
   const [isMuted, setIsMuted] = useState(false); // Track muted state
   const [showMutedNotice, setShowMutedNotice] = useState(false); // Show notification for iOS users about audio
   const [audioUnlocked, setAudioUnlocked] = useState(false); // Track if audio is unlocked on iOS
+
   const playbackDetectionTimeout = useRef(null);
 
-  // Check if running on iOS for special audio handling
+  // Check if running on iOS for special audio handling and fullscreen API compatibility
   const isIOS = useRef(/iPad|iPhone|iPod/.test(navigator.userAgent) ||
                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
@@ -108,7 +109,12 @@ export default function Player({ item }) {
 		}
 	}, [mode]);
 
-	const handleClickFullscreen = () => {
+	const handleClickFullscreen = (e) => {
+		if (e) {
+			e.preventDefault();
+			e.stopPropagation();
+		}
+
 		cplLog(item.id, 'fullscreen');
 
 		try {
@@ -129,8 +135,8 @@ export default function Player({ item }) {
 
 						// Send a postMessage to enable fullscreen
 						if (iframe && iframe.contentWindow) {
-							iframe.contentWindow.postMessage('{"event":"command","func":"enterFullScreen","args":""}', '*');
-							return false;
+							iframe.contentWindow.postMessage('{"event":"command","func":"requestFullscreen","args":""}', '*');
+							return;
 						}
 					}
 
@@ -142,7 +148,7 @@ export default function Player({ item }) {
 
 						// Set player to full window size
 						internalPlayer.setSize(width, height);
-						return false;
+						return;
 					}
 				}
 			}
@@ -155,12 +161,16 @@ export default function Player({ item }) {
 
 				if (videoContainer) {
 					// Request fullscreen on the video container
-					screenfull.request(videoContainer);
-					return false;
+					screenfull.request(videoContainer).catch(err => {
+						console.error('Fullscreen request failed:', err);
+					});
+					return;
 				} else if (instance) {
 					// Fallback to the instance itself
-					screenfull.request(instance);
-					return false;
+					screenfull.request(instance).catch(err => {
+						console.error('Fullscreen request failed:', err);
+					});
+					return;
 				}
 			} else {
 				// If screenfull isn't available
@@ -171,20 +181,30 @@ export default function Player({ item }) {
 
 					// For HTML5 video element
 					if (internalPlayer && typeof internalPlayer.requestFullscreen === 'function') {
-						internalPlayer.requestFullscreen();
-						return false;
+						internalPlayer.requestFullscreen().catch(err => {
+							console.error('Native fullscreen request failed:', err);
+						});
+						return;
 					}
 
 					// iOS Safari specific method
 					if (internalPlayer && typeof internalPlayer.webkitEnterFullscreen === 'function') {
-						internalPlayer.webkitEnterFullscreen();
-						return false;
+						try {
+							internalPlayer.webkitEnterFullscreen();
+							return;
+						} catch (err) {
+							console.error('WebKit fullscreen failed:', err);
+						}
 					}
 
 					// Alternative webkit method
 					if (internalPlayer && typeof internalPlayer.webkitRequestFullscreen === 'function') {
-						internalPlayer.webkitRequestFullscreen();
-						return false;
+						try {
+							internalPlayer.webkitRequestFullscreen();
+							return;
+						} catch (err) {
+							console.error('WebKit request fullscreen failed:', err);
+						}
 					}
 				}
 
@@ -193,8 +213,6 @@ export default function Player({ item }) {
 		} catch (error) {
 			console.error('Error entering fullscreen:', error);
 		}
-
-		return false;
 	};
 
 	const handleClickPersistent = () => {
@@ -798,7 +816,7 @@ export default function Player({ item }) {
 										{!screenfull.isFullscreen && (
 											<Box className="itemPlayer__controls" display="flex" flexDirection="row"
 												justifyContent="space-around" margin="auto">
-												{mode === 'video' && (
+												{mode === 'video' && !isIOS.current && (
 														<IconButton onClick={handleClickFullscreen} aria-label="Open in fullscreen"><OpenInFull/></IconButton>
 												)}
 
@@ -992,7 +1010,7 @@ export default function Player({ item }) {
 					         }}
 				         />
 
-				         {mode === 'video' && (
+				         {mode === 'video' && !isIOS.current && (
 					         <IconButton
 						         className="fullscreen-button"
 						         onClick={handleClickFullscreen}
