@@ -49,6 +49,11 @@ class Init {
 	 * @var Blocks\Init;
 	 */
 	public $blocks;
+	
+	/**
+	 * @var Visibility;
+	 */
+	public $visibility;
 
 	/**
 	 * Only make one instance of Init
@@ -85,6 +90,7 @@ class Init {
 		$this->post_types = PostTypes\Init::get_instance();
 		$this->taxonomies = Taxonomies\Init::get_instance();
 		$this->blocks     = Blocks\Init::get_instance();
+		$this->visibility = Visibility::get_instance();
 	}
 
 	protected function actions() {

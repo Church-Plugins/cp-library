@@ -56,29 +56,38 @@ class CP_Library {
 	 * @param {string} args.mode The mode to pass to the player. One of 'audio' or 'video'.
 	 * @param {boolean} args.isPlaying Whether the player should start playing immediately.
 	 * @param {number} args.playedSeconds The number of seconds to start playing from.
+	 * @param {number} [args.userInteractionToken] Token to maintain user interaction context.
 	 */
-	passToPersistentPlayer({ item, mode, isPlaying, playedSeconds }) {
-		this.triggerEvent('CPL_OPEN_PERSISTENT_PLAYER', {
+	passToPersistentPlayer({ item, mode, isPlaying, playedSeconds, userInteractionToken, isIOS }) {
+		// Store token for immediate access globally
+		if (userInteractionToken) {
+			window._activeUserInteractionToken = userInteractionToken;
+		}
+		
+		// Include all parameters when triggering events
+		const params = {
 			item,
 			mode,
 			isPlaying,
 			playedSeconds,
-		});
+			userInteractionToken,
+			isIOS
+		};
+		
+		// Create the player container immediately
+		this.triggerEvent('CPL_OPEN_PERSISTENT_PLAYER', params);
 
+		// Ensure player mounting completes before sending handover
+		// A very short timeout ensures DOM updates before handover
 		setTimeout(() => {
-			this.triggerEvent('CPL_HANDOVER_TO_PERSISTENT', {
-				item,
-				mode,
-				isPlaying,
-				playedSeconds,
-			});
-		}, 50);
+			this.triggerEvent('CPL_HANDOVER_TO_PERSISTENT', params);
+		}, 10);
 
-		cplLog( item.id, 'persistent' );
+		cplLog(item.id, 'persistent');
 
 		// also log a play action if we are not currently playing
-		if ( ! (playedSeconds > 0) ) {
-			cplLog( item.id, 'play' );
+		if (!(playedSeconds > 0)) {
+			cplLog(item.id, 'play');
 		}
 	}
 
@@ -104,6 +113,17 @@ class CP_Library {
 	 */
 	playerIsActive() {
 		return window.top.document.body.classList.contains('cpl-persistent-player');
+	}
+	
+	/**
+	 * Whether the persistent player is currently playing.
+	 * This is a convenience method that checks if the player is active.
+	 * More detailed state would require communication with the PersistentPlayer component.
+	 *
+	 * @returns {boolean}
+	 */
+	isPersistentPlayerPlaying() {
+		return this.playerIsActive();
 	}
 
 	/**

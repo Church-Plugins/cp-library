@@ -1,61 +1,93 @@
-# Customization & Display Options
+# Customization and Display
 
-## Changing Permalinks & Post Names
+This guide covers the various ways to display and customize sermons, series, and other content in CP Sermon Library.
 
-You can customize how the sermon URLs and labels appear on your site:
+## Display Options for Sermons
 
-1. Navigate to Library → Settings → General
-2. Change the "Item Slug" field to customize the URL structure (e.g., "podcasts" instead of "sermons")
-3. Customize the singular and plural labels for the content types
-4. Save changes
+### Archive Pages
 
-After changing permalinks, you may need to flush your site's rewrite rules by going to Settings → Permalinks and clicking "Save Changes".
+CP Sermon Library automatically creates archive pages for:
 
-## Using Gutenberg Blocks for Sermons & Series
+- Sermons - All sermons in your library
+- Series - All sermon series
+- Speakers - All sermon speakers
+- Topics - Sermons by topic
+- Scripture - Sermons by Bible reference
+- Seasons - Sermons by seasons
 
-CP Sermon Library includes custom blocks for the WordPress block editor:
+These archives are accessible at URLs like:
+- /sermons/
+- /series/
+- /speakers/
+- /topic/faith/
+- /scripture/john-3/
+- /season/summer-2023/
 
-### Sermon Content Blocks
+### Layout Options
 
-- **Item Title** - Display the sermon title
-- **Item Date** - Show the sermon date
-- **Item Description** - Display the sermon description
-- **Item Graphic** - Show the sermon/series image
-- **Sermon Scripture** - Display scripture references
-- **Sermon Series** - Show the sermon's series
-- **Sermon Speaker** - Display the sermon speaker
-- **Sermon Topics** - Show the sermon topics
-- **Sermon Actions** - Display sermon action buttons (download, share, etc.)
+The plugin includes multiple layout options for displaying sermons:
 
-### Sermon Query Blocks
+1. **Grid Layout**
+   - Displays sermons in a responsive grid
+   - Shows featured images prominently
+   - Great for visual impact
 
-- **Query** - Create custom sermon lists with filtering options
-- **Pagination** - Add pagination to sermon lists
-- **Sermon Template** - Control the sermon display template
+2. **List Layout**
+   - Displays sermons in a vertical list
+   - Shows more metadata for each sermon
+   - Ideal for chronological browsing
 
-To use these blocks:
+3. **Vertical Layout**
+   - A hybrid layout with larger images
+   - Shows more details than grid, less than list
+   - Good balance of visual appeal and information
 
-1. Create or edit a page in the WordPress block editor
-2. Click the "+" button to add a block
-3. Search for "sermon" to see all available sermon blocks
-4. Select the desired block and configure its settings
+### Template Customization
 
-## Customizing Sermon Layouts & Templates
+Templates can be customized in several ways:
 
-### Using Built-in Templates
+1. **Global Template Settings**
+   - Navigate to Library → Settings → Templates
+   - Adjust default settings for all sermon displays
 
-CP Sermon Library includes several built-in templates for displaying sermons:
+2. **Per-Instance Settings**
+   - When using blocks or shortcodes, customize each instance
+   - Override defaults for specific sections of your site
 
-1. **Default** - Standard sermon display
-2. **Grid** - Display sermons in a grid layout
-3. **List** - Show sermons in a list format
-4. **Vertical** - Vertical card-style display
+3. **Custom CSS**
+   - Use the custom CSS option in Settings → Templates
+   - Target specific elements with CSS selectors
 
-To change the default template:
+## Sermon Block Options
 
-1. Navigate to Library → Settings → Item
-2. Select your preferred default template
-3. Save changes
+CP Sermon Library includes Gutenberg blocks for displaying sermon content:
+
+### Core Blocks
+
+- **Sermon Grid/List** - Display multiple sermons in grid or list format
+- **Series Grid/List** - Display series in grid or list format
+- **Latest Sermon** - Display the most recent sermon
+- **Latest Series** - Display the most recent series
+- **Sermon Template** - Display a sermon using a custom template
+
+### Block Customization
+
+Each block includes customization options:
+
+1. **Content Selection**
+   - Filter by series, speaker, topics, etc.
+   - Set number of items to display
+   - Control sorting order
+
+2. **Layout Options**
+   - Choose grid or list layout
+   - Set number of columns
+   - Adjust image size and aspect ratio
+
+3. **Style Options**
+   - Customize colors and typography
+   - Control spacing and padding
+   - Show/hide specific elements
 
 ### Creating Custom Templates
 
@@ -87,42 +119,118 @@ Common parameters for sermon shortcodes include:
 - `id` - Specify a sermon ID
 - `count` - Number of sermons to display
 - `columns` - Number of columns for grid layouts
-- `series` - Filter by series ID
-- `speaker` - Filter by speaker ID
-- `template` - Specify template style
-- `order` - Sort order (ASC or DESC)
-- `orderby` - Sort field (date, title, etc.)
+- `template` - Template to use (grid, list, vertical)
+- `series` - Filter by series slug
+- `speaker` - Filter by speaker slug
+- `topic` - Filter by topic slug
+- `scripture` - Filter by scripture reference
+- `season` - Filter by season slug
+- `pagination` - Show pagination (true/false)
 
-Example shortcode usage:
+Example shortcode with multiple parameters:
 ```
-[cpl_item_list count="4" columns="2" series="12" template="grid"]
+[cpl_item_list count="10" columns="3" template="grid" series="easter-2023" pagination="true"]
 ```
 
-## Theme Compatibility & Styling Options
+## Series Display Options
 
-### Basic Styling Options
+Series can be displayed in several ways:
 
-CP Sermon Library integrates with your theme's styles while providing some basic customization options:
+### Series Archive
 
-1. Navigate to Library → Settings → Item
-2. Adjust color settings for the sermon player
-3. Configure basic layout options
-4. Save changes
+The series archive displays all series, sorted by date:
+- Grid layout shows series thumbnails
+- Clicking a series shows all sermons in that series
 
-### Advanced Styling
+### Series Grid/List Block
 
-For advanced styling, you can use:
+The Series Grid/List block allows you to:
+- Display selected series in grid or list format
+- Filter series by specific criteria
+- Customize the appearance of series items
 
-1. **Custom CSS** - Add custom CSS to your theme to style sermon elements
-2. **Theme Templates** - Override plugin templates in your theme
-3. **Block Editor** - Use the block editor's style options for sermon blocks
+### Series Single View
 
-### Template Overrides
+When viewing a single series:
+- Shows the series description
+- Lists all sermons in the series
+- Displays series artwork prominently
 
-You can override the plugin's templates in your theme by creating properly named template files:
+## Controlling Content Visibility
 
-1. Create a `/cp-library/` directory in your theme
-2. Copy template files from the plugin's `/templates/` directory to your theme's `/cp-library/` directory
-3. Modify the copied templates as needed
+### Sermon Visibility Control
 
-The plugin will automatically use your theme's template files instead of the plugin defaults.
+You can control which sermons appear in the main sermon lists:
+
+1. Edit a sermon
+2. Find the "Visibility Settings" panel
+3. Use the "Show in Main List" checkbox
+4. Sermons hidden from the main list will still be accessible via their direct URL
+
+### Series Visibility Control
+
+Series can also be hidden from the main series list:
+
+1. Edit a series
+2. Find the "Visibility Settings" panel 
+3. Use the "Exclude from Main List" checkbox
+4. Hidden series will not appear in the main series list but can still be accessed directly
+
+### Service Type Visibility Control
+
+Sermons with specific service types can be excluded from main lists:
+
+1. Edit a service type
+2. Find the "Visibility Settings" panel
+3. Use the "Exclude from Main List" checkbox
+4. All sermons with this service type will be hidden from the main sermon list
+
+### Visibility Inheritance
+
+Sermon visibility can be inherited from parent entities:
+- If a series is hidden, all sermons in that series inherit that setting
+- If a service type is hidden, all sermons with that service type inherit that setting
+- Sermons with inherited visibility will show a notice explaining why they're hidden
+
+## Filter Display Options
+
+Control how filters appear on your sermon pages:
+
+### Filter Settings
+
+Navigate to Library → Settings → Advanced to adjust:
+- Filter sorting (by count or alphabetically)
+- Minimum count threshold for filters
+- Show/hide count numbers
+- Disable specific filters
+- Control filter display on mobile
+
+### Customizing Filter Labels
+
+Customize the labels used in filters:
+1. Navigate to Library → Settings → Post Types
+2. Adjust the labels for Series, Speaker, Topics, etc.
+3. These changes will be reflected in the filter UI
+
+### Filter Contexts
+
+Filters are now context-aware and work in multiple locations:
+- Main sermon archive
+- Service Type pages
+- Custom templates
+
+For detailed documentation on the filter system, see [Filter System Documentation](filter-system.md).
+
+## Widget Areas
+
+CP Sermon Library adds widget areas you can use with any theme:
+
+- Sermon Single - Above content
+- Sermon Single - Below content
+- Sermon Archive - Above content
+- Sermon Archive - Below content
+
+To use these widget areas:
+1. Navigate to Appearance → Widgets
+2. Add widgets to the sermon widget areas
+3. Custom content will appear in the specified locations

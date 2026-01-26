@@ -66,6 +66,11 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 	public $templates;
 
 	/**
+	 * @var Filters
+	 */
+	public $filters;
+
+	/**
 	 * Only make one instance of Init
 	 *
 	 * @return Init
@@ -139,6 +144,10 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 
 		Download::get_instance();
 		$this->templates = Templates::get_instance();
+
+		// Initialize the filter system
+		$filters_init = Filters\Init::get_instance();
+		$this->filters = Filters\Filters::get_instance(); // Compatibility layer
 
 		include_once( CP_LIBRARY_INCLUDES . '/CLI/CP_Migrate.php' );
 	}
@@ -276,8 +285,7 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 	 */
 	public function app_enqueue() {
 		$scss_asset   = $this->enqueue_asset( 'scss', [], false, true );
-		$facets_asset = $this->enqueue_asset( 'facets', [ 'jquery' ], false, false, true );
-		$main_asset   = $this->enqueue_asset( 'main', [ 'jquery', $facets_asset['handle'] ], false, false, true );
+		$main_asset   = $this->enqueue_asset( 'main', [ 'jquery' ], false, false, true );
 		$app_asset    = $this->enqueue_asset( 'app', [ 'jquery' ], false, false, true );
 
 		if ( ! empty( $main_asset ) ) {
@@ -317,6 +325,7 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 
 		Integrations\YouTube::get_instance();
 		Integrations\OpenAI::get_instance();
+		Integrations\WPAllImport::get_instance();
 
 		$this->modules = Modules\Init::get_instance();
 		$this->logging = new \ChurchPlugins\Logging( $this->get_id(), $this->is_debug_mode() );

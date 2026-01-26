@@ -113,7 +113,7 @@ class Item extends Controller{
 			}
 		}
 
-		if ( ! $thumb ) {
+		if ( apply_filters( 'cpl_item_get_thumbnail_use_service_type', ! $thumb, $this ) ) {
 			$service_types = wp_list_pluck( $this->get_service_types(), 'origin_id' );
 
 			// try to find a service type with a thumbnail
@@ -612,6 +612,28 @@ class Item extends Controller{
 	}
 
 	/**
+	 * Return the ID for this item's variation source
+	 *
+	 * @return false|mixed|void
+	 * @author Tanner Moushey, 5/6/23
+	 */
+	public function get_variation_source_origin_id() {
+		if ( ! $source_id = $this->get_variation_source_id() ) {
+			return false;
+		}
+
+		try {
+			$service_type = \CP_Library\Models\ServiceType::get_instance( $source_id );
+		} catch ( \ChurchPlugins\Exception $e ) {
+			error_log( $e );
+			return false;
+		}
+
+		return $this->filter( $service_type->origin_id, __FUNCTION__ );
+	}
+
+
+	/**
 	 * Return the Label for this item's variation source
 	 *
 	 * @since  1.1.0
@@ -679,13 +701,17 @@ class Item extends Controller{
 			}
 
 			return array(
-				'title'     => sprintf( '%s: %s', $this->get_title(), $item->get_variation_source_label() ),
-				'variation' => $item->get_variation_source_label(),
-				'id'        => $item->get_variation_source_id(),
-				'audio'     => $item->get_audio(),
-				'video'     => $item->get_video(),
-				'speakers'  => $item->get_speakers(),
-				'permalink' => $this->get_permalink()
+				'title'          => sprintf( '%s: %s', $this->get_title(), $item->get_variation_source_label() ),
+				'variation'      => $item->get_variation_source_label(),
+				'variationImage' => [
+					'thumb' => get_the_post_thumbnail_url( $item->get_variation_source_origin_id(), 'thumbnail' ),
+					'full'  => get_the_post_thumbnail_url( $item->get_variation_source_origin_id(), 'full' )
+				],
+				'id'             => $item->get_variation_source_origin_id(),
+				'audio'          => $item->get_audio(),
+				'video'          => $item->get_video(),
+				'speakers'       => $item->get_speakers(),
+				'permalink'      => $this->get_permalink()
 			);
 		}, $variations );
 

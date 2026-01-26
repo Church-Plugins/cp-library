@@ -39,7 +39,8 @@ Before using variations, you need to set up Service Types:
 2. Enter the service type name (e.g., "Sunday Morning," "Youth Service")
 3. Add a description if desired
 4. Set a featured image (optional)
-5. Click "Publish"
+5. Configure visibility settings (see below)
+6. Click "Publish"
 
 Create as many service types as your church requires. Common examples include:
 - Sunday Morning
@@ -48,6 +49,18 @@ Create as many service types as your church requires. Common examples include:
 - Youth Service
 - Children's Service
 - Campus-specific services (Downtown Campus, North Campus, etc.)
+
+### Service Type Visibility
+
+Each service type can be configured to show or hide from the main sermon list:
+
+1. Edit the service type
+2. Locate the "Visibility Settings" panel
+3. Check "Exclude from Main List" to hide sermons with this service type
+4. When this option is checked:
+   - Sermons with this service type will not appear in the main sermon list
+   - Sermons will still appear in the service type's own archive page
+   - This setting affects all sermons associated with this service type
 
 ## Creating and Managing Sermon Variations
 

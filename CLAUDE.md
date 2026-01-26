@@ -129,31 +129,6 @@ CP Sermon Library is a WordPress plugin that provides functionality for managing
 - The Events Calendar - Connect sermons with events
 - SearchWP - Enhanced sermon search capabilities
 
-## Shortcodes
-
-- `[cpl_item_list]` - Display a list of sermons
-- `[cpl_item]` or `[cp-sermon]` - Display a single sermon
-- `[cpl_item_widget]` - Display a sermon widget
-- `[cpl_video_widget]` - Display a video widget
-- `[cp-sermons]` - Display sermons archive
-- `[cpl_template]` - Display a template
-- `[cp-template]` - Display the current template
-
-### Shortcode Parameters
-```
-[cpl_item_list 
-  count="10" 
-  columns="3" 
-  template="grid" 
-  series="series-slug" 
-  speaker="speaker-slug" 
-  topic="topic-slug"
-  scripture="john-3"
-  season="season-slug"
-  pagination="true"
-]
-```
-
 ## Best Practices
 
 ### Content Organization
@@ -181,9 +156,6 @@ CP Sermon Library is a WordPress plugin that provides functionality for managing
 
 ## Troubleshooting
 
-- If shortcodes don't render, ensure the plugin is properly activated
-- For template issues, check theme compatibility
-- Import issues may require checking CSV format or external API connectivity
 - Enable debug mode in Advanced settings for detailed logging
 - Use built-in logging functionality through `$cp_library->logging`
 
@@ -201,17 +173,8 @@ npm install
 npm run build
 ```
 
-### Build Commands
-
-- `npm run start` - Start development mode (watches for changes)
-- `npm run build` - Build production assets
-- `npm run plugin-zip` - Create a distribution zip file
-- `npm run build:src` - Build only the src directory
-- `npm run build:blocks` - Build only the blocks directory
-
 ### Important Development Notes
 
-- Changes to React components require running `npm run build` (no automatic watcher in WordPress context)
 - The plugin uses webpack for asset bundling
 - SASS is used for styling
 
@@ -303,5 +266,47 @@ Custom tables are used alongside WordPress tables:
 - PostCSS for CSS processing
 - React for frontend components
 - Material UI for UI components
+
+## Documentation Sync System
+
+This plugin uses an automated documentation sync system that publishes markdown files to https://docs.churchplugins.com
+
+### Documentation Structure
+
+```
+cp-library/
+├── docs/                    # SYNCED to WordPress
+│   ├── config.json         # Plugin metadata & category mapping
+│   ├── README.md           # Documentation guide (not synced)
+│   ├── .image-cache.json   # Image upload cache (auto-generated)
+│   ├── assets/             # Images (auto-uploaded to WP)
+│   └── *.md                # Documentation articles (synced)
+└── documentation/          # LEGACY docs (for reference only)
+```
+
+### Quick Reference
+
+**Sync all documentation:**
+```bash
+php sync-docs.php --plugin=cp-library
+```
+
+**Preview changes (dry run):**
+```bash
+php sync-docs.php --plugin=cp-library --dry-run
+```
+
+**Add new documentation:**
+1. Create markdown file in `docs/` folder
+2. Add YAML frontmatter (title, slug, status)
+3. Place images in `docs/assets/`
+4. Run sync script
+
+### Important Notes
+
+- Documentation syncs to WordPress category: "CP Sermons" (ID: 7)
+- Articles matched by `slug` field in frontmatter
+- Images automatically upload to WordPress Media Library
+- See `/DOCS-SYNC-GUIDE.md` for complete documentation
 
 This document will be updated as the plugin evolves.

@@ -69,12 +69,18 @@ class ItemType extends PostType  {
 
 		add_action( 'shutdown', [ $this, 'save_post_date'], 99 );
 		add_action( 'save_post', [ $this, 'post_date' ] );
-		add_filter( 'cmb2_save_field_cpl_series', [ $this, 'save_item_series' ], 10, 3 );
 		add_action( 'pre_get_posts', [ $this, 'default_posts_per_page' ] );
+
+		// Handle all meta updates (both CMB2 and direct WordPress functions)
+		add_action( 'updated_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
+		add_action( 'added_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
 		add_action( 'pre_get_posts', [ $this, 'item_item_type_query' ] );
 		add_action( 'pre_get_posts', [ $this, 'item_type_param_query' ] );
 		add_filter( 'post_updated_messages', [ $this, 'post_update_messages' ] );
 		add_filter( "{$this->post_type}_slug", [ $this, 'custom_slug' ] );
+
+		// Register facets
+		// add_action( 'cpl_register_facets', [ $this, 'register_facets' ] );
 
 		add_filter( "manage_{$item}_posts_columns", [ $this, 'item_data_column' ] );
 		add_action( "manage_{$item}_posts_custom_column", [ $this, 'item_data_column_cb' ], 10, 2 );
@@ -300,6 +306,11 @@ class ItemType extends PostType  {
 		}
 
 		$query->set( 'posts_per_page', Settings::get_item_type( 'per_page', 12 ) );
+
+		// Handle custom search parameter
+		if ( !empty( $_GET['cpl_search'] ) ) {
+			$query->set( 's', sanitize_text_field( $_GET['cpl_search'] ) );
+		}
 	}
 
 	/**
@@ -452,26 +463,74 @@ class ItemType extends PostType  {
 	}
 
 	/**
-	 * Save item series to the item_meta table
+	 * Handle meta updates for series field
 	 *
-	 * @since  1.0.0
-	 * @updated 1.1.0 Fix error when value was not set
+	 * @param int $meta_id ID of the meta value
+	 * @param int $object_id Post ID
+	 * @param string $meta_key Meta key
+	 * @param mixed $meta_value Meta value
 	 *
-	 * @author Tanner Moushey
+	 * @since 1.6.0
 	 */
-	public function save_item_series( $updated, $actions, $field ) {
-		$series = [];
+	public function handle_updated_meta( $meta_id, $object_id, $meta_key, $meta_value ) {
+		// Only process our specific meta key
+		if ( 'cpl_series' !== $meta_key ) {
+			return;
+		}
 
-		if ( isset( $field->data_to_save[ $field->id( true ) ] ) && is_array( $field->data_to_save[ $field->id( true ) ] ) ) {
-			$series = array_map( 'absint', $field->data_to_save[ $field->id( true ) ] );
+		// Get post type of the object
+		$post_type = get_post_type( $object_id );
+
+		// Only process sermon post type
+		if ( Item::get_instance()->post_type !== $post_type ) {
+			return;
 		}
 
 		try {
-			$item = ItemModel::get_instance_from_origin( $field->object_id );
-			$item->update_types( $series );
+			$item = ItemModel::get_instance_from_origin( $object_id );
+			$series_ids = $this->process_series_data( $meta_value );
+			$item->update_types( $series_ids );
 		} catch ( Exception $e ) {
-			error_log( $e );
+			error_log( 'CP Library Series Meta Update: ' . $e->getMessage() );
 		}
+	}
+
+	/**
+	 * Process series data from metadata
+	 *
+	 * @param mixed $data Series data (IDs or title strings)
+	 * @return array Array of series IDs
+	 */
+	protected function process_series_data( $data ) {
+		global $wpdb;
+		$series_ids = [];
+
+		// If single value, convert to array
+		if ( !is_array( $data ) ) {
+			$data = [ $data ];
+		}
+
+		foreach ( $data as $value ) {
+			if ( is_numeric( $value ) ) {
+				// Already a series ID
+				$series_ids[] = absint( $value );
+			} else if ( is_string( $value ) && ! empty( $value ) ) {
+				// Try to find series by title
+				$value  = sanitize_text_field( $value );
+				$series = $wpdb->get_row( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND (post_title = %s OR post_name = %s) AND post_status = 'publish' LIMIT 1", $this->post_type, $value, $value ) );
+
+				if ( $series ) {
+					try {
+						$series_model = \CP_Library\Models\ItemType::get_instance_from_origin( $series->ID );
+						$series_ids[] = $series_model->id;
+					} catch ( Exception $e ) {
+						error_log( 'CP Library Series Lookup: ' . $e->getMessage() );
+					}
+				}
+			}
+		}
+
+		return $series_ids;
 	}
 
 	/**
@@ -629,6 +688,12 @@ class ItemType extends PostType  {
 	 * @author Tanner Moushey
 	 */
 	protected function get_series_items( $data, $object_id, $source = '' ) {
+		// Don't try to load model for auto-drafts (they don't exist in custom tables yet)
+		$post_status = get_post_status( $object_id );
+		if ( $post_status === 'auto-draft' || ! $post_status ) {
+			return [];
+		}
+
 		$series = Model::get_instance_from_origin( $object_id );
 		$data   = [];
 
@@ -779,5 +844,116 @@ class ItemType extends PostType  {
 		$messages['post'][98] = sprintf( __( '%s was set to publish it contains %s', 'cp-library' ), get_the_title( $post->ID ), Item::get_instance()->plural_label );
 
 		return $messages;
+	}
+
+	/**
+	 * Register series (item type) facet
+	 *
+	 * @param \CP_Library\Filters $filters The filters instance
+	 */
+	public function register_facets( $filters ) {
+		$filters->register_facet( 'series', [
+			'label'           => $this->single_label,
+			'param'           => 'facet-series',
+			'query_var'       => 'cpl_item_type',
+			'type'            => 'series',
+			'public'          => true,
+			'query_callback'  => [ $this, 'facet_query_callback' ],
+			'options_callback' => [ $this, 'get_facet_options' ],
+		]);
+	}
+
+	/**
+	 * Get series options for facet dropdown
+	 *
+	 * @param array $args Arguments for facet options
+	 * @return array Options in format required by facet system
+	 */
+	public function get_facet_options( $args = [] ) {
+		$args = wp_parse_args( $args, [
+			'threshold'  => 1,
+			'orderby'    => 'count',
+			'query_vars' => [],
+		]);
+
+		// Get all enabled series with associated item counts
+		try {
+			$series = \CP_Library\Models\ItemType::get_all([
+				'order_by'  => $args['orderby'] === 'count' ? 'item_count' : 'title',
+				'order'     => $args['orderby'] === 'count' ? 'DESC' : 'ASC',
+				'threshold' => $args['threshold'],
+			]);
+
+			// Format for facet system
+			$options = [];
+			foreach ( $series as $item_type ) {
+				// Skip if below threshold or has no items
+				if ( $item_type->item_count < $args['threshold'] ) {
+					continue;
+				}
+
+				$options[] = [
+					'id'    => $item_type->origin_id,
+					'value' => $item_type->origin_id,
+					'title' => $item_type->title,
+					'count' => $item_type->item_count,
+				];
+			}
+
+			return $options;
+		} catch ( \Exception $e ) {
+			error_log( $e );
+			return [];
+		}
+	}
+
+	/**
+	 * Query callback for series facet
+	 *
+	 * @param \WP_Query $query  The query object
+	 * @param array     $values The facet values
+	 * @param array     $config The facet configuration
+	 */
+	public function facet_query_callback( $query, $values, $config ) {
+		if ( empty( $values ) ) {
+			return;
+		}
+
+		// Convert to array if it's not already
+		if ( ! is_array( $values ) ) {
+			$values = [ $values ];
+		}
+
+		// Convert values to integers
+		$values = array_map( 'absint', $values );
+
+		// Use the same logic as item_type_param_query method
+		try {
+			$items = [];
+
+			foreach ( $values as $type_id ) {
+				$type = Model::get_instance_from_origin( $type_id );
+				$series_items = array_map( 'absint', wp_list_pluck( $type->get_items(), 'origin_id' ) );
+				$items = array_merge( $items, $series_items );
+			}
+
+			if ( ! empty( $items ) ) {
+				$post_in = $query->get( 'post__in', [] );
+
+				// If post__in is already set, we need to find the intersection
+				if ( ! empty( $post_in ) ) {
+					$items = array_intersect( $post_in, $items );
+
+					// If there's no intersection, add a dummy ID to ensure no results
+					if ( empty( $items ) ) {
+						$items = [ '-1' ];
+					}
+				}
+
+				$query->set( 'post__in', $items );
+			}
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
 	}
 }

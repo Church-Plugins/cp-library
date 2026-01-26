@@ -147,3 +147,30 @@ As an administrator, you can filter sermons in the admin area by:
 1. Navigating to Library → Sermons
 2. Using the filter dropdowns at the top of the sermon list
 3. Filtering by date, speaker, series, or other taxonomy
+
+## Controlling Sermon Visibility
+
+You can control whether individual sermons appear in the main sermon list:
+
+### Sermon Visibility Settings
+
+1. Edit a sermon
+2. Locate the "Visibility Settings" panel in the sidebar
+3. Use the "Show in Main List" checkbox to control visibility
+4. When unchecked, the sermon will be hidden from the main sermon list
+5. The sermon will still be accessible via direct links, archives, and search
+
+### Inherited Visibility
+
+A sermon's visibility may be controlled by its parent entities:
+
+- If the sermon belongs to a hidden Series, it inherits that visibility setting
+- If the sermon belongs to a hidden Service Type, it inherits that visibility setting
+- When visibility is inherited, the control will be disabled with an explanatory message
+
+### Visibility vs. Deletion
+
+- Hidden sermons are not deleted - they remain in your database
+- Hidden sermons still appear in their Series or Service Type archives
+- Hidden sermons can still be accessed via direct links
+- This feature is ideal for organizing specialized content while keeping main lists clean

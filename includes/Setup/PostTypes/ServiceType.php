@@ -37,13 +37,23 @@ class ServiceType extends PostType {
 	public function add_actions() {
 		parent::add_actions();
 
-		add_filter( 'cmb2_save_field_cpl_service_type', [ $this, 'save_item_service_type' ], 10, 3 );
 		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
+
+		// Handle all meta updates (both CMB2 and direct WordPress functions)
+		add_action( 'updated_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
+		add_action( 'added_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
 
 		$item_type = Item::get_instance()->post_type;
 		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'service_type_column' ] );
 		add_action( "manage_{$item_type}_posts_custom_column", [ $this, 'service_type_column_cb' ], 10, 2 );
 		add_action( 'pre_get_posts', [ $this, 'service_type_query' ] );
+
+		// Add columns to service type list view
+		add_filter( "manage_{$this->post_type}_posts_columns", [ $this, 'service_type_list_columns' ], 20 );
+		add_action( "manage_{$this->post_type}_posts_custom_column", [ $this, 'service_type_list_column_cb' ], 10, 2 );
+
+		// Register facets
+		add_action( 'cpl_register_facets', [ $this, 'register_facets' ] );
 
 		// Variations
 		add_filter( 'cpl_variations_sources', [ $this, 'variation_source' ] );
@@ -54,6 +64,59 @@ class ServiceType extends PostType {
 			add_action( 'cpl_save_item_source_' . $this->post_type, [ $this, 'variation_item_save' ], 10, 2 );
 		}
 
+	}
+
+	/**
+	 * Add custom columns to the service type admin list view
+	 *
+	 * @param array $columns The existing columns
+	 * @return array Modified columns
+	 */
+	public function service_type_list_columns($columns) {
+		$new_columns = [];
+		foreach ($columns as $key => $column) {
+			if ('date' === $key) {
+				$new_columns['sermons'] = cp_library()->setup->post_types->item->plural_label;
+			}
+
+			$new_columns[$key] = $column;
+		}
+
+		// in case date isn't set
+		if (!isset($columns['date'])) {
+			$new_columns['sermons'] = cp_library()->setup->post_types->item->plural_label;
+		}
+
+		return $new_columns;
+	}
+
+	/**
+	 * Output content for the custom sermons count column
+	 *
+	 * @param string $column The column name
+	 * @param int $post_id The post ID
+	 */
+	public function service_type_list_column_cb($column, $post_id) {
+		switch ($column) {
+			case 'sermons':
+				try {
+					$service_type = ServiceType_Model::get_instance_from_origin($post_id);
+					$items = $service_type->get_all_items();
+
+					if (empty($items)) {
+						_e('—', 'cp-library');
+					} else {
+						$url = add_query_arg([
+							'post_type' => cp_library()->setup->post_types->item->post_type,
+							'service-type' => $service_type->id
+						], admin_url('edit.php'));
+						echo sprintf('<a href="%s">%s</a>', $url, count($items));
+					}
+				} catch (\Exception $e) {
+					_e('—', 'cp-library');
+				}
+				break;
+		}
 	}
 
 	/**
@@ -155,26 +218,74 @@ class ServiceType extends PostType {
 	}
 
 	/**
-	 * Save item series to the item_meta table
+	 * Handle meta updates for service type field
 	 *
-	 * @since  1.0.0
+	 * @param int $meta_id ID of the meta value
+	 * @param int $object_id Post ID
+	 * @param string $meta_key Meta key
+	 * @param mixed $meta_value Meta value
 	 *
-	 * @author Tanner Moushey
+	 * @since 1.6.0
 	 */
-	public function save_item_service_type( $updated, $action, $field ) {
-		try {
-			$item = ItemModel::get_instance_from_origin( $field->object_id );
-			$service_types = [];
-
-			if ( ! empty( $field->data_to_save[ $field->id( true ) ] ) ) {
-				$service_types = array_map( 'absint', $field->data_to_save[ $field->id( true ) ] );
-			}
-
-			$item->update_service_types( $service_types );
-
-		} catch ( Exception $e ) {
-			error_log( $e );
+	public function handle_updated_meta( $meta_id, $object_id, $meta_key, $meta_value ) {
+		// Only process our specific meta key
+		if ( 'cpl_service_type' !== $meta_key ) {
+			return;
 		}
+
+		// Get post type of the object
+		$post_type = get_post_type( $object_id );
+
+		// Only process sermon post type
+		if ( Item::get_instance()->post_type !== $post_type ) {
+			return;
+		}
+
+		try {
+			$item = ItemModel::get_instance_from_origin( $object_id );
+			$service_type_ids = $this->process_service_type_data( $meta_value );
+			$item->update_service_types( $service_type_ids );
+		} catch ( Exception $e ) {
+			error_log( 'CP Library Service Type Meta Update: ' . $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Process service type data from metadata
+	 *
+	 * @param mixed $data Service type data (IDs or title strings)
+	 * @return array Array of service type IDs
+	 */
+	protected function process_service_type_data( $data ) {
+		global $wpdb;
+		$service_type_ids = [];
+
+		// If single value, convert to array
+		if ( !is_array( $data ) ) {
+			$data = [ $data ];
+		}
+
+		foreach ( $data as $value ) {
+			if ( is_numeric( $value ) ) {
+				// Already a service type ID
+				$service_type_ids[] = absint( $value );
+			} else if ( is_string( $value ) && ! empty( $value ) ) {
+				// Try to find service type by post_title or post_name
+				$value = sanitize_text_field( $value );
+				$service_type = $wpdb->get_row( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND (post_title = %s OR post_name = %s) AND post_status = 'publish' LIMIT 1", $this->post_type, $value, $value ) );
+
+				if ( $service_type ) {
+					try {
+						$service_type_model = \CP_Library\Models\ServiceType::get_instance_from_origin( $service_type->ID );
+						$service_type_ids[] = $service_type_model->id;
+					} catch ( Exception $e ) {
+						error_log( 'CP Library Service Type Lookup: ' . $e->getMessage() );
+					}
+				}
+			}
+		}
+
+		return $service_type_ids;
 	}
 
 
@@ -353,5 +464,73 @@ class ServiceType extends PostType {
 		}
 	}
 
+	/**
+	 * Get a ServiceType controller instance for a post ID
+	 *
+	 * @since 1.6.0
+	 * @param int $post_id The post ID
+	 * @return \CP_Library\Controllers\ServiceType
+	 */
+	public function get_controller($post_id) {
+		return new \CP_Library\Controllers\ServiceType($post_id);
+	}
+
+	/**
+	 * Register service type facet
+	 *
+	 * @param \CP_Library\Filters $filters The filters instance
+	 */
+	public function register_facets( $filters ) {
+		$filters->register_facet( 'service-type', [
+			'label'           => $this->single_label,
+			'param'           => 'facet-service-type',
+			'query_var'       => 'cpl_service_types',
+			'type'            => 'source',
+			'source_type'     => 'service_type',
+			'public'          => true,
+			'query_callback'  => [ $this, 'facet_query_callback' ],
+		]);
+	}
+
+	/**
+	 * Query callback for service type facet
+	 *
+	 * @param \WP_Query $query  The query object
+	 * @param array     $values The facet values
+	 * @param array     $config The facet configuration
+	 */
+	public function facet_query_callback( $query, $values, $config ) {
+		if ( empty( $values ) ) {
+			return;
+		}
+
+		// Use the same logic as service_type_query method
+		if ( ! is_array( $values ) ) {
+			$values = [ $values ];
+		}
+
+		$post_in_orig = $query->get( 'post__in' );
+		$post_in = [];
+
+		foreach( $values as $type_id ) {
+			$type_id = absint( $type_id );
+
+			try {
+				$type = ServiceType_Model::get_instance( $type_id );
+				$post_in = array_merge( $post_in, $type->get_all_items() );
+			} catch ( Exception $e ) {
+				error_log( $e );
+			}
+		}
+
+		if ( ! empty( $post_in ) ) {
+			if ( ! empty( $post_in_orig ) ) {
+				$post_in = array_intersect( $post_in_orig, $post_in );
+				$post_in[] = '-1'; // Ensure we still get no results if there's no intersection
+			}
+
+			$query->set( 'post__in', $post_in );
+		}
+	}
 
 }

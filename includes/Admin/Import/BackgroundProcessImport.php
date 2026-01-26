@@ -348,6 +348,8 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 
 		$handle  = fopen( $file, 'r' );
 		$headers = fgetcsv( $handle );
+		// Convert headers to UTF-8
+		$headers = array_map( [ static::class, 'convert_to_utf8' ], $headers );
 
 		/**
 		 * Batch size for processing items
@@ -382,6 +384,9 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 			if ( false === $data ) {
 				break;
 			}
+
+			// Convert data to UTF-8
+			$data = array_map( [ static::class, 'convert_to_utf8' ], $data );
 
 			$queue[] = array_combine( $headers, $data );
 
@@ -704,6 +709,9 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 		$handle = fopen( $file, 'r' );
 		$headers   = fgetcsv( $handle );
 		$first_row = fgetcsv( $handle );
+		// Convert to UTF-8
+		$headers   = array_map( [ static::class, 'convert_to_utf8' ], $headers );
+		$first_row = array_map( [ static::class, 'convert_to_utf8' ], $first_row );
 		foreach ( $first_row as $key => $value ) {
 			if ( is_string( $value ) ) {
 				$value = strlen( $value ) > 250 ? wp_kses( substr( $value, 0, 250 ), [] ) . '...' : $value;
@@ -725,6 +733,53 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 		$handle = fopen( $file, 'r' );
 		$row    = fgetcsv( $handle );
 		fclose( $handle );
-		return $row;
+		// Convert to UTF-8
+		return array_map( [ static::class, 'convert_to_utf8' ], $row );
+	}
+
+	/**
+	 * Convert a string to UTF-8 encoding
+	 *
+	 * @since 1.6.0
+	 * @param string $string String to convert
+	 * @return string UTF-8 encoded string
+	 */
+	protected static function convert_to_utf8( $string ) {
+		if ( empty( $string ) ) {
+			return $string;
+		}
+
+		// Check if already valid UTF-8
+		if ( mb_check_encoding( $string, 'UTF-8' ) ) {
+			return $string;
+		}
+
+		// Try to detect the encoding
+		$detected_encoding = mb_detect_encoding( $string, ['UTF-8', 'Windows-1252', 'ISO-8859-1', 'ASCII'], true );
+
+		// If we detected an encoding, convert it
+		if ( $detected_encoding && $detected_encoding !== 'UTF-8' ) {
+			$converted = mb_convert_encoding( $string, 'UTF-8', $detected_encoding );
+			if ( $converted !== false ) {
+				return $converted;
+			}
+		}
+
+		// Fallback: try Windows-1252 (most common source of these issues)
+		$converted = mb_convert_encoding( $string, 'UTF-8', 'Windows-1252' );
+		if ( $converted !== false ) {
+			return $converted;
+		}
+
+		// Last resort: use iconv if available
+		if ( function_exists( 'iconv' ) ) {
+			$converted = iconv( 'Windows-1252', 'UTF-8//TRANSLIT//IGNORE', $string );
+			if ( $converted !== false ) {
+				return $converted;
+			}
+		}
+
+		// If all else fails, return the original string
+		return $string;
 	}
 }

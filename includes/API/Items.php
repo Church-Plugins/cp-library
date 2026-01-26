@@ -312,9 +312,9 @@ class Items extends WP_REST_Controller {
 						"
 						SELECT		origin_id
 						FROM 		$table, $meta_table
-						WHERE		$meta_table.`key` IN ( %s, %s ) AND
+						WHERE		$meta_table.`key` IN ( %s, %s, %s ) AND
 									$table.`id` = $meta_table.item_id",
-						'video_id_vimeo', 'video_id_facebook'
+						'video_id_vimeo', 'video_id_facebook', 'video_url'
 					);
 				}
 
@@ -376,6 +376,10 @@ class Items extends WP_REST_Controller {
 			$args['cpl_hide_upcoming'] = true;
 		}
 
+		if ( !empty( $request->get_param( 'cpl_service_types' ) ) ) {
+			$args['cpl_service_types'] = $request->get_param( 'cpl_service_types' );
+		}
+
 		// $posts = get_posts( $args );
 		if( $page = $request->get_param( 'p' ) ) {
 			$args['paged'] = absint( $page );
@@ -398,7 +402,9 @@ class Items extends WP_REST_Controller {
 			try {
 				$item = new Item( $post->ID );
 
-				$data = $item->get_api_data();
+				// Check if include_variations parameter is set
+				$include_variations = $request->get_param( 'include_variations' ) === 'true';
+				$data = $item->get_api_data( $include_variations );
 
 				$return_value['items'][] = $data;
 			} catch ( Exception $e ) {
@@ -432,7 +438,9 @@ class Items extends WP_REST_Controller {
 
 			$item = new Item( $item_id );
 
-			$data = $item->get_api_data();
+			// Check if include_variations parameter is set
+			$include_variations = $request->get_param( 'include_variations' ) === 'true';
+			$data = $item->get_api_data( $include_variations );
 		} catch ( Exception $e ) {
 			$data = [
 				'id' => $item_id,

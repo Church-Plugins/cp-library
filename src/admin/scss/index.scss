@@ -61,31 +61,6 @@
 			display: none;
 		}
 
-		> .inside {
-			> div:first-child {
-				position: absolute;
-				top: -4rem;
-				border-bottom: 0;
-
-				input:not(:focus) {
-					background: transparent;
-					border: none;
-					border-bottom: 1px solid;
-					border-radius: 0;
-					font-weight: bold;
-				}
-
-				.cmb-th {
-					display: none;
-				}
-
-				.cmb-td {
-					float: none;
-					margin-left: 1.5rem;
-				}
-			}
-		}
-
 		&.closed {
 			> .inside {
 				display: block;

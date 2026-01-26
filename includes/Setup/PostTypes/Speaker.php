@@ -38,13 +38,76 @@ class Speaker extends PostType {
 	public function add_actions() {
 		parent::add_actions();
 
-		add_filter( 'cmb2_save_field_cpl_speaker', [ $this, 'save_item_speaker' ], 10, 3 );
 		add_filter( 'cmb2_override_meta_value', [ $this, 'meta_get_override' ], 10, 4 );
+
+		// Handle all meta updates (both CMB2 and direct WordPress functions)
+		add_action( 'updated_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
+		add_action( 'added_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
 
 		$item_type = Item::get_instance()->post_type;
 		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'speaker_column' ] );
 		add_action( "manage_{$item_type}_posts_custom_column", [ $this, 'speaker_column_cb' ], 10, 2 );
 		add_action( 'pre_get_posts', [ $this, 'speaker_query' ] );
+
+		// Register facets
+		add_action( 'cpl_register_facets', [ $this, 'register_facets' ] );
+	}
+
+	/**
+	 * Register speaker facet
+	 *
+	 * @param \CP_Library\Filters $filters The filters instance
+	 */
+	public function register_facets( $filters ) {
+		$filters->register_facet( 'speaker', [
+			'label'           => $this->single_label,
+			'param'           => 'facet-speaker',
+			'query_var'       => 'cpl_speakers',
+			'type'            => 'source',
+			'source_type'     => 'speaker',
+			'public'          => true,
+			'query_callback'  => [ $this, 'facet_query_callback' ],
+		]);
+	}
+
+	/**
+	 * Query callback for speaker facet
+	 *
+	 * @param \WP_Query $query  The query object
+	 * @param array     $values The facet values
+	 * @param array     $config The facet configuration
+	 */
+	public function facet_query_callback( $query, $values, $config ) {
+		if ( empty( $values ) ) {
+			return;
+		}
+
+		// Use the same logic as speaker_query method
+		if ( ! is_array( $values ) ) {
+			$values = [ $values ];
+		}
+
+		$post_in_orig = $query->get( 'post__in' );
+		$post_in = [];
+
+		foreach ( $values as $speaker_id ) {
+			$speaker_id = absint( $speaker_id );
+
+			try {
+				$speaker = Speaker_Model::get_instance( $speaker_id );
+				$post_in = array_merge( $post_in, $speaker->get_all_items() );
+			} catch ( Exception $e ) {
+				error_log( $e );
+			}
+		}
+
+		if ( ! empty( $post_in ) ) {
+			if ( ! empty( $post_in_orig ) ) {
+				$post_in = array_intersect( $post_in_orig, $post_in );
+				$post_in[] = '-1'; // Ensure we still get no results if there's no intersection
+			}
+			$query->set( 'post__in', $post_in );
+		}
 	}
 
 	/**
@@ -150,26 +213,74 @@ class Speaker extends PostType {
 	}
 
 	/**
-	 * Save item series to the item_meta table
+	 * Handle meta updates for speaker field
 	 *
-	 * @since  1.0.0
+	 * @param int $meta_id ID of the meta value
+	 * @param int $object_id Post ID
+	 * @param string $meta_key Meta key
+	 * @param mixed $meta_value Meta value
 	 *
-	 * @author Tanner Moushey
+	 * @since 1.6.0
 	 */
-	public function save_item_speaker( $updated, $action, $field ) {
-		try {
-			$item = ItemModel::get_instance_from_origin( $field->object_id );
-
-			$data = isset( $field->data_to_save[ $field->id( true ) ] ) ? $field->data_to_save[ $field->id( true ) ] : null;
-			if ( ! is_array( $data ) || ! $speakers = array_map( 'absint', $data ) ) {
-				$speakers = [];
-			}
-
-			$item->update_speakers( $speakers );
-
-		} catch ( Exception $e ) {
-			error_log( $e );
+	public function handle_updated_meta( $meta_id, $object_id, $meta_key, $meta_value ) {
+		// Only process our specific meta key
+		if ( 'cpl_speaker' !== $meta_key ) {
+			return;
 		}
+
+		// Get post type of the object
+		$post_type = get_post_type( $object_id );
+
+		// Only process sermon post type
+		if ( Item::get_instance()->post_type !== $post_type ) {
+			return;
+		}
+
+		try {
+			$item = ItemModel::get_instance_from_origin( $object_id );
+			$speaker_ids = $this->process_speaker_data( $meta_value );
+			$item->update_speakers( $speaker_ids );
+		} catch ( Exception $e ) {
+			error_log( 'CP Library Speaker Meta Update: ' . $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Process speaker data from metadata
+	 *
+	 * @param mixed $data Speaker data (IDs or title strings)
+	 * @return array Array of speaker IDs
+	 */
+	protected function process_speaker_data( $data ) {
+		global $wpdb;
+		$speaker_ids = [];
+
+		// If single value, convert to array
+		if ( !is_array( $data ) ) {
+			$data = [ $data ];
+		}
+
+		foreach ( $data as $value ) {
+			if ( is_numeric( $value ) ) {
+				// Already a speaker ID
+				$speaker_ids[] = absint( $value );
+			} else if ( is_string( $value ) && ! empty( $value ) ) {
+				// Try to find speaker by title
+				$value = sanitize_text_field( $value );
+				$speaker = $wpdb->get_row( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND (post_title = %s OR post_name = %s) AND post_status = 'publish' LIMIT 1", $this->post_type, $value, $value ) );
+
+				if ( $speaker ) {
+					try {
+						$speaker_model = \CP_Library\Models\Speaker::get_instance_from_origin( $speaker->ID );
+						$speaker_ids[] = $speaker_model->id;
+					} catch ( Exception $e ) {
+						error_log( 'CP Library Speaker Lookup: ' . $e->getMessage() );
+					}
+				}
+			}
+		}
+
+		return $speaker_ids;
 	}
 
 	/**

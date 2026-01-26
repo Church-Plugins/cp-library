@@ -106,6 +106,46 @@ class Settings {
 	}
 
 	/**
+	 * Get disabled filters for sermon post type (cpl_item)
+	 * Falls back to advanced setting for backward compatibility
+	 *
+	 * @return array
+	 * @since  1.6.0
+	 */
+	public static function get_item_disabled_filters() {
+		$options = get_option( 'cpl_item_options', [] );
+
+		// If the key exists in options (even if empty), use it
+		// This allows users to explicitly enable all filters by unchecking everything
+		if ( array_key_exists( 'disable_filters', $options ) ) {
+			return isset( $options['disable_filters'] ) ? $options['disable_filters'] : [];
+		}
+
+		// Otherwise fall back to advanced setting for backward compatibility
+		return self::get_advanced( 'disable_filters', [] );
+	}
+
+	/**
+	 * Get disabled filters for series post type (cpl_item_type)
+	 * Falls back to advanced setting for backward compatibility
+	 *
+	 * @return array
+	 * @since  1.6.0
+	 */
+	public static function get_item_type_disabled_filters() {
+		$options = get_option( 'cpl_item_type_options', [] );
+
+		// If the key exists in options (even if empty), use it
+		// This allows users to explicitly enable all filters by unchecking everything
+		if ( array_key_exists( 'disable_filters', $options ) ) {
+			return isset( $options['disable_filters'] ) ? $options['disable_filters'] : [];
+		}
+
+		// Otherwise fall back to advanced setting for backward compatibility
+		return self::get_advanced( 'disable_filters', [] );
+	}
+
+	/**
 	 * Class constructor. Add admin hooks and actions
 	 *
 	 */
@@ -329,6 +369,21 @@ class Settings {
 		$template_items = apply_filters( 'cp_library_template_items', $template_items );
 
 		$options->add_field( [
+			'name'    => __( 'Image Aspect Ratio', 'cp-library' ),
+			'desc'    => __( 'Enforce a consistent image ratio in the Grid view.', 'cp-library' ),
+			'id'      => 'image_ratio',
+			'type'    => 'radio_inline',
+			'default' => '',
+			'options' => [
+				''     => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-none.png" />' . __( 'Use Series Aspect Ratio', 'cp-library' ),
+				'1x1'  => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-1x1.png" />' . __( 'Square (1:1)', 'cp-library' ),
+				'4x3'  => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-4x3.png" />' . __( 'Standard (4:3)', 'cp-library' ),
+				'16x9' => '<img src="' . CP_LIBRARY_PLUGIN_URL . 'assets/images/admin/image-aspect-16x9.png" />' . __( 'Landscape (16:9)', 'cp-library' ),
+			],
+			'classes' => 'cp-radio-image',
+		] );
+
+		$options->add_field( [
 			'name' => __( 'Info Items', 'cp-library' ),
 			'desc' => __( 'The items to show under the title on the single view, grid view, and list view.', 'cp-library' ),
 			'id'   => 'info_items',
@@ -436,6 +491,35 @@ class Settings {
 			'type' => 'select',
 			'desc' => __( 'The Variation Source is used to define the different sermons variations.', 'cp-library' ),
 			'options' => $variation_sources,
+		) );
+
+		// Add Disable Filters setting
+		$options->add_field( array(
+			'name' => __( 'Filters', 'cp-library' ),
+			'id'   => 'filters_title',
+			'type' => 'title',
+		) );
+
+		// Get filter options for sermons
+		$taxonomies = cp_library()->setup->taxonomies->get_objects();
+		$filters    = wp_list_pluck( $taxonomies, 'plural_label', 'taxonomy' );
+
+		if ( cp_library()->setup->post_types->speaker_enabled() ) {
+			$filters['speaker'] = cp_library()->setup->post_types->speaker->plural_label;
+		}
+
+		if ( cp_library()->setup->post_types->service_type_enabled() ) {
+			$filters['service_type'] = cp_library()->setup->post_types->service_type->plural_label;
+		}
+
+		$filters['year'] = __( 'Year', 'cp-library' );
+
+		$options->add_field( array(
+			'name'    => __( 'Disable Filters', 'cp-library' ),
+			'id'      => 'disable_filters',
+			'desc'    => sprintf( __( 'Choose to disable any of the filters on the %s archive page.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			'type'    => 'multicheck_inline',
+			'options' => $filters,
 		) );
 
 	}
@@ -567,6 +651,34 @@ class Settings {
 				'post_date'  => __( 'Publish Date', 'cp-library' ),
 			],
 		] );
+
+		// Add Disable Filters setting
+		$options->add_field( array(
+			'name' => __( 'Filters', 'cp-library' ),
+			'id'   => 'filters_title_series',
+			'type' => 'title',
+		) );
+
+		// Get filter options for series
+		$taxonomies = cp_library()->setup->taxonomies->get_objects();
+		$filters    = [];
+
+		// Only include taxonomies that apply to series
+		foreach ( $taxonomies as $taxonomy ) {
+			if ( in_array( $taxonomy->taxonomy, [ 'cpl_season', 'cpl_topic', 'cpl_scripture' ] ) ) {
+				$filters[ $taxonomy->taxonomy ] = $taxonomy->plural_label;
+			}
+		}
+
+		$filters['year'] = __( 'Year', 'cp-library' );
+
+		$options->add_field( array(
+			'name'    => __( 'Disable Filters', 'cp-library' ),
+			'id'      => 'disable_filters',
+			'desc'    => sprintf( __( 'Choose to disable any of the filters on the %s archive page.', 'cp-library' ), cp_library()->setup->post_types->item_type->plural_label ),
+			'type'    => 'multicheck_inline',
+			'options' => $filters,
+		) );
 	}
 
 	protected function speaker_options() {
@@ -874,8 +986,11 @@ class Settings {
 			array(
 				'name'    => __( 'Disable Filters', 'cp-library' ),
 				'id'      => 'disable_filters',
-				/* translators: %s is the plural label for the item post type */
-				'desc'    => sprintf( __( 'Choose to disable any of the filters on the %s archive page.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+				'desc'    => sprintf(
+					__( '<strong>Note:</strong> This setting is deprecated. Please use the post-type specific "Disable Filters" settings in %s and %s settings instead.', 'cp-library' ),
+					cp_library()->setup->post_types->item->plural_label,
+					cp_library()->setup->post_types->item_type->plural_label
+				),
 				'type'    => 'multicheck_inline',
 				'options' => $filters,
 			)

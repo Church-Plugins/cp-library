@@ -80,6 +80,41 @@ class SermonManager extends Migration {
 	}
 
 	/**
+	 * Extract YouTube or Vimeo URL from an embed code
+	 *
+	 * @param string $embed The embed code (iframe or other HTML).
+	 * @return string|false The extracted URL or false if not found.
+	 * @since 1.6.0
+	 */
+	protected function extract_video_url_from_embed( $embed ) {
+		if ( empty( $embed ) ) {
+			return false;
+		}
+
+		// Check if it's already a URL (not an embed code)
+		if ( filter_var( $embed, FILTER_VALIDATE_URL ) ) {
+			return $embed;
+		}
+
+		// YouTube patterns
+		// Match youtube.com/embed/VIDEO_ID, youtube.com/watch?v=VIDEO_ID, or youtu.be/VIDEO_ID
+		if ( preg_match( '/(?:youtube\.com\/(?:embed\/|watch\?v=)|youtu\.be\/)([a-zA-Z0-9_-]+)/', $embed, $matches ) ) {
+			// Normalize all YouTube URLs to the watch format
+			return 'https://www.youtube.com/watch?v=' . $matches[1];
+		}
+
+		// Vimeo patterns
+		// Match vimeo.com/VIDEO_ID or player.vimeo.com/video/VIDEO_ID
+		if ( preg_match( '/(?:vimeo\.com\/|player\.vimeo\.com\/video\/)(\d+)/', $embed, $matches ) ) {
+			return 'https://vimeo.com/' . $matches[1];
+		}
+
+		// If we can't extract a URL, return the original embed code
+		// The video_url field can handle embeds as a fallback
+		return $embed;
+	}
+
+	/**
 	 * Get the number of items to migrate, 0 if none.
 	 *
 	 * @return bool
@@ -178,6 +213,11 @@ class SermonManager extends Migration {
 			$scripture = $meta['bible_passage'][0] ?? false;
 			$video_url = $meta['sermon_video_link'][0] ?? false;
 			$audio_url = $meta['sermon_audio'][0] ?? false;
+
+			// Fallback to sermon_video embed if no video_link is found
+			if ( ! $video_url && ! empty( $meta['sermon_video'][0] ) ) {
+				$video_url = $this->extract_video_url_from_embed( $meta['sermon_video'][0] );
+			}
 
 			if ( $thumb ) {
 				set_post_thumbnail( $new_post_id, $thumb );

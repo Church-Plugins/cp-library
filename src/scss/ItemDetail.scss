@@ -2,7 +2,6 @@
 
 .itemPlayer {
 	&__controlsWrapper {
-		padding: 2rem 1rem;
 
 		@media(max-width: 879px) {
 			position: fixed;
@@ -13,7 +12,6 @@
 			background: var(--cp-color-canvas-inverted);
 			color: white;
 			box-sizing: border-box;
-			padding: 1rem 1rem 1rem;
 			flex-flow: column;
 
 			button {
@@ -49,6 +47,10 @@
 
 	&__video {
 
+		iframe {
+			margin: 0;
+		}
+
 		&__controls {
 			z-index: 20;
 			position: absolute;
@@ -68,6 +70,7 @@
 			top: 0;
 			cursor: pointer;
 			z-index: 10;
+			display: none;
 		}
 
 		.itemPlayer__controlsWrapper {

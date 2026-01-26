@@ -1,0 +1,123 @@
+/**
+ * Filter System Error Styles
+ *
+ * Provides styling for filter system error messages.
+ */
+
+// Error container
+.cpl-filter-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid #f5c6cb;
+  border-radius: 0.25rem;
+  margin: 0.5rem 0;
+  transition: opacity 0.15s linear;
+  
+  p {
+    margin: 0;
+  }
+}
+
+// No options message
+.cp-no-filter-options {
+  padding: 0.5rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+// Pagination specific errors
+.cpl-filter-pagination-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 1rem;
+  border: 1px solid #f5c6cb;
+  border-radius: 0.25rem;
+  margin: 1rem 0;
+  text-align: center;
+  
+  p {
+    margin-bottom: 1rem;
+  }
+  
+  .cpl-retry-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+    
+    &:hover, &:focus {
+      background-color: #c82333;
+    }
+    
+    &:focus {
+      outline: 0;
+      box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.5);
+    }
+  }
+}
+
+// Loading indicator styles
+.cpl-loading-indicator {
+  width: 100%;
+  text-align: center;
+  padding: 2rem 0;
+  
+  .cpl-spinner {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    border: 0.25rem solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #007bff;
+    animation: spin 1s ease-in-out infinite;
+  }
+}
+
+// Loading state for filter dropdowns
+.cpl-filter--has-dropdown.loading {
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 1rem;
+    height: 1rem;
+    border: 0.15rem solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #007bff;
+    animation: spin 1s ease-in-out infinite;
+  }
+}
+
+// Visually hidden screen reader text
+.screen-reader-text {
+  border: 0;
+  clip: rect(1px, 1px, 1px, 1px);
+  clip-path: inset(50%);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+  word-wrap: normal !important;
+}
+
+// Animation for spinners
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Focus styles for better accessibility
+.cpl-retry-button:focus-visible {
+  outline: 2px solid #0073aa;
+  outline-offset: 2px;
+}

@@ -1,4 +1,3 @@
-
 (function($) {
 
 	let transcripts = function() {
@@ -41,13 +40,13 @@
 			SELF.$body.on('click', 'a', SELF.handleLinkClick);
 			window.addEventListener("message", SELF.iframeMessage);
 
-			if(window.navigation) [
+			if(window.navigation) {
 				window.navigation.addEventListener('navigate', event => {
 					if( SELF.$iframe ) {
 						SELF.$iframe.attr('src', event.destination.url);
 					}
 				})
-			]
+			}
 		};
 
 		/**

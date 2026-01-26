@@ -1,0 +1,9 @@
+{
+  "plugin_name": "CP Library",
+  "plugin_slug": "cp-library",
+  "category_name": "CP Sermons",
+  "category_slug": "cp-library",
+  "category_id": 7,
+  "docs_url": "https://docs.churchplugins.com",
+  "source_folder": "documentation"
+}
