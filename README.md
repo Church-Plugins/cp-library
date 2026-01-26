@@ -24,6 +24,21 @@ npm run build
 
 ### Change Log
 
+#### 1.6.0
+* **Major Feature**: Complete filter system refactoring with new architecture for better performance and reliability
+* **Major Feature**: Enhanced media player with significantly improved iOS support and mobile experience
+* **Major Feature**: Service Type enhancements with dedicated archives, filtering, and REST API support
+* **Major Feature**: New visibility management system for controlling content access
+* Enhancement: UTF-8 encoding support for CSV imports with automatic detection and conversion
+* Enhancement: Improved accessibility with better keyboard navigation and screen reader support
+* Enhancement: Enhanced API responses with variation data support
+* Enhancement: Better mobile styling across sermon list and player interfaces
+* Enhancement: Improved error handling with centralized error code system
+* Bug Fix: Resolved filter bugs affecting Speaker and Service Type filters
+* Bug Fix: Fixed critical bugs in series and item management
+* Bug Fix: Corrected persistent player functionality issues
+* Bug Fix: Resolved encoding issues in CSV imports that could corrupt data
+
 #### 1.5.4
 * Enhancement: Use "Preach Date" when importing from SermonAudio (instead of publish date)
 * Enhancement: Add template for Speaker Archive

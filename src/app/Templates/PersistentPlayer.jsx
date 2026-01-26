@@ -549,7 +549,7 @@ export default function PersistentPlayer (props) {
 							 {!screenfull.isFullscreen && (
 								 <Box className="itemPlayer__controls" display="flex" flexDirection="row"
 								      justifyContent="space-around" margin="auto">
-									 {mode === 'video' && (
+									 {mode === 'video' && isDesktop && (
 										 <IconButton onClick={handleClickFullscreen}><OpenInFull/></IconButton>
 									 )}
 								 </Box>
