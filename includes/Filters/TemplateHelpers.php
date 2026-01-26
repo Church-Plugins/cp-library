@@ -43,9 +43,18 @@ class TemplateHelpers {
             'year'            => true,
         ];
 
-		$disabled_filters = Settings::get_advanced( 'disabled_filters', [] );
-
         $args = wp_parse_args( $args, $defaults );
+
+        // Determine post type from context
+        $post_type = $args['context_args']['post_type'] ?? 'cpl_item';
+
+        if ( $post_type === 'cpl_item' ) {
+            $disabled_filters = Settings::get_item_disabled_filters();
+        } elseif ( $post_type === 'cpl_item_type' ) {
+            $disabled_filters = Settings::get_item_type_disabled_filters();
+        } else {
+            $disabled_filters = [];
+        }
 
         // Default facets to show
         $enabled_facets = [];
@@ -72,8 +81,14 @@ class TemplateHelpers {
             $enabled_facets[] = 'year';
         }
 
-        // Get disabled filters
-        $disabled_filters = array_diff( array_keys( $filter_manager->get_facets() ), $enabled_facets );
+        // Get disabled filters from settings
+        $settings_disabled_filters = $disabled_filters; // From earlier in the method
+
+        // Calculate disabled filters from args (what's NOT enabled)
+        $args_disabled_filters = array_diff( array_keys( $filter_manager->get_facets() ), $enabled_facets );
+
+        // Merge both: use disabled from settings + disabled from args
+        $disabled_filters = array_unique( array_merge( $settings_disabled_filters, $args_disabled_filters ) );
 
         // Render filter form
         $output = $filter_manager->render_filter_form([

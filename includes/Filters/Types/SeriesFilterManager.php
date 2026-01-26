@@ -135,8 +135,7 @@ class SeriesFilterManager extends AbstractFilterManager {
      */
     protected function register_default_facets() {
         // Register taxonomy facets that apply to series
-        // We only want to include specific taxonomies for series
-        $this->register_taxonomies_for_post_type($this->post_type, ['cpl_scripture']);
+        $this->register_taxonomies_for_post_type($this->post_type);
 
         // Register year facet
         $this->register_facet( 'year', [
@@ -655,8 +654,14 @@ class SeriesFilterManager extends AbstractFilterManager {
             $enabled_facets[] = 'sermon_count';
         }
 
-        // Get disabled filters
-        $disabled_filters = array_diff( array_keys( $this->get_facets() ), $enabled_facets );
+        // Get disabled filters from settings
+        $settings_disabled_filters = Settings::get_item_type_disabled_filters();
+
+        // Calculate disabled filters from args (what's NOT enabled)
+        $args_disabled_filters = array_diff( array_keys( $this->get_facets() ), $enabled_facets );
+
+        // Merge both: use disabled from settings + disabled from args
+        $disabled_filters = array_unique( array_merge( $settings_disabled_filters, $args_disabled_filters ) );
 
         // Render filter form
         $output = $this->render_filter_form([

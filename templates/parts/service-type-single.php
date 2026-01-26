@@ -75,7 +75,7 @@ if ( ! empty( $sermon_ids ) ) {
 			<div class="cpl-archive--container--filter">
 				<?php
 				// Use the new filter system for service type context
-				$disabled_filters   = Settings::get_advanced( 'disable_filters', [] );
+				$disabled_filters   = Settings::get_item_disabled_filters();
 				$disabled_filters[] = 'service-type'; // Always disable service-type filter in this context
 
 				echo cp_library()->filters->render_filter_form( [

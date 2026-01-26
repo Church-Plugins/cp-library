@@ -602,6 +602,23 @@ abstract class AbstractFilterManager {
 	}
 
 	/**
+	 * Get default disabled filters for this post type
+	 * Subclasses can override if needed
+	 *
+	 * @return array
+	 * @since 1.6.0
+	 */
+	protected function get_default_disabled_filters() {
+		if ( $this->post_type === 'cpl_item' ) {
+			return Settings::get_item_disabled_filters();
+		} elseif ( $this->post_type === 'cpl_item_type' ) {
+			return Settings::get_item_type_disabled_filters();
+		}
+
+		return [];
+	}
+
+	/**
 	 * Render filter form
 	 *
 	 * @param array $args Filter form arguments
@@ -613,7 +630,7 @@ abstract class AbstractFilterManager {
 		$args = wp_parse_args( $args, [
 			'context'          => 'archive',
 			'context_args'     => [],
-			'disabled_filters' => Settings::get_advanced( 'disable_filters', [] ),
+			'disabled_filters' => $this->get_default_disabled_filters(),
 			'show_search'      => true,
 			'container_class'  => '',
 			'post_type'        => $this->post_type,
