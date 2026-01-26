@@ -571,19 +571,22 @@ class ItemType extends PostType  {
 					$item_data['content'] = '';
 				}
 
+				$date = $item_data['date'] ? $item_data['date'] : current_time( 'timestamp' );
+
 				if ( empty( $item_data['id'] ) ) {
 					$item_data['id'] = wp_insert_post( [
 						'post_type'    => Item::get_instance()->post_type,
 						'post_status'  => 'publish',
 						'post_title'   => $item_data['title'],
-						'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ? $item_data['date'] : current_time( 'timestamp' ) ),
+						'post_date'    => date( 'Y-m-d H:i:s', $date ),
 						'post_content' => $item_data['content'],
 					] );
 				} else {
 					wp_update_post( [
 						'ID'           => $item_data['id'],
 						'post_title'   => $item_data['title'],
-						'post_date'    => date( 'Y-m-d H:i:s', $item_data['date'] ? $item_data['date'] : current_time( 'timestamp' ) ),
+						'post_date'    => date( 'Y-m-d H:i:s', $date ),
+						'post_date_gmt' => gmdate( 'Y-m-d H:i:s', $date ),
 						'post_content' => $item_data['content'],
 					] );
 				}
