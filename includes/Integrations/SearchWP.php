@@ -79,7 +79,7 @@ class SearchWP {
 		$search = new \SearchWP\Query(
 			$query->get( 's' ),
 			[
-				'engine'   => apply_filters( 'cp_library_searchwp_engine', 'default' ),
+				'engine'   => apply_filters( 'cp_library_searchwp_engine', 'sermons' ),
 				'per_page' => $query->get( 'posts_per_page' ),
 				'paged'    => get_query_var( 'paged' ),
 			]
@@ -93,7 +93,7 @@ class SearchWP {
 		$query->set( 'post__in', wp_list_pluck( $search->results, 'id' ) );
 
 		// unset search query vars
-		$query->set( 's', '' ); 
+		$query->set( 's', '' );
 		$query->set( 'sentence', '' );
 		$query->set( 'search_terms', '' );
 		$query->set( 'search_orderby_title', '' );
