@@ -437,7 +437,6 @@ class SermonFilterManager extends AbstractFilterManager {
 		// Check if we're on a speaker page
 		if ( is_singular( 'cpl_speaker' ) ) {
 			$context = 'speaker';
-			$this->apply_speaker_page_mods( $query );
 		}
 
 		// Allow plugins to apply additional context-specific mods
@@ -468,35 +467,6 @@ class SermonFilterManager extends AbstractFilterManager {
 				$query->set( 'orderby', 'date' );
 				$query->set( 'order', 'DESC' );
 			}
-		}
-	}
-
-	/**
-	 * Apply speaker page specific query modifications
-	 *
-	 * @param \WP_Query $query The query object
-	 */
-	protected function apply_speaker_page_mods( $query ) {
-		$speaker_id = get_the_ID();
-
-		if ( empty( $speaker_id ) ) {
-			return;
-		}
-
-		// Set up meta query to find sermons by this speaker
-		$meta_query   = $query->get( 'meta_query' ) ?: [];
-		$meta_query[] = [
-			'key'     => 'cp_speaker',
-			'value'   => $speaker_id,
-			'compare' => '=',
-		];
-
-		$query->set( 'meta_query', $meta_query );
-
-		// Default to date sort
-		if ( ! $query->get( 'orderby' ) ) {
-			$query->set( 'orderby', 'date' );
-			$query->set( 'order', 'DESC' );
 		}
 	}
 

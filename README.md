@@ -24,6 +24,10 @@ npm run build
 
 ### Change Log
 
+#### 1.6.1
+* Bug Fix: Fix speaker single page not displaying sermons
+* Enhancement: Change default SearchWP engine to "sermons" so the default engine can be used for the main site search
+
 #### 1.6.0
 * **Major Feature**: Complete filter system refactoring with new architecture for better performance and reliability
 * **Major Feature**: Enhanced media player with significantly improved iOS support, mobile experience, and styling across sermon list and player interfaces
