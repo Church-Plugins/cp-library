@@ -40,7 +40,14 @@ export default function ShareButton({ item, variant = "outlined" }) {
 
 		const link = document.createElement('a');
 
-		if ( item.audio.search('soundcloud') ) {
+		let downloadName;
+		try {
+			downloadName = decodeURIComponent(item.audio).replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3';
+		} catch (e) {
+			downloadName = 'download.mp3';
+		}
+
+		if ( item.audio.includes('soundcloud') ) {
 	    link.href = item.audio;
 		} else {
 	    link.href = cplVar( 'url', 'site' ) + '?item_id=' + item.originID + '&key=audio&name=' + item.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3';
@@ -54,7 +61,7 @@ export default function ShareButton({ item, variant = "outlined" }) {
 		// force download
 		link.setAttribute(
 			'download',
-			item.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3',
+			downloadName,
 		);
 
     // Append to html link element page
