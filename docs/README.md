@@ -1,111 +1,49 @@
-# CP Library Documentation
+# CP Library — Docs Sync
 
-This folder contains the documentation that syncs to https://docs.churchplugins.com
+This folder contains WordPress-specific metadata for syncing documentation to https://docs.churchplugins.com. The actual content lives in `../documentation/`.
 
-## Folder Structure
+## How It Works
 
-```
-docs/
-├── assets/                 # Images and media files
-│   └── .gitkeep
-├── config.json             # Plugin configuration for docs sync
-├── README.md               # This file
-├── .image-cache.json       # Tracks uploaded images (auto-generated)
-└── *.md                    # Individual documentation files
-```
+Each `.md` file here is a thin wrapper with YAML frontmatter that references a source file:
 
-## Markdown File Format
-
-Each markdown file should include YAML frontmatter at the top:
-
-```markdown
+```yaml
 ---
 title: "Article Title"
 slug: "article-slug"
-excerpt: "Short description for the article"
-status: "publish"          # publish, draft, or private
-order: 1                   # Optional: controls display order
-category_id: 7             # Optional: defaults to config.json category
+source: "getting-started/introduction.md"
+excerpt: "Short description"
+status: "publish"
+order: 1
+category_id: 10
 ---
-
-# Your Content Here
-
-Regular markdown content follows...
 ```
 
-### Frontmatter Fields
+The sync script reads frontmatter from `docs/`, loads content from `documentation/` via the `source` field, converts to Gutenberg blocks, and publishes via the WordPress REST API.
 
-- **title** (required): The article title as it appears in WordPress
-- **slug** (required): URL-friendly identifier (used to match existing articles)
-- **excerpt** (optional): Short description shown in article listings
+## Frontmatter Fields
+
+- **title** (required): Article title in WordPress
+- **slug** (required): URL-friendly identifier (matches existing articles)
+- **source** (required): Path to the markdown file in `documentation/`
+- **excerpt** (optional): Short description for listings
 - **status** (required): `publish`, `draft`, or `private`
-- **order** (optional): Numeric value to control display order
-- **category_id** (optional): WordPress category ID (defaults to value in config.json)
+- **order** (optional): Display order
+- **category_id** (optional): KB subcategory ID (not parent)
 
-## Config.json
+## KB Categories
 
-The `config.json` file contains metadata about this plugin's documentation:
+| ID | Name | Parent |
+|----|------|--------|
+| 7 | CP Sermons | — |
+| 10 | Getting Started | CP Sermons |
+| 13 | Options and Features | CP Sermons |
+| 12 | Advanced | CP Sermons |
+| 20 | Developers | CP Sermons |
+| 11 | Support | CP Sermons |
 
-```json
-{
-  "plugin_name": "CP Library",
-  "plugin_slug": "cp-library",
-  "category_name": "CP Sermons",
-  "category_slug": "cp-library",
-  "category_id": 7,
-  "docs_url": "https://docs.churchplugins.com",
-  "source_folder": "documentation"
-}
-```
-
-## Syncing to WordPress
-
-To sync these docs to WordPress, run the sync script:
+## Syncing
 
 ```bash
-# Sync all plugins with docs folders
-./sync-docs.php
-
-# Sync only cp-library
-./sync-docs.php --plugin=cp-library
-
-# Dry run (preview changes without syncing)
-./sync-docs.php --dry-run
+php sync-docs.php --plugin=cp-library --dry-run --verbose
+php sync-docs.php --plugin=cp-library --verbose
 ```
-
-## Content Guidelines
-
-- Use standard markdown syntax
-- Internal links should reference other doc files: `[link text](other-doc.md)`
-- Code blocks should specify language for syntax highlighting
-- Images should be placed in the `assets/` folder
-
-### Working with Images
-
-Place all images in the `docs/assets/` folder and reference them relatively:
-
-```markdown
-![Alt text](assets/screenshot.png)
-![Settings page](assets/settings-page.jpg)
-```
-
-During sync:
-- Images are automatically uploaded to WordPress Media Library
-- Markdown image references are converted to WordPress URLs
-- Duplicate uploads are avoided (images are cached in `.image-cache.json`)
-- Supported formats: JPG, PNG, GIF, WebP
-
-## Workflow
-
-1. Edit markdown files in this folder
-2. Test locally if needed
-3. Commit changes to git
-4. Run sync script to update docs.churchplugins.com
-5. Verify changes on the live docs site
-
-## Notes
-
-- The sync script will CREATE new articles if the slug doesn't exist
-- The sync script will UPDATE existing articles if the slug matches
-- Articles are matched by slug, not title
-- Changing a slug will create a new article (the old one won't be deleted)
