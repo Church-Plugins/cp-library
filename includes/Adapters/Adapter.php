@@ -574,6 +574,21 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 			)
 		);
 
+		$cmb->add_field(
+			array(
+				'name'       => __( 'Minimum Duration (seconds)', 'cp-library' ),
+				'id'         => 'min_duration',
+				'type'       => 'text_small',
+				'desc'       => __( 'Skip sermons shorter than this duration (in seconds). Leave empty or 0 to import all.', 'cp-library' ),
+				'default'    => 0,
+				'attributes' => array(
+					'min'  => 0,
+					'step' => 1,
+					'type' => 'number',
+				),
+			)
+		);
+
 		$import_in_progress = get_option( "cpl_{$this->type}_adapter_import_in_progress", false );
 		$cmb->add_field(
 			array(
