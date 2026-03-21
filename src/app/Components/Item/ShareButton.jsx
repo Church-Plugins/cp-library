@@ -36,6 +36,11 @@ export default function ShareButton({ item, variant = "outlined" }) {
 	};
 
 	const handleFileDownload = () => {
+		if ( ! item.audio || typeof item.audio !== 'string' ) {
+			setAnchorEl(null);
+			return;
+		}
+
 		cplLog(item.id, 'download');
 
 		const link = document.createElement('a');
@@ -45,7 +50,7 @@ export default function ShareButton({ item, variant = "outlined" }) {
 		if ( item.audio.includes('soundcloud') ) {
 	    link.href = item.audio;
 		} else {
-	    link.href = cplVar( 'url', 'site' ) + '?item_id=' + item.originID + '&key=audio&name=' + item.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3';
+	    link.href = cplVar( 'url', 'site' ) + '?item_id=' + item.originID + '&key=audio&name=' + downloadName;
 		}
 
 		link.setAttribute(
