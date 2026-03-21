@@ -116,7 +116,18 @@ class SermonAudio extends Adapter {
 		$speakers   = array();
 		$item_types = array();
 
+		$min_duration = absint( $this->get_setting( 'min_duration', 0 ) );
+
 		foreach ( $items as $sermon ) {
+			// Skip sermons below minimum duration threshold
+			if ( $min_duration > 0 ) {
+				$duration = $this->get_sermon_duration( $sermon );
+
+				if ( $duration > 0 && $duration < $min_duration ) {
+					continue;
+				}
+			}
+
 			$item = $this->format_item( $sermon );
 
 			$item['attachments'] = array();
@@ -299,6 +310,28 @@ class SermonAudio extends Adapter {
 		}
 
 		return $args;
+	}
+
+	/**
+	 * Get the duration of a sermon from SA API data in seconds.
+	 *
+	 * @param \stdClass $sermon The sermon API object.
+	 * @return int Duration in seconds, or 0 if unavailable.
+	 */
+	protected function get_sermon_duration( $sermon ) {
+		if ( empty( $sermon->media ) ) {
+			return 0;
+		}
+
+		if ( ! empty( $sermon->media->audio[0]->durationInSeconds ) ) {
+			return (int) $sermon->media->audio[0]->durationInSeconds;
+		}
+
+		if ( ! empty( $sermon->media->video[0]->durationInSeconds ) ) {
+			return (int) $sermon->media->video[0]->durationInSeconds;
+		}
+
+		return 0;
 	}
 
 	/**
