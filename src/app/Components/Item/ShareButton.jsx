@@ -40,12 +40,7 @@ export default function ShareButton({ item, variant = "outlined" }) {
 
 		const link = document.createElement('a');
 
-		let downloadName;
-		try {
-			downloadName = decodeURIComponent(item.audio).replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3';
-		} catch (e) {
-			downloadName = 'download.mp3';
-		}
+		const downloadName = (item.title || 'download').replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3';
 
 		if ( item.audio.includes('soundcloud') ) {
 	    link.href = item.audio;
