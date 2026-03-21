@@ -156,6 +156,7 @@ class SermonAudio extends Adapter {
 			'pageSize'               => $amount,
 			'broadcasterID'          => $this->get_setting( 'broadcaster_id', '' ),
 			'sortBy'                 => 'newest',
+			'requirePlaylist'        => 'false',
 			'preachedAfterTimestamp' => strtotime( $this->get_setting( 'ignore_before', 0 ) ),
 			'cache'                  => true
 		);
@@ -192,6 +193,7 @@ class SermonAudio extends Adapter {
 			'broadcasterID'          => $this->get_setting( 'broadcaster_id', '' ),
 			'sortBy'                 => 'oldest',
 			'page'                   => $batch,
+			'requirePlaylist'        => 'false',
 			'preachedAfterTimestamp' => strtotime( $this->get_setting( 'ignore_before', 0 ) ),
 			'cache'                  => true
 		);
