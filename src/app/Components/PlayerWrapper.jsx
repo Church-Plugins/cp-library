@@ -69,7 +69,8 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
     // Check if this is a YouTube or Vimeo player (they use iframe and have special methods)
     const isIframePlayer = internalPlayer && (
       typeof internalPlayer.pauseVideo === 'function' || // YouTube
-      typeof internalPlayer.getIframe === 'function' ||  // YouTube/Vimeo
+      typeof internalPlayer.getIframe === 'function' ||  // YouTube
+      typeof internalPlayer.setMuted === 'function' ||   // Vimeo
       (internalPlayer.nodeName === 'IFRAME') // Generic iframe detection
     );
 
@@ -104,6 +105,13 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
         internalPlayer.unMute();
         if (typeof internalPlayer.setVolume === 'function') {
           internalPlayer.setVolume(100);
+        }
+      }
+      // For Vimeo
+      else if (typeof internalPlayer.setMuted === 'function') {
+        internalPlayer.setMuted(false).catch(() => {});
+        if (typeof internalPlayer.setVolume === 'function') {
+          internalPlayer.setVolume(1).catch(() => {});
         }
       }
       // For HTML5 video
@@ -364,6 +372,32 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
         } catch (e) {
         }
       }
+      // For Vimeo videos (SDK uses setMuted/setVolume which return Promises, volume 0-1)
+      else if (typeof internalPlayer.setMuted === 'function') {
+        try {
+          internalPlayer.setMuted(false).catch(() => {});
+          if (typeof internalPlayer.setVolume === 'function') {
+            internalPlayer.setVolume(1).catch(() => {});
+          }
+          if (typeof internalPlayer.play === 'function') {
+            internalPlayer.play().catch(() => {});
+          }
+
+          if (isIOS) {
+            requestAnimationFrame(() => {
+              if (internalPlayer) {
+                if (typeof internalPlayer.setMuted === 'function') {
+                  internalPlayer.setMuted(false).catch(() => {});
+                }
+                if (typeof internalPlayer.play === 'function') {
+                  internalPlayer.play().catch(() => {});
+                }
+              }
+            });
+          }
+        } catch (e) {
+        }
+      }
       // For HTML5 video/audio elements
       else if (typeof internalPlayer.play === 'function') {
         // Set volume to max and unmute
@@ -390,6 +424,13 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
           internalPlayer.unMute();
           if (typeof internalPlayer.setVolume === 'function') {
             internalPlayer.setVolume(100);
+          }
+        }
+        // For Vimeo
+        else if (typeof internalPlayer.setMuted === 'function') {
+          internalPlayer.setMuted(false).catch(() => {});
+          if (typeof internalPlayer.setVolume === 'function') {
+            internalPlayer.setVolume(1).catch(() => {});
           }
         }
         // For HTML5 video

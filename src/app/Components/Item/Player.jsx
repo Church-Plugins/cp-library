@@ -235,6 +235,17 @@ export default function Player({ item }) {
 							// Silently continue
 						}
 					}
+					// For Vimeo
+					else if (typeof internalPlayer.setMuted === 'function') {
+						try {
+							internalPlayer.setMuted(false).catch(() => {});
+							if (typeof internalPlayer.setVolume === 'function') {
+								internalPlayer.setVolume(1).catch(() => {});
+							}
+						} catch (e) {
+							// Silently continue
+						}
+					}
 					// For HTML5 video/audio
 					else if (internalPlayer.muted !== undefined) {
 						try {
@@ -427,6 +438,17 @@ export default function Player({ item }) {
 				setShowMutedNotice(false);
 				setAudioUnlocked(true);
 			}
+			// For Vimeo players (SDK uses setMuted/setVolume, volume 0-1)
+			else if (typeof internalPlayer.setMuted === 'function') {
+				internalPlayer.setMuted(false).catch(() => {});
+				if (typeof internalPlayer.setVolume === 'function') {
+					internalPlayer.setVolume(1).catch(() => {});
+				}
+
+				setIsMuted(false);
+				setShowMutedNotice(false);
+				setAudioUnlocked(true);
+			}
 			// For HTML5 video/audio players
 			else if (internalPlayer.muted !== undefined) {
 				internalPlayer.muted = false;
@@ -488,6 +510,17 @@ export default function Player({ item }) {
             // Audio is working
             setAudioUnlocked(true);
           }
+        }
+        // Check if audio is muted on Vimeo (getMuted returns a Promise)
+        else if (internalPlayer && typeof internalPlayer.getMuted === 'function') {
+          internalPlayer.getMuted().then(muted => {
+            if (muted) {
+              setShowMutedNotice(true);
+              setIsMuted(true);
+            } else {
+              setAudioUnlocked(true);
+            }
+          }).catch(() => {});
         }
         // For HTML5 video
         else if (internalPlayer && internalPlayer.muted !== undefined) {

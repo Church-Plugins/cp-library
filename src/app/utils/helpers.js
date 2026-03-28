@@ -286,3 +286,66 @@ export function forceUnmuteYouTubePlayer(player, setupInterval = false, source =
 
   return null;
 }
+
+/**
+ * Attempts to unmute a Vimeo player specifically for iOS.
+ * Vimeo Player SDK uses setMuted(false) and setVolume(1) (0-1 range), which return Promises.
+ *
+ * @param {Object} player - The Vimeo player instance
+ * @param {boolean} [setupInterval=false] - Whether to set up an interval to repeatedly try unmuting
+ * @param {string} [source='unknown'] - Source of the unmute call for debugging
+ * @returns {number|null} - Interval ID if an interval was set up, null otherwise
+ */
+export function forceUnmuteVimeoPlayer(player, setupInterval = false, source = 'unknown') {
+  if (!player) {
+    return null;
+  }
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  try {
+    if (typeof player.setMuted === 'function') {
+      player.setMuted(false).catch(() => {});
+    }
+    if (typeof player.setVolume === 'function') {
+      player.setVolume(1).catch(() => {});
+    }
+
+    if (setupInterval && isIOS) {
+      requestAnimationFrame(() => {
+        if (player) {
+          if (typeof player.setMuted === 'function') {
+            player.setMuted(false).catch(() => {});
+          }
+          if (typeof player.setVolume === 'function') {
+            player.setVolume(1).catch(() => {});
+          }
+        }
+      });
+
+      const unmutingInterval = setInterval(() => {
+        if (player) {
+          if (typeof player.setMuted === 'function') {
+            player.setMuted(false).catch(() => {});
+          }
+          if (typeof player.setVolume === 'function') {
+            player.setVolume(1).catch(() => {});
+          }
+        } else {
+          clearInterval(unmutingInterval);
+        }
+      }, 300);
+
+      setTimeout(() => {
+        clearInterval(unmutingInterval);
+      }, 3000);
+
+      return unmutingInterval;
+    }
+  } catch (e) {
+    console.error(`[DEBUG:${source}] Error in forceUnmuteVimeoPlayer:`, e);
+  }
+
+  return null;
+}
