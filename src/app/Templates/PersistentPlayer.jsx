@@ -91,11 +91,22 @@ export default function PersistentPlayer (props) {
 			// For YouTube players
 			if (typeof internalPlayer.unMute === 'function') {
 				internalPlayer.unMute();
-				
+
 				if (typeof internalPlayer.setVolume === 'function') {
 					internalPlayer.setVolume(100);
 				}
-				
+
+				setIsMutedPlayback(false);
+				setShowMutedNotice(false);
+				setAudioUnlocked(true);
+			}
+			// For Vimeo players (SDK uses setMuted/setVolume, volume 0-1)
+			else if (typeof internalPlayer.setMuted === 'function') {
+				internalPlayer.setMuted(false).catch(() => {});
+				if (typeof internalPlayer.setVolume === 'function') {
+					internalPlayer.setVolume(1).catch(() => {});
+				}
+
 				setIsMutedPlayback(false);
 				setShowMutedNotice(false);
 				setAudioUnlocked(true);
@@ -104,7 +115,7 @@ export default function PersistentPlayer (props) {
 			else if (internalPlayer.muted !== undefined) {
 				internalPlayer.muted = false;
 				internalPlayer.volume = 1.0;
-				
+
 				setIsMutedPlayback(false);
 				setShowMutedNotice(false);
 				setAudioUnlocked(true);
@@ -152,6 +163,13 @@ export default function PersistentPlayer (props) {
 								internalPlayer.setVolume(100);
 							}
 						}
+						// For Vimeo
+						else if (typeof internalPlayer.setMuted === 'function') {
+							internalPlayer.setMuted(false).catch(() => {});
+							if (typeof internalPlayer.setVolume === 'function') {
+								internalPlayer.setVolume(1).catch(() => {});
+							}
+						}
 					}
 				}
 			};
@@ -196,13 +214,24 @@ export default function PersistentPlayer (props) {
 				if (internalPlayer && typeof internalPlayer.isMuted === 'function') {
 					const isMuted = internalPlayer.isMuted();
 					if (isMuted) {
-						
+
 						setShowMutedNotice(true);
 						setIsMutedPlayback(true);
 					} else {
 						// Audio is working
 						setAudioUnlocked(true);
 					}
+				}
+				// Check if audio is muted on Vimeo (getMuted returns a Promise)
+				else if (internalPlayer && typeof internalPlayer.getMuted === 'function') {
+					internalPlayer.getMuted().then(muted => {
+						if (muted) {
+							setShowMutedNotice(true);
+							setIsMutedPlayback(true);
+						} else {
+							setAudioUnlocked(true);
+						}
+					}).catch(() => {});
 				}
 				// For HTML5 video/audio
 				else if (internalPlayer && internalPlayer.muted !== undefined) {
@@ -313,6 +342,29 @@ export default function PersistentPlayer (props) {
 						});
 					}
 				}
+				// Handle Vimeo videos (SDK uses setMuted/setVolume, volume 0-1)
+				else if (internalPlayer && typeof internalPlayer.setMuted === 'function') {
+					internalPlayer.setMuted(false).catch(() => {});
+					if (typeof internalPlayer.setVolume === 'function') {
+						internalPlayer.setVolume(1).catch(() => {});
+					}
+					if (typeof internalPlayer.play === 'function') {
+						internalPlayer.play().catch(() => {});
+					}
+
+					if (isIOS.current) {
+						requestAnimationFrame(() => {
+							if (internalPlayer) {
+								if (typeof internalPlayer.setMuted === 'function') {
+									internalPlayer.setMuted(false).catch(() => {});
+								}
+								if (typeof internalPlayer.play === 'function') {
+									internalPlayer.play().catch(() => {});
+								}
+							}
+						});
+					}
+				}
 				// Handle HTML5 video elements
 				else if (internalPlayer && typeof internalPlayer.play === 'function') {
 					internalPlayer.muted = false;
@@ -340,6 +392,13 @@ export default function PersistentPlayer (props) {
 					// Handle YouTube
 					if (internalPlayer && typeof internalPlayer.unMute === 'function') {
 						internalPlayer.unMute();
+					}
+					// Handle Vimeo
+					else if (internalPlayer && typeof internalPlayer.setMuted === 'function') {
+						internalPlayer.setMuted(false).catch(() => {});
+						if (typeof internalPlayer.setVolume === 'function') {
+							internalPlayer.setVolume(1).catch(() => {});
+						}
 					}
 					// Handle HTML5 video
 					else if (internalPlayer && typeof internalPlayer.play === 'function') {
