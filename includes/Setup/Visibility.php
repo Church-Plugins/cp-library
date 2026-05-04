@@ -71,6 +71,10 @@ class Visibility {
 
 		// Save actions. Run after CMB2
 		add_action( 'save_post', [ $this, 'maybe_update_visibility' ], 100 );
+
+		// One-time admin notice for the 1.6.0 → 1.6.2 visibility flip.
+		add_action( 'admin_init', [ $this, 'maybe_dismiss_flip_notice' ] );
+		add_action( 'admin_notices', [ $this, 'maybe_render_flip_notice' ] );
 	}
 
 	public function maybe_filter_shortcode( $value, $tag ) {
@@ -197,11 +201,11 @@ class Visibility {
 		] );
 
 		$cmb->add_field( [
-			'name'       => __( 'Show in Main List', 'cp-library' ),
-			'desc'       => __( 'When checked, this sermon will appear in the main sermon list.', 'cp-library' ),
-			'id'         => 'show_in_main_list',
+			'name'       => __( 'Exclude from Main List', 'cp-library' ),
+			'desc'       => __( 'When checked, this sermon will not appear in the main sermon list. It will still appear on its single page and in taxonomy archives.', 'cp-library' ),
+			'id'         => 'exclude_from_main_list',
 			'type'       => 'checkbox',
-			'default'    => true,
+			'default'    => false,
 			'attributes' => [
 				'data-conditional-id'    => 'cpl_visibility_inherited',
 				'data-conditional-value' => 'false',
@@ -517,17 +521,24 @@ class Visibility {
 	 * @param int $post_id The post ID
 	 */
 	public function update_item_visibility( $post_id ) {
-		// Check if should be visible based on parent entities
-		$should_be_visible = $this->should_be_visible( $post_id );
-
-		if ( ! $should_be_visible ) {
-			// If parent entities force this to be hidden, set visibility to hidden
+		if ( ! $this->should_be_visible( $post_id ) ) {
+			// A parent series or service type forces this hidden.
 			$this->set_visibility( $post_id, false );
-		} else {
-			// Otherwise use the checkbox value
-			$show_in_main_list = isset( $_POST['show_in_main_list'] ) ? true : false;
-			$this->set_visibility( $post_id, $show_in_main_list );
+			return;
 		}
+
+		// When the metabox was submitted, normalize storage to a single
+		// canonical key. Without this, unchecking the box on a sermon that
+		// still carries pre-1.6.2 legacy meta would leave it hidden because
+		// CMB2 deletes the new key on uncheck and the helper would fall
+		// through to the legacy key.
+		if ( isset( $_POST['cpl_visibility_inherited'] ) ) {
+			$exclude = ! empty( $_POST['exclude_from_main_list'] );
+			update_post_meta( $post_id, 'exclude_from_main_list', $exclude ? '1' : '0' );
+			delete_post_meta( $post_id, 'show_in_main_list' );
+		}
+
+		$this->set_visibility( $post_id, $this->get_user_visibility_preference( $post_id ) );
 	}
 
 	/**
@@ -536,14 +547,12 @@ class Visibility {
 	 * @param int $post_id The post ID
 	 */
 	public function update_item_type_visibility( $post_id ) {
-		$exclude_from_main_list = isset( $_POST['exclude_from_main_list'] ) ? true : false;
+		$exclude = $this->is_excluded_from_main_list( $post_id );
 
-		// Set visibility for the series itself
-		$this->set_visibility( $post_id, ! $exclude_from_main_list );
+		$this->set_visibility( $post_id, ! $exclude );
 
-		// Optionally propagate to all sermons in the series
-		if ( apply_filters( 'cpl_visibility_propagate_from_series', true, $post_id, $exclude_from_main_list ) ) {
-			$this->propagate_item_type_visibility( $post_id, ! $exclude_from_main_list );
+		if ( apply_filters( 'cpl_visibility_propagate_from_series', true, $post_id, $exclude ) ) {
+			$this->propagate_item_type_visibility( $post_id, ! $exclude );
 		}
 	}
 
@@ -553,14 +562,12 @@ class Visibility {
 	 * @param int $post_id The post ID
 	 */
 	public function update_service_type_visibility( $post_id ) {
-		$exclude_from_main_list = isset( $_POST['exclude_from_main_list'] ) ? true : false;
+		$exclude = $this->is_excluded_from_main_list( $post_id );
 
-		// Set visibility for the service type itself
-		$this->set_visibility( $post_id, ! $exclude_from_main_list );
+		$this->set_visibility( $post_id, ! $exclude );
 
-		// Optionally propagate to all sermons with this service type
-		if ( apply_filters( 'cpl_visibility_propagate_from_service_type', true, $post_id, $exclude_from_main_list ) ) {
-			$this->propagate_service_type_visibility( $post_id, ! $exclude_from_main_list );
+		if ( apply_filters( 'cpl_visibility_propagate_from_service_type', true, $post_id, $exclude ) ) {
+			$this->propagate_service_type_visibility( $post_id, ! $exclude );
 		}
 	}
 
@@ -586,8 +593,7 @@ class Visibility {
 
 					if ( $still_visible ) {
 						// If no other parents force this to be hidden, revert to user preference
-						$show_in_main_list = get_post_meta( $item_id, 'show_in_main_list', true );
-						$this->set_visibility( $item_id, $show_in_main_list !== '' ? $show_in_main_list : true );
+						$this->set_visibility( $item_id, $this->get_user_visibility_preference( $item_id ) );
 					}
 				}
 			}
@@ -618,8 +624,7 @@ class Visibility {
 
 					if ( $still_visible ) {
 						// If no other parents force this to be hidden, revert to user preference
-						$show_in_main_list = get_post_meta( $item_id, 'show_in_main_list', true );
-						$this->set_visibility( $item_id, $show_in_main_list !== '' ? $show_in_main_list : true );
+						$this->set_visibility( $item_id, $this->get_user_visibility_preference( $item_id ) );
 					}
 				}
 			}
@@ -627,5 +632,164 @@ class Visibility {
 			// Log error but continue
 			error_log( $e->getMessage() );
 		}
+	}
+
+	/**
+	 * Get the user's stored visibility preference for a sermon.
+	 *
+	 * Uses metadata_exists() to distinguish "user explicitly set this" from
+	 * "never set." That distinction matters for two reasons:
+	 *  - Imports and other programmatic saves never set the meta, and must
+	 *    default to visible.
+	 *  - Under 1.6.0/1.6.1 an unchecked legacy "Show in Main List" stored
+	 *    an empty string (meaning hidden) — we need to honor that until
+	 *    the user runs the meta migration.
+	 *
+	 * @param int $item_id The sermon post ID.
+	 *
+	 * @return bool True if the user prefers this sermon visible.
+	 */
+	public function get_user_visibility_preference( $item_id ) {
+		if ( metadata_exists( 'post', $item_id, 'exclude_from_main_list' ) ) {
+			return ! get_post_meta( $item_id, 'exclude_from_main_list', true );
+		}
+
+		if ( metadata_exists( 'post', $item_id, 'show_in_main_list' ) ) {
+			return (bool) get_post_meta( $item_id, 'show_in_main_list', true );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Whether a series or service type should be excluded from the main list.
+	 *
+	 * Same metadata_exists pattern as get_user_visibility_preference: a missing
+	 * meta key means "no preference, default visible," so programmatic saves
+	 * cannot accidentally un-hide an existing entity.
+	 *
+	 * @param int $post_id The series or service type post ID.
+	 *
+	 * @return bool True if the entity is excluded from the main list.
+	 */
+	protected function is_excluded_from_main_list( $post_id ) {
+		if ( ! metadata_exists( 'post', $post_id, 'exclude_from_main_list' ) ) {
+			return false;
+		}
+
+		return ! empty( get_post_meta( $post_id, 'exclude_from_main_list', true ) );
+	}
+
+	/**
+	 * Render the one-time admin notice introducing the 1.6.2 visibility flip
+	 * and pointing users to the recovery tools on the Tools page.
+	 *
+	 * @since 1.6.2
+	 */
+	public function maybe_render_flip_notice() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		if ( get_option( 'cpl_visibility_flip_notice_dismissed' ) ) {
+			return;
+		}
+
+		// Only surface the notice where sermon admins are likely to act on
+		// it: the sermons CPT screens (list/edit), the related taxonomies,
+		// and the dashboard. Avoids running the legacy-meta query on every
+		// unrelated admin page.
+		$screen = get_current_screen();
+		if ( ! $screen ) {
+			return;
+		}
+		$item_post_type = cp_library()->setup->post_types->item->post_type;
+		$relevant_screens = [ 'dashboard', 'plugins' ];
+		$is_relevant = in_array( $screen->id, $relevant_screens, true )
+			|| $screen->post_type === $item_post_type
+			|| $screen->post_type === cp_library()->setup->post_types->item_type->post_type
+			|| ( isset( $_GET['page'] ) && $_GET['page'] === 'cp-library-tools' );
+		if ( ! $is_relevant ) {
+			return;
+		}
+
+		if ( ! $this->has_legacy_visibility_meta() ) {
+			return;
+		}
+
+		$tools_url = admin_url( 'edit.php?post_type=' . cp_library()->setup->post_types->item->post_type . '&page=cp-library-tools&tab=import_export' );
+		$dismiss_url = wp_nonce_url(
+			add_query_arg( 'cpl_dismiss', 'visibility_flip', admin_url() ),
+			'cpl_dismiss_visibility_flip'
+		);
+		?>
+		<div class="notice notice-info is-dismissible">
+			<p>
+				<strong><?php esc_html_e( 'CP Sermon Library:', 'cp-library' ); ?></strong>
+				<?php esc_html_e( 'The per-sermon visibility checkbox was renamed to "Exclude from Main List" in 1.6.2 so that imported sermons default to visible.', 'cp-library' ); ?>
+				<a href="<?php echo esc_url( $tools_url ); ?>"><?php esc_html_e( 'Open the Tools page to migrate legacy settings or reset hidden sermons.', 'cp-library' ); ?></a>
+			</p>
+			<p>
+				<a href="<?php echo esc_url( $dismiss_url ); ?>"><?php esc_html_e( 'Dismiss this notice', 'cp-library' ); ?></a>
+			</p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Whether any sermon still carries the legacy `show_in_main_list` meta.
+	 * Result is cached for a day; the migration tool clears the cache when
+	 * it completes via {@see clear_legacy_meta_cache}.
+	 *
+	 * @since 1.6.2
+	 *
+	 * @return bool
+	 */
+	protected function has_legacy_visibility_meta() {
+		$cached = get_transient( 'cpl_visibility_legacy_present' );
+		if ( $cached !== false ) {
+			return (bool) $cached;
+		}
+
+		global $wpdb;
+		$exists = (bool) $wpdb->get_var(
+			"SELECT 1 FROM {$wpdb->postmeta} WHERE meta_key = 'show_in_main_list' LIMIT 1"
+		);
+
+		set_transient( 'cpl_visibility_legacy_present', $exists ? 1 : 0, DAY_IN_SECONDS );
+
+		return $exists;
+	}
+
+	/**
+	 * Clear the legacy-meta cache. Called by the meta migration tool on
+	 * completion so the admin notice updates immediately.
+	 *
+	 * @since 1.6.2
+	 */
+	public static function clear_legacy_meta_cache() {
+		delete_transient( 'cpl_visibility_legacy_present' );
+	}
+
+	/**
+	 * Dismiss the visibility flip notice when the user clicks the dismiss link.
+	 *
+	 * @since 1.6.2
+	 */
+	public function maybe_dismiss_flip_notice() {
+		if ( empty( $_GET['cpl_dismiss'] ) || 'visibility_flip' !== $_GET['cpl_dismiss'] ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		check_admin_referer( 'cpl_dismiss_visibility_flip' );
+
+		update_option( 'cpl_visibility_flip_notice_dismissed', 1 );
+
+		wp_safe_redirect( remove_query_arg( [ 'cpl_dismiss', '_wpnonce' ] ) );
+		exit;
 	}
 }

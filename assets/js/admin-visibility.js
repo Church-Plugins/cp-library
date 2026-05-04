@@ -9,7 +9,7 @@ jQuery(document).ready(function($) {
     
     var $seriesField = $('#cpl_item_type'),
         $serviceTypeField = $('#cpl_service_type'),
-        $visibilityField = $('#show_in_main_list'),
+        $visibilityField = $('#exclude_from_main_list'),
         $inheritedField = $('#cpl_visibility_inherited'),
         $noticeArea = $('#cpl-visibility-notice');
     
@@ -57,7 +57,7 @@ jQuery(document).ready(function($) {
             // Something is forcing this to be hidden
             $inheritedField.val('true');
             $visibilityField.prop('disabled', true);
-            $visibilityField.prop('checked', false);
+            $visibilityField.prop('checked', true);
             
             // Show appropriate notice
             var noticeText = '';
