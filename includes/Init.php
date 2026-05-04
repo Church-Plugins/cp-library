@@ -150,6 +150,7 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 		$this->filters = Filters\Filters::get_instance(); // Compatibility layer
 
 		include_once( CP_LIBRARY_INCLUDES . '/CLI/CP_Migrate.php' );
+		CLI\Init::get_instance();
 	}
 
 	/**
