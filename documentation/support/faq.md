@@ -84,7 +84,7 @@ Variations let you create different versions of the same sermon for multiple ser
 
 ### Can I hide certain sermons from the main list?
 
-Yes. Edit the sermon and uncheck "Show in Main List" in the Visibility Settings panel. The sermon remains accessible via direct links and archives.
+Yes. Edit the sermon and check **Exclude from Main List** in the Visibility Settings panel. The sermon remains accessible via direct links and archives.
 
 ## Display & Templates
 

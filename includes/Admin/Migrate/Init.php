@@ -48,6 +48,11 @@ class Init {
 		add_action( 'cpl_after_activation', array( $this, 'on_activation' ) );
 		add_action( 'cpl_deactivation', array( $this, 'on_deactivation' ) );
 		$this->wizard = SetupWizard::get_instance();
+
+		// Internal data-fixup migrations exposed via the Tools page. Instantiated
+		// so the base class registers their AJAX start/poll/pause/resume endpoints.
+		VisibilityMetaMigration::get_instance();
+		SermonVisibilityReset::get_instance();
 	}
 
 	/**

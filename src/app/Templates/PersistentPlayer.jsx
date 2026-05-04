@@ -13,7 +13,7 @@ import VolumeOff from '@mui/icons-material/VolumeOff';
 import VolumeUp from '@mui/icons-material/VolumeUp';
 import useBreakpoints from '../Hooks/useBreakpoints';
 import formatDuration from '../utils/formatDuration';
-import { cplLog, cplMarker } from '../utils/helpers';
+import { cplLog, cplMarker, forceUnmuteVimeoPlayer } from '../utils/helpers';
 
 import ErrorDisplay from '../Elements/ErrorDisplay';
 import PlayPause from '../Elements/Buttons/PlayPause';
@@ -91,11 +91,19 @@ export default function PersistentPlayer (props) {
 			// For YouTube players
 			if (typeof internalPlayer.unMute === 'function') {
 				internalPlayer.unMute();
-				
+
 				if (typeof internalPlayer.setVolume === 'function') {
 					internalPlayer.setVolume(100);
 				}
-				
+
+				setIsMutedPlayback(false);
+				setShowMutedNotice(false);
+				setAudioUnlocked(true);
+			}
+			// For Vimeo players
+			else if (typeof internalPlayer.setMuted === 'function') {
+				forceUnmuteVimeoPlayer(internalPlayer);
+
 				setIsMutedPlayback(false);
 				setShowMutedNotice(false);
 				setAudioUnlocked(true);
@@ -104,7 +112,7 @@ export default function PersistentPlayer (props) {
 			else if (internalPlayer.muted !== undefined) {
 				internalPlayer.muted = false;
 				internalPlayer.volume = 1.0;
-				
+
 				setIsMutedPlayback(false);
 				setShowMutedNotice(false);
 				setAudioUnlocked(true);
@@ -152,6 +160,10 @@ export default function PersistentPlayer (props) {
 								internalPlayer.setVolume(100);
 							}
 						}
+						// For Vimeo
+						else if (typeof internalPlayer.setMuted === 'function') {
+							forceUnmuteVimeoPlayer(internalPlayer);
+						}
 					}
 				}
 			};
@@ -196,13 +208,24 @@ export default function PersistentPlayer (props) {
 				if (internalPlayer && typeof internalPlayer.isMuted === 'function') {
 					const isMuted = internalPlayer.isMuted();
 					if (isMuted) {
-						
+
 						setShowMutedNotice(true);
 						setIsMutedPlayback(true);
 					} else {
 						// Audio is working
 						setAudioUnlocked(true);
 					}
+				}
+				// Check if audio is muted on Vimeo (getMuted returns a Promise)
+				else if (internalPlayer && typeof internalPlayer.getMuted === 'function') {
+					internalPlayer.getMuted().then(muted => {
+						if (muted) {
+							setShowMutedNotice(true);
+							setIsMutedPlayback(true);
+						} else {
+							setAudioUnlocked(true);
+						}
+					}).catch(() => {});
 				}
 				// For HTML5 video/audio
 				else if (internalPlayer && internalPlayer.muted !== undefined) {
@@ -313,6 +336,10 @@ export default function PersistentPlayer (props) {
 						});
 					}
 				}
+				// Handle Vimeo videos
+				else if (internalPlayer && typeof internalPlayer.setMuted === 'function') {
+					forceUnmuteVimeoPlayer(internalPlayer, { play: true, retry: true });
+				}
 				// Handle HTML5 video elements
 				else if (internalPlayer && typeof internalPlayer.play === 'function') {
 					internalPlayer.muted = false;
@@ -340,6 +367,10 @@ export default function PersistentPlayer (props) {
 					// Handle YouTube
 					if (internalPlayer && typeof internalPlayer.unMute === 'function') {
 						internalPlayer.unMute();
+					}
+					// Handle Vimeo
+					else if (internalPlayer && typeof internalPlayer.setMuted === 'function') {
+						forceUnmuteVimeoPlayer(internalPlayer);
 					}
 					// Handle HTML5 video
 					else if (internalPlayer && typeof internalPlayer.play === 'function') {

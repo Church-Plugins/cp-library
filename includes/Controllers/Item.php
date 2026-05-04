@@ -221,29 +221,33 @@ class Item extends Controller{
 		$passages = cp_library()->setup->taxonomies->scripture->get_object_passages( $this->post->ID );
 		$terms    = cp_library()->setup->taxonomies->scripture->get_object_scripture( $this->post->ID );
 
-		if ( empty( $terms ) && empty( $passages[0] ) ) {
+		if ( empty( $terms ) && empty( $passages ) ) {
 			return $return;
 		}
 
-		$term = false;
+		if ( ! empty( $passages ) ) {
+			foreach ( $passages as $passage ) {
+				$book = cp_library()->setup->taxonomies->scripture->get_book( $passage );
+				$term = get_term_by( 'name', $book, cp_library()->setup->taxonomies->scripture->taxonomy );
 
-		if ( empty( $passages[0] ) ) {
-			$term = $terms[0];
-		} else {
-			$book = cp_library()->setup->taxonomies->scripture->get_book( $passages[0] );
-			$term = get_term_by( 'name', $book, cp_library()->setup->taxonomies->scripture->taxonomy );
-		}
+				if ( ! $term || is_wp_error( $term ) ) {
+					continue;
+				}
 
-		if ( ! $term || is_wp_error( $term ) ) {
-			return false;
-		}
-
-		$terms  = [ $term ];
-
-		if ( $terms ) {
-			foreach ( $terms as $term ) {
 				$return[ $term->slug ] = [
-					'name' => empty( $passages[0] ) ? $term->name : $passages[0],
+					'name' => $passage,
+					'slug' => $term->slug,
+					'url'  => get_term_link( $term ),
+				];
+			}
+		} else {
+			foreach ( $terms as $term ) {
+				if ( ! $term || is_wp_error( $term ) ) {
+					continue;
+				}
+
+				$return[ $term->slug ] = [
+					'name' => $term->name,
 					'slug' => $term->slug,
 					'url'  => get_term_link( $term ),
 				];

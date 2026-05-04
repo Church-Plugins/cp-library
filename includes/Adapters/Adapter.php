@@ -574,6 +574,20 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 			)
 		);
 
+		$cmb->add_field(
+			array(
+				'name'       => __( 'Minimum Audio Duration', 'cp-library' ),
+				'id'         => 'audio_min_duration',
+				'type'       => 'text_small',
+				'desc'       => sprintf( __( 'Skip %s with audio shorter than this many seconds. Leave blank to import all.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+				'attributes' => array(
+					'min'  => 0,
+					'step' => 1,
+					'type' => 'number',
+				),
+			)
+		);
+
 		$import_in_progress = get_option( "cpl_{$this->type}_adapter_import_in_progress", false );
 		$cmb->add_field(
 			array(

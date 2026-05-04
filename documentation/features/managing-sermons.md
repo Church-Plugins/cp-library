@@ -160,9 +160,11 @@ You can control whether individual sermons appear in the main sermon list:
 
 1. Edit a sermon
 2. Locate the "Visibility Settings" panel in the sidebar
-3. Use the "Show in Main List" checkbox to control visibility
-4. When unchecked, the sermon will be hidden from the main sermon list
-5. The sermon will still be accessible via direct links, archives, and search
+3. Check **Exclude from Main List** to remove this sermon from the main sermon list
+4. Leave the box unchecked (the default) to keep the sermon in the main list
+5. Hidden sermons remain accessible via direct links, taxonomy archives, and search
+
+> **Note:** Prior to version 1.6.2 this checkbox was labeled "Show in Main List" and defaulted to checked. The label and default were inverted to match the existing Series and Service Type controls so that imported sermons (via CSV or SermonAudio) reliably default to visible. Any sermons you previously hid by hand can be carried forward using the **Migrate Visibility Settings** tool — see [Tools: Import, Export & Maintenance](tools-cp-library).
 
 ### Inherited Visibility
 
