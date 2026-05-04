@@ -121,5 +121,4 @@ Enable debug mode in Messages → Settings → Advanced. This enables detailed l
 ## Still Need Help?
 
 - Check the [Troubleshooting Guide](../advanced/troubleshooting.md)
-- Watch our [Video Tutorials](video-tutorials.md)
 - Visit [Getting Help](getting-help.md) for support options

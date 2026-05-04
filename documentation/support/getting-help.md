@@ -8,10 +8,6 @@ If you need assistance with CP Sermon Library, here are the available support ch
 
 You're reading it! Browse the full documentation at [docs.churchplugins.com](https://docs.churchplugins.com) for guides on every feature.
 
-### Video Tutorials
-
-Watch step-by-step [video tutorials](video-tutorials.md) covering installation, configuration, and common tasks.
-
 ### Troubleshooting Guide
 
 The [troubleshooting guide](../advanced/troubleshooting.md) covers solutions to common issues with installation, media playback, podcast feeds, and more.

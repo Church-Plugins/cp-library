@@ -41,4 +41,3 @@ Welcome to the CP Sermon Library documentation. This guide covers installation, 
 
 - [FAQ](support/faq.md) — Frequently asked questions
 - [Getting Help](support/getting-help.md) — Support channels and resources
-- [Video Tutorials](support/video-tutorials.md) — Step-by-step video guides
