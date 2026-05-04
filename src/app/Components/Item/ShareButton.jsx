@@ -40,10 +40,13 @@ export default function ShareButton({ item, variant = "outlined" }) {
 
 		const link = document.createElement('a');
 
+		// Use the original mp3 filename from the audio URL
+		const audioFilename = item.audio.split('/').pop().split('?')[0] || 'download.mp3';
+
 		if ( item.audio.search('soundcloud') ) {
 	    link.href = item.audio;
 		} else {
-	    link.href = cplVar( 'url', 'site' ) + '?item_id=' + item.originID + '&key=audio&name=' + item.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3';
+	    link.href = cplVar( 'url', 'site' ) + '?item_id=' + item.originID + '&key=audio';
 		}
 
 		link.setAttribute(
@@ -54,7 +57,7 @@ export default function ShareButton({ item, variant = "outlined" }) {
 		// force download
 		link.setAttribute(
 			'download',
-			item.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3',
+			audioFilename,
 		);
 
     // Append to html link element page
