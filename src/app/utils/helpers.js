@@ -286,3 +286,45 @@ export function forceUnmuteYouTubePlayer(player, setupInterval = false, source =
 
   return null;
 }
+
+/**
+ * Unmutes a Vimeo player. Returns nothing; failures are swallowed so callers
+ * don't need to wrap in try/catch.
+ *
+ * Vimeo Player SDK uses setMuted(false) and setVolume(1) (0-1), both Promises.
+ * The chain matters on iOS: play() called before setMuted() resolves can run
+ * against the previous muted state and break the user-gesture chain.
+ *
+ * @param {Object} player                  Vimeo player instance
+ * @param {Object} [options]
+ * @param {boolean} [options.play=false]   Also call player.play() after unmute
+ * @param {boolean} [options.retry=false]  Re-unmute on the next frame (iOS only)
+ */
+export function forceUnmuteVimeoPlayer(player, options = {}) {
+  if (!player || typeof player.setMuted !== 'function') return;
+
+  const { play = false, retry = false } = options;
+
+  const unmute = () => {
+    let promise = player.setMuted(false);
+    if (typeof player.setVolume === 'function') {
+      promise = promise.then(() => player.setVolume(1));
+    }
+    if (play && typeof player.play === 'function') {
+      promise = promise.then(() => player.play());
+    }
+    promise.catch(() => {});
+  };
+
+  unmute();
+
+  if (retry) {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (isIOS) {
+      requestAnimationFrame(() => {
+        if (player && typeof player.setMuted === 'function') unmute();
+      });
+    }
+  }
+}
