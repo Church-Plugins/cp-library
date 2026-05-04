@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
-import { cplVar, cplLog, cplMarker, isURL } from '../../utils/helpers';
+import { cplVar, cplLog, cplMarker, isURL, forceUnmuteVimeoPlayer } from '../../utils/helpers';
 import PlayerWrapper from '../PlayerWrapper';
 import useBreakpoints from '../../Hooks/useBreakpoints';
 import { usePersistentPlayer } from '../../Contexts/PersistentPlayerContext';
@@ -237,14 +237,7 @@ export default function Player({ item }) {
 					}
 					// For Vimeo
 					else if (typeof internalPlayer.setMuted === 'function') {
-						try {
-							internalPlayer.setMuted(false).catch(() => {});
-							if (typeof internalPlayer.setVolume === 'function') {
-								internalPlayer.setVolume(1).catch(() => {});
-							}
-						} catch (e) {
-							// Silently continue
-						}
+						forceUnmuteVimeoPlayer(internalPlayer);
 					}
 					// For HTML5 video/audio
 					else if (internalPlayer.muted !== undefined) {
@@ -438,12 +431,9 @@ export default function Player({ item }) {
 				setShowMutedNotice(false);
 				setAudioUnlocked(true);
 			}
-			// For Vimeo players (SDK uses setMuted/setVolume, volume 0-1)
+			// For Vimeo players
 			else if (typeof internalPlayer.setMuted === 'function') {
-				internalPlayer.setMuted(false).catch(() => {});
-				if (typeof internalPlayer.setVolume === 'function') {
-					internalPlayer.setVolume(1).catch(() => {});
-				}
+				forceUnmuteVimeoPlayer(internalPlayer);
 
 				setIsMuted(false);
 				setShowMutedNotice(false);

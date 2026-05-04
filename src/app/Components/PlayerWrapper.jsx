@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { cplLog } from "../utils/helpers";
+import { cplLog, forceUnmuteVimeoPlayer } from "../utils/helpers";
 import VideoPlayer from 'react-player'
 import Cookies from 'js-cookie'
 
@@ -69,7 +69,7 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
     // Check if this is a YouTube or Vimeo player (they use iframe and have special methods)
     const isIframePlayer = internalPlayer && (
       typeof internalPlayer.pauseVideo === 'function' || // YouTube
-      typeof internalPlayer.getIframe === 'function' ||  // YouTube
+      typeof internalPlayer.getIframe === 'function' ||  // YouTube/Vimeo
       typeof internalPlayer.setMuted === 'function' ||   // Vimeo
       (internalPlayer.nodeName === 'IFRAME') // Generic iframe detection
     );
@@ -109,10 +109,7 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
       }
       // For Vimeo
       else if (typeof internalPlayer.setMuted === 'function') {
-        internalPlayer.setMuted(false).catch(() => {});
-        if (typeof internalPlayer.setVolume === 'function') {
-          internalPlayer.setVolume(1).catch(() => {});
-        }
+        forceUnmuteVimeoPlayer(internalPlayer);
       }
       // For HTML5 video
       else if (internalPlayer.muted !== undefined) {
@@ -372,31 +369,9 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
         } catch (e) {
         }
       }
-      // For Vimeo videos (SDK uses setMuted/setVolume which return Promises, volume 0-1)
+      // For Vimeo videos
       else if (typeof internalPlayer.setMuted === 'function') {
-        try {
-          internalPlayer.setMuted(false).catch(() => {});
-          if (typeof internalPlayer.setVolume === 'function') {
-            internalPlayer.setVolume(1).catch(() => {});
-          }
-          if (typeof internalPlayer.play === 'function') {
-            internalPlayer.play().catch(() => {});
-          }
-
-          if (isIOS) {
-            requestAnimationFrame(() => {
-              if (internalPlayer) {
-                if (typeof internalPlayer.setMuted === 'function') {
-                  internalPlayer.setMuted(false).catch(() => {});
-                }
-                if (typeof internalPlayer.play === 'function') {
-                  internalPlayer.play().catch(() => {});
-                }
-              }
-            });
-          }
-        } catch (e) {
-        }
+        forceUnmuteVimeoPlayer(internalPlayer, { play: true, retry: true });
       }
       // For HTML5 video/audio elements
       else if (typeof internalPlayer.play === 'function') {
@@ -428,10 +403,7 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
         }
         // For Vimeo
         else if (typeof internalPlayer.setMuted === 'function') {
-          internalPlayer.setMuted(false).catch(() => {});
-          if (typeof internalPlayer.setVolume === 'function') {
-            internalPlayer.setVolume(1).catch(() => {});
-          }
+          forceUnmuteVimeoPlayer(internalPlayer);
         }
         // For HTML5 video
         else if (internalPlayer.muted !== undefined) {
