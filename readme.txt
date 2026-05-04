@@ -118,6 +118,11 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 * Change: The per-sermon visibility checkbox is now "Exclude from Main List" (default unchecked) instead of "Show in Main List" (default checked) — matching the existing Series and Service Type metaboxes.
 * New: **Tools → Migrate Visibility Settings** — converts legacy meta from older sites and preserves any sermons you previously hid by hand.
 * New: **Tools → Reset All Sermons to Visible** — one-click recovery for sites already affected by the hidden-on-import bug. Inheritance from hidden Series or Service Types is re-applied automatically.
+* New: WP-CLI command for SermonAudio imports (`wp cp sermonaudio import`) with `--dry-run`, `--recent[=count]`, and `--max-batches` options for scripted and scheduled syncs.
+* New: Minimum audio duration filter for the SermonAudio adapter — skip short clips, intros, and announcements during import by setting a threshold in the adapter settings.
+* Fix: Vimeo videos now reliably unmute on iOS using a shared helper with chained promises.
+* Fix: All scripture references now display on sermon detail views (previously only the first reference was shown in some layouts).
+* Fix: Sermon sort order is now correct on speaker pages and taxonomy archives.
 
 = 1.6.1 =
 * Fix: Speaker page message display

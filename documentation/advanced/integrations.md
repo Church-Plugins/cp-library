@@ -45,8 +45,39 @@ Once enabled, a "Sermon Audio" settings tab appears:
 2. Enter your API Key (found at sermonaudio.com/members)
 3. Enter your Broadcaster ID
 4. Optionally set an "Ignore Before" date to skip older sermons
-5. Click "Start full import" to begin importing sermons
-6. Configure the Update Check interval for automatic syncing of new content
+5. Optionally set a **Minimum Audio Duration** (in seconds) to skip short clips, intros, and announcements
+6. Click "Start full import" to begin importing sermons
+7. Configure the Update Check interval for automatic syncing of new content
+
+### Importing from the Command Line
+
+For scripted, scheduled, or large-broadcaster imports, CP Sermon Library provides a WP-CLI command. The command runs the same import as the admin button but synchronously, so it returns when the import is finished and exits with a real status code.
+
+```bash
+# Full import (every sermon, oldest first)
+wp cp sermonaudio import
+
+# Pull only the most recent sermons (uses the "Check Count" setting)
+wp cp sermonaudio import --recent
+
+# Pull a specific number of recent sermons
+wp cp sermonaudio import --recent=20
+
+# Preview what would be imported without writing anything
+wp cp sermonaudio import --dry-run
+
+# Stop after the first N batches (each batch is up to 100 sermons) — useful
+# for smoke tests on large broadcasters
+wp cp sermonaudio import --max-batches=2
+```
+
+Notes:
+
+- The command requires the SermonAudio adapter to be enabled and configured (API Key + Broadcaster ID).
+- `--dry-run` fetches from the SermonAudio API and reports what would be created or updated, but skips all writes — handy for verifying configuration before a full sync.
+- `--recent` mirrors the cron-based update check. It does not clear the import queue, change-detection store, or in-progress flag, so it can safely run alongside other syncs.
+- `--recent` and `--max-batches` cannot be combined.
+- Per-item output makes the command verbose on large libraries. Pipe to a log file for large runs: `wp cp sermonaudio import > import.log 2>&1`.
 
 ## YouTube Integration
 
