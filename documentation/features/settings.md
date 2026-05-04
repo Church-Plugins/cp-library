@@ -153,6 +153,7 @@ Configure your SermonAudio connection and import settings:
 - **API Key** — Your SermonAudio API key (found at sermonaudio.com/members)
 - **Broadcaster ID** — Your SermonAudio broadcaster ID
 - **Ignore Messages Before** — Optionally set a date to skip importing older sermons
+- **Minimum Audio Duration** — Skip sermons whose audio is shorter than this many seconds. Useful for filtering out intros, announcements, and short clips. Leave blank to import everything.
 - **Start full import** — Begin a full import of all sermons from SermonAudio
 - **Update Check** — How often to automatically check for new sermons (e.g., twice daily)
 - **Check Now** — Manually trigger an update check
