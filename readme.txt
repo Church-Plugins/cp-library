@@ -4,7 +4,7 @@ Tags: sermons, church, podcast, speakers, series
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -113,6 +113,12 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 
 == Changelog ==
 
+= 1.6.2 =
+* Fix: Imported sermons (CSV import and SermonAudio adapter) were silently flagged as hidden and excluded from the main sermon list. Imports now default to visible.
+* Change: The per-sermon visibility checkbox is now "Exclude from Main List" (default unchecked) instead of "Show in Main List" (default checked) — matching the existing Series and Service Type metaboxes.
+* New: **Tools → Migrate Visibility Settings** — converts legacy meta from older sites and preserves any sermons you previously hid by hand.
+* New: **Tools → Reset All Sermons to Visible** — one-click recovery for sites already affected by the hidden-on-import bug. Inheritance from hidden Series or Service Types is re-applied automatically.
+
 = 1.6.1 =
 * Fix: Speaker page message display
 * Fix: SearchWP default engine configuration
@@ -146,6 +152,9 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 * Feature updates and enhancements
 
 == Upgrade Notice ==
+
+= 1.6.2 =
+Fixes a bug where imported sermons were silently hidden from the main list. The visibility checkbox has been renamed to "Exclude from Main List" (matching the existing Series and Service Type controls) so imports default to visible. After updating, visit Messages → Tools to migrate legacy visibility settings or reset any sermons that were accidentally hidden.
 
 = 1.6.0 =
 Major update with rebuilt filter system, improved media player, and new filter controls per post type. If you have filters disabled in Advanced Settings, they will continue to work until you configure the new post-type specific settings.

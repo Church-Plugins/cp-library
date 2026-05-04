@@ -402,7 +402,7 @@ class ItemType extends PostType  {
 					$items = $item_type->get_items();
 
 					// don't show series items if we have too many
-					if ( count( $items ) > 60 ) {
+					if ( count( $items ) > apply_filters( 'cpl_item_type_max_items_for_admin', 60 ) ) {
 						return;
 					}
 				} catch ( Exception $e ) {
