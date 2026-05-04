@@ -78,6 +78,32 @@ The export feature downloads all of your sermon data as a single CSV file.
 
 The export includes all sermons regardless of their status (published, draft, private, and scheduled). The exported CSV contains the following columns: Title, Description, Transcript, Series, Date, Passage, Location, Service Type, Speaker, Topics, Season, Scripture, Thumbnail, Video, Audio, and Downloads.
 
+## Visibility Recovery Tools
+
+Two one-click tools help you recover from the visibility-related issues addressed in version 1.6.2.
+
+### Migrate Visibility Settings
+
+Sites that used the "Show in Main List" checkbox under version 1.6.0 or 1.6.1 should run this once after upgrading. It converts the legacy meta key into the new format so any sermons you previously hid by hand stay hidden under the new "Exclude from Main List" convention.
+
+1. Navigate to **Messages > Tools**.
+2. Under **Migrate Visibility Settings**, the page reports how many sermons still hold legacy meta. If the count is zero, no action is needed.
+3. Click **Migrate Visibility Settings** to start. A status indicator shows progress.
+4. Sermons that were previously hidden continue to be hidden. Sermons that were previously visible carry no extra meta — they simply default to visible.
+
+The taxonomy term that controls visibility is left untouched by this tool — only the per-sermon meta key is rewritten.
+
+### Reset All Sermons to Visible
+
+Use this tool if imported sermons are missing from the main sermon list. It clears the hidden flag from every sermon at once.
+
+1. Navigate to **Messages > Tools**.
+2. Under **Reset All Sermons to Visible**, click **Reset Sermon Visibility**.
+3. Confirm the prompt. A status indicator shows progress.
+4. Sermons whose Series or Service Type is excluded from the main list remain hidden — that inheritance is re-applied automatically.
+
+After running this tool you can re-hide individual sermons via the **Exclude from Main List** checkbox on the sermon edit screen.
+
 ## Merge Duplicate Speakers
 
 After importing sermons, you may end up with duplicate speaker entries that have the same name. The merge tool consolidates these into a single speaker.

@@ -69,6 +69,33 @@ abstract class Migration extends \ChurchPlugins\Utils\WP_Background_Process {
 	abstract public function migrate_item( $post );
 
 	/**
+	 * Authorization hook for AJAX entry points. The base class is a no-op
+	 * to preserve existing behavior for the cross-plugin migration wizard,
+	 * which has no nonce wired up. Subclasses that expose destructive
+	 * operations (e.g. resetting visibility on every sermon) should
+	 * override to require a nonce and capability.
+	 *
+	 * @since 1.6.2
+	 */
+	protected function authorize_request() {
+		// Subclasses may override.
+	}
+
+	/**
+	 * Shared admin authorization helper for visibility tools migrations.
+	 * Sends a JSON error and dies if either the capability or nonce check
+	 * fails.
+	 *
+	 * @since 1.6.2
+	 */
+	protected function authorize_visibility_tool() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Unauthorized.', 'cp-library' ) ), 403 );
+		}
+		check_ajax_referer( 'cpl_visibility_tools', 'nonce' );
+	}
+
+	/**
 	 * Handles the task
 	 *
 	 * @param mixed $item The data to migrate.
@@ -109,6 +136,7 @@ abstract class Migration extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * @return void
 	 */
 	public function start_migration() {
+		$this->authorize_request();
 		cp_library()->logging->log( "Starting migration from {$this->name}" );
 
 		try {
@@ -533,6 +561,7 @@ abstract class Migration extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * @return void
 	 */
 	public function pause_migration() {
+		$this->authorize_request();
 		$this->pause();
 		wp_send_json_success();
 	}
@@ -543,6 +572,7 @@ abstract class Migration extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * @return void
 	 */
 	public function resume_migration() {
+		$this->authorize_request();
 		$this->resume();
 		wp_send_json_success();
 	}
@@ -553,6 +583,7 @@ abstract class Migration extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * @return void
 	 */
 	public function send_progress() {
+		$this->authorize_request();
 		$status = get_transient( "cpl_migration_status_{$this->type}" );
 
 		if ( ! $status ) {

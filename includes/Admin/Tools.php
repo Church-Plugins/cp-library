@@ -485,8 +485,122 @@ class Tools
 			</div>
 		</div>
 
+		<?php $this->visibility_tools_display(); ?>
+
 	<?php
+		// Register the tool-button JS only on this tab, after the postboxes render.
+		add_action( 'admin_print_footer_scripts', [ $this, 'visibility_tools_script' ] );
+
 		do_action('cp_library_tools_import_export_after');
+	}
+
+	/**
+	 * Render the visibility recovery tools added in 1.6.2.
+	 *
+	 * @since 1.6.2
+	 */
+	public function visibility_tools_display() {
+		$migrate_count = \CP_Library\Admin\Migrate\VisibilityMetaMigration::get_instance()->get_item_count();
+
+		if ( $migrate_count > 0 ) :
+			?>
+			<div class="postbox">
+				<h3><span><?php esc_html_e( 'Migrate Visibility Settings', 'cp-library' ); ?></span></h3>
+				<div class="inside">
+					<p><?php esc_html_e( 'In version 1.6.2 the per-sermon visibility checkbox was renamed from "Show in Main List" to "Exclude from Main List" so that imported sermons default to visible. Run this once to convert legacy meta and preserve any sermons you previously hid by hand.', 'cp-library' ); ?></p>
+					<p>
+						<?php
+						echo esc_html(
+							sprintf(
+								_n( '%d sermon still has legacy visibility meta.', '%d sermons still have legacy visibility meta.', $migrate_count, 'cp-library' ),
+								$migrate_count
+							)
+						);
+						?>
+					</p>
+					<div class="cpl-visibility-tool" data-tool="visibility_meta" data-confirm="<?php echo esc_attr__( 'Run the visibility meta migration now?', 'cp-library' ); ?>">
+						<button type="button" class="button button-primary cpl-visibility-tool__start"><?php esc_html_e( 'Migrate Visibility Settings', 'cp-library' ); ?></button>
+						<span class="cpl-visibility-tool__status" style="margin-left:10px;"></span>
+					</div>
+				</div>
+			</div>
+			<?php
+		endif;
+		?>
+
+		<div class="postbox">
+			<h3><span><?php esc_html_e( 'Reset All Sermons to Visible', 'cp-library' ); ?></span></h3>
+			<div class="inside">
+				<p><?php esc_html_e( 'If imported sermons are missing from the main list, run this tool to clear the hidden flag from every sermon. Sermons whose Series or Service Type is excluded will remain hidden — that inheritance is re-applied automatically.', 'cp-library' ); ?></p>
+				<div class="cpl-visibility-tool" data-tool="visibility_reset" data-confirm="<?php echo esc_attr__( 'This will reset visibility on every sermon. Continue?', 'cp-library' ); ?>">
+					<button type="button" class="button button-primary cpl-visibility-tool__start"><?php esc_html_e( 'Reset Sermon Visibility', 'cp-library' ); ?></button>
+					<span class="cpl-visibility-tool__status" style="margin-left:10px;"></span>
+				</div>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Inline JS that drives the visibility tool buttons against the
+	 * existing cpl_start_migration_{type} / cpl_poll_migration_{type}
+	 * endpoints registered by the Migration base class.
+	 *
+	 * @since 1.6.2
+	 */
+	public function visibility_tools_script() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		$nonce = wp_create_nonce( 'cpl_visibility_tools' );
+		?>
+		<script>
+		(function($){
+			var nonce = <?php echo wp_json_encode( $nonce ); ?>;
+
+			$(document).on('click', '.cpl-visibility-tool__start', function(e){
+				e.preventDefault();
+				var $btn = $(this);
+				var $wrap = $btn.closest('.cpl-visibility-tool');
+				var $status = $wrap.find('.cpl-visibility-tool__status');
+				var type = $wrap.data('tool');
+				var confirmMsg = $wrap.data('confirm');
+
+				if ( confirmMsg && ! window.confirm( confirmMsg ) ) {
+					return;
+				}
+
+				$btn.prop('disabled', true);
+				$status.text('<?php echo esc_js( __( 'Starting…', 'cp-library' ) ); ?>');
+
+				$.post(ajaxurl, { action: 'cpl_start_migration_' + type, nonce: nonce })
+					.done(function(){
+						poll();
+					})
+					.fail(function(xhr){
+						$status.text('<?php echo esc_js( __( 'Could not start migration.', 'cp-library' ) ); ?>');
+						$btn.prop('disabled', false);
+					});
+
+				function poll(){
+					$.post(ajaxurl, { action: 'cpl_poll_migration_' + type, nonce: nonce })
+						.done(function(resp){
+							if ( ! resp || ! resp.success ) { return; }
+							var d = resp.data || {};
+							var pct = Math.round(d.progress || 0);
+							$status.text(pct + '% (' + (d.item_count || 0) + ' items)');
+							if ( d.status === 'complete' ) {
+								$status.text('<?php echo esc_js( __( 'Done.', 'cp-library' ) ); ?>');
+								return;
+							}
+							setTimeout(poll, 1500);
+						})
+						.fail(function(){ setTimeout(poll, 3000); });
+				}
+			});
+		})(jQuery);
+		</script>
+		<?php
 	}
 
 	public function get_tools_tabs()

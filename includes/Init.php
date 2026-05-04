@@ -118,6 +118,16 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 			return;
 		}
 
+		// MySQL 5.5 compatibility: FULLTEXT on InnoDB and DATETIME DEFAULT require 5.6+
+		global $wpdb;
+		if ( version_compare( $wpdb->db_version(), '5.6', '<' ) ) {
+			add_filter( 'cp_create_table_sql', function( $sql ) {
+				$sql = preg_replace( '/FULLTEXT\s+INDEX/i', 'KEY', $sql );
+				$sql = preg_replace( '/datetime\s+DEFAULT\s+CURRENT_TIMESTAMP/i', 'datetime NOT NULL', $sql );
+				return $sql;
+			} );
+		}
+
 		$cp = \ChurchPlugins\Setup\Init::get_instance();
 
 		Setup\Tables\Init::get_instance();
