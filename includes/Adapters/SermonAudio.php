@@ -160,6 +160,11 @@ class SermonAudio extends Adapter {
 			'cache'                  => true
 		);
 
+		$audio_min = $this->get_setting( 'audio_min_duration', '' );
+		if ( '' !== $audio_min && (int) $audio_min > 0 ) {
+			$query['audioMinDurationSeconds'] = (int) $audio_min;
+		}
+
 		$data = $this->fetch( '/node/sermons', $query );
 
 		if ( ! $data->results ) {
@@ -195,6 +200,11 @@ class SermonAudio extends Adapter {
 			'preachedAfterTimestamp' => strtotime( $this->get_setting( 'ignore_before', 0 ) ),
 			'cache'                  => true
 		);
+
+		$audio_min = $this->get_setting( 'audio_min_duration', '' );
+		if ( '' !== $audio_min && (int) $audio_min > 0 ) {
+			$query['audioMinDurationSeconds'] = (int) $audio_min;
+		}
 
 		$data = $this->fetch( '/node/sermons', $query );
 

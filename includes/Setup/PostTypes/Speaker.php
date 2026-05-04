@@ -381,6 +381,8 @@ class Speaker extends PostType {
 				$post_in[] = '-1';
 			}
 			$query->set( 'post__in', $post_in );
+			$query->set( 'orderby', 'date' );
+			$query->set( 'order', 'DESC' );
 		}
 	}
 }
