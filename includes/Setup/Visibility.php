@@ -205,7 +205,7 @@ class Visibility {
 			'desc'       => __( 'When checked, this sermon will not appear in the main sermon list. It will still appear on its single page and in taxonomy archives.', 'cp-library' ),
 			'id'         => 'exclude_from_main_list',
 			'type'       => 'checkbox',
-			'default'    => false,
+			'default_cb' => [ $this, 'default_exclude_from_main_list' ],
 			'attributes' => [
 				'data-conditional-id'    => 'cpl_visibility_inherited',
 				'data-conditional-value' => 'false',
@@ -638,12 +638,17 @@ class Visibility {
 	 * Get the user's stored visibility preference for a sermon.
 	 *
 	 * Uses metadata_exists() to distinguish "user explicitly set this" from
-	 * "never set." That distinction matters for two reasons:
+	 * "never set." That distinction matters for three reasons:
 	 *  - Imports and other programmatic saves never set the meta, and must
 	 *    default to visible.
 	 *  - Under 1.6.0/1.6.1 an unchecked legacy "Show in Main List" stored
 	 *    an empty string (meaning hidden) — we need to honor that until
 	 *    the user runs the meta migration.
+	 *  - Pre-1.6.2 hidden sermons whose CMB2 field deleted the legacy meta
+	 *    on uncheck have no postmeta at all, only a `cpl_visibility:hidden`
+	 *    term. Callers reach this method only after `should_be_visible()`
+	 *    returned true, so a `hidden` term in that state must reflect
+	 *    explicit user intent rather than parent inheritance.
 	 *
 	 * @param int $item_id The sermon post ID.
 	 *
@@ -656,6 +661,10 @@ class Visibility {
 
 		if ( metadata_exists( 'post', $item_id, 'show_in_main_list' ) ) {
 			return (bool) get_post_meta( $item_id, 'show_in_main_list', true );
+		}
+
+		if ( has_term( 'hidden', 'cpl_visibility', $item_id ) ) {
+			return false;
 		}
 
 		return true;
@@ -678,6 +687,41 @@ class Visibility {
 		}
 
 		return ! empty( get_post_meta( $post_id, 'exclude_from_main_list', true ) );
+	}
+
+	/**
+	 * Compute the rendered default for the sermon "Exclude from Main List"
+	 * checkbox. Fires only when no `exclude_from_main_list` meta exists yet,
+	 * so this exclusively governs the upgrade case.
+	 *
+	 * Pre-1.6.2 hidden sermons (unchecked legacy "Show in Main List") have
+	 * the `cpl_visibility:hidden` term applied but no postmeta row, because
+	 * CMB2 deletes that field's meta on uncheck. Without this callback the
+	 * checkbox would render unchecked and the next save would silently flip
+	 * the sermon to public.
+	 *
+	 * @since 1.6.2
+	 *
+	 * @param array       $field_args CMB2 field args.
+	 * @param \CMB2_Field $field      The field instance.
+	 *
+	 * @return string 'on' to render checked, '' otherwise.
+	 */
+	public function default_exclude_from_main_list( $field_args, $field ) {
+		$post_id = $field->object_id;
+		if ( ! $post_id ) {
+			return '';
+		}
+
+		if ( metadata_exists( 'post', $post_id, 'show_in_main_list' ) ) {
+			return get_post_meta( $post_id, 'show_in_main_list', true ) ? '' : 'on';
+		}
+
+		if ( has_term( 'hidden', 'cpl_visibility', $post_id ) ) {
+			return 'on';
+		}
+
+		return '';
 	}
 
 	/**
@@ -737,7 +781,13 @@ class Visibility {
 	}
 
 	/**
-	 * Whether any sermon still carries the legacy `show_in_main_list` meta.
+	 * Whether any sermon still carries pre-1.6.2 visibility state that needs
+	 * to be migrated. Covers two cohorts:
+	 *  - Sermons with the legacy `show_in_main_list` postmeta.
+	 *  - Sermons in `cpl_visibility:hidden` that lack both `show_in_main_list`
+	 *    and `exclude_from_main_list` meta (legacy unchecked sermons whose
+	 *    CMB2 field deleted the meta on save).
+	 *
 	 * Result is cached for a day; the migration tool clears the cache when
 	 * it completes via {@see clear_legacy_meta_cache}.
 	 *
@@ -752,9 +802,33 @@ class Visibility {
 		}
 
 		global $wpdb;
-		$exists = (bool) $wpdb->get_var(
-			"SELECT 1 FROM {$wpdb->postmeta} WHERE meta_key = 'show_in_main_list' LIMIT 1"
-		);
+
+		$post_type = cp_library()->setup->post_types->item->post_type;
+
+		$exists = (bool) $wpdb->get_var( $wpdb->prepare(
+			"SELECT 1
+			FROM {$wpdb->posts} p
+			LEFT JOIN {$wpdb->postmeta} legacy
+			       ON legacy.post_id = p.ID AND legacy.meta_key = %s
+			LEFT JOIN {$wpdb->postmeta} new_meta
+			       ON new_meta.post_id = p.ID AND new_meta.meta_key = %s
+			LEFT JOIN {$wpdb->term_relationships} tr ON tr.object_id = p.ID
+			LEFT JOIN {$wpdb->term_taxonomy} tt
+			       ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = %s
+			LEFT JOIN {$wpdb->terms} t
+			       ON t.term_id = tt.term_id AND t.slug = %s
+			WHERE p.post_type = %s
+			  AND (
+			        legacy.meta_id IS NOT NULL
+			     OR ( t.term_id IS NOT NULL AND new_meta.meta_id IS NULL )
+			  )
+			LIMIT 1",
+			'show_in_main_list',
+			'exclude_from_main_list',
+			'cpl_visibility',
+			'hidden',
+			$post_type
+		) );
 
 		set_transient( 'cpl_visibility_legacy_present', $exists ? 1 : 0, DAY_IN_SECONDS );
 

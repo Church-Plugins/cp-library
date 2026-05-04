@@ -70,59 +70,90 @@ class VisibilityMetaMigration extends Migration {
 	}
 
 	/**
-	 * Count sermons that still have the legacy `show_in_main_list` meta.
+	 * Count sermons that need visibility-meta migration.
+	 *
+	 * Includes both legacy `show_in_main_list` carriers and pre-1.6.2 hidden
+	 * sermons whose CMB2 field deleted the legacy meta on uncheck (they have
+	 * a `cpl_visibility:hidden` term but no preference postmeta).
 	 *
 	 * @return int
 	 */
 	public function get_item_count() {
 		global $wpdb;
 
-		$post_type = cp_library()->setup->post_types->item->post_type;
-
-		$count = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT COUNT(DISTINCT p.ID)
-				FROM {$wpdb->posts} p
-				INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = %s
-				WHERE p.post_type = %s",
-				'show_in_main_list',
-				$post_type
-			)
-		);
+		$count = $wpdb->get_var( $this->affected_sermons_sql( 'COUNT(DISTINCT p.ID)' ) );
 
 		return absint( $count );
 	}
 
 	/**
-	 * Get IDs of sermons with the legacy meta key.
+	 * Get IDs of sermons that need visibility-meta migration.
 	 *
 	 * @return int[]
 	 */
 	public function get_migration_data() {
 		global $wpdb;
 
-		$post_type = cp_library()->setup->post_types->item->post_type;
-
-		$ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT DISTINCT p.ID
-				FROM {$wpdb->posts} p
-				INNER JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID AND pm.meta_key = %s
-				WHERE p.post_type = %s",
-				'show_in_main_list',
-				$post_type
-			)
-		);
+		$ids = $wpdb->get_col( $this->affected_sermons_sql( 'DISTINCT p.ID' ) );
 
 		return array_map( 'absint', $ids );
 	}
 
 	/**
-	 * Convert legacy meta on a single sermon.
+	 * Build a prepared query against the set of sermons needing migration.
 	 *
-	 * Any truthy legacy value ('1', 'on', etc.) meant "show in main list."
-	 * Any falsy value ('', '0', missing) meant "hide." Map accordingly to
-	 * the new key, then delete the legacy meta.
+	 * Two cohorts are unioned via OR in the WHERE clause:
+	 *  1. Sermons with a `show_in_main_list` postmeta row (legacy field).
+	 *  2. Sermons in `cpl_visibility:hidden` that have neither legacy meta
+	 *     nor the new `exclude_from_main_list` meta — pre-1.6.2 hidden
+	 *     sermons that would otherwise silently flip to public on save.
+	 *
+	 * @param string $select_clause The SELECT list to project (e.g. 'DISTINCT p.ID').
+	 *
+	 * @return string Prepared SQL.
+	 */
+	protected function affected_sermons_sql( $select_clause ) {
+		global $wpdb;
+
+		$post_type = cp_library()->setup->post_types->item->post_type;
+
+		return $wpdb->prepare(
+			"SELECT {$select_clause}
+			FROM {$wpdb->posts} p
+			LEFT JOIN {$wpdb->postmeta} legacy
+			       ON legacy.post_id = p.ID AND legacy.meta_key = %s
+			LEFT JOIN {$wpdb->postmeta} new_meta
+			       ON new_meta.post_id = p.ID AND new_meta.meta_key = %s
+			LEFT JOIN {$wpdb->term_relationships} tr ON tr.object_id = p.ID
+			LEFT JOIN {$wpdb->term_taxonomy} tt
+			       ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = %s
+			LEFT JOIN {$wpdb->terms} t
+			       ON t.term_id = tt.term_id AND t.slug = %s
+			WHERE p.post_type = %s
+			  AND (
+			        legacy.meta_id IS NOT NULL
+			     OR ( t.term_id IS NOT NULL AND new_meta.meta_id IS NULL )
+			  )",
+			'show_in_main_list',
+			'exclude_from_main_list',
+			'cpl_visibility',
+			'hidden',
+			$post_type
+		);
+	}
+
+	/**
+	 * Migrate a single sermon's visibility state to the new meta key.
+	 *
+	 * Two branches:
+	 *  - If legacy `show_in_main_list` exists: any truthy value ('1', 'on')
+	 *    meant "show in main list" → clear `exclude_from_main_list`. Any
+	 *    falsy value ('', '0') meant "hide" → set `exclude_from_main_list`
+	 *    to '1'. Then delete the legacy key.
+	 *  - If no legacy meta but the sermon is currently in `cpl_visibility:hidden`
+	 *    and has no `exclude_from_main_list` meta: pre-1.6.2 hidden sermon.
+	 *    Backfill `exclude_from_main_list` = '1' to lock in the hidden state
+	 *    so future saves do not flip it to public.
 	 *
 	 * @param mixed $post The sermon post ID.
 	 */
@@ -133,15 +164,20 @@ class VisibilityMetaMigration extends Migration {
 			return;
 		}
 
-		$legacy = get_post_meta( $post_id, 'show_in_main_list', true );
+		if ( metadata_exists( 'post', $post_id, 'show_in_main_list' ) ) {
+			$legacy = get_post_meta( $post_id, 'show_in_main_list', true );
 
-		if ( ! $legacy ) {
+			if ( ! $legacy ) {
+				update_post_meta( $post_id, 'exclude_from_main_list', '1' );
+			} else {
+				delete_post_meta( $post_id, 'exclude_from_main_list' );
+			}
+
+			delete_post_meta( $post_id, 'show_in_main_list' );
+		} elseif ( ! metadata_exists( 'post', $post_id, 'exclude_from_main_list' )
+		           && has_term( 'hidden', 'cpl_visibility', $post_id ) ) {
 			update_post_meta( $post_id, 'exclude_from_main_list', '1' );
-		} else {
-			delete_post_meta( $post_id, 'exclude_from_main_list' );
 		}
-
-		delete_post_meta( $post_id, 'show_in_main_list' );
 
 		// Invalidate the cached "legacy meta present" flag used by the
 		// admin notice. Cheap to call per item; transient is deleted lazily.
