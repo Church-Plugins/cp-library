@@ -1,5 +1,5 @@
 === CP Sermon Library ===
-Contributors: churchplugins, tabormoushey
+Contributors: churchplugins, tannermoushey
 Tags: sermons, church, podcast, speakers, series
 Requires at least: 6.0
 Tested up to: 6.9
