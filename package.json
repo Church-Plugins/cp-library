@@ -9,7 +9,7 @@
     "build:src": "wp-scripts build",
     "start": "npm run start:src && npm run start:blocks",
     "build": "npm run build:src && npm run build:blocks",
-    "plugin-zip": "wp-scripts plugin-zip"
+    "plugin-zip": "wp-scripts plugin-zip && zip -d cp-library.zip README.md package.json"
   },
   "dependencies": {
     "@emotion/react": "^11.4.1",
@@ -54,7 +54,6 @@
     "dist/**",
     "build/**",
     "*.php",
-    "*.md",
     "readme.txt",
     "languages/**",
     "layouts/**",
