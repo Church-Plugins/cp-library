@@ -886,7 +886,11 @@ class Settings {
 					'item'      => cp_library()->setup->post_types->item->plural_label,
 					'item_type' => cp_library()->setup->post_types->item_type->plural_label,
 				],
-				'default' => 'item_type',
+				// Matches the fallback every caller passes to get_advanced(). These
+				// disagreed from 1.5.0 until 1.7.0: the runtime default was already
+				// 'item', but this field rendered 'item_type' as selected, so any
+				// site that saved this tab silently stored Series.
+				'default' => 'item',
 				'desc'    => sprintf( __( 'Select which object to use for the Admin menu item.', 'cp-library' ), cp_library()->setup->post_types->item_type->plural_label, cp_library()->setup->post_types->item->plural_label ),
 			] );
 		}

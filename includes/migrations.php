@@ -11,6 +11,17 @@ function cp_library_complete_migration( $version ) {
 	update_option( 'cp_library_migrations', $migrations );
 }
 
+/**
+ * Pin sites upgrading from before 1.5.0 to the Series menu.
+ *
+ * 1.5.0 changed the default menu item to Sermons. This records the previous
+ * default for sites that were already running on it, so their menu does not
+ * move under them.
+ *
+ * @param string|false $old_version The version being upgraded from, or false on
+ *                                  a fresh install.
+ * @param string       $new_version The version being upgraded to.
+ */
 function cp_library_migrate_1_5_0( $old_version, $new_version ) {
 	$migration = '1.5.0';
 
@@ -19,6 +30,18 @@ function cp_library_migrate_1_5_0( $old_version, $new_version ) {
 	}
 
 	if ( cp_library_did_migration( $migration ) ) {
+		return;
+	}
+
+	/*
+	 * A fresh install has no prior version, and version_compare() reads that
+	 * false as "older than everything" — so this migration used to run on brand
+	 * new sites and pin them to Series, which meant the Sermons default 1.5.0
+	 * introduced never actually applied to anyone. Only genuine upgrades were
+	 * ever meant to be pinned.
+	 */
+	if ( empty( $old_version ) ) {
+		cp_library_complete_migration( $migration );
 		return;
 	}
 
