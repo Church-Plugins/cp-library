@@ -43,6 +43,12 @@ class Speaker extends PostType {
 		// Handle all meta updates (both CMB2 and direct WordPress functions)
 		add_action( 'updated_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
 		add_action( 'added_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
+		add_action( 'deleted_post_meta', [ $this, 'handle_deleted_meta' ], 10, 4 );
+
+		// Reconcile on every CMB2 save — the postmeta hooks above don't fire when the
+		// submitted value matches the stored value, which leaves the relationship table
+		// out of sync when it disagrees with postmeta (e.g. posts copied by a duplicator).
+		add_action( 'cmb2_save_field_cpl_speaker', [ $this, 'save_item_speaker' ], 10, 3 );
 
 		$item_type = Item::get_instance()->post_type;
 		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'speaker_column' ] );
@@ -213,6 +219,94 @@ class Speaker extends PostType {
 	}
 
 	/**
+	 * Whether speaker sync should be skipped for this post.
+	 *
+	 * Variant children and parents with variations get their speakers from the
+	 * variations save flow, not the cpl_speaker field.
+	 *
+	 * @param int $object_id Post ID.
+	 *
+	 * @return bool
+	 * @since 1.6.3
+	 */
+	protected function skip_speaker_sync( $object_id ) {
+		if ( wp_get_post_parent_id( $object_id ) ) {
+			return true;
+		}
+
+		return cp_library()->setup->variations->is_enabled() && get_post_meta( $object_id, '_cpl_has_variations', true );
+	}
+
+	/**
+	 * Reconcile item speakers from the submitted CMB2 field data.
+	 *
+	 * update_post_meta() skips its hooks when the value is unchanged, so
+	 * handle_updated_meta() alone cannot heal a relationship table that disagrees
+	 * with postmeta. This runs on every CMB2 save with the submitted data.
+	 *
+	 * @param bool               $updated Whether the field was updated.
+	 * @param string             $action  The save action performed.
+	 * @param \CMB2_Field        $field   The field object.
+	 *
+	 * @since 1.6.3
+	 */
+	public function save_item_speaker( $updated, $action, $field ) {
+		$object_id = $field->object_id;
+
+		if ( Item::get_instance()->post_type !== get_post_type( $object_id ) ) {
+			return;
+		}
+
+		if ( $this->skip_speaker_sync( $object_id ) ) {
+			return;
+		}
+
+		$data = isset( $field->data_to_save[ $field->id( true ) ] ) ? $field->data_to_save[ $field->id( true ) ] : [];
+
+		if ( $this->is_unresolved( $data, $speaker_ids = $this->process_speaker_data( $data ) ) ) {
+			return;
+		}
+
+		try {
+			$item = ItemModel::get_instance_from_origin( $object_id );
+			$item->update_speakers( $speaker_ids );
+		} catch ( Exception $e ) {
+			error_log( 'CP Library Speaker Save: ' . $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Clear item speakers when the cpl_speaker postmeta is deleted.
+	 *
+	 * @param array  $meta_ids   Deleted meta IDs.
+	 * @param int    $object_id  Post ID.
+	 * @param string $meta_key   Meta key.
+	 * @param mixed  $meta_value Meta value.
+	 *
+	 * @since 1.6.3
+	 */
+	public function handle_deleted_meta( $meta_ids, $object_id, $meta_key, $meta_value ) {
+		if ( 'cpl_speaker' !== $meta_key ) {
+			return;
+		}
+
+		if ( Item::get_instance()->post_type !== get_post_type( $object_id ) ) {
+			return;
+		}
+
+		if ( $this->skip_speaker_sync( $object_id ) ) {
+			return;
+		}
+
+		try {
+			$item = ItemModel::get_instance_from_origin( $object_id );
+			$item->update_speakers( [] );
+		} catch ( Exception $e ) {
+			error_log( 'CP Library Speaker Meta Delete: ' . $e->getMessage() );
+		}
+	}
+
+	/**
 	 * Handle meta updates for speaker field
 	 *
 	 * @param int $meta_id ID of the meta value
@@ -236,13 +330,46 @@ class Speaker extends PostType {
 			return;
 		}
 
+		if ( $this->is_unresolved( $meta_value, $speaker_ids = $this->process_speaker_data( $meta_value ) ) ) {
+			return;
+		}
+
 		try {
 			$item = ItemModel::get_instance_from_origin( $object_id );
-			$speaker_ids = $this->process_speaker_data( $meta_value );
 			$item->update_speakers( $speaker_ids );
 		} catch ( Exception $e ) {
 			error_log( 'CP Library Speaker Meta Update: ' . $e->getMessage() );
 		}
+	}
+
+	/**
+	 * Whether a submitted value named speakers we could not match
+	 *
+	 * Names arrive from feeds and importers, and a name we can't match — unpublished,
+	 * misspelled, or delimited — resolves to nothing. Treating that as "no speakers"
+	 * would clear associations the caller never meant to touch, so only a genuinely
+	 * empty submission is allowed to clear.
+	 *
+	 * @param mixed $raw The submitted meta value.
+	 * @param array $ids The ids it resolved to.
+	 *
+	 * @return bool
+	 * @since 1.6.3
+	 */
+	protected function is_unresolved( $raw, $ids ) {
+		if ( ! empty( $ids ) ) {
+			return false;
+		}
+
+		$submitted = array_filter( array_map( 'trim', array_filter( (array) $raw, 'is_scalar' ) ), 'strlen' );
+
+		if ( empty( $submitted ) ) {
+			return false;
+		}
+
+		error_log( sprintf( 'CP Library Speaker Lookup: no %s matched "%s"; leaving existing associations in place.', $this->plural_label, implode( ', ', $submitted ) ) );
+
+		return true;
 	}
 
 	/**
@@ -252,7 +379,6 @@ class Speaker extends PostType {
 	 * @return array Array of speaker IDs
 	 */
 	protected function process_speaker_data( $data ) {
-		global $wpdb;
 		$speaker_ids = [];
 
 		// If single value, convert to array
@@ -264,23 +390,61 @@ class Speaker extends PostType {
 			if ( is_numeric( $value ) ) {
 				// Already a speaker ID
 				$speaker_ids[] = absint( $value );
-			} else if ( is_string( $value ) && ! empty( $value ) ) {
-				// Try to find speaker by title
-				$value = sanitize_text_field( $value );
-				$speaker = $wpdb->get_row( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND (post_title = %s OR post_name = %s) AND post_status = 'publish' LIMIT 1", $this->post_type, $value, $value ) );
+				continue;
+			}
 
-				if ( $speaker ) {
-					try {
-						$speaker_model = \CP_Library\Models\Speaker::get_instance_from_origin( $speaker->ID );
-						$speaker_ids[] = $speaker_model->id;
-					} catch ( Exception $e ) {
-						error_log( 'CP Library Speaker Lookup: ' . $e->getMessage() );
-					}
+			if ( ! is_string( $value ) || '' === trim( $value ) ) {
+				continue;
+			}
+
+			$value = sanitize_text_field( $value );
+
+			if ( $id = $this->find_speaker_by_name( $value ) ) {
+				$speaker_ids[] = $id;
+				continue;
+			}
+
+			// a feed can deliver several names in one column; only split once the whole
+			// string fails to match, so titles containing a comma still resolve first
+			if ( false === strpos( $value, ',' ) ) {
+				continue;
+			}
+
+			foreach ( array_filter( array_map( 'trim', explode( ',', $value ) ) ) as $name ) {
+				if ( $id = $this->find_speaker_by_name( $name ) ) {
+					$speaker_ids[] = $id;
 				}
 			}
 		}
 
 		return $speaker_ids;
+	}
+
+	/**
+	 * Look up a speaker id by post title or slug
+	 *
+	 * @param string $name
+	 *
+	 * @return int Speaker model id, or 0 when no published speaker matches.
+	 * @since 1.6.3
+	 */
+	protected function find_speaker_by_name( $name ) {
+		global $wpdb;
+
+		$speaker = $wpdb->get_row( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND (post_title = %s OR post_name = %s) AND post_status = 'publish' LIMIT 1", $this->post_type, $name, $name ) );
+
+		if ( ! $speaker ) {
+			return 0;
+		}
+
+		try {
+			$speaker_model = \CP_Library\Models\Speaker::get_instance_from_origin( $speaker->ID );
+			return $speaker_model->id;
+		} catch ( Exception $e ) {
+			error_log( 'CP Library Speaker Lookup: ' . $e->getMessage() );
+		}
+
+		return 0;
 	}
 
 	/**

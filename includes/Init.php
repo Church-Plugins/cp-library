@@ -193,6 +193,14 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 			add_rewrite_tag( '%type-item%', '([^&]+)' );
 			add_rewrite_rule( "^$type/([^/]*)/(?!feed)([^/]+)?", 'index.php?cpl_item_type=$matches[1]&type-item=$matches[2]', 'top' );
 		}
+
+		// A settings import can change the post type and taxonomy slugs, but only after
+		// the CPTs for that request have already registered. It flags the flush for the
+		// next request — this one — where the rules regenerate from the new slugs.
+		if ( get_option( 'cpl_flush_rewrite_rules' ) ) {
+			delete_option( 'cpl_flush_rewrite_rules' );
+			flush_rewrite_rules();
+		}
 	}
 
 	/**

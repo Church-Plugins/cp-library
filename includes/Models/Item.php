@@ -97,10 +97,13 @@ class Item extends Table  {
 	 * @author Tanner Moushey
 	 */
 	public function update_speakers( $speakers ) {
-		$existing_speakers = $this->get_speakers();
+		$speakers = array_values( array_unique( array_filter( array_map( 'absint', (array) $speakers ) ) ) );
 
-		foreach( (array) $speakers as $speaker ) {
-			if ( false !== $key = array_search( $speaker, $existing_speakers ) ) {
+		// normalize for comparison — legacy rows can have a NULL/0 source_id which maps to 0
+		$existing_speakers = array_map( 'absint', (array) $this->get_speakers() );
+
+		foreach( $speakers as $speaker ) {
+			if ( false !== $key = array_search( $speaker, $existing_speakers, true ) ) {
 				unset( $existing_speakers[ $key ] );
 				continue;
 			}
@@ -111,20 +114,72 @@ class Item extends Table  {
 				'source_type_id' => Speaker::get_type_id(),
 			];
 
-			$speaker_model = Speaker::get_instance( $speaker );
-			$speaker_model->update_meta( $data, false );
+			try {
+				$speaker_model = Speaker::get_instance( $speaker );
+
+				// don't create association rows for speakers that don't exist
+				if ( ! $speaker_model->id ) {
+					continue;
+				}
+
+				$speaker_model->update_meta( $data, false );
+			} catch ( Exception $e ) {
+				error_log( $e );
+			}
 		}
 
-		// remove any speakers which should no longer be attached
-		foreach( $existing_speakers as $speaker ) {
-			$speaker_model = Speaker::get_instance( $speaker );
-			$speaker_model->delete_meta( absint( $this->id ), 'item_id' );
-		}
+		$this->remove_stale_sources( $existing_speakers, Speaker::class );
 
 		$this->speakers = $speakers;
 		$this->update_cache();
 
 		return true;
+	}
+
+	/**
+	 * Remove stale `source_item` association rows for this item
+	 *
+	 * Deletes rows directly rather than through the source model: instantiating the
+	 * model throws for rows whose source no longer exists, and a NULL `source_id`
+	 * never matches a prepared %d.
+	 *
+	 * Only the surplus rows for each source are removed. An item can carry duplicate
+	 * association rows for the same source (the corruption the 1.6.3 migration cleans
+	 * up), and when that source is still attached the extras must go without taking
+	 * the row we mean to keep. `$stale` holds one entry per surplus row, so its count
+	 * per source is exactly how many rows to delete.
+	 *
+	 * Scoped by `source_type_id` because speakers and service types share this table.
+	 *
+	 * @param array  $stale       Leftover source ids, one entry per surplus row.
+	 * @param string $model_class Source model class the ids belong to.
+	 *
+	 * @since 1.6.3
+	 *
+	 * @author Tanner Moushey
+	 */
+	protected function remove_stale_sources( $stale, $model_class ) {
+		global $wpdb;
+
+		if ( empty( $stale ) ) {
+			return;
+		}
+
+		$meta_table     = $model_class::get_prop( 'meta_table_name' );
+		$cache_group    = $model_class::get_prop( 'cache_group' ) . '_meta';
+		$source_type_id = $model_class::get_type_id();
+
+		foreach( array_count_values( array_map( 'absint', $stale ) ) as $source_id => $count ) {
+			if ( $source_id ) {
+				// oldest row wins — it carries the original `order`
+				$wpdb->query( $wpdb->prepare( "DELETE FROM {$meta_table} WHERE `key` = 'source_item' AND `item_id` = %d AND `source_type_id` = %d AND `source_id` = %d ORDER BY `id` DESC LIMIT %d", $this->id, $source_type_id, $source_id, $count ) );
+			} else {
+				// legacy rows with no source are always stale, however many there are
+				$wpdb->query( $wpdb->prepare( "DELETE FROM {$meta_table} WHERE `key` = 'source_item' AND `item_id` = %d AND `source_type_id` = %d AND ( `source_id` IS NULL OR `source_id` = 0 )", $this->id, $source_type_id ) );
+			}
+
+			wp_cache_delete( $source_id, $cache_group );
+		}
 	}
 
 	/**
@@ -164,10 +219,13 @@ class Item extends Table  {
 	 * @author Tanner Moushey
 	 */
 	public function update_service_types( $service_types ) {
-		$existing_service_types = $this->get_service_types();
+		$service_types = array_values( array_unique( array_filter( array_map( 'absint', (array) $service_types ) ) ) );
 
-		foreach( (array) $service_types as $service_type ) {
-			if ( false !== $key = array_search( $service_type, $existing_service_types ) ) {
+		// normalize for comparison — legacy rows can have a NULL/0 source_id which maps to 0
+		$existing_service_types = array_map( 'absint', (array) $this->get_service_types() );
+
+		foreach( $service_types as $service_type ) {
+			if ( false !== $key = array_search( $service_type, $existing_service_types, true ) ) {
 				unset( $existing_service_types[ $key ] );
 				continue;
 			}
@@ -178,15 +236,21 @@ class Item extends Table  {
 				'source_type_id' => ServiceType::get_type_id(),
 			];
 
-			$service_type_model = ServiceType::get_instance( $service_type );
-			$service_type_model->update_meta( $data, false );
+			try {
+				$service_type_model = ServiceType::get_instance( $service_type );
+
+				// don't create association rows for service types that don't exist
+				if ( ! $service_type_model->id ) {
+					continue;
+				}
+
+				$service_type_model->update_meta( $data, false );
+			} catch ( Exception $e ) {
+				error_log( $e );
+			}
 		}
 
-		// remove any service_types which should no longer be attached
-		foreach( $existing_service_types as $service_type ) {
-			$service_type_model = ServiceType::get_instance( $service_type );
-			$service_type_model->delete_meta( absint( $this->id ), 'item_id' );
-		}
+		$this->remove_stale_sources( $existing_service_types, ServiceType::class );
 
 		$this->service_types = $service_types;
 		$this->update_cache();
@@ -225,10 +289,15 @@ class Item extends Table  {
 	 * @author Tanner Moushey
 	 */
 	public function update_types( $types ) {
-		$existing_types = $this->get_types();
+		global $wpdb;
+
+		$types = array_values( array_unique( array_filter( array_map( 'absint', (array) $types ) ) ) );
+
+		// normalize for comparison — legacy rows can have a NULL/0 item_type_id which maps to 0
+		$existing_types = array_map( 'absint', (array) $this->get_types() );
 
 		foreach( $types as $type ) {
-			if ( false !== $key = array_search( $type, $existing_types ) ) {
+			if ( false !== $key = array_search( $type, $existing_types, true ) ) {
 				unset( $existing_types[ $key ] );
 				continue;
 			}
@@ -249,17 +318,28 @@ class Item extends Table  {
 			}
 		}
 
-		// remove any types which should no longer be attached
-		foreach( $existing_types as $type ) {
-			$this->delete_meta( absint( $type ), 'item_type_id' );
+		// remove any types which should no longer be attached; scope by key so rows for
+		// other meta keys are untouched, match NULL/0 ids which a prepared %d misses, and
+		// delete only the surplus rows so a duplicate can't take a still-attached type
+		// with it (see remove_stale_sources() for the same reasoning on the source side)
+		foreach( array_count_values( $existing_types ) as $type => $count ) {
+			if ( $type ) {
+				// oldest row wins — it carries the original `order`
+				$wpdb->query( $wpdb->prepare( "DELETE FROM {$this->meta_table_name} WHERE `key` = 'item_type' AND `item_id` = %d AND `item_type_id` = %d ORDER BY `id` DESC LIMIT %d", $this->id, $type, $count ) );
+			} else {
+				$wpdb->query( $wpdb->prepare( "DELETE FROM {$this->meta_table_name} WHERE `key` = 'item_type' AND `item_id` = %d AND ( `item_type_id` IS NULL OR `item_type_id` = 0 )", $this->id ) );
+				continue;
+			}
 
 			try {
-				$typeModel = ItemType::get_instance( absint( $type ) );
+				$typeModel = ItemType::get_instance( $type );
 				$typeModel->get_items( true );
 			} catch ( Exception $e ) {
 				error_log( $e );
 			}
 		}
+
+		wp_cache_delete( $this->id, static::get_prop( 'cache_group' ) . '_meta' );
 
 		$this->types = $types;
 		$this->update_cache();

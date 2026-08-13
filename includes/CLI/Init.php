@@ -2,9 +2,9 @@
 /**
  * CLI bootstrap.
  *
- * Registers WP-CLI command groups under the `wp cp` namespace. Each command
- * group is a class in CLI\Commands\ whose public methods become subcommands
- * (e.g. `wp cp sermonaudio import`).
+ * Registers WP-CLI command groups. Each command group is a class in
+ * CLI\Commands\ whose public methods become subcommands (e.g.
+ * `wp cp sermonaudio import`, `wp cpl export`, `wp cpl import`).
  *
  * @package CP_Library
  */
@@ -50,5 +50,6 @@ class Init {
 	 */
 	protected function register_commands() {
 		\WP_CLI::add_command( 'cp sermonaudio', Commands\SermonAudio::class );
+		\WP_CLI::add_command( 'cpl', Commands\ImportExport::class );
 	}
 }

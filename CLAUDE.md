@@ -211,7 +211,7 @@ npm run build
 #### Taxonomies
 - `cpl_scripture` - Bible scripture references
 - `cpl_season` - Sermon seasons
-- `cpl_topics` - Sermon topics
+- `cpl_topic` - Sermon topics
 
 ### Common CLI Commands
 
