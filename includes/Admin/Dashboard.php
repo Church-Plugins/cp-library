@@ -70,6 +70,7 @@ class Dashboard {
 
 		\ChurchPlugins\Admin\Menu::add_support();
 
+		Dashboard\Setup::get_instance();
 		Dashboard\Attention::get_instance();
 		Dashboard\Help::get_instance();
 
