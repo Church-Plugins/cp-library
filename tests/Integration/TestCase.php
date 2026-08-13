@@ -14,6 +14,7 @@ namespace CP_Library\Tests\Integration;
 
 use CP_Library\Models\Item as ItemModel;
 use CP_Library\Models\ItemType as ItemTypeModel;
+use CP_Library\Models\ServiceType as ServiceTypeModel;
 use CP_Library\Models\Speaker as SpeakerModel;
 use WP_UnitTestCase;
 
@@ -71,6 +72,76 @@ abstract class TestCase extends WP_UnitTestCase {
 		);
 
 		return ItemTypeModel::get_instance_from_origin( $post_id );
+	}
+
+	/**
+	 * Create a service type backed by a real post.
+	 *
+	 * Service types are off by default; callers testing them should also add
+	 * `cpl_enable_service_type` => __return_true, which WP_UnitTestCase unwinds
+	 * between tests.
+	 *
+	 * @param string $title
+	 * @return ServiceTypeModel
+	 */
+	protected function make_service_type( $title = 'Test Service Type' ) {
+		$post_id = self::factory()->post->create(
+			[
+				'post_type'   => ServiceTypeModel::get_prop( 'post_type' ),
+				'post_title'  => $title,
+				'post_status' => 'publish',
+			]
+		);
+
+		return ServiceTypeModel::get_instance_from_origin( $post_id );
+	}
+
+	/**
+	 * Insert a raw association row for any source type.
+	 *
+	 * Speakers and service types share one meta table, distinguished only by
+	 * `source_type_id` — which is what makes cross-type scoping worth testing.
+	 *
+	 * @param int $item_id
+	 * @param int $source_id
+	 * @param int $source_type_id
+	 * @return int Inserted row id.
+	 */
+	protected function insert_source_row( $item_id, $source_id, $source_type_id ) {
+		global $wpdb;
+
+		$wpdb->insert(
+			SpeakerModel::get_prop( 'meta_table_name' ),
+			[
+				'key'            => 'source_item',
+				'source_id'      => $source_id,
+				'source_type_id' => $source_type_id,
+				'item_id'        => $item_id,
+			]
+		);
+
+		return (int) $wpdb->insert_id;
+	}
+
+	/**
+	 * Association rows for one item restricted to a single source type.
+	 *
+	 * @param int $item_id
+	 * @param int $source_type_id
+	 * @return array
+	 */
+	protected function source_rows_of_type( $item_id, $source_type_id ) {
+		global $wpdb;
+
+		$table = SpeakerModel::get_prop( 'meta_table_name' );
+
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT `id`, `source_id` FROM {$table} WHERE `key` = 'source_item' AND `item_id` = %d AND `source_type_id` = %d ORDER BY `id` ASC",
+				$item_id,
+				$source_type_id
+			)
+		);
 	}
 
 	/**
