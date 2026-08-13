@@ -174,15 +174,21 @@ class AnalyticsSnapshot {
 		$since   = Analytics::get_time( self::WINDOW . ' days ago' );
 		$actions = self::get_play_actions();
 
-		$placeholders = implode( ', ', array_fill( 0, count( $actions ), '%s' ) );
+		$plays = 0;
 
-		$plays = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders are generated above.
-				"SELECT COUNT(*) FROM {$table} WHERE action IN ( {$placeholders} ) AND created > %s",
-				array_merge( $actions, array( $since ) )
-			)
-		);
+		// A filter that returns nothing would otherwise build `action IN ( )`,
+		// which is a syntax error rather than an empty result.
+		if ( $actions ) {
+			$placeholders = implode( ', ', array_fill( 0, count( $actions ), '%s' ) );
+
+			$plays = (int) $wpdb->get_var(
+				$wpdb->prepare(
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholders are generated above.
+					"SELECT COUNT(*) FROM {$table} WHERE action IN ( {$placeholders} ) AND created > %s",
+					array_merge( $actions, array( $since ) )
+				)
+			);
+		}
 
 		$engaged = (int) $wpdb->get_var(
 			$wpdb->prepare(

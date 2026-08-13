@@ -127,12 +127,12 @@ class Integrations {
 		}
 
 		if ( ! $last_sync ) {
-			// Never recorded a sync. On a feed connected before 1.7.0 this only
+			// Never recorded a check. On a feed connected before 1.7.0 this only
 			// means it has not run since upgrading, so it is reported as unknown
 			// rather than broken.
 			return array(
 				'state'  => 'unknown',
-				'detail' => __( 'No sync recorded yet', 'cp-library' ),
+				'detail' => __( 'No check recorded yet', 'cp-library' ),
 				'next'   => $next,
 			);
 		}
@@ -142,7 +142,7 @@ class Integrations {
 				'state'  => 'stale',
 				'detail' => sprintf(
 					/* translators: %s: human readable time difference, e.g. "3 weeks". */
-					__( 'Last synced %s ago', 'cp-library' ),
+					__( 'Last checked %s ago', 'cp-library' ),
 					human_time_diff( $last_sync )
 				),
 				'next'   => $next,
@@ -153,7 +153,7 @@ class Integrations {
 			'state'  => 'ok',
 			'detail' => sprintf(
 				/* translators: %s: human readable time difference, e.g. "20 minutes". */
-				__( 'Synced %s ago', 'cp-library' ),
+				__( 'Checked %s ago', 'cp-library' ),
 				human_time_diff( $last_sync )
 			),
 			'next'   => $next,

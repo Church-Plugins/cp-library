@@ -171,12 +171,18 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	}
 
 	/**
-	 * Record the outcome of a sync.
+	 * Record the outcome of a check against the source.
 	 *
-	 * Until 1.7.0 a failed sync left no trace outside the debug log, so the only
-	 * way to discover that a feed had been silently failing for weeks was to
-	 * notice sermons had stopped arriving. Storing the outcome lets the
-	 * dashboard say so.
+	 * Until 1.7.0 a failure left no trace outside the debug log, so the only way
+	 * to discover that a feed had been failing for weeks was to notice sermons
+	 * had stopped arriving. Storing the outcome lets the dashboard say so.
+	 *
+	 * Note what the success case actually means: update_check() fetches from the
+	 * source and hands the results to format_and_process(), which queues them —
+	 * the rows are written later by the background worker. So a recorded success
+	 * means "the source answered and its items were queued", not "everything
+	 * saved". Failures on the worker side are recorded separately from
+	 * fetch_batch(), which is where they surface.
 	 *
 	 * @param string $error The failure message, or empty on success.
 	 * @return void
@@ -248,6 +254,10 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	public function fetch_complete() {
 		update_option( "cpl_{$this->type}_adapter_import_complete", true );
 		update_option( "cpl_{$this->type}_adapter_import_in_progress", false );
+
+		// Every batch fetched without throwing — the strongest success signal
+		// this adapter has.
+		$this->record_sync();
 	}
 
 	/**
@@ -269,6 +279,11 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 			$this->format_and_process( $batch );
 		} catch ( \ChurchPlugins\Exception | \Exception $e ) {
 			cp_library()->logging->log( $e->getMessage() . ' ' . $e->getTraceAsString(), true );
+
+			// A batch that dies here stops the import, which is exactly the
+			// silent failure the dashboard exists to surface.
+			$this->record_sync( $e->getMessage() );
+
 			return true;
 		}
 
