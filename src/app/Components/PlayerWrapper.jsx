@@ -38,7 +38,12 @@ const countTruthy = (arr) => {
  * @returns {React.ReactElement}
  */
 function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
-  const compoundId = `${mode}-${item.id}`
+  // The persistent player keeps one audio instance mounted from page load so
+  // Safari can grant it playback permission before the first click, which means
+  // this can render with no item. Nothing item-scoped (analytics, watch history)
+  // applies until one is selected.
+  const itemId     = item?.id ?? null
+  const compoundId = `${mode}-${itemId}`
   const viewedRef = useRef(false)
   const isEngagedRef = useRef(false)
   /** @type {{ current: Uint32Array|null }} */
@@ -118,11 +123,11 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
       }
     }
 
-    if(viewedRef.current || !mode || intervalRef.current) return
+    if(viewedRef.current || !mode || !itemId || intervalRef.current) return
 
     intervalRef.current = setTimeout(() => {
       viewedRef.current = true
-      cplLog(item.id, mode + "_view")
+      cplLog(itemId, mode + "_view")
     }, 30 * 1000) // TODO: should not be hardcoded
   }
 
@@ -270,11 +275,11 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
 
     // TODO: Should not be hardcoded, get based on user preference
     if(watchedPercentage > 0.7) {
-      cplLog(item.id, `engaged_${mode}_view`)
+      cplLog(itemId, `engaged_${mode}_view`)
       record.engaged = true
     }
 
-    cplLog(item.id, 'view_duration', {
+    cplLog(itemId, 'view_duration', {
       watchedSeconds,
       maxDuration: watchData.current.length
     })

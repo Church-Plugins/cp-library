@@ -21,6 +21,7 @@ import Logo from '../Elements/Logo';
 import throttle from 'lodash.throttle';
 import api from '../api';
 import useListenerRef from '../Hooks/useListenerRef';
+import { getSilentAudioUrl } from '../utils/silentAudio';
 
 export default function PersistentPlayer (props) {
 	const {isDesktop} = useBreakpoints();
@@ -246,6 +247,56 @@ export default function PersistentPlayer (props) {
 
 	// Store received video/audio URL for use in PlayerWrapper
 	const [mediaUrl, setMediaUrl] = useState(null);
+
+	/**
+	 * Grant the audio element playback permission on the first user interaction.
+	 *
+	 * Safari only allows a media element to play if play() was once called inside a
+	 * user gesture, and it tracks that per element. The audio instance below is kept
+	 * mounted from page load precisely so this can happen before the user picks a
+	 * sermon — otherwise the element is created after the click that was supposed to
+	 * start it, arrives without permission, and the first click does nothing.
+	 *
+	 * Playing then immediately pausing the silent placeholder is enough to clear the
+	 * restriction; swapping src later keeps it.
+	 */
+	useEffect(() => {
+		const doc = window.top.document;
+
+		const unlock = () => {
+			const el = doc.querySelector('#cpl_persistent_player audio');
+
+			if (!el) {
+				return;
+			}
+
+			doc.removeEventListener('pointerdown', unlock, true);
+			doc.removeEventListener('keydown', unlock, true);
+
+			try {
+				const promise = el.play();
+
+				if (promise !== undefined) {
+					promise.then(() => el.pause()).catch(() => {
+						// Nothing to recover here: playback simply stays gated and the
+						// user gets the old two-click behaviour rather than an error.
+					});
+				} else {
+					el.pause();
+				}
+			} catch (e) {
+			}
+		};
+
+		// Capture phase, so this still runs for handlers that stop propagation.
+		doc.addEventListener('pointerdown', unlock, true);
+		doc.addEventListener('keydown', unlock, true);
+
+		return () => {
+			doc.removeEventListener('pointerdown', unlock, true);
+			doc.removeEventListener('keydown', unlock, true);
+		};
+	}, []);
 	
 	useEffect(() => {
 		function handleMessage (data) {
@@ -419,6 +470,71 @@ export default function PersistentPlayer (props) {
 
 	const throttleScroll = throttle(doScroll, 10);
 
+	const isAudio = 'audio' === mode;
+
+	/**
+	 * The one audio instance, mounted for the lifetime of the player root.
+	 *
+	 * Two things matter here and both are about Safari's per-element playback
+	 * permission. The key is fixed rather than derived from the item, so switching
+	 * sermons swaps the element's src instead of tearing the element down and
+	 * building a new, unpermitted one. And it renders whether or not a sermon is
+	 * selected — falling back to a silent placeholder — so the element exists to be
+	 * unlocked on the first interaction, before any play button is clicked.
+	 *
+	 * It only takes the shared player ref while audio is the active mode; in video
+	 * mode the video instance owns that ref, as before.
+	 */
+	const audioEngine = (
+		<PlayerWrapper
+			key="cpl-persistent-audio"
+			mode="audio"
+			item={isAudio ? item : null}
+			ref={isAudio ? setPlayerInstance : null}
+			controls={false}
+			url={isAudio && item ? (mediaUrl || item.audio) : getSilentAudioUrl()}
+			width="0"
+			height="0"
+			playing={isAudio && !loading && isPlaying}
+			playbackRate={playbackRate}
+			userInteractionToken={userInteractionToken}
+			onPlay={() => {
+				if (!isAudio) return;
+				setIsPlaying(true);
+				setIsMutedPlayback(false);
+				setShowMutedNotice(false);
+			}}
+			onPause={() => { if (isAudio) setIsPlaying(false); }}
+			onMutedPlayback={(isMuted) => {
+				if (!isAudio) return;
+				setIsMutedPlayback(isMuted);
+				// Show notification for iOS users when audio is muted
+				if (isMuted && isIOS.current) {
+					setShowMutedNotice(true);
+				}
+				setIsPlaying(false);
+			}}
+			onDuration={duration => {
+				if (!isAudio) return;
+				setDuration(duration);
+				if (playedSeconds > 0) {
+					playerInstance.current?.seekTo(playedSeconds, 'seconds');
+					setIsPlaying(true);
+				}
+			}}
+			onProgress={progress => { if (isAudio) setPlayedSeconds(progress.playedSeconds); }}
+			progressInterval={100}
+		/>
+	);
+
+	return (
+		<>
+			{audioEngine}
+			{renderPlayerChrome()}
+		</>
+	);
+
+	function renderPlayerChrome() {
 	return error ? (
 		<ErrorDisplay error={error}/>
 	) : item ? (
@@ -739,45 +855,13 @@ export default function PersistentPlayer (props) {
 						 </Box>
 					 )}
 					 
-					 <PlayerWrapper
-						 key={`${mode}-${item.id}`}
-						 mode={mode}
-						 item={item}
-						 ref={setPlayerInstance}
-						 controls={false}
-						 url={mediaUrl || item.audio}
-						 width="0"
-						 height="0"
-						 playing={!loading && isPlaying}
-						 playbackRate={playbackRate}
-						 userInteractionToken={userInteractionToken}
-						 onPlay={() => { 
-							 setIsPlaying(true); 
-							 setIsMutedPlayback(false);
-							 setShowMutedNotice(false);
-						 }}
-						 onPause={() => setIsPlaying(false)}
-						 onMutedPlayback={(isMuted) => { 
-							 setIsMutedPlayback(isMuted);
-							 // Show notification for iOS users when audio is muted
-							 if (isMuted && isIOS.current) {
-								 setShowMutedNotice(true);
-							 }
-							 setIsPlaying(false); 
-						 }}
-						 onDuration={duration => {
-							 setDuration(duration);
-							 if (playedSeconds > 0) {
-								 playerInstance.current.seekTo(playedSeconds, 'seconds');
-								 setIsPlaying(true);
-							 }
-						 }}
-						 onProgress={progress => setPlayedSeconds(progress.playedSeconds)}
-						 progressInterval={100}
-					 />
+					 {/* The audio instance itself is mounted outside this tree — see
+					     audioEngine below — so its element survives from page load and
+					     across sermon changes. */}
 				 </Box>
 				}
 			</Box>
 		</Box>
 	) : null;
+	}
 }

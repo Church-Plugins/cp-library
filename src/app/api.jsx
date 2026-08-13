@@ -29,22 +29,68 @@ class CP_Library {
 	constructor() {
 		if( ! this.isIframe ) {
 			this.listen('CPL_OPEN_PERSISTENT_PLAYER', this.__createRoot.bind(this));
+
+			// Mount up front rather than waiting for the first play. Safari grants a
+			// media element permission to play only for a play() call made inside a
+			// user gesture, and tracks it per element — so an <audio> element created
+			// in response to the click is already too late and the first click does
+			// nothing. Mounting here lets PersistentPlayer unlock the element on the
+			// first interaction, well before any play button is pressed.
+			this.__mountWhenReady();
 		}
 	}
 
 	/**
+	 * Mount the player as soon as its container exists.
+	 *
+	 * The container is appended by the plugin's own inline jQuery ready handler, so
+	 * it is not guaranteed to be in the document when this module runs. Retry across
+	 * a few frames, then fall back to window load. The CPL_OPEN_PERSISTENT_PLAYER
+	 * listener still mounts on demand, so the worst case is the old behaviour rather
+	 * than no player.
+	 */
+	__mountWhenReady( attempt = 0 ) {
+		if ( CP_Library.__root ) {
+			return;
+		}
+
+		this.__createRoot();
+
+		if ( CP_Library.__root ) {
+			return;
+		}
+
+		if ( attempt < 20 ) {
+			requestAnimationFrame( () => this.__mountWhenReady( attempt + 1 ) );
+			return;
+		}
+
+		window.addEventListener( 'load', () => this.__createRoot(), { once: true } );
+	}
+
+	/**
 	 * Create the root element for the persistent player.
+	 *
+	 * Note this deliberately does not mark the player as active. `cpl-persistent-player`
+	 * on the body is what tells the rest of the plugin a sermon is loaded — it drives
+	 * playerIsActive() and the SPA-style iframe navigation — and mounting an idle,
+	 * silent player is not that. PersistentPlayer adds the class once an item is
+	 * actually handed over.
 	 */
 	__createRoot() {
 		if (!CP_Library.__root) {
 			CP_Library.__domNode = window.top.document.getElementById('cpl_persistent_player');
-			CP_Library.__root    = createRoot(CP_Library.__domNode)
+
+			if (!CP_Library.__domNode) {
+				return;
+			}
+
+			CP_Library.__root = createRoot(CP_Library.__domNode)
 			CP_Library.__root.render(
 				<Providers>
 					<PersistentPlayer />
 				</Providers>
 			)
-			window.top.document.body.classList.add('cpl-persistent-player');
 		}
 	}
 
