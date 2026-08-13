@@ -95,14 +95,19 @@ class Init {
 	public function upcoming_series_filter( $clauses, \WP_Query $query ) {
 		global $wpdb;
 
-		$item_table_name      = "{$wpdb->prefix}cpl_item";
 		$item_type_table_name = "{$wpdb->prefix}cpl_item_type";
 		$item_meta_table_name = "{$wpdb->prefix}cpl_item_meta";
 
 		if ( isset( $query->query['cpl_hide_upcoming'] ) && true === $query->query['cpl_hide_upcoming'] && cp_library()->setup->post_types->item_type->post_type === $query->query['post_type'] ) {
+			// Join the item_type table — NOT cpl_item. The ON clause has to reference a
+			// table the query actually brings in, and the correlation below needs
+			// item_type.id.
 			$clauses['join']  .= "
-				INNER JOIN {$item_table_name} ON {$item_type_table_name}.origin_id = {$wpdb->posts}.ID";
-			$clauses['where'] .= " AND EXISTS ( SELECT 1 FROM {$item_meta_table_name} WHERE {$item_meta_table_name}.key = 'item_type' AND {$item_type_table_name}.item_type_id = {$item_type_table_name}.id )";
+				INNER JOIN {$item_type_table_name} ON {$item_type_table_name}.origin_id = {$wpdb->posts}.ID";
+			// Correlate the subquery to the joined series row: keep series that some
+			// item is associated with. Comparing item_type to itself matched nothing
+			// and referenced a column that does not exist, failing the whole query.
+			$clauses['where'] .= " AND EXISTS ( SELECT 1 FROM {$item_meta_table_name} WHERE {$item_meta_table_name}.key = 'item_type' AND {$item_meta_table_name}.item_type_id = {$item_type_table_name}.id )";
 		}
 
 		return $clauses;
