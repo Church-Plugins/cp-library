@@ -96,11 +96,35 @@ class Rollup {
 	 * @since 1.7.0
 	 */
 	public function schedule() {
-		if ( wp_next_scheduled( self::CRON_HOOK ) ) {
-			return;
+		// AnalyticsSnapshot used to schedule its own daily event. Rollup now
+		// recomputes those figures as part of its run, so an install that
+		// upgraded through that version would otherwise keep a second event
+		// recomputing them.
+		if ( wp_next_scheduled( AnalyticsSnapshot::CRON_HOOK ) ) {
+			wp_clear_scheduled_hook( AnalyticsSnapshot::CRON_HOOK );
 		}
 
-		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::CRON_HOOK );
+		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::CRON_HOOK );
+		}
+
+		// Nothing is computed on a page view, so a site with no figures yet shows
+		// a thinner panel until this has run once — including, on a site that has
+		// just installed, the card telling them their sermons can be imported.
+		// Prime it a minute out rather than making them wait for the daily run.
+		if ( ! $this->has_run() ) {
+			$this->schedule_debounced( MINUTE_IN_SECONDS );
+		}
+	}
+
+	/**
+	 * Whether the rollup has produced anything yet.
+	 *
+	 * @return bool
+	 * @since 1.7.0
+	 */
+	protected function has_run() {
+		return false !== get_transient( MissingContent::TRANSIENT );
 	}
 
 	/**
@@ -121,12 +145,12 @@ class Rollup {
 	 * @return void
 	 * @since 1.7.0
 	 */
-	public function schedule_debounced() {
+	public function schedule_debounced( $delay = null ) {
 		if ( wp_next_scheduled( self::DEBOUNCE_HOOK ) ) {
 			return;
 		}
 
-		wp_schedule_single_event( time() + self::DEBOUNCE, self::DEBOUNCE_HOOK );
+		wp_schedule_single_event( time() + ( null === $delay ? self::DEBOUNCE : $delay ), self::DEBOUNCE_HOOK );
 	}
 
 	/**

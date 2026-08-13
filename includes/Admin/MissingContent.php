@@ -459,11 +459,21 @@ class MissingContent {
 			return $cached;
 		}
 
-		// Without a lock, every admin who lands on the dashboard after the cache
-		// expires pays the full recount at once. The first one through does the
-		// work; everyone else gets an empty result and the card sits this view
-		// out rather than piling on.
-		if ( ! $force && ! wp_cache_add( self::TRANSIENT . '_lock', 1, '', MINUTE_IN_SECONDS ) ) {
+		/*
+		 * Never computed on a page view — only by Rollup, on cron.
+		 *
+		 * This used to recount on a cache miss behind a wp_cache_add() lock, but
+		 * that lock is worthless on the hosting most of these sites run on: with
+		 * no persistent object cache wp_cache_add() is per-request, so every
+		 * concurrent admin is "the first one through" and each pays the full
+		 * recount. Measured cold on a 8,800-sermon library that is 326ms and 27
+		 * queries per request, all of it in MySQL, on shared hosting that is
+		 * already the slowest thing on the box.
+		 *
+		 * So the card shows nothing until the rollup has run, which Rollup
+		 * primes within a minute of the first admin page load.
+		 */
+		if ( ! $force ) {
 			return array(
 				'total'  => 0,
 				'counts' => array(),

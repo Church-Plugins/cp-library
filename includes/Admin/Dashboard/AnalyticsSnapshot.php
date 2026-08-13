@@ -82,8 +82,11 @@ class AnalyticsSnapshot {
 	 */
 	protected function __construct() {
 		add_filter( 'cpl_dashboard_cards', array( $this, 'register_card' ) );
+
+		// Kept so an existing schedule, or anything hooking it, still works —
+		// but Rollup owns the scheduling, so this no longer registers a second
+		// daily event recomputing the same three figures.
 		add_action( self::CRON_HOOK, array( $this, 'rollup' ) );
-		add_action( 'admin_init', array( $this, 'schedule' ) );
 	}
 
 	/**
@@ -100,20 +103,6 @@ class AnalyticsSnapshot {
 		 * @since 1.7.0
 		 */
 		return absint( apply_filters( 'cpl_analytics_snapshot_window', self::WINDOW ) );
-	}
-
-	/**
-	 * Make sure the rollup is scheduled.
-	 *
-	 * @return void
-	 * @since 1.7.0
-	 */
-	public function schedule() {
-		if ( wp_next_scheduled( self::CRON_HOOK ) ) {
-			return;
-		}
-
-		wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', self::CRON_HOOK );
 	}
 
 	/**
