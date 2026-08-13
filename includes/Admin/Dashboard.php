@@ -70,6 +70,7 @@ class Dashboard {
 
 		\ChurchPlugins\Admin\Menu::add_support();
 
+		Dashboard\Attention::get_instance();
 		Dashboard\Help::get_instance();
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );

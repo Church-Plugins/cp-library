@@ -46,6 +46,40 @@
 		padding-top: 1em;
 		border-top: 1px solid #dcdcde;
 	}
+
+	&__attention {
+		margin: 0;
+
+		li + li {
+			border-top: 1px solid #f0f0f1;
+		}
+
+		a {
+			display: flex;
+			align-items: baseline;
+			gap: .75em;
+			padding: .6em 0;
+			text-decoration: none;
+		}
+	}
+
+	&__attention-count {
+		flex: 0 0 auto;
+		min-width: 2.5em;
+		text-align: right;
+		font-size: 1.3em;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+	}
+
+	&__attention-label {
+		color: #1d2327;
+	}
+
+	&__all-clear {
+		margin: 0;
+		color: #50575e;
+	}
 }
 
 @media screen and (min-width: 960px) {
