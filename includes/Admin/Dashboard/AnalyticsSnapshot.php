@@ -136,7 +136,8 @@ class AnalyticsSnapshot {
 		$cards['analytics'] = array(
 			'title'     => __( 'Last 30 days', 'cp-library' ),
 			'column'    => 'main',
-			'priority'  => 30,
+			// Below the discovery cards: useful, but not why someone opens this.
+			'priority'  => 50,
 			'condition' => array( $this, 'has_data' ),
 			'render'    => array( $this, 'render' ),
 		);

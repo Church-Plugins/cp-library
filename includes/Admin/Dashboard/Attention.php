@@ -59,13 +59,30 @@ class Attention {
 	 */
 	public function register_card( $cards ) {
 		$cards['attention'] = array(
-			'title'    => __( 'Needs attention', 'cp-library' ),
-			'column'   => 'main',
-			'priority' => 20,
-			'render'   => array( $this, 'render' ),
+			'title'     => __( 'Housekeeping', 'cp-library' ),
+			'column'    => 'main',
+			// Last in the main column, deliberately. This is the one card that
+			// reports work outstanding, and a panel people open to find out what
+			// the plugin can do should not lead with a list of what is wrong.
+			'priority'  => 90,
+			'condition' => array( $this, 'has_problems' ),
+			'render'    => array( $this, 'render' ),
 		);
 
 		return $cards;
+	}
+
+	/**
+	 * Whether there is anything worth reporting.
+	 *
+	 * The counts are cached, so this is an option read on all but the first view
+	 * after a sermon changes.
+	 *
+	 * @return bool
+	 * @since 1.7.0
+	 */
+	public function has_problems() {
+		return (bool) MissingContent::get_instance()->get_problems();
 	}
 
 	/**
@@ -78,13 +95,6 @@ class Attention {
 		$problems = MissingContent::get_instance()->get_problems();
 
 		if ( empty( $problems ) ) {
-			// Rendered rather than hidden: an absent card reads as "not checked",
-			// which is not the same as "nothing to fix".
-			printf(
-				'<p class="cpl-dashboard__all-clear">%s</p>',
-				esc_html__( 'Everything looks good — no sermons are missing media, a speaker, or a series.', 'cp-library' )
-			);
-
 			return;
 		}
 		?>

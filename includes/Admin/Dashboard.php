@@ -70,7 +70,11 @@ class Dashboard {
 
 		\ChurchPlugins\Admin\Menu::add_support();
 
+		Dashboard\Notices::get_instance();
+		Dashboard\Spotlight::get_instance();
 		Dashboard\Setup::get_instance();
+		Dashboard\Placement::get_instance();
+		Dashboard\SettingsLinks::get_instance();
 		Dashboard\Attention::get_instance();
 		Dashboard\AnalyticsSnapshot::get_instance();
 		Dashboard\PodcastCard::get_instance();
@@ -159,6 +163,10 @@ class Dashboard {
 			array( $this, 'page_callback' )
 		);
 
+		if ( $this->hook_suffix ) {
+			add_action( "load-{$this->hook_suffix}", array( $this, 'enqueue' ) );
+		}
+
 		// Also surface it in the CP Sermons menu, where people already work.
 		// Registered as a link rather than a page so there is only ever one
 		// dashboard callback; Setup\Init sorts it to the top of that menu.
@@ -168,6 +176,24 @@ class Dashboard {
 			__( 'Dashboard', 'cp-library' ),
 			self::get_capability(),
 			self::get_menu_link()
+		);
+	}
+
+	/**
+	 * Enqueue the dashboard's own assets.
+	 *
+	 * Hooked to `load-{$hook}` so it only runs on this screen. The admin
+	 * stylesheet and main script already load here via Init::is_admin_page().
+	 *
+	 * @return void
+	 * @since 1.7.0
+	 */
+	public function enqueue() {
+		add_action(
+			'admin_enqueue_scripts',
+			function () {
+				cp_library()->enqueue_asset( 'admin-dashboard', array(), false, true, true );
+			}
 		);
 	}
 

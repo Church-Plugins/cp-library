@@ -238,3 +238,127 @@
 		grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
 	}
 }
+
+// Announcements and feature spotlights.
+.cpl-notice {
+	display: flex;
+	gap: .75em;
+	padding: 1em 1.25em;
+	margin-bottom: 20px;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-left: 4px solid var(--wp-admin-theme-color, #2271b1);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+
+	// Inside the spotlight card the box is the card, so drop the chrome.
+	.cpl-dashboard__card & {
+		padding: 0;
+		border: 0;
+		box-shadow: none;
+		background: none;
+	}
+
+	& + .cpl-notice {
+		.cpl-dashboard__card & {
+			margin-top: 1.25em;
+			padding-top: 1.25em;
+			border-top: 1px solid #f0f0f1;
+		}
+	}
+
+	&__title {
+		margin: 0 0 .35em;
+		font-size: 1.05em;
+	}
+
+	&__body p {
+		margin: 0 0 .75em;
+	}
+
+	&__actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: .5em 1em;
+		align-items: center;
+		margin: 0;
+	}
+
+	&__dismiss {
+		color: #50575e;
+		text-decoration: none;
+	}
+}
+
+.cpl-dashboard {
+
+	&__hint {
+		margin: 0 0 1em;
+		color: #50575e;
+	}
+
+	&__codes {
+		margin: 0;
+
+		li {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: .5em;
+			margin-bottom: .75em;
+		}
+
+		code {
+			background: #f0f0f1;
+			padding: .3em .5em;
+			border-radius: 2px;
+		}
+	}
+
+	&__code-label {
+		flex: 1 1 100%;
+		color: #50575e;
+	}
+
+	&__builder {
+		margin-top: 1.5em;
+		padding-top: 1.25em;
+		border-top: 1px solid #f0f0f1;
+
+		h4 {
+			margin: 0 0 .5em;
+		}
+
+		p {
+			margin: 0 0 .75em;
+		}
+	}
+
+	&__settings {
+		margin: 0;
+
+		li {
+			padding: .5em 0;
+
+			& + li {
+				border-top: 1px solid #f0f0f1;
+			}
+		}
+
+		a {
+			display: block;
+			font-weight: 600;
+			text-decoration: none;
+		}
+
+		span {
+			display: block;
+			color: #50575e;
+			font-size: .9em;
+		}
+	}
+}
+
+.cpl-copy.is-copied {
+	border-color: #007427;
+	color: #007427;
+}
