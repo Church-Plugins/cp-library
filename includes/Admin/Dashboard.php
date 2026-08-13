@@ -72,6 +72,9 @@ class Dashboard {
 
 		Dashboard\Setup::get_instance();
 		Dashboard\Attention::get_instance();
+		Dashboard\AnalyticsSnapshot::get_instance();
+		Dashboard\PodcastCard::get_instance();
+		Dashboard\Integrations::get_instance();
 		Dashboard\Help::get_instance();
 
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );

@@ -131,6 +131,105 @@
 			color: #50575e;
 		}
 	}
+
+	// Wraps to 2 + 1 rather than squeezing the numbers below legibility.
+	&__stats {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1.5em;
+	}
+
+	&__stat {
+		display: flex;
+		flex-direction: column;
+		min-width: 5em;
+	}
+
+	&__stat-value {
+		font-size: 1.6em;
+		font-weight: 600;
+		line-height: 1.2;
+		font-variant-numeric: tabular-nums;
+	}
+
+	&__stat-label,
+	&__stat-stamp {
+		color: #50575e;
+	}
+
+	&__stat-footer {
+		display: flex;
+		flex-wrap: wrap;
+		gap: .5em 1em;
+		align-items: baseline;
+		justify-content: space-between;
+		margin: 1em 0 0;
+	}
+
+	&__feed {
+		margin: 0 0 1em;
+		// A feed URL has no spaces to break on and would otherwise widen the card.
+		overflow-wrap: anywhere;
+	}
+
+	&__requirements {
+		margin: 0 0 1em;
+
+		li {
+			display: flex;
+			align-items: flex-start;
+			gap: .4em;
+			margin-bottom: .4em;
+		}
+
+		.dashicons {
+			color: #dba617;
+			flex: 0 0 auto;
+		}
+	}
+
+	&__requirement-note {
+		display: block;
+		color: #50575e;
+		font-style: normal;
+		font-size: .9em;
+	}
+
+	&__integrations {
+		margin: 0;
+
+		li {
+			padding: .5em 0;
+
+			& + li {
+				border-top: 1px solid #f0f0f1;
+			}
+		}
+
+		span {
+			display: block;
+		}
+	}
+
+	&__integration-name {
+		font-weight: 600;
+	}
+
+	&__integration-detail {
+		.is-error & {
+			color: #d63638;
+		}
+
+		.is-stale & {
+			color: #dba617;
+		}
+	}
+
+	&__integration-detail,
+	&__integration-next {
+		color: #50575e;
+		font-size: .9em;
+	}
 }
 
 @media screen and (min-width: 960px) {

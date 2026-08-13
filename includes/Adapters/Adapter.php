@@ -153,15 +153,70 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 		try {
 			$items = $this->get_recent_items( $amount );
 			$this->format_and_process( $items );
+
+			$this->record_sync();
+
 			if ( $is_json_request ) {
 				wp_send_json_success( array( 'message' => 'Sermons updated' ) );
 			}
 		} catch ( \ChurchPlugins\Exception | \Exception $e ) {
 			cp_library()->logging->log( $e->getMessage() . ' ' . $e->getTraceAsString(), true );
+
+			$this->record_sync( $e->getMessage() );
+
 			if ( $is_json_request ) {
 				wp_send_json_error( array( 'error' => $e->getMessage() ) );
 			}
 		}
+	}
+
+	/**
+	 * Record the outcome of a sync.
+	 *
+	 * Until 1.7.0 a failed sync left no trace outside the debug log, so the only
+	 * way to discover that a feed had been silently failing for weeks was to
+	 * notice sermons had stopped arriving. Storing the outcome lets the
+	 * dashboard say so.
+	 *
+	 * @param string $error The failure message, or empty on success.
+	 * @return void
+	 * @since 1.7.0
+	 */
+	public function record_sync( $error = '' ) {
+		update_option( "cpl_{$this->type}_adapter_last_sync", time() );
+
+		if ( $error ) {
+			update_option( "cpl_{$this->type}_adapter_last_error", array(
+				'message' => $error,
+				'time'    => time(),
+			) );
+
+			return;
+		}
+
+		delete_option( "cpl_{$this->type}_adapter_last_error" );
+	}
+
+	/**
+	 * When this adapter last completed a sync.
+	 *
+	 * @return int A Unix timestamp, or 0 if it has never run.
+	 * @since 1.7.0
+	 */
+	public function get_last_sync() {
+		return (int) get_option( "cpl_{$this->type}_adapter_last_sync", 0 );
+	}
+
+	/**
+	 * The most recent sync failure, if the last sync failed.
+	 *
+	 * @return array|false Array with `message` and `time`, or false.
+	 * @since 1.7.0
+	 */
+	public function get_last_error() {
+		$error = get_option( "cpl_{$this->type}_adapter_last_error", false );
+
+		return is_array( $error ) && ! empty( $error['message'] ) ? $error : false;
 	}
 
 	/**
