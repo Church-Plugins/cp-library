@@ -417,3 +417,57 @@
 		}
 	}
 }
+
+.cpl-dashboard {
+
+	&__recent {
+		margin: 0;
+
+		li {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: baseline;
+			gap: .25em .75em;
+			padding: .6em 0;
+
+			& + li {
+				border-top: 1px solid #f0f0f1;
+			}
+		}
+	}
+
+	&__recent-title {
+		font-weight: 600;
+		text-decoration: none;
+		// Long sermon titles should wrap rather than push the View link out.
+		flex: 1 1 60%;
+		min-width: 0;
+	}
+
+	&__recent-view {
+		margin-left: auto;
+	}
+
+	&__recent-meta {
+		flex: 1 1 100%;
+		color: #50575e;
+		font-size: .9em;
+	}
+
+	&__recent-notes {
+		color: #b32d2e;
+
+		&::before {
+			content: "· ";
+			color: #50575e;
+		}
+	}
+
+	&__migrations {
+		margin: 0 0 1em;
+
+		li {
+			padding: .2em 0;
+		}
+	}
+}

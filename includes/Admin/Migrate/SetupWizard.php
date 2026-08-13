@@ -70,7 +70,15 @@ class SetupWizard {
 
 		$wizard_initialized = get_option( 'cp-library-setup-wizard-initialized', false );
 
-		if ( $wizard_initialized ) {
+		/*
+		 * Also register when content is waiting to be imported. The option above
+		 * is only written by the activation redirect, so activating via WP-CLI —
+		 * or installing CP Sermons before the old plugin's content arrives, or
+		 * simply clicking away — left the wizard with no route back to it. The
+		 * flag is the cached one behind the dashboard card, so this costs a
+		 * transient read rather than three COUNT(*) queries.
+		 */
+		if ( $wizard_initialized || get_transient( \CP_Library\Admin\Dashboard\Migrate::TRANSIENT ) ) {
 			$this->actions();
 		}
 	}

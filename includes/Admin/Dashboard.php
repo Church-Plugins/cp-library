@@ -72,6 +72,8 @@ class Dashboard {
 
 		Dashboard\Rollup::get_instance();
 		Dashboard\Notices::get_instance();
+		Dashboard\Migrate::get_instance();
+		Dashboard\ThisWeek::get_instance();
 		Dashboard\Spotlight::get_instance();
 		Dashboard\Setup::get_instance();
 		Dashboard\Placement::get_instance();

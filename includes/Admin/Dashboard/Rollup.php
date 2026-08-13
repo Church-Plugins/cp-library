@@ -138,6 +138,7 @@ class Rollup {
 	public function run() {
 		MissingContent::get_instance()->get_counts( true );
 		Spotlight::get_instance()->get_usage( true );
+		Migrate::get_instance()->get_available( true );
 		AnalyticsSnapshot::get_instance()->rollup();
 	}
 }

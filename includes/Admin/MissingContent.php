@@ -253,6 +253,34 @@ class MissingContent {
 	}
 
 	/**
+	 * A type's condition, bound to a post ID column.
+	 *
+	 * Lets other screens ask "is this particular sermon missing X" using the
+	 * same definition as the counts and the list table filter, so the three can
+	 * never drift apart.
+	 *
+	 * @param string $key    A type key.
+	 * @param string $column The post ID column to key on.
+	 * @return string Empty when the type is not registered.
+	 * @since 1.7.0
+	 */
+	public function get_condition_sql( $key, $column ) {
+		$types = $this->get_types();
+
+		return isset( $types[ $key ] ) ? $this->prepare_sql( $types[ $key ]['sql'], $column ) : '';
+	}
+
+	/**
+	 * The registered type keys and their labels.
+	 *
+	 * @return array
+	 * @since 1.7.0
+	 */
+	public function get_labels() {
+		return wp_list_pluck( $this->get_types(), 'label' );
+	}
+
+	/**
 	 * The Speaker source type id.
 	 *
 	 * Speaker::get_type_id() inserts the type when it is absent, so this is
