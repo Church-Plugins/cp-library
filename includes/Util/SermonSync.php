@@ -59,6 +59,8 @@ class SermonSync {
 	 *     @type int          $date      Optional. Message date as a Unix timestamp. Defaults to now.
 	 *     @type string       $status    Optional. Post status. Default 'publish'.
 	 *     @type array|null   $series    Optional. `[ 'id' => extId, 'title' => string ]` or null.
+	 *                                   May carry `thumbnail_id` ( an attachment id ) to use as the
+	 *                                   series featured image; see maybe_update_series().
 	 *     @type array        $speakers  Optional. List of `[ 'id' => extId, 'name' => string ]`.
 	 *     @type string       $video_url Optional. Video URL.
 	 *     @type string       $audio_url Optional. Audio URL.
@@ -157,7 +159,7 @@ class SermonSync {
 	 * @since 1.6.0
 	 *
 	 * @param Item       $item   The item model.
-	 * @param array|null $series `[ 'id' => extId, 'title' => string ]` or null.
+	 * @param array|null $series `[ 'id' => extId, 'title' => string, 'thumbnail_id' => int ]` or null.
 	 * @param string     $source External-id namespace.
 	 * @return void
 	 */
@@ -186,12 +188,38 @@ class SermonSync {
 			return;
 		}
 
+		self::maybe_set_series_thumbnail( $series_post_id, $series['thumbnail_id'] ?? 0 );
+
 		try {
 			$series_model_id = ItemType::get_instance_from_origin( $series_post_id )->id;
 			$item->update_types( [ $series_model_id ] );
 		} catch ( \Throwable $e ) {
 			self::log( 'Could not attach series "' . $series['title'] . '": ' . $e->getMessage() );
 		}
+	}
+
+	/**
+	 * Set the series featured image, without overwriting an existing one.
+	 *
+	 * A series post is not always ours to style: resolve_or_create_post() deliberately
+	 * adopts an existing post with a matching title so repeated syncs do not create
+	 * duplicates, which means this may be a series someone built and illustrated by
+	 * hand. Only fill an empty slot — never replace artwork a human chose.
+	 *
+	 * @since 1.6.3
+	 *
+	 * @param int $series_post_id The series ( `cpl_item_type` ) post id.
+	 * @param int $thumbnail_id   The attachment id to use, or 0 for none.
+	 * @return void
+	 */
+	protected static function maybe_set_series_thumbnail( $series_post_id, $thumbnail_id ) {
+		$thumbnail_id = (int) $thumbnail_id;
+
+		if ( ! $thumbnail_id || get_post_thumbnail_id( $series_post_id ) ) {
+			return;
+		}
+
+		set_post_thumbnail( $series_post_id, $thumbnail_id );
 	}
 
 	/**
