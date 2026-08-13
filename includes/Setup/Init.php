@@ -2,6 +2,7 @@
 
 namespace CP_Library\Setup;
 
+use CP_Library\Admin\Dashboard;
 use CP_Library\Admin\Settings;
 use CP_Library\Setup\Blocks\Block;
 
@@ -99,6 +100,7 @@ class Init {
 			$menu_type = cp_library()->get_admin_menu_slug();
 			$menu_item = 'edit.php?post_type=' . $menu_type;
 
+			$dash_menu = [];
 			$top_menu  = [];
 			$tax_menu  = [];
 			$cpt_menu  = [];
@@ -109,7 +111,9 @@ class Init {
 			}
 
 			foreach ( $submenu[ $menu_item ] as $item ) {
-				if ( $item[2] === $menu_item || false !== strpos( $item[2], 'post-new.php' ) ) {
+				if ( Dashboard::get_menu_link() === $item[2] ) {
+					$dash_menu[] = $item;
+				} elseif ( $item[2] === $menu_item || false !== strpos( $item[2], 'post-new.php' ) ) {
 					$top_menu[] = $item;
 				} elseif ( false !== strpos( $item[2], 'edit-tags.php?taxonomy=' ) ) {
 					$tax_menu[] = $item;
@@ -117,6 +121,29 @@ class Init {
 					$cpt_menu[] = $item;
 				} else {
 					$tool_menu[] = $item;
+				}
+			}
+
+			// Sit the dashboard directly above Settings. Anchoring to the Settings
+			// entry rather than a fixed offset keeps it in place regardless of the
+			// order the tool pages register in — CMB2 attaches Settings later than
+			// the rest, on `init`. Deliberately not first: WordPress points a
+			// top-level menu at its first submenu item, so leading with the
+			// dashboard would take over the CP Sermons menu link itself.
+			if ( ! empty( $dash_menu ) ) {
+				$settings_index = null;
+
+				foreach ( $tool_menu as $index => $item ) {
+					if ( 'cpl_main_options' === $item[2] ) {
+						$settings_index = $index;
+						break;
+					}
+				}
+
+				if ( null === $settings_index ) {
+					$tool_menu = array_merge( $dash_menu, $tool_menu );
+				} else {
+					array_splice( $tool_menu, $settings_index, 0, $dash_menu );
 				}
 			}
 
