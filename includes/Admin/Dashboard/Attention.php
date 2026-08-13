@@ -82,7 +82,26 @@ class Attention {
 	 * @since 1.7.0
 	 */
 	public function has_problems() {
-		return (bool) MissingContent::get_instance()->get_problems();
+		return (bool) $this->get_problems();
+	}
+
+	/**
+	 * The problems worth reporting, resolved once per request.
+	 *
+	 * Both the card's condition and its render need this, and without memoizing
+	 * a cold cache would be paid for twice on the same page view.
+	 *
+	 * @return array
+	 * @since 1.7.0
+	 */
+	protected function get_problems() {
+		static $problems = null;
+
+		if ( null === $problems ) {
+			$problems = MissingContent::get_instance()->get_problems();
+		}
+
+		return $problems;
 	}
 
 	/**
@@ -92,7 +111,7 @@ class Attention {
 	 * @since 1.7.0
 	 */
 	public function render() {
-		$problems = MissingContent::get_instance()->get_problems();
+		$problems = $this->get_problems();
 
 		if ( empty( $problems ) ) {
 			return;

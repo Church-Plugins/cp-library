@@ -124,42 +124,66 @@ class Setup {
 
 		$steps = array(
 			'sermon' => array(
-				/* translators: %s: the singular sermon label. */
-				'label' => sprintf( __( 'Add your first %s', 'cp-library' ), strtolower( $item->single_label ) ),
-				'done'  => $this->has_posts( $item->post_type ),
-				'url'   => admin_url( 'post-new.php?post_type=' . $item->post_type ),
+				/* translators: %s: the singular sermon label, e.g. "Sermon". */
+				'label'  => sprintf( __( 'Add your first %s', 'cp-library' ), $item->single_label ),
+				'action' => __( 'Add', 'cp-library' ),
+				'done'   => $this->has_posts( $item->post_type ),
+				'url'    => admin_url( 'post-new.php?post_type=' . $item->post_type ),
 			),
 		);
 
 		if ( $post_types->item_type_enabled() ) {
 			$steps['series'] = array(
-				/* translators: %s: the singular series label. */
-				'label' => sprintf( __( 'Create a %s', 'cp-library' ), strtolower( $post_types->item_type->single_label ) ),
-				'done'  => $this->has_posts( $post_types->item_type->post_type ),
-				'url'   => admin_url( 'post-new.php?post_type=' . $post_types->item_type->post_type ),
+				/* translators: %s: the singular series label, e.g. "Series". */
+				'label'  => sprintf( __( 'Create a %s', 'cp-library' ), $post_types->item_type->single_label ),
+				'desc'   => __( 'A group of sermons preached together — a six-week study, say. Optional.', 'cp-library' ),
+				'action' => __( 'Create', 'cp-library' ),
+				'done'   => $this->has_posts( $post_types->item_type->post_type ),
+				'url'    => admin_url( 'post-new.php?post_type=' . $post_types->item_type->post_type ),
 			);
 		}
 
 		if ( $post_types->speaker_enabled() ) {
 			$steps['speaker'] = array(
-				/* translators: %s: the singular speaker label. */
-				'label' => sprintf( __( 'Add a %s', 'cp-library' ), strtolower( $post_types->speaker->single_label ) ),
-				'done'  => $this->has_posts( $post_types->speaker->post_type ),
-				'url'   => admin_url( 'post-new.php?post_type=' . $post_types->speaker->post_type ),
+				/* translators: %s: the singular speaker label, e.g. "Speaker". */
+				'label'  => sprintf( __( 'Add a %s', 'cp-library' ), $post_types->speaker->single_label ),
+				'desc'   => __( 'Speakers get their own page listing everything they have preached. Optional.', 'cp-library' ),
+				'action' => __( 'Add', 'cp-library' ),
+				'done'   => $this->has_posts( $post_types->speaker->post_type ),
+				'url'    => admin_url( 'post-new.php?post_type=' . $post_types->speaker->post_type ),
 			);
 		}
 
 		$steps['thumbnail'] = array(
-			'label' => __( 'Set a default image', 'cp-library' ),
-			'done'  => (bool) Settings::get( 'default_thumbnail', '', 'cpl_main_options' ),
-			'url'   => admin_url( 'admin.php?page=cpl_main_options' ),
+			'label'  => __( 'Choose a fallback image', 'cp-library' ),
+			'desc'   => __( 'Used when a sermon has no image of its own. There is a placeholder until you set one.', 'cp-library' ),
+			'action' => __( 'Choose', 'cp-library' ),
+			'done'   => (bool) Settings::get( 'default_thumbnail', '', 'cpl_main_options' ),
+			'url'    => admin_url( 'admin.php?page=cpl_main_options' ),
 		);
 
-		$steps['podcast'] = array(
-			'label' => __( 'Turn on your podcast feed', 'cp-library' ),
-			'done'  => cp_library()->setup->podcast->is_enabled(),
-			'url'   => admin_url( 'admin.php?page=cpl_advanced_options' ),
-		);
+		// Only offered to sites that have not already decided against a podcast.
+		// A church that will never publish one should not be held at four of five
+		// forever, with dismissing the whole card as its only escape.
+		$podcast_decided = array_key_exists( 'podcast_feed_enable', (array) get_option( 'cpl_advanced_options', array() ) );
+
+		if ( cp_library()->setup->podcast->is_enabled() || ! $podcast_decided ) {
+			$steps['podcast'] = array(
+				'label'  => __( 'Set up your sermon podcast', 'cp-library' ),
+				'desc'   => __( 'Lets people listen in Apple Podcasts or Spotify. Turning it on just creates the address — nothing is published until you submit it yourself.', 'cp-library' ),
+				'action' => __( 'Set up', 'cp-library' ),
+				// Enabling the feed is not the same as having a usable one, so
+				// this stays outstanding until the requirements Apple rejects on
+				// are actually met.
+				'done'   => cp_library()->setup->podcast->is_enabled() && ! array_filter(
+					PodcastCard::get_instance()->get_requirements(),
+					function ( $requirement ) {
+						return ! $requirement['met'];
+					}
+				),
+				'url'    => admin_url( 'admin.php?page=cpl_advanced_options' ),
+			);
+		}
 
 		/**
 		 * Filters the CP Sermons setup checklist.
@@ -246,10 +270,10 @@ class Setup {
 		<p class="cpl-dashboard__progress-label">
 			<?php
 			printf(
-				/* translators: 1: steps completed, 2: total steps. */
-				esc_html__( '%1$s of %2$s complete', 'cp-library' ),
+				/* translators: 1: steps completed, 2: steps remaining. */
+				esc_html__( '%1$s done, %2$s to go', 'cp-library' ),
 				esc_html( number_format_i18n( $done ) ),
-				esc_html( number_format_i18n( $total ) )
+				esc_html( number_format_i18n( max( 0, $total - $done ) ) )
 			);
 			?>
 		</p>
@@ -260,12 +284,22 @@ class Setup {
 
 		<ul class="cpl-dashboard__steps">
 			<?php foreach ( $steps as $key => $step ) : ?>
+				<?php $step = wp_parse_args( $step, array( 'desc' => '', 'action' => __( 'Set up', 'cp-library' ) ) ); ?>
 				<li class="<?php echo $step['done'] ? 'is-done' : ''; ?>">
 					<span class="cpl-dashboard__step-mark dashicons <?php echo $step['done'] ? 'dashicons-yes-alt' : 'dashicons-marker'; ?>" aria-hidden="true"></span>
-					<span class="cpl-dashboard__step-label"><?php echo esc_html( $step['label'] ); ?></span>
+					<span class="cpl-dashboard__step-label">
+						<?php /* State is otherwise colour, a strikethrough and a hidden icon — none of which reach a screen reader. */ ?>
+						<span class="screen-reader-text">
+							<?php echo $step['done'] ? esc_html__( 'Done:', 'cp-library' ) : esc_html__( 'Still to do:', 'cp-library' ); ?>
+						</span>
+						<?php echo esc_html( $step['label'] ); ?>
+						<?php if ( $step['desc'] && ! $step['done'] ) : ?>
+							<span class="cpl-dashboard__step-desc"><?php echo esc_html( $step['desc'] ); ?></span>
+						<?php endif; ?>
+					</span>
 					<?php if ( ! $step['done'] ) : ?>
 						<a class="button button-small" href="<?php echo esc_url( $step['url'] ); ?>">
-							<?php esc_html_e( 'Set up', 'cp-library' ); ?>
+							<?php echo esc_html( $step['action'] ); ?>
 						</a>
 					<?php endif; ?>
 				</li>
@@ -274,8 +308,11 @@ class Setup {
 
 		<p class="cpl-dashboard__dismiss">
 			<a href="<?php echo esc_url( $this->get_dismiss_url() ); ?>">
-				<?php esc_html_e( 'Dismiss this checklist', 'cp-library' ); ?>
+				<?php esc_html_e( 'Hide this checklist', 'cp-library' ); ?>
 			</a>
+			<span class="cpl-dashboard__dismiss-note">
+				<?php esc_html_e( '(hides it for everyone who manages this site)', 'cp-library' ); ?>
+			</span>
 		</p>
 		<?php
 	}

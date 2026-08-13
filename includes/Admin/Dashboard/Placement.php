@@ -128,24 +128,24 @@ class Placement {
 				'code'  => '[cp-sermons]',
 				'label' => sprintf(
 					/* translators: %s: the plural sermon label, e.g. "Sermons". */
-					__( 'The full %s archive, with filters and search.', 'cp-library' ),
-					strtolower( $item->plural_label )
+					__( 'A page listing all your %s, with search and filters.', 'cp-library' ),
+					$item->plural_label
 				),
 			),
 			array(
 				'code'  => '[cp-sermon id="123"]',
 				'label' => sprintf(
-					/* translators: %s: the singular sermon label, e.g. "sermon". */
-					__( 'One %s, with its player. Use the ID from the address bar when editing it.', 'cp-library' ),
-					strtolower( $item->single_label )
+					/* translators: %s: the singular sermon label, e.g. "Sermon". */
+					__( 'Shows one %s and its player. Replace 123 with that one\'s number — open it for editing and look for post=1234 in your browser address bar.', 'cp-library' ),
+					$item->single_label
 				),
 			),
 			array(
 				'code'  => '[cpl_video_widget]',
 				'label' => sprintf(
-					/* translators: %s: the singular sermon label. */
-					__( 'The most recent %s as a video widget — good for a home page.', 'cp-library' ),
-					strtolower( $item->single_label )
+					/* translators: %s: the singular sermon label, e.g. "Sermon". */
+					__( 'Always shows your newest %s. Good for a home page — it updates itself.', 'cp-library' ),
+					$item->single_label
 				),
 			),
 		);
@@ -169,14 +169,26 @@ class Placement {
 		$builders = $this->get_active_builders();
 		?>
 		<p class="cpl-dashboard__hint">
-			<?php esc_html_e( 'Paste any of these into a page or post. Blocks for each are in the editor under "CP Sermons".', 'cp-library' ); ?>
+			<?php
+			/* The safe path first. The previous copy led with "paste any of these" and buried blocks in a subordinate clause — and overclaimed, since only the archive has a block, under a category named "CP Sermons Queries" rather than "CP Sermons". */
+			esc_html_e( 'The easiest way is to edit a page and add the "CP Sermons Sermons/Series" block — look for it under CP Sermons Queries in the block list.', 'cp-library' );
+			?>
+		</p>
+		<p class="cpl-dashboard__hint">
+			<?php esc_html_e( 'Prefer to type it? These do the same thing. Paste one into a page and it becomes the real thing when you save.', 'cp-library' ); ?>
 		</p>
 
 		<ul class="cpl-dashboard__codes">
 			<?php foreach ( $this->get_shortcodes() as $shortcode ) : ?>
 				<li>
 					<code class="cpl-copy__value"><?php echo esc_html( $shortcode['code'] ); ?></code>
-					<button type="button" class="button button-small cpl-copy" data-copy="<?php echo esc_attr( $shortcode['code'] ); ?>">
+					<button
+						type="button"
+						class="button button-small cpl-copy"
+						data-copy="<?php echo esc_attr( $shortcode['code'] ); ?>"
+						<?php /* Three buttons all named "Copy" read as "Copy, Copy, Copy" in a screen reader's button list. */ ?>
+						aria-label="<?php echo esc_attr( sprintf( __( 'Copy %s', 'cp-library' ), $shortcode['code'] ) ); ?>"
+					>
 						<?php esc_html_e( 'Copy', 'cp-library' ); ?>
 					</button>
 					<span class="cpl-dashboard__code-label"><?php echo esc_html( $shortcode['label'] ); ?></span>
@@ -186,33 +198,42 @@ class Placement {
 
 		<?php if ( $builders ) : ?>
 			<div class="cpl-dashboard__builder">
-				<h4>
+				<h3>
 					<?php
 					printf(
-						/* translators: %s: a page builder name, e.g. "Divi". */
-						esc_html__( 'Using %s?', 'cp-library' ),
-						esc_html( implode( ', ', $builders ) )
+						/* translators: %s: a list of page builder names, e.g. "Divi" or "Divi and Elementor". */
+						esc_html__( 'Designing %s pages yourself', 'cp-library' ),
+						esc_html( cp_library()->setup->post_types->item->single_label )
 					);
 					?>
-				</h4>
+				</h3>
 				<p>
 					<?php
 					printf(
-						/* translators: %s: the singular sermon label, e.g. "sermon". */
-						esc_html__( 'CP Sermons supplies its own layout for a single %s, which replaces whatever your builder would render. To design that page yourself instead, add this shortcode anywhere in your builder layout — CP Sermons will stand down and render its content in that exact spot.', 'cp-library' ),
-						esc_html( strtolower( cp_library()->setup->post_types->item->single_label ) )
+						/* translators: 1: the singular sermon label, 2: the page builders in use. */
+						esc_html__( 'Right now CP Sermons decides how each %1$s page looks, so a design built in %2$s is not used on them. To design them yourself instead, paste the code below into your builder layout and the sermon content will appear at exactly that spot rather than taking over the page.', 'cp-library' ),
+						esc_html( cp_library()->setup->post_types->item->single_label ),
+						esc_html( wp_sprintf( '%l', $builders ) )
 					);
 					?>
 				</p>
+				<p>
+					<?php esc_html_e( 'This only changes how those pages look — nothing is deleted, and removing the code puts it back. If you are not sure, this is usually a job for whoever built your site.', 'cp-library' ); ?>
+				</p>
 				<p class="cpl-dashboard__codes">
 					<code class="cpl-copy__value">[cp-template]</code>
-					<button type="button" class="button button-small cpl-copy" data-copy="[cp-template]">
+					<button
+						type="button"
+						class="button button-small cpl-copy"
+						data-copy="[cp-template]"
+						aria-label="<?php esc_attr_e( 'Copy [cp-template]', 'cp-library' ); ?>"
+					>
 						<?php esc_html_e( 'Copy', 'cp-library' ); ?>
 					</button>
 				</p>
 				<p>
 					<a href="<?php echo esc_url( Help::doc_url( 'church-plugins-customizer' ) ); ?>" target="_blank" rel="noopener noreferrer">
-						<?php esc_html_e( 'Templates and display options', 'cp-library' ); ?>
+						<?php esc_html_e( 'How sermon pages are designed', 'cp-library' ); ?>
 						<span aria-hidden="true">&rarr;</span>
 					</a>
 				</p>

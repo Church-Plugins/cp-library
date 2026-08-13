@@ -114,17 +114,17 @@ class PodcastCard {
 	public function get_requirements() {
 		$requirements = array(
 			'image'    => array(
-				'label' => __( 'Cover art', 'cp-library' ),
+				'label' => __( 'Cover image — square, at least 1400×1400 pixels', 'cp-library' ),
 				'met'   => false,
 				'note'  => '',
 			),
 			'email'    => array(
-				'label' => __( 'Owner email', 'cp-library' ),
+				'label' => __( 'Contact email — Apple requires one; it is not shown publicly', 'cp-library' ),
 				'met'   => (bool) PodcastSettings::get( 'email', '' ),
 				'note'  => '',
 			),
 			'category' => array(
-				'label' => __( 'Category', 'cp-library' ),
+				'label' => __( 'Category — how your show is listed in Apple Podcasts', 'cp-library' ),
 				'met'   => (bool) PodcastSettings::get( 'category', '' ),
 				'note'  => '',
 			),
@@ -154,6 +154,31 @@ class PodcastCard {
 	protected function check_artwork() {
 		$image = PodcastSettings::get( 'image', '' );
 
+		// attachment_url_to_postid() is an unindexed scan of wp_posts.guid, and
+		// this runs on every dashboard view. The answer only changes when the
+		// setting does, so it is cached against the URL.
+		$cache_key = 'cpl_podcast_artwork_' . md5( (string) $image );
+		$cached    = get_transient( $cache_key );
+
+		if ( is_array( $cached ) ) {
+			return $cached;
+		}
+
+		$result = $this->check_artwork_uncached( $image );
+
+		set_transient( $cache_key, $result, WEEK_IN_SECONDS );
+
+		return $result;
+	}
+
+	/**
+	 * Work out whether the artwork passes, without consulting the cache.
+	 *
+	 * @param string $image The artwork URL.
+	 * @return array
+	 * @since 1.7.0
+	 */
+	protected function check_artwork_uncached( $image ) {
 		if ( ! $image ) {
 			return array(
 				'met'  => false,
@@ -218,18 +243,32 @@ class PodcastCard {
 			return ! $requirement['met'];
 		} );
 		?>
+		<h3 class="cpl-dashboard__feed-label"><?php esc_html_e( 'Your podcast address', 'cp-library' ); ?></h3>
 		<p class="cpl-dashboard__feed">
-			<a href="<?php echo esc_url( $feed_url ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $feed_url ); ?></a>
+			<code class="cpl-copy__value"><?php echo esc_html( $feed_url ); ?></code>
+			<button
+				type="button"
+				class="button button-small cpl-copy"
+				data-copy="<?php echo esc_attr( $feed_url ); ?>"
+				aria-label="<?php esc_attr_e( 'Copy podcast address', 'cp-library' ); ?>"
+			>
+				<?php esc_html_e( 'Copy', 'cp-library' ); ?>
+			</button>
+		</p>
+		<p class="cpl-dashboard__hint">
+			<?php esc_html_e( 'Give this to Apple Podcasts or Spotify when you submit your show. Opening it yourself shows a page of code — that is normal, it is meant for apps rather than people.', 'cp-library' ); ?>
 		</p>
 
 		<?php if ( empty( $outstanding ) ) : ?>
-			<p class="cpl-dashboard__all-clear"><?php esc_html_e( 'Ready to submit.', 'cp-library' ); ?></p>
+			<p class="cpl-dashboard__all-clear"><?php esc_html_e( 'Everything Apple asks for is filled in — you can submit the address above.', 'cp-library' ); ?></p>
 		<?php else : ?>
+			<h3><?php esc_html_e( 'Before you submit to Apple', 'cp-library' ); ?></h3>
 			<ul class="cpl-dashboard__requirements">
 				<?php foreach ( $outstanding as $requirement ) : ?>
 					<li>
-						<span class="dashicons dashicons-warning" aria-hidden="true"></span>
+						<span class="dashicons dashicons-marker" aria-hidden="true"></span>
 						<span>
+							<span class="screen-reader-text"><?php esc_html_e( 'Still needed:', 'cp-library' ); ?></span>
 							<?php echo esc_html( $requirement['label'] ); ?>
 							<?php if ( $requirement['note'] ) : ?>
 								<em class="cpl-dashboard__requirement-note"><?php echo esc_html( $requirement['note'] ); ?></em>
@@ -240,7 +279,7 @@ class PodcastCard {
 			</ul>
 			<p>
 				<a class="button button-small" href="<?php echo esc_url( admin_url( 'admin.php?page=cpl_podcast_options' ) ); ?>">
-					<?php esc_html_e( 'Podcast settings', 'cp-library' ); ?>
+					<?php esc_html_e( 'Add the missing details', 'cp-library' ); ?>
 				</a>
 			</p>
 		<?php endif; ?>

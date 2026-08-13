@@ -70,6 +70,7 @@ class Dashboard {
 
 		\ChurchPlugins\Admin\Menu::add_support();
 
+		Dashboard\Rollup::get_instance();
 		Dashboard\Notices::get_instance();
 		Dashboard\Spotlight::get_instance();
 		Dashboard\Setup::get_instance();
@@ -128,13 +129,19 @@ class Dashboard {
 	 * @since 1.7.0
 	 */
 	public static function get_capability() {
+		// Defers to the shared menu's own capability so the dashboard cannot end
+		// up visible to a role that cannot see the menu it lives in, or hidden
+		// from one that can. Lowering either alone used to split them.
+		$parent = apply_filters( 'cp_admin_menu_capability', 'manage_options' );
+
 		/**
 		 * Filters the capability required to view the CP Sermons dashboard.
 		 *
-		 * @param string $capability The capability. Default 'manage_options'.
+		 * @param string $capability The capability, defaulting to the shared
+		 *                           Church Plugins menu's own.
 		 * @since 1.7.0
 		 */
-		return apply_filters( 'cpl_dashboard_capability', 'manage_options' );
+		return apply_filters( 'cpl_dashboard_capability', $parent );
 	}
 
 	/**
@@ -189,13 +196,12 @@ class Dashboard {
 	 * @since 1.7.0
 	 */
 	public function enqueue() {
-		add_action(
-			'admin_enqueue_scripts',
-			function () {
-				// Fourth argument is $is_style — this bundle is script only.
-				cp_library()->enqueue_asset( 'admin-dashboard', array( 'wp-a11y', 'wp-i18n' ), false, false, true );
-			}
-		);
+		// Fourth argument is $is_style — this bundle is script only.
+		$script = cp_library()->enqueue_asset( 'admin-dashboard', array( 'wp-a11y', 'wp-i18n' ), false, false, true );
+
+		if ( ! empty( $script['handle'] ) ) {
+			wp_set_script_translations( $script['handle'], 'cp-library' );
+		}
 	}
 
 	/**
@@ -260,6 +266,20 @@ class Dashboard {
 			/* translators: %s: the singular sermon label, e.g. "Sermon" or "Message". */
 			esc_html( sprintf( __( 'Add %s', 'cp-library' ), $item->single_label ) )
 		);
+
+		// The archive exists from activation, but nothing in this admin has ever
+		// linked to it — so the panel talked about sermon pages without ever
+		// letting anyone look at one.
+		$archive = get_post_type_archive_link( $item->post_type );
+
+		if ( $archive ) {
+			printf(
+				' <a href="%s" class="page-title-action" target="_blank" rel="noopener noreferrer">%s</a>',
+				esc_url( $archive ),
+				/* translators: %s: the plural sermon label, e.g. "Sermons". */
+				esc_html( sprintf( __( 'View %s', 'cp-library' ), $item->plural_label ) )
+			);
+		}
 	}
 
 	/**
@@ -322,6 +342,17 @@ class Dashboard {
 				continue;
 			}
 
+			// A third party can pass anything. An array as `column` would make
+			// the isset() below raise TypeError on PHP 8 and take the whole
+			// screen down with it.
+			$card['id']       = is_string( $card['id'] ) ? $card['id'] : '';
+			$card['title']    = is_string( $card['title'] ) ? $card['title'] : '';
+			$card['priority'] = is_numeric( $card['priority'] ) ? (int) $card['priority'] : 10;
+
+			if ( ! is_string( $card['column'] ) || ! isset( $columns[ $card['column'] ] ) ) {
+				$card['column'] = 'main';
+			}
+
 			if ( ! empty( $card['capability'] ) && ! current_user_can( $card['capability'] ) ) {
 				continue;
 			}
@@ -330,15 +361,20 @@ class Dashboard {
 				continue;
 			}
 
-			$column = isset( $columns[ $card['column'] ] ) ? $card['column'] : 'main';
-
-			$columns[ $column ][] = $card;
+			$columns[ $card['column'] ][] = $card;
 		}
 
 		foreach ( $columns as &$column ) {
 			usort(
 				$column,
 				function ( $a, $b ) {
+					// usort only became stable in PHP 8.0 and this plugin still
+					// supports 7.4, where equal priorities would otherwise
+					// reorder between requests.
+					if ( $a['priority'] === $b['priority'] ) {
+						return strcmp( $a['id'], $b['id'] );
+					}
+
 					return $a['priority'] <=> $b['priority'];
 				}
 			);
@@ -355,17 +391,30 @@ class Dashboard {
 	 * @since 1.7.0
 	 */
 	protected function render_card( $card ) {
+		// Deliberately not `.postbox`. That markup is the contract for a core
+		// meta box — collapsible, draggable, remembered per user — and none of
+		// that is wired up here, so it would look like a control that does
+		// nothing. These cards are also conditionally shown and deliberately
+		// ordered, which per-user reordering would undo. Neutral classes keep
+		// the WordPress look while leaving the styling ours to change.
+		$id = $card['id'] ? 'cpl-card-' . $card['id'] : '';
 		?>
-		<div class="postbox cpl-dashboard__card" <?php echo $card['id'] ? 'id="cpl-card-' . esc_attr( $card['id'] ) . '"' : ''; ?>>
+		<section
+			class="cpl-card"
+			<?php echo $id ? 'id="' . esc_attr( $id ) . '"' : ''; ?>
+			<?php echo $card['title'] && $id ? 'aria-labelledby="' . esc_attr( $id . '-title' ) . '"' : ''; ?>
+		>
 			<?php if ( $card['title'] ) : ?>
-				<div class="postbox-header">
-					<h2 class="hndle"><?php echo esc_html( $card['title'] ); ?></h2>
+				<div class="cpl-card__header">
+					<h2 class="cpl-card__title" <?php echo $id ? 'id="' . esc_attr( $id . '-title' ) . '"' : ''; ?>>
+						<?php echo esc_html( $card['title'] ); ?>
+					</h2>
 				</div>
 			<?php endif; ?>
-			<div class="inside">
+			<div class="cpl-card__body">
 				<?php call_user_func( $card['render'], $card ); ?>
 			</div>
-		</div>
+		</section>
 		<?php
 	}
 }

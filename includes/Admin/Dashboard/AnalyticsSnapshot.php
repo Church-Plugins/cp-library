@@ -87,6 +87,22 @@ class AnalyticsSnapshot {
 	}
 
 	/**
+	 * The window this covers, in days.
+	 *
+	 * @return int
+	 * @since 1.7.0
+	 */
+	public static function get_window() {
+		/**
+		 * Filters the number of days the dashboard snapshot covers.
+		 *
+		 * @param int $days Default 30.
+		 * @since 1.7.0
+		 */
+		return absint( apply_filters( 'cpl_analytics_snapshot_window', self::WINDOW ) );
+	}
+
+	/**
 	 * Make sure the rollup is scheduled.
 	 *
 	 * @return void
@@ -172,7 +188,7 @@ class AnalyticsSnapshot {
 		global $wpdb;
 
 		$table   = $wpdb->prefix . 'cp_log';
-		$since   = Analytics::get_time( self::WINDOW . ' days ago' );
+		$since   = Analytics::get_time( self::get_window() . ' days ago' );
 		$actions = self::get_play_actions();
 
 		$plays = 0;
@@ -198,12 +214,20 @@ class AnalyticsSnapshot {
 			)
 		);
 
-		$duration = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT AVG( JSON_EXTRACT( data, '$.watch_duration' ) ) FROM {$table} WHERE action = 'view_duration' AND created > %s",
-				$since
-			)
-		);
+		// JSON_EXTRACT needs MySQL 5.7 / MariaDB 10.2. Init::maybe_setup() still
+		// accommodates 5.5, and this now runs daily on every site rather than
+		// only when someone opens the Analytics screen — so those installs would
+		// otherwise log a SQL error every day for a stat they can never show.
+		$duration = null;
+
+		if ( version_compare( $wpdb->db_version(), '5.7', '>=' ) ) {
+			$duration = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT AVG( JSON_EXTRACT( data, '$.watch_duration' ) ) FROM {$table} WHERE action = 'view_duration' AND created > %s",
+					$since
+				)
+			);
+		}
 
 		$snapshot = array(
 			'plays'        => $plays,
@@ -247,20 +271,41 @@ class AnalyticsSnapshot {
 			return;
 		}
 
-		$stats = array(
+		$snapshot = wp_parse_args(
+			$snapshot,
 			array(
-				'value' => number_format_i18n( $snapshot['plays'] ),
-				'label' => __( 'plays', 'cp-library' ),
-			),
-			array(
-				'value' => number_format_i18n( $snapshot['engaged'] ),
-				'label' => __( 'engaged', 'cp-library' ),
-			),
-			array(
-				'value' => $this->format_duration( $snapshot['avg_duration'] ),
-				'label' => __( 'avg watch', 'cp-library' ),
-			),
+				'plays'        => 0,
+				'engaged'      => 0,
+				'avg_duration' => 0,
+				'computed_at'  => 0,
+			)
 		);
+
+		// Zero stats are omitted rather than printed. `engaged` and
+		// `avg_duration` come from different logging paths than `plays`, so a
+		// site can genuinely have thousands of plays and no engagement rows —
+		// and "1,284 plays / 0 engaged / 0:00" reads as broken software, which
+		// is the whole reason this card hides itself on a quiet install.
+		$stats = array();
+
+		$stats[] = array(
+			'value' => number_format_i18n( $snapshot['plays'] ),
+			'label' => __( 'times played', 'cp-library' ),
+		);
+
+		if ( $snapshot['engaged'] ) {
+			$stats[] = array(
+				'value' => number_format_i18n( $snapshot['engaged'] ),
+				'label' => __( 'listened past the start', 'cp-library' ),
+			);
+		}
+
+		if ( $snapshot['avg_duration'] ) {
+			$stats[] = array(
+				'value' => $this->format_duration( $snapshot['avg_duration'] ),
+				'label' => __( 'average time watched', 'cp-library' ),
+			);
+		}
 		?>
 		<div class="cpl-dashboard__stats">
 			<?php foreach ( $stats as $stat ) : ?>
@@ -281,7 +326,7 @@ class AnalyticsSnapshot {
 					<?php
 					printf(
 						/* translators: %s: human readable time difference, e.g. "4 hours". */
-						esc_html__( 'updated %s ago', 'cp-library' ),
+						esc_html__( 'counted %s ago, refreshes daily', 'cp-library' ),
 						esc_html( human_time_diff( $snapshot['computed_at'] ) )
 					);
 					?>

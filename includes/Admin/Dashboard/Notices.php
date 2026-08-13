@@ -54,6 +54,13 @@ class Notices {
 	const MAX_SPOTLIGHTS = 2;
 
 	/**
+	 * How long a "Not now" lasts before the spotlight comes back.
+	 *
+	 * @var int
+	 */
+	const SNOOZE = 90 * DAY_IN_SECONDS;
+
+	/**
 	 * The single instance of the class.
 	 *
 	 * @var Notices
@@ -99,7 +106,9 @@ class Notices {
 				return (bool) $this->get_visible( 'announcement' );
 			},
 			'render'    => function () {
-				$this->render_notices( $this->get_visible( 'announcement' ) );
+				// This card is headless, so its notices carry the h2 the card
+				// would otherwise have supplied.
+				$this->render_notices( $this->get_visible( 'announcement' ), 'h2' );
 			},
 		);
 
@@ -111,7 +120,7 @@ class Notices {
 				return (bool) $this->get_visible( 'spotlight' );
 			},
 			'render'    => function () {
-				$this->render_notices( array_slice( $this->get_visible( 'spotlight' ), 0, self::MAX_SPOTLIGHTS ) );
+				$this->render_notices( array_slice( $this->get_visible( 'spotlight' ), 0, self::MAX_SPOTLIGHTS ), 'h3' );
 			},
 		);
 
@@ -161,8 +170,7 @@ class Notices {
 			return $cache[ $kind ];
 		}
 
-		$dismissed = $this->get_dismissed();
-		$visible   = array();
+		$visible = array();
 
 		foreach ( $this->get_notices() as $key => $notice ) {
 			$notice = wp_parse_args(
@@ -181,7 +189,7 @@ class Notices {
 				continue;
 			}
 
-			if ( in_array( $notice['id'], $dismissed, true ) ) {
+			if ( $this->is_dismissed( $notice ) ) {
 				continue;
 			}
 
@@ -207,6 +215,32 @@ class Notices {
 		$dismissed = get_user_meta( get_current_user_id(), self::DISMISSED_META, true );
 
 		return is_array( $dismissed ) ? $dismissed : array();
+	}
+
+	/**
+	 * Whether a notice is currently dismissed for this user.
+	 *
+	 * An announcement stays dismissed for good. A spotlight is dismissed with a
+	 * button labelled "Not now", so it comes back after a while — the label has
+	 * to mean what it says.
+	 *
+	 * @param array $notice A normalized notice.
+	 * @return bool
+	 * @since 1.7.0
+	 */
+	protected function is_dismissed( $notice ) {
+		$dismissed = $this->get_dismissed();
+
+		if ( ! isset( $dismissed[ $notice['id'] ] ) ) {
+			// Pre-1.7.0 shape: a plain list of ids, meaning dismissed forever.
+			return in_array( $notice['id'], $dismissed, true );
+		}
+
+		if ( 'spotlight' !== $notice['kind'] ) {
+			return true;
+		}
+
+		return ( time() - (int) $dismissed[ $notice['id'] ] ) < self::SNOOZE;
 	}
 
 	/**
@@ -236,17 +270,20 @@ class Notices {
 
 		$id = sanitize_text_field( wp_unslash( $_GET[ self::DISMISS_ACTION ] ) );
 
+		if ( ! current_user_can( \CP_Library\Admin\Dashboard::get_capability() ) ) {
+			return;
+		}
+
 		check_admin_referer( self::DISMISS_ACTION . $id );
 
 		$user_id = get_current_user_id();
 
 		if ( $user_id ) {
-			$dismissed = $this->get_dismissed();
+			$dismissed        = $this->get_dismissed();
+			$dismissed        = array_filter( $dismissed, 'is_int' );
+			$dismissed[ $id ] = time();
 
-			if ( ! in_array( $id, $dismissed, true ) ) {
-				$dismissed[] = $id;
-				update_user_meta( $user_id, self::DISMISSED_META, $dismissed );
-			}
+			update_user_meta( $user_id, self::DISMISSED_META, $dismissed );
 		}
 
 		wp_safe_redirect( \CP_Library\Admin\Dashboard::get_url() );
@@ -260,19 +297,36 @@ class Notices {
 	 * @return void
 	 * @since 1.7.0
 	 */
-	protected function render_notices( $notices ) {
+	protected function render_notices( $notices, $heading = 'h3' ) {
+		$heading = in_array( $heading, array( 'h2', 'h3' ), true ) ? $heading : 'h3';
+
 		foreach ( $notices as $notice ) :
 			?>
 			<div class="cpl-notice cpl-notice--<?php echo esc_attr( $notice['kind'] ); ?>">
 				<div class="cpl-notice__body">
-					<h3 class="cpl-notice__title"><?php echo esc_html( $notice['title'] ); ?></h3>
+					<<?php echo esc_attr( $heading ); ?> class="cpl-notice__title"><?php echo esc_html( $notice['title'] ); ?></<?php echo esc_attr( $heading ); ?>>
 					<?php if ( $notice['body'] ) : ?>
 						<p><?php echo esc_html( $notice['body'] ); ?></p>
 					<?php endif; ?>
 
 					<?php if ( ! empty( $notice['actions'] ) ) : ?>
 						<p class="cpl-notice__actions">
-							<?php foreach ( $notice['actions'] as $action ) : ?>
+							<?php foreach ( (array) $notice['actions'] as $action ) : ?>
+								<?php
+								$action = wp_parse_args(
+									(array) $action,
+									array(
+										'label'    => '',
+										'url'      => '',
+										'primary'  => false,
+										'external' => false,
+									)
+								);
+
+								if ( ! $action['label'] || ! $action['url'] ) {
+									continue;
+								}
+								?>
 								<a
 									class="button <?php echo empty( $action['primary'] ) ? '' : 'button-primary'; ?>"
 									href="<?php echo esc_url( $action['url'] ); ?>"

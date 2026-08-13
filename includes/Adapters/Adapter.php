@@ -189,13 +189,22 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * @since 1.7.0
 	 */
 	public function record_sync( $error = '' ) {
-		update_option( "cpl_{$this->type}_adapter_last_sync", time() );
+		// Read by one admin card; no reason to autoload it on every front-end
+		// request.
+		update_option( "cpl_{$this->type}_adapter_last_sync", time(), false );
 
 		if ( $error ) {
-			update_option( "cpl_{$this->type}_adapter_last_error", array(
-				'message' => $error,
-				'time'    => time(),
-			) );
+			// Adapter exceptions routinely carry the request URL, and for some
+			// sources that URL carries an API key. The full text stays in the
+			// log; only a trimmed message is stored for display.
+			update_option(
+				"cpl_{$this->type}_adapter_last_error",
+				array(
+					'message' => sanitize_text_field( wp_strip_all_tags( mb_substr( $error, 0, 140 ) ) ),
+					'time'    => time(),
+				),
+				false
+			);
 
 			return;
 		}

@@ -80,6 +80,17 @@ class Spotlight {
 			return $cached;
 		}
 
+		// Refreshed by Rollup on a schedule. Until it has run there are no
+		// figures, and a suggestion is not worth three unindexed scans — one of
+		// them a leading-wildcard LIKE — on the render path of a page view.
+		if ( ! $force ) {
+			return array(
+				'hosted_videos' => 0,
+				'transcripts'   => 0,
+				'timestamps'    => 0,
+			);
+		}
+
 		global $wpdb;
 
 		$item_meta = $wpdb->prefix . 'cpl_item_meta';
@@ -132,7 +143,7 @@ class Spotlight {
 		$notices['spotlight-timestamps'] = array(
 			'kind'      => 'spotlight',
 			'title'     => __( 'Let people jump to the sermon', 'cp-library' ),
-			'body'      => __( 'Add a timestamp to skip the announcements and the music, so the play button starts where the message does.', 'cp-library' ),
+			'body'      => __( 'Add a timestamp to skip the announcements and the music, so the play button starts where the message does. Try it on this week\'s — you do not have to go back through the archive.', 'cp-library' ),
 			'condition' => array( $this, 'wants_timestamps' ),
 			'actions'   => array(
 				array(

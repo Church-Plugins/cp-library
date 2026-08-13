@@ -24,8 +24,9 @@
 		min-width: 0;
 	}
 
+	// Card chrome. Matches the weight of a core .postbox on purpose — the panel
+	// should look native — without borrowing its markup or its behaviour.
 	&__card {
-		// The grid gap owns the spacing; .postbox ships its own margin.
 		margin-bottom: 0;
 	}
 
@@ -239,6 +240,28 @@
 	}
 }
 
+.cpl-card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
+
+	&__header {
+		padding: 8px 12px;
+		border-bottom: 1px solid #c3c4c7;
+	}
+
+	&__title {
+		margin: 0;
+		padding: 0;
+		font-size: 14px;
+		line-height: 1.4;
+	}
+
+	&__body {
+		padding: 12px;
+	}
+}
+
 // Announcements and feature spotlights.
 .cpl-notice {
 	display: flex;
@@ -251,7 +274,7 @@
 	box-shadow: 0 1px 1px rgba(0, 0, 0, .04);
 
 	// Inside the spotlight card the box is the card, so drop the chrome.
-	.cpl-dashboard__card & {
+	.cpl-card__body & {
 		padding: 0;
 		border: 0;
 		box-shadow: none;
@@ -259,7 +282,7 @@
 	}
 
 	& + .cpl-notice {
-		.cpl-dashboard__card & {
+		.cpl-card__body & {
 			margin-top: 1.25em;
 			padding-top: 1.25em;
 			border-top: 1px solid #f0f0f1;
@@ -361,4 +384,36 @@
 .cpl-copy.is-copied {
 	border-color: #007427;
 	color: #007427;
+}
+
+.cpl-dashboard {
+
+	&__step-desc,
+	&__dismiss-note {
+		display: block;
+		color: #50575e;
+		font-size: .9em;
+	}
+
+	&__dismiss-note {
+		display: inline;
+	}
+
+	&__feed-label {
+		margin: 0 0 .5em;
+		font-size: 1em;
+	}
+
+	&__feed {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: .5em;
+
+		code {
+			background: #f0f0f1;
+			padding: .3em .5em;
+			border-radius: 2px;
+		}
+	}
 }

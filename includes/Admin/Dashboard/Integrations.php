@@ -33,6 +33,22 @@ class Integrations {
 	const STALE_AFTER = 2 * DAY_IN_SECONDS;
 
 	/**
+	 * How long a source can go unchecked before it is worth mentioning.
+	 *
+	 * @return int
+	 * @since 1.7.0
+	 */
+	public static function get_stale_after() {
+		/**
+		 * Filters how long a source may go unchecked before being called stale.
+		 *
+		 * @param int $seconds Default two days.
+		 * @since 1.7.0
+		 */
+		return absint( apply_filters( 'cpl_integration_stale_after', self::STALE_AFTER ) );
+	}
+
+	/**
 	 * The single instance of the class.
 	 *
 	 * @var Integrations
@@ -68,7 +84,7 @@ class Integrations {
 	 */
 	public function register_card( $cards ) {
 		$cards['integrations'] = array(
-			'title'     => __( 'Sermon sources', 'cp-library' ),
+			'title'     => __( 'Automatic imports', 'cp-library' ),
 			'column'    => 'side',
 			'priority'  => 30,
 			'condition' => array( $this, 'has_enabled_adapters' ),
@@ -121,7 +137,8 @@ class Integrations {
 		if ( $last_error ) {
 			return array(
 				'state'  => 'error',
-				'detail' => $last_error['message'],
+				/* translators: %s: the error reported by the sermon source. */
+				'detail' => sprintf( __( 'Something went wrong last time it checked: %s', 'cp-library' ), $last_error['message'] ),
 				'next'   => $next,
 			);
 		}
@@ -132,17 +149,17 @@ class Integrations {
 			// rather than broken.
 			return array(
 				'state'  => 'unknown',
-				'detail' => __( 'No check recorded yet', 'cp-library' ),
+				'detail' => __( 'Has not run yet — it will at the next scheduled time.', 'cp-library' ),
 				'next'   => $next,
 			);
 		}
 
-		if ( ( time() - $last_sync ) > self::STALE_AFTER ) {
+		if ( ( time() - $last_sync ) > self::get_stale_after() ) {
 			return array(
 				'state'  => 'stale',
 				'detail' => sprintf(
 					/* translators: %s: human readable time difference, e.g. "3 weeks". */
-					__( 'Last checked %s ago', 'cp-library' ),
+					__( 'Has not checked for %s — longer than expected.', 'cp-library' ),
 					human_time_diff( $last_sync )
 				),
 				'next'   => $next,
@@ -153,7 +170,7 @@ class Integrations {
 			'state'  => 'ok',
 			'detail' => sprintf(
 				/* translators: %s: human readable time difference, e.g. "20 minutes". */
-				__( 'Checked %s ago', 'cp-library' ),
+				__( 'Working — last checked %s ago.', 'cp-library' ),
 				human_time_diff( $last_sync )
 			),
 			'next'   => $next,
@@ -172,14 +189,28 @@ class Integrations {
 			<?php foreach ( $this->get_enabled_adapters() as $adapter ) : ?>
 				<?php $status = $this->get_status( $adapter ); ?>
 				<li class="is-<?php echo esc_attr( $status['state'] ); ?>">
-					<span class="cpl-dashboard__integration-name"><?php echo esc_html( $adapter->display_name ); ?></span>
+					<span class="cpl-dashboard__integration-name">
+						<?php /* The state is otherwise only a text colour. */ ?>
+						<span class="screen-reader-text">
+							<?php
+							$states = array(
+								'ok'      => __( 'Working:', 'cp-library' ),
+								'stale'   => __( 'Needs attention:', 'cp-library' ),
+								'error'   => __( 'Problem:', 'cp-library' ),
+								'unknown' => __( 'Not yet run:', 'cp-library' ),
+							);
+							echo esc_html( isset( $states[ $status['state'] ] ) ? $states[ $status['state'] ] : '' );
+							?>
+						</span>
+						<?php echo esc_html( $adapter->display_name ); ?>
+					</span>
 					<span class="cpl-dashboard__integration-detail"><?php echo esc_html( $status['detail'] ); ?></span>
 					<?php if ( $status['next'] ) : ?>
 						<span class="cpl-dashboard__integration-next">
 							<?php
 							printf(
 								/* translators: %s: human readable time difference, e.g. "40 minutes". */
-								esc_html__( 'Next run in %s', 'cp-library' ),
+								esc_html__( 'Checks again in about %s', 'cp-library' ),
 								esc_html( human_time_diff( time(), $status['next'] ) )
 							);
 							?>

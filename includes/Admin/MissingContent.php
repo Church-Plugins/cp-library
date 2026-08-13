@@ -145,11 +145,14 @@ class MissingContent {
 					SELECT 1 FROM {$wpdb->posts} cpl_p
 					INNER JOIN {$item} cpl_i ON cpl_i.origin_id = cpl_p.ID
 					INNER JOIN {$imeta} cpl_m ON cpl_m.item_id = cpl_i.id
-					WHERE cpl_p.post_parent = {$id} AND {$media_where}
+					WHERE cpl_p.post_parent = {$id}
+					AND cpl_p.post_status NOT IN ( 'trash', 'auto-draft' )
+					AND {$media_where}
 				) )",
 			),
 			'speaker'    => array(
-				'label' => __( 'No speaker', 'cp-library' ),
+				/* translators: %s: the singular speaker label, e.g. "Speaker". */
+				'label' => sprintf( __( 'No %s', 'cp-library' ), cp_library()->setup->post_types->speaker->single_label ),
 				'sql'   => "( NOT EXISTS (
 					SELECT 1 FROM {$item} cpl_i
 					INNER JOIN {$smeta} cpl_s ON cpl_s.item_id = cpl_i.id
@@ -158,11 +161,14 @@ class MissingContent {
 					SELECT 1 FROM {$wpdb->posts} cpl_p
 					INNER JOIN {$item} cpl_i ON cpl_i.origin_id = cpl_p.ID
 					INNER JOIN {$smeta} cpl_s ON cpl_s.item_id = cpl_i.id
-					WHERE cpl_p.post_parent = {$id} AND {$speaker_where}
+					WHERE cpl_p.post_parent = {$id}
+					AND cpl_p.post_status NOT IN ( 'trash', 'auto-draft' )
+					AND {$speaker_where}
 				) )",
 			),
 			'series'     => array(
-				'label' => __( 'Not in a series', 'cp-library' ),
+				/* translators: %s: the singular series label, e.g. "Series". */
+				'label' => sprintf( __( 'Not in a %s', 'cp-library' ), cp_library()->setup->post_types->item_type->single_label ),
 				'sql'   => "NOT EXISTS (
 					SELECT 1 FROM {$item} cpl_i
 					INNER JOIN {$imeta} cpl_m ON cpl_m.item_id = cpl_i.id
@@ -170,6 +176,27 @@ class MissingContent {
 					AND cpl_m.`key` = 'item_type'
 					AND cpl_m.item_type_id IS NOT NULL AND cpl_m.item_type_id <> 0
 				)",
+			),
+			// A sermon can have working audio, play fine on the site, and still be
+			// absent from the podcast: the feed only includes posts carrying an
+			// `enclosure` (Setup\Podcast::feed_query()), which is written solely
+			// by core's do_enclose() and silently writes nothing when its HTTP
+			// request to the audio URL fails. On one library 7,362 of 8,349
+			// published sermons with audio were missing from the feed, with
+			// nothing anywhere in the admin saying so.
+			'podcast'    => array(
+				'label' => __( 'Has audio but is not in the podcast', 'cp-library' ),
+				'sql'   => "( EXISTS (
+					SELECT 1 FROM {$item} cpl_i
+					INNER JOIN {$imeta} cpl_m ON cpl_m.item_id = cpl_i.id
+					WHERE cpl_i.origin_id = {$id}
+					AND cpl_m.`key` = 'audio_url' AND cpl_m.value <> ''
+				) AND NOT EXISTS (
+					SELECT 1 FROM {$wpdb->postmeta} cpl_pm
+					WHERE cpl_pm.post_id = {$id}
+					AND cpl_pm.meta_key = 'enclosure'
+					AND cpl_pm.meta_value <> ''
+				) )",
 			),
 			'transcript' => array(
 				'label' => __( 'No transcript', 'cp-library' ),
@@ -190,6 +217,10 @@ class MissingContent {
 			unset( $types['series'] );
 		}
 
+		if ( ! cp_library()->setup->podcast->is_enabled() ) {
+			unset( $types['podcast'] );
+		}
+
 		/**
 		 * Filters the "missing content" types offered on the sermon list table
 		 * and counted for the dashboard.
@@ -198,10 +229,27 @@ class MissingContent {
 		 * self-contained boolean expression using {POST_ID} where the sermon's
 		 * post ID belongs.
 		 *
+		 * The fragment is concatenated into the sermon list table's WHERE clause
+		 * and into the dashboard's COUNT queries, so it must already be safe:
+		 * pass anything derived from a request through $wpdb->prepare() before
+		 * returning it. Entries that are not an array with a non-empty string
+		 * `label` and `sql` are dropped rather than reaching the database.
+		 *
 		 * @param array $types The registered types.
 		 * @since 1.7.0
 		 */
-		return apply_filters( 'cpl_missing_content_types', $types );
+		$types = apply_filters( 'cpl_missing_content_types', $types );
+
+		// A malformed entry here would fatal the sermon list table — the most
+		// used screen in the plugin — so anything unusable is discarded.
+		return array_filter(
+			(array) $types,
+			function ( $type ) {
+				return is_array( $type )
+					&& ! empty( $type['label'] ) && is_string( $type['label'] )
+					&& ! empty( $type['sql'] ) && is_string( $type['sql'] );
+			}
+		);
 	}
 
 	/**
@@ -272,7 +320,12 @@ class MissingContent {
 			<?php esc_html_e( 'Filter by missing content', 'cp-library' ); ?>
 		</label>
 		<select name="<?php echo esc_attr( self::QUERY_VAR ); ?>" id="<?php echo esc_attr( self::QUERY_VAR ); ?>">
-			<option value=""><?php esc_html_e( 'All sermons', 'cp-library' ); ?></option>
+			<option value="">
+				<?php
+				/* translators: %s: the plural sermon label, e.g. "Sermons". */
+				echo esc_html( sprintf( __( 'All %s', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ) );
+				?>
+			</option>
 			<?php foreach ( $this->get_types() as $key => $type ) : ?>
 				<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $active, $key ); ?>>
 					<?php echo esc_html( $type['label'] ); ?>
@@ -324,9 +377,6 @@ class MissingContent {
 		if ( ! $type || ! isset( $types[ $type ] ) ) {
 			return $where;
 		}
-
-		// One filter, one query — a list table renders its main query once.
-		remove_filter( 'posts_where', array( $this, 'filter_where' ), 10 );
 
 		return $where . ' AND ' . $this->prepare_sql( $types[ $type ]['sql'], "{$wpdb->posts}.ID" );
 	}
@@ -381,6 +431,17 @@ class MissingContent {
 			return $cached;
 		}
 
+		// Without a lock, every admin who lands on the dashboard after the cache
+		// expires pays the full recount at once. The first one through does the
+		// work; everyone else gets an empty result and the card sits this view
+		// out rather than piling on.
+		if ( ! $force && ! wp_cache_add( self::TRANSIENT . '_lock', 1, '', MINUTE_IN_SECONDS ) ) {
+			return array(
+				'total'  => 0,
+				'counts' => array(),
+			);
+		}
+
 		global $wpdb;
 
 		// Matches the list table, which hides variations unless asked otherwise
@@ -424,7 +485,10 @@ class MissingContent {
 			return;
 		}
 
-		delete_transient( self::TRANSIENT );
+		// Deliberately not a recount here. A bulk import fires this thousands of
+		// times, and recomputing on the next page view would put four correlated
+		// scans on the render path. Queue one refresh instead.
+		Dashboard\Rollup::get_instance()->schedule_debounced();
 	}
 
 	/**
@@ -454,6 +518,21 @@ class MissingContent {
 		 */
 		$threshold = (float) apply_filters( 'cpl_missing_content_threshold', 0.25 );
 
+		/**
+		 * Filters the types that are reported regardless of how common they are.
+		 *
+		 * The threshold exists to stop a house style being reported as a defect —
+		 * 99% of a library having no transcript is a choice, not a fault. But
+		 * some things are broken at any proportion: a sermon with no media shows
+		 * an empty player, and one missing from the podcast never reaches a
+		 * subscriber. Suppressing those for being too common hides exactly the
+		 * problems worth acting on.
+		 *
+		 * @param array $always The type keys exempt from the threshold.
+		 * @since 1.7.0
+		 */
+		$always = (array) apply_filters( 'cpl_missing_content_always_report', array( 'media', 'podcast' ) );
+
 		$problems = array();
 
 		foreach ( $data['counts'] as $key => $count ) {
@@ -461,7 +540,7 @@ class MissingContent {
 				continue;
 			}
 
-			if ( $data['total'] && ( $count / $data['total'] ) > $threshold ) {
+			if ( ! in_array( $key, $always, true ) && $data['total'] && ( $count / $data['total'] ) > $threshold ) {
 				continue;
 			}
 
