@@ -192,7 +192,8 @@ class Dashboard {
 		add_action(
 			'admin_enqueue_scripts',
 			function () {
-				cp_library()->enqueue_asset( 'admin-dashboard', array(), false, true, true );
+				// Fourth argument is $is_style — this bundle is script only.
+				cp_library()->enqueue_asset( 'admin-dashboard', array( 'wp-a11y', 'wp-i18n' ), false, false, true );
 			}
 		);
 	}
@@ -286,7 +287,7 @@ class Dashboard {
 		 *
 		 * Note that `condition` runs on every view of this page, for every
 		 * registered card, before anything is rendered. Keep it to option reads
-		 * or cache its result — see Setup\Visibility::has_legacy_meta() for the
+		 * or cache its result — see Dashboard\AnalyticsSnapshot::rollup() for the
 		 * shape to copy when a condition needs to hit the database.
 		 *
 		 * @param array $cards The registered cards.
