@@ -63,6 +63,9 @@ class SermonSync {
 	 *                                   May carry `thumbnail_id` ( an attachment id ) to use as the
 	 *                                   series featured image; see maybe_update_series().
 	 *     @type array|null   $service_type Optional. `[ 'id' => extId, 'title' => string ]` or null.
+	 *                                   May carry `thumbnail_id` ( an attachment id ) to use as the
+	 *                                   service type featured image, which CP Sermons serves as
+	 *                                   podcast channel artwork; see maybe_update_service_type().
 	 *     @type array        $speakers  Optional. List of `[ 'id' => extId, 'name' => string ]`.
 	 *     @type string       $video_url Optional. Video URL.
 	 *     @type string       $audio_url Optional. Audio URL.
@@ -192,7 +195,7 @@ class SermonSync {
 			return;
 		}
 
-		self::maybe_set_series_thumbnail( $series_post_id, $series['thumbnail_id'] ?? 0 );
+		self::maybe_set_thumbnail( $series_post_id, $series['thumbnail_id'] ?? 0 );
 
 		try {
 			$series_model_id = ItemType::get_instance_from_origin( $series_post_id )->id;
@@ -213,7 +216,7 @@ class SermonSync {
 	 * @since 1.6.3
 	 *
 	 * @param Item       $item         The item model.
-	 * @param array|null $service_type `[ 'id' => extId, 'title' => string ]` or null.
+	 * @param array|null $service_type `[ 'id' => extId, 'title' => string, 'thumbnail_id' => int ]` or null.
 	 * @param string     $source       External-id namespace.
 	 * @return void
 	 */
@@ -242,6 +245,8 @@ class SermonSync {
 			return;
 		}
 
+		self::maybe_set_thumbnail( $service_type_post_id, $service_type['thumbnail_id'] ?? 0 );
+
 		try {
 			// update_service_types() takes MODEL ids, not post ids.
 			$service_type_model_id = ServiceType::get_instance_from_origin( $service_type_post_id )->id;
@@ -252,27 +257,30 @@ class SermonSync {
 	}
 
 	/**
-	 * Set the series featured image, without overwriting an existing one.
+	 * Set a related record's featured image, without overwriting an existing one.
 	 *
-	 * A series post is not always ours to style: resolve_or_create_post() deliberately
+	 * These posts are not always ours to style: resolve_or_create_post() deliberately
 	 * adopts an existing post with a matching title so repeated syncs do not create
-	 * duplicates, which means this may be a series someone built and illustrated by
-	 * hand. Only fill an empty slot — never replace artwork a human chose.
+	 * duplicates, which means this may be a series or service type someone built and
+	 * illustrated by hand. Only fill an empty slot — never replace artwork a human
+	 * chose. That applies with particular force to service types, whose image is used
+	 * as podcast channel artwork and may have been sized deliberately for Apple.
 	 *
 	 * @since 1.6.3
 	 *
-	 * @param int $series_post_id The series ( `cpl_item_type` ) post id.
-	 * @param int $thumbnail_id   The attachment id to use, or 0 for none.
+	 * @param int $post_id      The series ( `cpl_item_type` ) or service type
+	 *                          ( `cpl_service_type` ) post id.
+	 * @param int $thumbnail_id The attachment id to use, or 0 for none.
 	 * @return void
 	 */
-	protected static function maybe_set_series_thumbnail( $series_post_id, $thumbnail_id ) {
+	protected static function maybe_set_thumbnail( $post_id, $thumbnail_id ) {
 		$thumbnail_id = (int) $thumbnail_id;
 
-		if ( ! $thumbnail_id || get_post_thumbnail_id( $series_post_id ) ) {
+		if ( ! $thumbnail_id || get_post_thumbnail_id( $post_id ) ) {
 			return;
 		}
 
-		set_post_thumbnail( $series_post_id, $thumbnail_id );
+		set_post_thumbnail( $post_id, $thumbnail_id );
 	}
 
 	/**
