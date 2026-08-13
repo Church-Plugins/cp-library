@@ -38,7 +38,16 @@ class ItemType extends Table  {
 		parent::init();
 
 		$this->table_name  = $wpdb->prefix . 'cpl_' . $this->type;
-		$this->meta_table_name  = $wpdb->prefix . 'cpl_' . $this->type . "_meta";
+
+		// Item types have no meta table of their own — unlike Item and the Source
+		// family, nothing ever created a `cpl_item_type_meta`. Their association rows
+		// ( `key` = 'item_type' ) live in the ITEM meta table, keyed by item_type_id,
+		// which is where Item::update_types() writes them and what API\Init queries.
+		//
+		// Deriving the name by pattern pointed delete_all_meta() at a table that has
+		// never existed, so every series delete failed with MySQL 1146 and left its
+		// associations behind as orphans.
+		$this->meta_table_name  = $wpdb->prefix . 'cpl_item_meta';
 	}
 
 	/**

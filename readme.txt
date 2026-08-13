@@ -121,6 +121,7 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 * Fix: Series, Speaker, and Service Type podcast feeds now use the full-size featured image for channel artwork. Previously a 600×600 thumbnail was served, which falls below Apple Podcasts' 1400×1400 minimum and caused artwork to be rejected in Apple Podcasts / iTunes.
 * Fix: Selecting a Series or Speaker on a sermon now saves reliably even when the stored value already matches — previously sermons copied with a duplicator plugin could not be assigned the same Series/Speaker as the original.
 * Fix: Clearing the Series or Speaker field on a sermon now properly removes the assignment.
+* Fix: Deleting a Series now removes its sermon associations. The model pointed at a `cpl_item_type_meta` table that has never existed, so every Series deletion failed silently and left its associations behind — the source of the orphaned Series records the cleanup below has been clearing. Those associations live in the item meta table, which is where the model now looks.
 * Fix: Sermon Speaker lists no longer show a stray comma from orphaned speaker records; a one-time cleanup removes orphaned Speaker/Series associations on upgrade.
 * Fix: A sermon with duplicate Speaker or Series records no longer loses that Speaker or Series when it is re-saved. Only the duplicate entry is removed.
 * Fix: Service Type assignments now use the same corrected save path as Speakers and Series, so stale and empty entries are cleaned up properly.
