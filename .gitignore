@@ -5,6 +5,7 @@ yarn.lock
 /dist/
 /build/
 /node_modules/
+/vendor/
 .phpdoc
 .vscode
 app/templates/*.rt.js
