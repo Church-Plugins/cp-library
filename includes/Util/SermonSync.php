@@ -24,6 +24,7 @@ namespace CP_Library\Util;
 use ChurchPlugins\Exception;
 use CP_Library\Models\Item;
 use CP_Library\Models\ItemType;
+use CP_Library\Models\ServiceType;
 use CP_Library\Models\Speaker;
 
 // Exit if accessed directly.
@@ -61,6 +62,7 @@ class SermonSync {
 	 *     @type array|null   $series    Optional. `[ 'id' => extId, 'title' => string ]` or null.
 	 *                                   May carry `thumbnail_id` ( an attachment id ) to use as the
 	 *                                   series featured image; see maybe_update_series().
+	 *     @type array|null   $service_type Optional. `[ 'id' => extId, 'title' => string ]` or null.
 	 *     @type array        $speakers  Optional. List of `[ 'id' => extId, 'name' => string ]`.
 	 *     @type string       $video_url Optional. Video URL.
 	 *     @type string       $audio_url Optional. Audio URL.
@@ -80,7 +82,8 @@ class SermonSync {
 				'content'   => '',
 				'date'      => 0,
 				'status'    => 'publish',
-				'series'    => null,
+				'series'       => null,
+				'service_type' => null,
 				'speakers'  => [],
 				'video_url' => '',
 				'audio_url' => '',
@@ -125,6 +128,7 @@ class SermonSync {
 		}
 
 		self::maybe_update_series( $item, $args['series'], $args['source'] );
+		self::maybe_update_service_type( $item, $args['service_type'], $args['source'] );
 		self::maybe_update_speakers( $item, $args['speakers'], $args['source'] );
 		self::maybe_update_media( $item, $post_id, $args['video_url'], $args['audio_url'] );
 
@@ -195,6 +199,55 @@ class SermonSync {
 			$item->update_types( [ $series_model_id ] );
 		} catch ( \Throwable $e ) {
 			self::log( 'Could not attach series "' . $series['title'] . '": ' . $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Resolve ( create if needed ) the service type and attach it to the item.
+	 *
+	 * Mirrors maybe_update_series(), but service types are Sources rather than
+	 * ItemTypes, so the association goes through update_service_types(). The lazy
+	 * row created by get_instance_from_origin() runs ServiceType::insert(), which
+	 * calls add_type() itself — so no separate type registration is needed here.
+	 *
+	 * @since 1.6.3
+	 *
+	 * @param Item       $item         The item model.
+	 * @param array|null $service_type `[ 'id' => extId, 'title' => string ]` or null.
+	 * @param string     $source       External-id namespace.
+	 * @return void
+	 */
+	protected static function maybe_update_service_type( $item, $service_type, $source ) {
+		if ( ! cp_library()->setup->post_types->service_type_enabled() ) {
+			return;
+		}
+
+		if ( empty( $service_type ) || empty( $service_type['title'] ) ) {
+			// No service type in the source: clear any existing association.
+			try {
+				$item->update_service_types( [] );
+			} catch ( \Throwable $e ) {
+				self::log( 'Could not clear service type: ' . $e->getMessage() );
+			}
+			return;
+		}
+
+		$service_type_post_id = self::resolve_or_create_post(
+			ServiceType::get_prop( 'post_type' ),
+			$source . '_service_type_' . $service_type['id'],
+			$service_type['title']
+		);
+
+		if ( ! $service_type_post_id ) {
+			return;
+		}
+
+		try {
+			// update_service_types() takes MODEL ids, not post ids.
+			$service_type_model_id = ServiceType::get_instance_from_origin( $service_type_post_id )->id;
+			$item->update_service_types( [ $service_type_model_id ] );
+		} catch ( \Throwable $e ) {
+			self::log( 'Could not attach service type "' . $service_type['title'] . '": ' . $e->getMessage() );
 		}
 	}
 
