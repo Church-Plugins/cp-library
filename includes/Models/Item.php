@@ -97,17 +97,10 @@ class Item extends Table  {
 	 * @author Tanner Moushey
 	 */
 	public function update_speakers( $speakers ) {
-		$speakers = array_values( array_unique( array_filter( array_map( 'absint', (array) $speakers ) ) ) );
+		$speakers = self::normalize_ids( $speakers );
+		$diff     = self::diff_associations( $this->get_speakers(), $speakers );
 
-		// normalize for comparison — legacy rows can have a NULL/0 source_id which maps to 0
-		$existing_speakers = array_map( 'absint', (array) $this->get_speakers() );
-
-		foreach( $speakers as $speaker ) {
-			if ( false !== $key = array_search( $speaker, $existing_speakers, true ) ) {
-				unset( $existing_speakers[ $key ] );
-				continue;
-			}
-
+		foreach( $diff['add'] as $speaker ) {
 			$data = [
 				'key' => 'source_item',
 				'item_id' => absint( $this->id ),
@@ -128,12 +121,71 @@ class Item extends Table  {
 			}
 		}
 
-		$this->remove_stale_sources( $existing_speakers, Speaker::class );
+		$this->remove_stale_sources( $diff['surplus'], Speaker::class );
 
 		$this->speakers = $speakers;
 		$this->update_cache();
 
 		return true;
+	}
+
+	/**
+	 * Reduce a caller-supplied list to unique, positive ids
+	 *
+	 * @param mixed $ids
+	 *
+	 * @return array
+	 *
+	 * @since 1.6.3
+	 *
+	 * @author Tanner Moushey
+	 */
+	public static function normalize_ids( $ids ) {
+		return array_values( array_unique( array_filter( array_map( 'absint', (array) $ids ) ) ) );
+	}
+
+	/**
+	 * Work out which associations to add and which rows are surplus
+	 *
+	 * The rows an item holds are not a set: the same source can appear more than
+	 * once (the corruption the 1.6.3 migration cleans up), and legacy rows can carry
+	 * a NULL/0 id which normalizes to 0. So `$existing` is matched off one entry at a
+	 * time, and whatever is left over is counted per id — that count is exactly how
+	 * many rows to delete.
+	 *
+	 * Getting this wrong is what made a re-save drop a speaker the user had kept: an
+	 * id left in the surplus list was previously deleted by value, taking every row
+	 * for that source including the one being kept.
+	 *
+	 * @param mixed $existing Current association ids, one entry per row.
+	 * @param mixed $desired  Ids that should end up attached.
+	 *
+	 * @return array {
+	 *     @type array $add     Ids that have no row yet, in the order given.
+	 *     @type array $surplus id => number of rows to delete for that id.
+	 * }
+	 *
+	 * @since 1.6.3
+	 *
+	 * @author Tanner Moushey
+	 */
+	public static function diff_associations( $existing, $desired ) {
+		$existing = array_map( 'absint', (array) $existing );
+		$add      = [];
+
+		foreach( self::normalize_ids( $desired ) as $id ) {
+			if ( false !== $key = array_search( $id, $existing, true ) ) {
+				unset( $existing[ $key ] );
+				continue;
+			}
+
+			$add[] = $id;
+		}
+
+		return [
+			'add'     => $add,
+			'surplus' => array_count_values( $existing ),
+		];
 	}
 
 	/**
@@ -143,25 +195,22 @@ class Item extends Table  {
 	 * model throws for rows whose source no longer exists, and a NULL `source_id`
 	 * never matches a prepared %d.
 	 *
-	 * Only the surplus rows for each source are removed. An item can carry duplicate
-	 * association rows for the same source (the corruption the 1.6.3 migration cleans
-	 * up), and when that source is still attached the extras must go without taking
-	 * the row we mean to keep. `$stale` holds one entry per surplus row, so its count
-	 * per source is exactly how many rows to delete.
+	 * Only the surplus rows for each source are removed — see diff_associations(),
+	 * which decides how many that is.
 	 *
 	 * Scoped by `source_type_id` because speakers and service types share this table.
 	 *
-	 * @param array  $stale       Leftover source ids, one entry per surplus row.
+	 * @param array  $surplus     source id => number of rows to delete.
 	 * @param string $model_class Source model class the ids belong to.
 	 *
 	 * @since 1.6.3
 	 *
 	 * @author Tanner Moushey
 	 */
-	protected function remove_stale_sources( $stale, $model_class ) {
+	protected function remove_stale_sources( $surplus, $model_class ) {
 		global $wpdb;
 
-		if ( empty( $stale ) ) {
+		if ( empty( $surplus ) ) {
 			return;
 		}
 
@@ -169,7 +218,7 @@ class Item extends Table  {
 		$cache_group    = $model_class::get_prop( 'cache_group' ) . '_meta';
 		$source_type_id = $model_class::get_type_id();
 
-		foreach( array_count_values( array_map( 'absint', $stale ) ) as $source_id => $count ) {
+		foreach( $surplus as $source_id => $count ) {
 			if ( $source_id ) {
 				// oldest row wins — it carries the original `order`
 				$wpdb->query( $wpdb->prepare( "DELETE FROM {$meta_table} WHERE `key` = 'source_item' AND `item_id` = %d AND `source_type_id` = %d AND `source_id` = %d ORDER BY `id` DESC LIMIT %d", $this->id, $source_type_id, $source_id, $count ) );
@@ -219,17 +268,10 @@ class Item extends Table  {
 	 * @author Tanner Moushey
 	 */
 	public function update_service_types( $service_types ) {
-		$service_types = array_values( array_unique( array_filter( array_map( 'absint', (array) $service_types ) ) ) );
+		$service_types = self::normalize_ids( $service_types );
+		$diff          = self::diff_associations( $this->get_service_types(), $service_types );
 
-		// normalize for comparison — legacy rows can have a NULL/0 source_id which maps to 0
-		$existing_service_types = array_map( 'absint', (array) $this->get_service_types() );
-
-		foreach( $service_types as $service_type ) {
-			if ( false !== $key = array_search( $service_type, $existing_service_types, true ) ) {
-				unset( $existing_service_types[ $key ] );
-				continue;
-			}
-
+		foreach( $diff['add'] as $service_type ) {
 			$data = [
 				'key' => 'source_item',
 				'item_id' => absint( $this->id ),
@@ -250,7 +292,7 @@ class Item extends Table  {
 			}
 		}
 
-		$this->remove_stale_sources( $existing_service_types, ServiceType::class );
+		$this->remove_stale_sources( $diff['surplus'], ServiceType::class );
 
 		$this->service_types = $service_types;
 		$this->update_cache();
@@ -291,17 +333,10 @@ class Item extends Table  {
 	public function update_types( $types ) {
 		global $wpdb;
 
-		$types = array_values( array_unique( array_filter( array_map( 'absint', (array) $types ) ) ) );
+		$types = self::normalize_ids( $types );
+		$diff  = self::diff_associations( $this->get_types(), $types );
 
-		// normalize for comparison — legacy rows can have a NULL/0 item_type_id which maps to 0
-		$existing_types = array_map( 'absint', (array) $this->get_types() );
-
-		foreach( $types as $type ) {
-			if ( false !== $key = array_search( $type, $existing_types, true ) ) {
-				unset( $existing_types[ $key ] );
-				continue;
-			}
-
+		foreach( $diff['add'] as $type ) {
 			$data = [
 				'key' => 'item_type',
 				'item_type_id' => absint( $type ),
@@ -321,8 +356,8 @@ class Item extends Table  {
 		// remove any types which should no longer be attached; scope by key so rows for
 		// other meta keys are untouched, match NULL/0 ids which a prepared %d misses, and
 		// delete only the surplus rows so a duplicate can't take a still-attached type
-		// with it (see remove_stale_sources() for the same reasoning on the source side)
-		foreach( array_count_values( $existing_types ) as $type => $count ) {
+		// with it (see diff_associations() for how the surplus count is decided)
+		foreach( $diff['surplus'] as $type => $count ) {
 			if ( $type ) {
 				// oldest row wins — it carries the original `order`
 				$wpdb->query( $wpdb->prepare( "DELETE FROM {$this->meta_table_name} WHERE `key` = 'item_type' AND `item_id` = %d AND `item_type_id` = %d ORDER BY `id` DESC LIMIT %d", $this->id, $type, $count ) );
