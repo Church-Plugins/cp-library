@@ -70,6 +70,8 @@ class Dashboard {
 
 		\ChurchPlugins\Admin\Menu::add_support();
 
+		Dashboard\Help::get_instance();
+
 		add_action( 'admin_menu', array( $this, 'register_menu' ) );
 	}
 
@@ -171,19 +173,166 @@ class Dashboard {
 	 * @since 1.7.0
 	 */
 	public function page_callback() {
+		$columns = $this->get_cards();
+
+		// A column with nothing in it would otherwise hold open a third of the
+		// page, so fall back to a single column until both sides have cards.
+		$single = empty( $columns['main'] ) || empty( $columns['side'] );
 		?>
 		<div class="wrap cpl-dashboard">
-			<h1><?php esc_html_e( 'CP Sermons', 'cp-library' ); ?></h1>
+			<h1 class="wp-heading-inline"><?php esc_html_e( 'CP Sermons', 'cp-library' ); ?></h1>
+			<?php $this->render_header_actions(); ?>
 			<hr class="wp-header-end">
+
+			<div class="cpl-dashboard__grid<?php echo $single ? ' cpl-dashboard__grid--single' : ''; ?>">
+				<?php foreach ( $columns as $name => $cards ) : ?>
+					<?php if ( empty( $cards ) ) { continue; } ?>
+					<div class="cpl-dashboard__column cpl-dashboard__column--<?php echo esc_attr( $name ); ?>">
+						<?php array_walk( $cards, array( $this, 'render_card' ) ); ?>
+					</div>
+				<?php endforeach; ?>
+			</div>
 
 			<?php
 			/**
-			 * Renders the contents of the CP Sermons dashboard.
+			 * Renders extra content at the foot of the CP Sermons dashboard.
+			 *
+			 * Prefer the `cpl_dashboard_cards` filter — this is an escape hatch
+			 * for output that does not belong in a card.
 			 *
 			 * @since 1.7.0
 			 */
 			do_action( 'cpl_dashboard_content' );
 			?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Render the actions that sit beside the page title.
+	 *
+	 * @return void
+	 * @since 1.7.0
+	 */
+	protected function render_header_actions() {
+		$item = cp_library()->setup->post_types->item;
+		$type = get_post_type_object( $item->post_type );
+
+		if ( ! $type || ! current_user_can( $type->cap->create_posts ) ) {
+			return;
+		}
+
+		printf(
+			' <a href="%s" class="page-title-action">%s</a>',
+			esc_url( admin_url( 'post-new.php?post_type=' . $item->post_type ) ),
+			/* translators: %s: the singular sermon label, e.g. "Sermon" or "Message". */
+			esc_html( sprintf( __( 'Add %s', 'cp-library' ), $item->single_label ) )
+		);
+	}
+
+	/**
+	 * The cards to render, grouped by column and ordered by priority.
+	 *
+	 * @return array {
+	 *     @type array $main Cards for the wide column.
+	 *     @type array $side Cards for the narrow column.
+	 * }
+	 * @since 1.7.0
+	 */
+	protected function get_cards() {
+		/**
+		 * Filters the cards shown on the CP Sermons dashboard.
+		 *
+		 * Each card is an array of:
+		 *  - id         string   Unique slug. Defaults to the array key.
+		 *  - title      string   Card heading. Omit for a headless card.
+		 *  - column     string   'main' (wide) or 'side' (narrow). Default 'main'.
+		 *  - priority   int      Sort order within the column. Default 10.
+		 *  - capability string   Capability to view. Defaults to the page's.
+		 *                        Pass '' to show to anyone who can see the page.
+		 *  - condition  callable Optional. Return false to hide the card.
+		 *  - render     callable Required. Echoes the card body.
+		 *
+		 * Note that `condition` runs on every view of this page, for every
+		 * registered card, before anything is rendered. Keep it to option reads
+		 * or cache its result — see Setup\Visibility::has_legacy_meta() for the
+		 * shape to copy when a condition needs to hit the database.
+		 *
+		 * @param array $cards The registered cards.
+		 * @since 1.7.0
+		 */
+		$cards = apply_filters( 'cpl_dashboard_cards', array() );
+
+		$columns = array(
+			'main' => array(),
+			'side' => array(),
+		);
+
+		foreach ( (array) $cards as $key => $card ) {
+			if ( ! is_array( $card ) ) {
+				continue;
+			}
+
+			$card = wp_parse_args(
+				$card,
+				array(
+					'id'         => is_string( $key ) ? $key : '',
+					'title'      => '',
+					'column'     => 'main',
+					'priority'   => 10,
+					'capability' => self::get_capability(),
+					'condition'  => null,
+					'render'     => null,
+				)
+			);
+
+			if ( ! is_callable( $card['render'] ) ) {
+				continue;
+			}
+
+			if ( ! empty( $card['capability'] ) && ! current_user_can( $card['capability'] ) ) {
+				continue;
+			}
+
+			if ( is_callable( $card['condition'] ) && ! call_user_func( $card['condition'], $card ) ) {
+				continue;
+			}
+
+			$column = isset( $columns[ $card['column'] ] ) ? $card['column'] : 'main';
+
+			$columns[ $column ][] = $card;
+		}
+
+		foreach ( $columns as &$column ) {
+			usort(
+				$column,
+				function ( $a, $b ) {
+					return $a['priority'] <=> $b['priority'];
+				}
+			);
+		}
+
+		return $columns;
+	}
+
+	/**
+	 * Render a single card.
+	 *
+	 * @param array $card A normalized card definition.
+	 * @return void
+	 * @since 1.7.0
+	 */
+	protected function render_card( $card ) {
+		?>
+		<div class="postbox cpl-dashboard__card" <?php echo $card['id'] ? 'id="cpl-card-' . esc_attr( $card['id'] ) . '"' : ''; ?>>
+			<?php if ( $card['title'] ) : ?>
+				<div class="postbox-header">
+					<h2 class="hndle"><?php echo esc_html( $card['title'] ); ?></h2>
+				</div>
+			<?php endif; ?>
+			<div class="inside">
+				<?php call_user_func( $card['render'], $card ); ?>
+			</div>
 		</div>
 		<?php
 	}

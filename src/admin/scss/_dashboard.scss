@@ -1,0 +1,56 @@
+// CP Sermons dashboard.
+//
+// Two columns on wide screens, stacked below 960px — the width at which core
+// folds the admin menu and the narrow column stops having room to be one.
+// Nothing urgent belongs in the side column: stacked, it lands after everything
+// in main.
+
+.cpl-dashboard {
+
+	&__grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		align-items: start;
+		gap: 20px;
+		margin-top: 20px;
+	}
+
+	&__column {
+		display: grid;
+		align-content: start;
+		gap: 20px;
+		// Without this, wide card content (a feed URL, a long title) forces the
+		// grid track past its share instead of scrolling inside the card.
+		min-width: 0;
+	}
+
+	&__card {
+		// The grid gap owns the spacing; .postbox ships its own margin.
+		margin-bottom: 0;
+	}
+
+	&__links {
+		margin: 0;
+
+		li {
+			margin-bottom: .6em;
+
+			&:last-child {
+				margin-bottom: 0;
+			}
+		}
+	}
+
+	&__support {
+		margin: 1em 0 0;
+		padding-top: 1em;
+		border-top: 1px solid #dcdcde;
+	}
+}
+
+@media screen and (min-width: 960px) {
+
+	.cpl-dashboard__grid:not(.cpl-dashboard__grid--single) {
+		grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+	}
+}
