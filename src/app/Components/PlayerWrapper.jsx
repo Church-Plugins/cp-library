@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useRef, useState } from "react";
 import { cplLog, forceUnmuteVimeoPlayer } from "../utils/helpers";
 import VideoPlayer from 'react-player'
 import Cookies from 'js-cookie'
@@ -12,6 +12,7 @@ import Cookies from 'js-cookie'
  *  item: object
  *  mode: string
  *  userInteractionToken?: number
+ *  forceAudio?: boolean
  *  onMutedPlayback?: (isMuted: boolean) => void
  * }} PlayerWrapperProps
  */
@@ -37,13 +38,16 @@ const countTruthy = (arr) => {
  * @param {object} ref
  * @returns {React.ReactElement}
  */
-function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
+function PlayerWrapper({ item, mode, userInteractionToken, forceAudio = false, ...props }, ref) {
   // The persistent player keeps one audio instance mounted from page load so
   // Safari can grant it playback permission before the first click, which means
   // this can render with no item. Nothing item-scoped (analytics, watch history)
   // applies until one is selected.
   const itemId     = item?.id ?? null
   const compoundId = `${mode}-${itemId}`
+  // Same identity, readable from handlers registered once (beforeunload).
+  const latest = useRef({ itemId, mode, compoundId })
+  latest.current = { itemId, mode, compoundId }
   const viewedRef = useRef(false)
   const isEngagedRef = useRef(false)
   /** @type {{ current: Uint32Array|null }} */
@@ -260,10 +264,18 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
     }
   }, [props.playbackRate, playerRef.current]);
 
-  const handleUnmount = () => {
-    clearInterval(intervalRef.current)
+  /**
+   * Log how much of an item was watched and remember it in the cookie.
+   *
+   * Takes the item's identity explicitly rather than reading props: it runs for
+   * the item that is going away, and by then the props already describe the next
+   * one.
+   */
+  const flushWatch = ({ itemId, mode, compoundId }) => {
+    clearTimeout(intervalRef.current)
+    intervalRef.current = null
 
-    if(!watchData.current || !mode || !viewedRef.current) return
+    if(!itemId || !watchData.current || !mode || !viewedRef.current) return
 
     const watchedSeconds    = countTruthy(watchData.current)
     const watchedPercentage = watchedSeconds / watchData.current.length
@@ -422,29 +434,38 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
 
   // We handle iOS-specific behavior directly in the handlePlay function
 
+  // Everything item-scoped lives in refs, and the persistent player keeps this
+  // component mounted across sermons (Safari's playback permission is per
+  // element), so a change of item has to do what a remount used to: log the
+  // outgoing item's watch data, then start the incoming one from scratch.
   useEffect(() => {
-    const watchedVideos = getWatchedVideos()
+    const identity = { itemId, mode, compoundId }
 
-    const video = watchedVideos.find(v => {
-      return v.id === compoundId
-    })
+    viewedRef.current            = false
+    isEngagedRef.current         = false
+    watchData.current            = null
+    lastProgressPosition.current = 0
+    firstPlayRef.current         = true
 
-    if(!video) return
+    const video = getWatchedVideos().find(v => v.id === compoundId)
 
-    viewedRef.current = true
+    if(video) {
+      viewedRef.current = true
 
-    if(video.engaged) {
-      isEngagedRef.current = true
+      if(video.engaged) {
+        isEngagedRef.current = true
+      }
     }
-  }, [])
 
-  useLayoutEffect(() => {
-    window.addEventListener('beforeunload', handleUnmount)
+    return () => flushWatch(identity)
+  }, [compoundId])
 
-    return () => {
-      handleUnmount()
-      window.removeEventListener('beforeunload', handleUnmount)
-    }
+  useEffect(() => {
+    const onUnload = () => flushWatch(latest.current)
+
+    window.addEventListener('beforeunload', onUnload)
+
+    return () => window.removeEventListener('beforeunload', onUnload)
   }, [])
 
   // Extract any custom props that React Player doesn't recognize
@@ -500,6 +521,12 @@ function PlayerWrapper({ item, mode, userInteractionToken, ...props }, ref) {
           }
         },
         file: {
+          // Render <audio> regardless of the URL. The persistent player's audio
+          // instance needs this for its silent blob: placeholder, which has no
+          // extension for react-player to recognise — without it the placeholder
+          // is a <video>, and the real .mp3 later gets a brand-new <audio> that
+          // Safari never granted playback permission to.
+          forceAudio,
           attributes: {
             controlsList: "nodownload", // Prevent download option
             // Direct video files don't need to start muted

@@ -45,12 +45,27 @@ export default function Controls({ isVariation, item, handleSelect }) {
         <Box className="itemDetail__playAudio" >
           <PlayAudio
             onClick={() => {
+              // An audio embed (SoundCloud, Spotify, ...) is markup the persistent
+              // player has nothing to play with; it renders in the feature area.
+              if (!isURL(item.audio)) {
+                if (handleSelect) {
+                  handleSelect({
+                    item         : item,
+                    mode         : 'embed',
+                    url          : item.audio,
+                    isPlaying    : true,
+                    playedSeconds: 0.0,
+                  });
+                }
+                return;
+              }
+
               // Hand over first, so the call that starts playback is as close to the
               // click as possible — Safari only grants playback for a play() tied to
               // the gesture, and anything queued ahead of this pushes it further away.
               api.passToPersistentPlayer({
                 item         : item,
-                mode         : isURL(item.audio) ? 'audio' : 'embed',
+                mode         : 'audio',
                 url          : item.audio,
                 isPlaying    : true,
                 playedSeconds: 0.0,

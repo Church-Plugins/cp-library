@@ -141,6 +141,13 @@ class Util {
 				'_wp_desired_post_slug',
 				'_thumbnail_id', // Exported separately as a URL reference.
 				'_cp_import_data', // Bulky bookkeeping blob from the CSV importer.
+				// Mirrors of the relationship tables, holding the *source site's* custom-table
+				// ids. The Speaker/ItemType/ServiceType post types hook added_post_meta on
+				// these keys, so replaying them attaches whatever record holds that id here.
+				// Relations are rebuilt from the record's own relation lists instead.
+				'cpl_speaker',
+				'cpl_series',
+				'cpl_service_type',
 				self::META_ORIGINAL_ID,
 				self::META_SOURCE_SITE,
 				self::META_THUMB_URL,
@@ -275,7 +282,8 @@ class Util {
 			return;
 		}
 
-		$files = glob( $dir . '/{export,import}-*', GLOB_BRACE );
+		// Two globs rather than GLOB_BRACE, which musl-based PHP builds (Alpine) don't define.
+		$files = array_merge( (array) glob( $dir . '/export-*' ), (array) glob( $dir . '/import-*' ) );
 
 		if ( empty( $files ) ) {
 			return;

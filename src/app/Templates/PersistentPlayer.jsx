@@ -347,6 +347,40 @@ export default function PersistentPlayer (props) {
 		};
 	}, []);
 
+	/**
+	 * Closing resets the player to idle in place rather than unmounting it.
+	 *
+	 * The audio element below is the one Safari granted playback permission on the
+	 * first interaction; unmounting would throw it away and the next Listen would
+	 * get a fresh, unpermitted element — the two-click bug all over again. With no
+	 * item the chrome renders nothing and the audio instance falls back to its
+	 * silent placeholder.
+	 */
+	useEffect(() => {
+		function handleClose() {
+			setIsPlaying(false);
+			setItem(null);
+			setMode(undefined);
+			setMediaUrl(null);
+			setPlayedSeconds(0);
+			setDuration(0);
+			setPlaybackRate(1);
+			setError(undefined);
+			setUserInteractionToken(null);
+			setIsMutedPlayback(false);
+			setShowMutedNotice(false);
+			// Back to the freshly-mounted state: the next handover attaches the player
+			// ref again, which is what clears this.
+			setLoading(true);
+		}
+
+		api.listen('CPL_CLOSE_PERSISTENT_PLAYER', handleClose);
+
+		return () => {
+			api.removeListener('CPL_CLOSE_PERSISTENT_PLAYER', handleClose);
+		};
+	}, []);
+
 	useEffect(() => {
 		if (!loading && playerInstance?.current) {
 			// Use the user interaction token if available
@@ -492,6 +526,7 @@ export default function PersistentPlayer (props) {
 			item={isAudio ? item : null}
 			ref={isAudio ? setPlayerInstance : null}
 			controls={false}
+			forceAudio
 			url={isAudio && item ? (mediaUrl || item.audio) : getSilentAudioUrl()}
 			width="0"
 			height="0"

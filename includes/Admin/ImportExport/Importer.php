@@ -135,6 +135,20 @@ class Importer {
 	protected $suspended = false;
 
 	/**
+	 * Post IDs written while cache invalidation was suspended, keyed by ID.
+	 *
+	 * @var array
+	 */
+	protected $touched_posts = array();
+
+	/**
+	 * Term IDs written while cache invalidation was suspended, keyed by taxonomy.
+	 *
+	 * @var array
+	 */
+	protected $touched_terms = array();
+
+	/**
 	 * Optional logger: fn( string $message, string $level ).
 	 *
 	 * @var callable|null
@@ -205,6 +219,24 @@ class Importer {
 		wp_suspend_cache_invalidation( false );
 		wp_defer_term_counting( false );
 		wp_defer_comment_counting( false );
+
+		// With invalidation suspended, wp_insert_post() and wp_insert_term() skipped
+		// clean_post_cache() / clean_term_cache(), and the runtime flush in
+		// free_memory() only empties in-process memory. On a persistent object cache
+		// (Redis, Memcached) the pre-import copies of updated posts and terms would
+		// otherwise be served until they expire. Evict exactly what was written — not
+		// wp_cache_flush(), which would take every other plugin's data (and, on a
+		// shared backend, every other site's) with it.
+		foreach ( array_keys( $this->touched_posts ) as $post_id ) {
+			clean_post_cache( $post_id );
+		}
+
+		foreach ( $this->touched_terms as $taxonomy => $term_ids ) {
+			clean_term_cache( array_keys( $term_ids ), $taxonomy );
+		}
+
+		$this->touched_posts = array();
+		$this->touched_terms = array();
 
 		if ( ! $this->dry_run && function_exists( 'kses_init' ) ) {
 			kses_init();
@@ -390,7 +422,8 @@ class Importer {
 
 		if ( $existing ) {
 			wp_update_term( $existing->term_id, $taxonomy, array_merge( $args, array( 'name' => $name ) ) );
-			$this->term_cache[ $taxonomy . ':' . $slug ] = (int) $existing->term_id;
+			$this->term_cache[ $taxonomy . ':' . $slug ]         = (int) $existing->term_id;
+			$this->touched_terms[ $taxonomy ][ $existing->term_id ] = true;
 			$this->bump_stat( 'term', 'updated' );
 			return;
 		}
@@ -403,7 +436,8 @@ class Importer {
 			return;
 		}
 
-		$this->term_cache[ $taxonomy . ':' . $slug ] = (int) $result['term_id'];
+		$this->term_cache[ $taxonomy . ':' . $slug ]        = (int) $result['term_id'];
+		$this->touched_terms[ $taxonomy ][ $result['term_id'] ] = true;
 		$this->bump_stat( 'term', 'created' );
 	}
 
@@ -463,7 +497,8 @@ class Importer {
 			return;
 		}
 
-		$this->post_map[ $original_id ] = (int) $post_id;
+		$this->post_map[ $original_id ]      = (int) $post_id;
+		$this->touched_posts[ (int) $post_id ] = true;
 
 		// Idempotency markers.
 		update_post_meta( $post_id, Util::META_ORIGINAL_ID, $original_id );
@@ -712,6 +747,8 @@ class Importer {
 
 						if ( ! is_wp_error( $created ) ) {
 							$term = get_term( $created['term_id'], $taxonomy );
+
+							$this->touched_terms[ $taxonomy ][ $created['term_id'] ] = true;
 						}
 					}
 
@@ -837,6 +874,8 @@ class Importer {
 
 		update_post_meta( $attachment_id, Util::META_SOURCE_SITE, $this->source_site );
 		update_post_meta( $attachment_id, '_cpl_import_source_url', esc_url_raw( $url ) );
+
+		$this->touched_posts[ (int) $attachment_id ] = true;
 
 		return (int) $attachment_id;
 	}

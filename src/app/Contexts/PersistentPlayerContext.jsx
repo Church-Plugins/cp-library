@@ -15,7 +15,10 @@ function reducer(state, action) {
       return { ...state, isActive: true };
     }
     case "PLAYER_MOUNTED": {
-      return { ...state, item: action.item, isActive: true };
+      // The player is mounted idle at page load (so Safari can unlock its audio
+      // element before the first click); it is only *active* once it holds a
+      // sermon. Reporting idle as active made Watch/play close it on every click.
+      return { ...state, item: action.item, isActive: Boolean(action.item) };
     }
     case "PLAYER_UNMOUNTED": {
       return { ...state, item: undefined, isActive: false };

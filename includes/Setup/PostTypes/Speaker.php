@@ -330,6 +330,13 @@ class Speaker extends PostType {
 			return;
 		}
 
+		// update_post_meta() fires this before cmb2_save_field, so the guard has to be
+		// here too or the variations flow gets overwritten before save_item_speaker()
+		// ever gets the chance to refuse.
+		if ( $this->skip_speaker_sync( $object_id ) ) {
+			return;
+		}
+
 		if ( $this->is_unresolved( $meta_value, $speaker_ids = $this->process_speaker_data( $meta_value ) ) ) {
 			return;
 		}

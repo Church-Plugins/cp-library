@@ -124,7 +124,10 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 * Fix: Sermon Speaker lists no longer show a stray comma from orphaned speaker records; a one-time cleanup removes orphaned Speaker/Series associations on upgrade.
 * Fix: A sermon with duplicate Speaker or Series records no longer loses that Speaker or Series when it is re-saved. Only the duplicate entry is removed.
 * Fix: Service Type assignments now use the same corrected save path as Speakers and Series, so stale and empty entries are cleaned up properly.
-* Fix: Speaker and Series mappings in WP All Import now sync correctly. A blank column, or a name that doesn't match a published Speaker or Series, no longer clears the assignments already on a sermon — re-running a feed to refresh other fields leaves them intact. Names separated by commas in a single column are now matched individually.
+* Fix: Speaker, Series and Service Type mappings in WP All Import now sync correctly. A blank column, or a name that doesn't match a published Speaker, Series or Service Type, no longer clears the assignments already on a sermon — re-running a feed to refresh other fields leaves them intact. Names separated by commas in a single column are now matched individually.
+* Fix: Permanently deleting a Series now removes it from every sermon it contained, instead of leaving each sermon with a reference to a series that no longer exists.
+* Fix: The Listen button on a sermon page now starts playback on the first click, including in Safari and on iOS. Video plays in the sermon's feature area again after audio has been played, instead of being pushed into the persistent player.
+* Fix: Sermons whose audio is an embed (SoundCloud, Spotify, etc.) render the embed in the feature area again.
 
 = 1.6.2 =
 * Fix: Imported sermons (CSV import and SermonAudio adapter) were silently flagged as hidden and excluded from the main sermon list. Imports now default to visible.

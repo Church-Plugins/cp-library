@@ -69,13 +69,21 @@ export default function Player({ item }) {
 	// image for those sermons.
 	const hasVideo = Boolean(currentItem.video?.value);
 	const [currentMedia, setCurrentMedia] = useState(() => {
-		const media = currentItem.video?.value;
+		const video = currentItem.video?.value;
 		// Hosted video is left unloaded until the play control is used. Embeds are
 		// markup rather than a stream, so they render straight away as before.
-		if( isURL( media ) ) {
+		if( isURL( video ) ) {
 			return ''
 		}
-		return media || ''
+		if( video ) {
+			return video
+		}
+		// Hosted audio goes to the persistent player, but an audio *embed*
+		// (SoundCloud, Spotify, ...) is markup with its own controls and the
+		// persistent player has nothing to play it with — it renders here, as it
+		// always has.
+		const audio = currentItem.audio;
+		return audio && ! isURL( audio ) ? audio : ''
 	});
 	// Video or embed
 	const [mode, setMode] = useState(currentMedia && (isURL(currentMedia) ? false : 'embed'));
@@ -341,6 +349,23 @@ export default function Player({ item }) {
 				...data,
 				url: url
 			});
+			return;
+		}
+
+		// An embed is markup, not a stream. Render it in place; the hosted-video
+		// initialisation in updateMode() (spinner, playback detection) has nothing
+		// to detect and would end by covering the embed with the thumbnail.
+		if ('embed' === data.mode) {
+			if (persistentPlayerIsActive) {
+				api.closePersistentPlayer()
+			}
+
+			clearTimeout(playbackDetectionTimeout.current);
+			window._playbackDetectionId = null;
+			setLoadingState('initial');
+			setIsPlaying(false);
+			setMode('embed');
+			setCurrentMedia(url);
 			return;
 		}
 

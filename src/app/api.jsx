@@ -140,16 +140,18 @@ class CP_Library {
 	/**
 	 * Close the persistent player.
 	 *
+	 * Resets it to idle in place rather than unmounting it. The audio element it
+	 * holds is the one Safari granted playback permission on the first
+	 * interaction (see __mountWhenReady); a new element created for the next
+	 * Listen would arrive without it. An arrow, so it can be passed unbound —
+	 * straight into an onClick, say.
+	 *
 	 * @returns {void}
 	 */
-	closePersistentPlayer() {
-		CP_Library.__root.unmount()
-		CP_Library.__root = null
-		CP_Library.__domNode = null
+	closePersistentPlayer = () => {
 		window.top.document.body.classList.remove('cpl-persistent-player');
-		window.top.postMessage({
-			action: "CPL_PERSISTENT_PLAYER_CLOSED",
-		});
+		this.triggerEvent('CPL_CLOSE_PERSISTENT_PLAYER');
+		this.triggerEvent('CPL_PERSISTENT_PLAYER_CLOSED');
 	}
 
 	/**

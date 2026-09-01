@@ -62,6 +62,12 @@ class ExcludedMetaTest extends TestCase {
 			'series repeater group field'   => [ 'cpl_series_items_data', 'CMB2 group wrapper for the same data' ],
 			'suffixed group field'          => [ 'cpl_series_items_data_2', 'per-source variant of the wrapper' ],
 			'variation repeater'            => [ '_cpl_item_variation_12', 'holds variant post IDs' ],
+			// Mirrors of the relationship tables. They hold the source site's custom-table
+			// ids, and added_post_meta handlers act on them — replaying attaches whatever
+			// record holds that id on the target. Relations come from the record instead.
+			'speaker field'                 => [ 'cpl_speaker', 'source-site speaker table ids' ],
+			'series field'                  => [ 'cpl_series', 'source-site series table ids' ],
+			'service type field'            => [ 'cpl_service_type', 'source-site service type table ids' ],
 		];
 	}
 
@@ -78,10 +84,9 @@ class ExcludedMetaTest extends TestCase {
 			'video url'      => [ 'video_url', 'real sermon content must survive the migration' ],
 			'downloads'      => [ 'downloads', 'rewritten on import, but must not be dropped' ],
 			'transcript'     => [ 'transcript', 'real sermon content must survive the migration' ],
-			// Guards the prefix from being written loosely enough to swallow the
-			// relation fields, which are handled by import_item_relations().
-			'series field'   => [ 'cpl_series', 'not the repeater — must not be caught by the prefix' ],
-			'speaker field'  => [ 'cpl_speaker', 'unrelated to the excluded prefixes' ],
+			// Guards the prefix from being written loosely enough to swallow
+			// unrelated keys that merely share a stem.
+			'series count'   => [ 'cpl_series_count', 'shares a stem with the repeater, not the repeater' ],
 			'variation-ish'  => [ '_cpl_item_variations_enabled', 'no trailing underscore — not the repeater' ],
 		];
 	}

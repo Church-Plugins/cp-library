@@ -562,6 +562,12 @@ class ItemType extends PostType  {
 			return;
 		}
 
+		// variant children get their series from the parent — same as save_item_series()
+		// and handle_deleted_meta(), and this hook fires before either of them
+		if ( wp_get_post_parent_id( $object_id ) ) {
+			return;
+		}
+
 		if ( $this->is_unresolved( $meta_value, $series_ids = $this->process_series_data( $meta_value ) ) ) {
 			return;
 		}

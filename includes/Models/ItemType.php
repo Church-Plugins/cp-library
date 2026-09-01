@@ -38,7 +38,11 @@ class ItemType extends Table  {
 		parent::init();
 
 		$this->table_name  = $wpdb->prefix . 'cpl_' . $this->type;
-		$this->meta_table_name  = $wpdb->prefix . 'cpl_' . $this->type . "_meta";
+		// A series has no meta table of its own: its rows (`item_type`, keyed by
+		// `item_type_id`) live in the item meta table. This used to name a
+		// cpl_item_type_meta table that never existed, so delete_all_meta() failed
+		// silently and every sermon in a deleted series kept a row pointing at it.
+		$this->meta_table_name  = $wpdb->prefix . 'cpl_item_meta';
 	}
 
 	/**
@@ -161,8 +165,19 @@ class ItemType extends Table  {
 	 * @author Tanner Moushey
 	 */
 	public function delete() {
+		global $wpdb;
+
 		do_action( "cpl_{$this->type}_delete_meta_before" );
+
+		// The items whose rows are about to go still hold them in their caches.
+		$affected = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT `item_id` FROM {$this->meta_table_name} WHERE `item_type_id` = %d", $this->id ) );
+
 		$this->delete_all_meta( $this->id, 'item_type_id' );
+
+		if ( function_exists( 'cp_library_invalidate_item_caches' ) ) {
+			cp_library_invalidate_item_caches( $affected );
+		}
+
 		do_action( "cpl_{$this->type}_delete_meta_after" );
 
 		parent::delete();
