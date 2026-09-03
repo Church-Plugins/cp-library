@@ -74,6 +74,12 @@ class ItemType extends PostType  {
 		// Handle all meta updates (both CMB2 and direct WordPress functions)
 		add_action( 'updated_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
 		add_action( 'added_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
+		add_action( 'deleted_post_meta', [ $this, 'handle_deleted_meta' ], 10, 4 );
+
+		// Reconcile on every CMB2 save — the postmeta hooks above don't fire when the
+		// submitted value matches the stored value, which leaves the relationship table
+		// out of sync when it disagrees with postmeta (e.g. posts copied by a duplicator).
+		add_action( 'cmb2_save_field_cpl_series', [ $this, 'save_item_series' ], 10, 3 );
 		add_action( 'pre_get_posts', [ $this, 'item_item_type_query' ] );
 		add_action( 'pre_get_posts', [ $this, 'item_type_param_query' ] );
 		add_filter( 'post_updated_messages', [ $this, 'post_update_messages' ] );
@@ -463,6 +469,76 @@ class ItemType extends PostType  {
 	}
 
 	/**
+	 * Reconcile item series from the submitted CMB2 field data.
+	 *
+	 * update_post_meta() skips its hooks when the value is unchanged, so
+	 * handle_updated_meta() alone cannot heal a relationship table that disagrees
+	 * with postmeta. This runs on every CMB2 save with the submitted data.
+	 *
+	 * @param bool        $updated Whether the field was updated.
+	 * @param string      $action  The save action performed.
+	 * @param \CMB2_Field $field   The field object.
+	 *
+	 * @since 1.6.3
+	 */
+	public function save_item_series( $updated, $action, $field ) {
+		$object_id = $field->object_id;
+
+		if ( Item::get_instance()->post_type !== get_post_type( $object_id ) ) {
+			return;
+		}
+
+		// variant children get their series from the parent
+		if ( wp_get_post_parent_id( $object_id ) ) {
+			return;
+		}
+
+		$data = isset( $field->data_to_save[ $field->id( true ) ] ) ? $field->data_to_save[ $field->id( true ) ] : [];
+
+		if ( $this->is_unresolved( $data, $series_ids = $this->process_series_data( $data ) ) ) {
+			return;
+		}
+
+		try {
+			$item = ItemModel::get_instance_from_origin( $object_id );
+			$item->update_types( $series_ids );
+		} catch ( Exception $e ) {
+			error_log( 'CP Library Series Save: ' . $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Clear item series when the cpl_series postmeta is deleted.
+	 *
+	 * @param array  $meta_ids   Deleted meta IDs.
+	 * @param int    $object_id  Post ID.
+	 * @param string $meta_key   Meta key.
+	 * @param mixed  $meta_value Meta value.
+	 *
+	 * @since 1.6.3
+	 */
+	public function handle_deleted_meta( $meta_ids, $object_id, $meta_key, $meta_value ) {
+		if ( 'cpl_series' !== $meta_key ) {
+			return;
+		}
+
+		if ( Item::get_instance()->post_type !== get_post_type( $object_id ) ) {
+			return;
+		}
+
+		if ( wp_get_post_parent_id( $object_id ) ) {
+			return;
+		}
+
+		try {
+			$item = ItemModel::get_instance_from_origin( $object_id );
+			$item->update_types( [] );
+		} catch ( Exception $e ) {
+			error_log( 'CP Library Series Meta Delete: ' . $e->getMessage() );
+		}
+	}
+
+	/**
 	 * Handle meta updates for series field
 	 *
 	 * @param int $meta_id ID of the meta value
@@ -486,13 +562,52 @@ class ItemType extends PostType  {
 			return;
 		}
 
+		// variant children get their series from the parent — same as save_item_series()
+		// and handle_deleted_meta(), and this hook fires before either of them
+		if ( wp_get_post_parent_id( $object_id ) ) {
+			return;
+		}
+
+		if ( $this->is_unresolved( $meta_value, $series_ids = $this->process_series_data( $meta_value ) ) ) {
+			return;
+		}
+
 		try {
 			$item = ItemModel::get_instance_from_origin( $object_id );
-			$series_ids = $this->process_series_data( $meta_value );
 			$item->update_types( $series_ids );
 		} catch ( Exception $e ) {
 			error_log( 'CP Library Series Meta Update: ' . $e->getMessage() );
 		}
+	}
+
+	/**
+	 * Whether a submitted value named series we could not match
+	 *
+	 * Names arrive from feeds and importers, and a name we can't match — unpublished,
+	 * misspelled, or delimited — resolves to nothing. Treating that as "no series"
+	 * would clear associations the caller never meant to touch (along with the manual
+	 * `order` on them), so only a genuinely empty submission is allowed to clear.
+	 *
+	 * @param mixed $raw The submitted meta value.
+	 * @param array $ids The ids it resolved to.
+	 *
+	 * @return bool
+	 * @since 1.6.3
+	 */
+	protected function is_unresolved( $raw, $ids ) {
+		if ( ! empty( $ids ) ) {
+			return false;
+		}
+
+		$submitted = array_filter( array_map( 'trim', array_filter( (array) $raw, 'is_scalar' ) ), 'strlen' );
+
+		if ( empty( $submitted ) ) {
+			return false;
+		}
+
+		error_log( sprintf( 'CP Library Series Lookup: no %s matched "%s"; leaving existing associations in place.', $this->plural_label, implode( ', ', $submitted ) ) );
+
+		return true;
 	}
 
 	/**
@@ -502,7 +617,6 @@ class ItemType extends PostType  {
 	 * @return array Array of series IDs
 	 */
 	protected function process_series_data( $data ) {
-		global $wpdb;
 		$series_ids = [];
 
 		// If single value, convert to array
@@ -514,23 +628,61 @@ class ItemType extends PostType  {
 			if ( is_numeric( $value ) ) {
 				// Already a series ID
 				$series_ids[] = absint( $value );
-			} else if ( is_string( $value ) && ! empty( $value ) ) {
-				// Try to find series by title
-				$value  = sanitize_text_field( $value );
-				$series = $wpdb->get_row( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND (post_title = %s OR post_name = %s) AND post_status = 'publish' LIMIT 1", $this->post_type, $value, $value ) );
+				continue;
+			}
 
-				if ( $series ) {
-					try {
-						$series_model = \CP_Library\Models\ItemType::get_instance_from_origin( $series->ID );
-						$series_ids[] = $series_model->id;
-					} catch ( Exception $e ) {
-						error_log( 'CP Library Series Lookup: ' . $e->getMessage() );
-					}
+			if ( ! is_string( $value ) || '' === trim( $value ) ) {
+				continue;
+			}
+
+			$value = sanitize_text_field( $value );
+
+			if ( $id = $this->find_series_by_name( $value ) ) {
+				$series_ids[] = $id;
+				continue;
+			}
+
+			// a feed can deliver several names in one column; only split once the whole
+			// string fails to match, so titles containing a comma still resolve first
+			if ( false === strpos( $value, ',' ) ) {
+				continue;
+			}
+
+			foreach ( array_filter( array_map( 'trim', explode( ',', $value ) ) ) as $name ) {
+				if ( $id = $this->find_series_by_name( $name ) ) {
+					$series_ids[] = $id;
 				}
 			}
 		}
 
 		return $series_ids;
+	}
+
+	/**
+	 * Look up a series id by post title or slug
+	 *
+	 * @param string $name
+	 *
+	 * @return int Series model id, or 0 when no published series matches.
+	 * @since 1.6.3
+	 */
+	protected function find_series_by_name( $name ) {
+		global $wpdb;
+
+		$series = $wpdb->get_row( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND (post_title = %s OR post_name = %s) AND post_status = 'publish' LIMIT 1", $this->post_type, $name, $name ) );
+
+		if ( ! $series ) {
+			return 0;
+		}
+
+		try {
+			$series_model = \CP_Library\Models\ItemType::get_instance_from_origin( $series->ID );
+			return $series_model->id;
+		} catch ( Exception $e ) {
+			error_log( 'CP Library Series Lookup: ' . $e->getMessage() );
+		}
+
+		return 0;
 	}
 
 	/**

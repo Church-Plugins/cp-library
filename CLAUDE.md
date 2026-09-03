@@ -211,7 +211,7 @@ npm run build
 #### Taxonomies
 - `cpl_scripture` - Bible scripture references
 - `cpl_season` - Sermon seasons
-- `cpl_topics` - Sermon topics
+- `cpl_topic` - Sermon topics
 
 ### Common CLI Commands
 
@@ -238,6 +238,64 @@ npm run build
 # Create distribution package
 npm run plugin-zip
 ```
+
+#### Testing
+
+`vendor/` is not in git — run `composer install` after cloning.
+
+```bash
+composer test              # both suites
+composer test:unit         # fast, WP-free (Brain Monkey for WP stubs)
+composer test:integration   # boots real WordPress against a real database
+composer verify            # everything that must pass before a commit
+```
+
+The unit suite does not boot WordPress. Tests exercise logic directly and stub WP
+functions with Brain Monkey, which keeps that run well under a second.
+
+New PHP logic should ship with a test in `tests/Unit/`. See `DiffAssociationsTest`
+for the pure-logic pattern and `UnresolvedSpeakerGuardTest` for the Brain Monkey
+one (subclass the unit, build it with `newInstanceWithoutConstructor()`, stub the
+WP calls). Name the test after the behavior it protects and open the file with a
+docblock explaining the bug it locks down — not what the method does.
+
+**The unit suite cannot reach `$wpdb`.** Much of the relationship logic is raw
+SQL against the `cpl_*` custom tables, so pull the decision out of the query and
+unit test the decision — `Models\Item::diff_associations()` is the shape to copy.
+Then cover the query itself in `tests/Integration/`.
+
+Pure WP helpers (`absint`, `trailingslashit`, ...) are defined for real in
+`tests/wp-polyfills.php`. Anything with behavior — `get_option`, `apply_filters`,
+`get_post_meta` — gets stubbed per test so the test states its own assumptions.
+
+##### Integration tests
+
+One-time setup per machine:
+
+```bash
+bin/install-wp-tests.sh <db-name> <db-user> <db-pass> [db-host] [wp-version] [skip-db-create]
+```
+
+**The WordPress test suite drops every table in the database it is given, on
+every run.** Point it at a dedicated database — never at the one behind a site
+you care about. On Local, MySQL only accepts socket connections, so pass the host
+as `localhost:/path/to/mysqld.sock` and create the database yourself first
+(the script's own creation step can't handle a socket path containing spaces):
+
+```bash
+SOCK="$HOME/Library/Application Support/Local/run/<site-id>/mysql/mysqld.sock"
+mysql --socket="$SOCK" -uroot -proot -e "CREATE DATABASE cpl_tests"
+bin/install-wp-tests.sh cpl_tests root root "localhost:$SOCK" latest true
+```
+
+Tests extend `CP_Library\Tests\Integration\TestCase`, which adds fixtures for the
+custom-table models. `WP_UnitTestCase` wraps each test in a transaction that
+covers the `cpl_*` tables too, so fixtures need no teardown — but never issue DDL
+from inside a test, as the implicit commit breaks that rollback.
+
+When a test is meant to lock down a fix, confirm it actually fails against the
+old behavior before trusting it. Both `SurplusAssociationDeleteTest` and
+`Migration163Test` were checked that way.
 
 ### Common Configuration Settings
 

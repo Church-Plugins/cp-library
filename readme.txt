@@ -1,10 +1,10 @@
 === CP Sermon Library ===
-Contributors: churchplugins, tabormoushey
+Contributors: churchplugins, tannermoushey
 Tags: sermons, church, podcast, speakers, series
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.6.2
+Stable tag: 1.6.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -113,6 +113,22 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 
 == Changelog ==
 
+= 1.6.3 =
+* New: **Tools → Import/Export → Full Migration** — move an entire sermon library between sites in one step. Exports sermons (with variations, timestamps, transcripts and downloads), series, speakers, service types, templates and taxonomy terms, and optionally your plugin settings. Imports run in small batches and can be resumed, so libraries with tens of thousands of sermons don't hit a PHP timeout. Re-importing the same file updates the existing content instead of duplicating it.
+* New: WP-CLI commands for full-site migration (`wp cpl export` and `wp cpl import`), with `--dry-run`, `--download-media`, `--include-settings` and `--batch-size` options. Recommended for very large libraries.
+* Fix: Sermons whose title contains an emoji no longer fail to save. On sites whose CP Sermons tables predate 4-byte character support, WordPress refuses the write rather than truncating it, so those sermons silently never imported — one site was losing 152 of 502 sermons on every sync. The sermon now saves, with the emoji omitted from the internal record only; the sermon's own title keeps it. No database changes are made.
+* New: Sermon sync can now set a sermon's service type and supply artwork for both series and service types. `SermonSync::upsert()` accepts a `thumbnail_id` on either, used as the featured image when that series or service type does not already have one — an image chosen by hand is never overwritten. Service type artwork is what CP Sermons serves as podcast channel art.
+* Fix: Series, Speaker, and Service Type podcast feeds now use the full-size featured image for channel artwork. Previously a 600×600 thumbnail was served, which falls below Apple Podcasts' 1400×1400 minimum and caused artwork to be rejected in Apple Podcasts / iTunes.
+* Fix: Selecting a Series or Speaker on a sermon now saves reliably even when the stored value already matches — previously sermons copied with a duplicator plugin could not be assigned the same Series/Speaker as the original.
+* Fix: Clearing the Series or Speaker field on a sermon now properly removes the assignment.
+* Fix: Sermon Speaker lists no longer show a stray comma from orphaned speaker records; a one-time cleanup removes orphaned Speaker/Series associations on upgrade.
+* Fix: A sermon with duplicate Speaker or Series records no longer loses that Speaker or Series when it is re-saved. Only the duplicate entry is removed.
+* Fix: Service Type assignments now use the same corrected save path as Speakers and Series, so stale and empty entries are cleaned up properly.
+* Fix: Speaker, Series and Service Type mappings in WP All Import now sync correctly. A blank column, or a name that doesn't match a published Speaker, Series or Service Type, no longer clears the assignments already on a sermon — re-running a feed to refresh other fields leaves them intact. Names separated by commas in a single column are now matched individually.
+* Fix: Permanently deleting a Series now removes it from every sermon it contained, instead of leaving each sermon with a reference to a series that no longer exists.
+* Fix: The Listen button on a sermon page now starts playback on the first click, including in Safari and on iOS. Video plays in the sermon's feature area again after audio has been played, instead of being pushed into the persistent player.
+* Fix: Sermons whose audio is an embed (SoundCloud, Spotify, etc.) render the embed in the feature area again.
+
 = 1.6.2 =
 * Fix: Imported sermons (CSV import and SermonAudio adapter) were silently flagged as hidden and excluded from the main sermon list. Imports now default to visible.
 * Change: The per-sermon visibility checkbox is now "Exclude from Main List" (default unchecked) instead of "Show in Main List" (default checked) — matching the existing Series and Service Type metaboxes.
@@ -157,6 +173,9 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 * Feature updates and enhancements
 
 == Upgrade Notice ==
+
+= 1.6.3 =
+Adds a full-site migration tool for moving a sermon library between sites, and fixes several Speaker/Series assignment bugs. A one-time cleanup runs on upgrade to remove orphaned and duplicate Speaker/Series associations. If you use WP All Import, note that a blank or unmatched Speaker/Series column no longer clears existing assignments.
 
 = 1.6.2 =
 Fixes a bug where imported sermons were silently hidden from the main list. The visibility checkbox has been renamed to "Exclude from Main List" (matching the existing Series and Service Type controls) so imports default to visible. After updating, visit Messages → Tools to migrate legacy visibility settings or reset any sermons that were accidentally hidden.
