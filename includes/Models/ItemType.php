@@ -38,11 +38,7 @@ class ItemType extends Table  {
 		parent::init();
 
 		$this->table_name  = $wpdb->prefix . 'cpl_' . $this->type;
-		// A series has no meta table of its own: its rows (`item_type`, keyed by
-		// `item_type_id`) live in the item meta table. This used to name a
-		// cpl_item_type_meta table that never existed, so delete_all_meta() failed
-		// silently and every sermon in a deleted series kept a row pointing at it.
-		$this->meta_table_name  = $wpdb->prefix . 'cpl_item_meta';
+		$this->meta_table_name  = $wpdb->prefix . 'cpl_' . $this->type . "_meta";
 	}
 
 	/**
@@ -164,13 +160,36 @@ class ItemType extends Table  {
 	 *
 	 * @author Tanner Moushey
 	 */
+	/**
+	 * A series has no meta table of its own: its association rows (`item_type`,
+	 * keyed by `item_type_id`) live in the item meta table, so that is what a meta
+	 * cascade must target. The generic implementation hits a cpl_item_type_meta
+	 * table that does not exist — and repointing $meta_table_name at the item meta
+	 * table instead would send every inherited meta method there too.
+	 *
+	 * @param string $value  Value to match.
+	 * @param string $column Column to match against.
+	 *
+	 * @return int|false
+	 * @since 1.6.3
+	 */
+	public function delete_all_meta( $value, $column ) {
+		global $wpdb;
+
+		if ( $this->id ) {
+			wp_cache_delete( $this->id, static::get_prop( 'cache_group' ) . '_meta' );
+		}
+
+		return $wpdb->query( $wpdb->prepare( "DELETE FROM " . ItemMeta::get_instance()->table_name . " WHERE `{$column}` = %s", $value ) );
+	}
+
 	public function delete() {
 		global $wpdb;
 
 		do_action( "cpl_{$this->type}_delete_meta_before" );
 
 		// The items whose rows are about to go still hold them in their caches.
-		$affected = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT `item_id` FROM {$this->meta_table_name} WHERE `item_type_id` = %d", $this->id ) );
+		$affected = $wpdb->get_col( $wpdb->prepare( "SELECT DISTINCT `item_id` FROM " . ItemMeta::get_instance()->table_name . " WHERE `item_type_id` = %d", $this->id ) );
 
 		$this->delete_all_meta( $this->id, 'item_type_id' );
 

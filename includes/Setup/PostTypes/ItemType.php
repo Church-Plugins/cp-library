@@ -493,7 +493,9 @@ class ItemType extends PostType  {
 			return;
 		}
 
-		$data = isset( $field->data_to_save[ $field->id( true ) ] ) ? $field->data_to_save[ $field->id( true ) ] : [];
+		if ( null === $data = $this->get_submitted_field_data( $field ) ) {
+			return;
+		}
 
 		if ( $this->is_unresolved( $data, $series_ids = $this->process_series_data( $data ) ) ) {
 			return;
@@ -578,6 +580,37 @@ class ItemType extends PostType  {
 		} catch ( Exception $e ) {
 			error_log( 'CP Library Series Meta Update: ' . $e->getMessage() );
 		}
+	}
+
+	/**
+	 * Pull this field's value out of the data being saved
+	 *
+	 * CMB2 fires cmb2_save_field_{id} for every registered field on any save it
+	 * performs, even when the field's key is absent from the data. Absence means
+	 * two different things: an emptied multiselect posts nothing, so the metabox's
+	 * own submission — identified by its nonce — is a request to clear; any other
+	 * save (a programmatic CMB2::save_fields() with a subset of fields, another
+	 * box's form) simply didn't include the field, and treating that as a clear
+	 * would strip associations the caller never touched.
+	 *
+	 * @param \CMB2_Field $field The field being saved.
+	 *
+	 * @return array|string|null The submitted value, [] for an explicit clear, or
+	 *                           null when the field was not part of the save.
+	 * @since 1.6.3
+	 */
+	protected function get_submitted_field_data( $field ) {
+		if ( isset( $field->data_to_save[ $field->id( true ) ] ) ) {
+			return $field->data_to_save[ $field->id( true ) ];
+		}
+
+		$cmb = function_exists( 'cmb2_get_metabox' ) ? cmb2_get_metabox( $field->cmb_id, $field->object_id ) : null;
+
+		if ( $cmb && isset( $field->data_to_save[ $cmb->nonce() ] ) ) {
+			return [];
+		}
+
+		return null;
 	}
 
 	/**
