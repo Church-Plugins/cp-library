@@ -117,6 +117,47 @@ class Migration163Test extends TestCase {
 		$this->assertEquals( $real, $rows[0]->id );
 	}
 
+	public function test_duplicate_speaker_rows_are_collapsed_to_the_oldest() {
+		$item    = $this->make_item();
+		$speaker = $this->make_speaker();
+		$other   = $this->make_speaker( 'Other Speaker' );
+
+		$oldest = $this->insert_raw_speaker_row( $item->id, $speaker->id );
+		$this->insert_raw_speaker_row( $item->id, $speaker->id );
+		$this->insert_raw_speaker_row( $item->id, $speaker->id );
+		$kept = $this->insert_raw_speaker_row( $item->id, $other->id );
+
+		$this->migrate();
+
+		$rows = $this->speaker_rows( $item->id );
+
+		$this->assertCount( 2, $rows, 'duplicates collapse to one row per speaker' );
+		$this->assertEqualsCanonicalizing(
+			[ $oldest, $kept ],
+			wp_list_pluck( $rows, 'id' ),
+			'the oldest duplicate survives — it carries the original `order`'
+		);
+	}
+
+	public function test_duplicate_series_rows_are_collapsed_to_the_oldest() {
+		global $wpdb;
+
+		$item   = $this->make_item();
+		$series = $this->make_series();
+		$table  = ItemModel::get_prop( 'meta_table_name' );
+
+		$wpdb->insert( $table, [ 'key' => 'item_type', 'item_type_id' => $series->id, 'item_id' => $item->id ] );
+		$oldest = (int) $wpdb->insert_id;
+		$wpdb->insert( $table, [ 'key' => 'item_type', 'item_type_id' => $series->id, 'item_id' => $item->id ] );
+
+		$this->migrate();
+
+		$rows = $this->type_rows( $item->id );
+
+		$this->assertCount( 1, $rows, 'duplicates collapse to a single row' );
+		$this->assertEquals( $oldest, $rows[0]->id );
+	}
+
 	public function test_unrelated_meta_rows_are_not_touched() {
 		global $wpdb;
 
