@@ -5,6 +5,7 @@ yarn.lock
 /dist/
 /build/
 /node_modules/
+/vendor/
 .phpdoc
 .vscode
 app/templates/*.rt.js
@@ -13,3 +14,4 @@ cp-library.zip
 .claude/
 cp-library/
 ai
+releases/

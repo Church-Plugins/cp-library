@@ -45,26 +45,39 @@ export default function Controls({ isVariation, item, handleSelect }) {
         <Box className="itemDetail__playAudio" >
           <PlayAudio
             onClick={() => {
-              // Always pass to PersistentPlayer for audio
-              // But first stop any video playback
-              if (handleSelect) {
-                // Stop video playback if it's playing
-                handleSelect({
-                  item: item,
-                  mode: false, // Set mode to false to stop playback
-                  url: '',
-                  isPlaying: false,
-                  playedSeconds: 0.0,
-                });
+              // An audio embed (SoundCloud, Spotify, ...) is markup the persistent
+              // player has nothing to play with; it renders in the feature area.
+              if (!isURL(item.audio)) {
+                if (handleSelect) {
+                  handleSelect({
+                    item         : item,
+                    mode         : 'embed',
+                    url          : item.audio,
+                    isPlaying    : true,
+                    playedSeconds: 0.0,
+                  });
+                }
+                return;
               }
-              
+
+              // Hand over first, so the call that starts playback is as close to the
+              // click as possible — Safari only grants playback for a play() tied to
+              // the gesture, and anything queued ahead of this pushes it further away.
               api.passToPersistentPlayer({
                 item         : item,
-                mode         : isURL(item.audio) ? 'audio' : 'embed',
+                mode         : 'audio',
                 url          : item.audio,
                 isPlaying    : true,
                 playedSeconds: 0.0,
               })
+
+              // Then tell the local player to stand down. 'stop' pauses it in place;
+              // passing mode:false used to route into updateMode(), which tore the
+              // local player down and rebuilt it — spinning the feature image and
+              // fighting the handover for the same click.
+              if (handleSelect) {
+                handleSelect({ item: item, mode: 'stop' });
+              }
             }}
             variant={ item.layout === 'vertical' ? 'light' : 'outlined' }
           />

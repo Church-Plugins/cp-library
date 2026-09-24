@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Integration suite: boots a real WordPress against a real database.
+
+	Requires bin/install-wp-tests.sh to have been run. See
+	tests/bootstrap-integration.php for setup and the warning about which
+	database you may point it at.
+
+	Kept separate from phpunit.xml.dist because the two suites need different
+	bootstraps and PHPUnit allows only one per config file. `composer test`
+	runs both.
+-->
+<phpunit
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+	bootstrap="tests/bootstrap-integration.php"
+	colors="true"
+	beStrictAboutOutputDuringTests="true"
+	beStrictAboutTestsThatDoNotTestAnything="true"
+	failOnWarning="true"
+	failOnRisky="true"
+	cacheResult="false">
+	<testsuites>
+		<testsuite name="integration">
+			<directory suffix="Test.php">tests/Integration</directory>
+		</testsuite>
+	</testsuites>
+</phpunit>

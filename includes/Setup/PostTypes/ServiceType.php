@@ -4,6 +4,7 @@ namespace CP_Library\Setup\PostTypes;
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+use ChurchPlugins\Helpers;
 use ChurchPlugins\Setup\Tables\SourceMeta;
 use CP_Library\Admin\Settings;
 use ChurchPlugins\Exception;
@@ -42,6 +43,12 @@ class ServiceType extends PostType {
 		// Handle all meta updates (both CMB2 and direct WordPress functions)
 		add_action( 'updated_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
 		add_action( 'added_post_meta', [ $this, 'handle_updated_meta' ], 10, 4 );
+		add_action( 'deleted_post_meta', [ $this, 'handle_deleted_meta' ], 10, 4 );
+
+		// Reconcile on every CMB2 save — the postmeta hooks above don't fire when the
+		// submitted value matches the stored value, which leaves the relationship table
+		// out of sync when it disagrees with postmeta (e.g. posts copied by a duplicator).
+		add_action( 'cmb2_save_field_cpl_service_type', [ $this, 'save_item_service_type' ], 10, 3 );
 
 		$item_type = Item::get_instance()->post_type;
 		add_filter( "manage_{$item_type}_posts_columns", [ $this, 'service_type_column' ] );
@@ -150,6 +157,13 @@ class ServiceType extends PostType {
 	}
 
 	protected function item_service_type() {
+		$id = Helpers::get_param( $_GET, 'post' );
+
+		// if this item's variations are driven by service type, the assignment lives
+		// on the variants — break early, same as the Speaker box.
+		if ( $id && $this->skip_service_type_sync( $id ) ) {
+			return;
+		}
 
 		$service_types = ServiceType_Model::get_all_service_types();
 
@@ -218,6 +232,106 @@ class ServiceType extends PostType {
 	}
 
 	/**
+	 * Whether service type sync should be skipped for this post.
+	 *
+	 * When service types drive variations, a variant child's service type row is
+	 * what identifies the variation, and it is assigned by the variations save
+	 * flow (variation_item_save()), not the cpl_service_type field. Saving a
+	 * parent re-runs wp_update_post() on each variant child while the parent's
+	 * submission is still populated, so without this guard the child's row gets
+	 * overwritten with the parent's field value. Same shape as
+	 * Speaker::skip_speaker_sync().
+	 *
+	 * @param int $object_id Post ID.
+	 *
+	 * @return bool
+	 * @since 1.6.3
+	 */
+	protected function skip_service_type_sync( $object_id ) {
+		// variant children get their service type from the variations save flow
+		if ( wp_get_post_parent_id( $object_id ) ) {
+			return true;
+		}
+
+		// when service types drive variations, the parent's own field is inert —
+		// each variant carries the assignment
+		return cp_library()->setup->variations->is_enabled()
+			&& $this->post_type === cp_library()->setup->variations->get_source()
+			&& (bool) get_post_meta( $object_id, '_cpl_has_variations', true );
+	}
+
+	/**
+	 * Reconcile item service types from the submitted CMB2 field data.
+	 *
+	 * update_post_meta() skips its hooks when the value is unchanged, so
+	 * handle_updated_meta() alone cannot heal a relationship table that disagrees
+	 * with postmeta. This runs on every CMB2 save with the submitted data.
+	 *
+	 * @param bool        $updated Whether the field was updated.
+	 * @param string      $action  The save action performed.
+	 * @param \CMB2_Field $field   The field object.
+	 *
+	 * @since 1.6.3
+	 */
+	public function save_item_service_type( $updated, $action, $field ) {
+		$object_id = $field->object_id;
+
+		if ( Item::get_instance()->post_type !== get_post_type( $object_id ) ) {
+			return;
+		}
+
+		if ( $this->skip_service_type_sync( $object_id ) ) {
+			return;
+		}
+
+		if ( null === $data = $this->get_submitted_field_data( $field ) ) {
+			return;
+		}
+
+		if ( $this->is_unresolved( $data, $service_type_ids = $this->process_service_type_data( $data ) ) ) {
+			return;
+		}
+
+		try {
+			$item = ItemModel::get_instance_from_origin( $object_id );
+			$item->update_service_types( $service_type_ids );
+		} catch ( Exception $e ) {
+			error_log( 'CP Library Service Type Save: ' . $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Clear item service types when the cpl_service_type postmeta is deleted.
+	 *
+	 * @param array  $meta_ids   Deleted meta IDs.
+	 * @param int    $object_id  Post ID.
+	 * @param string $meta_key   Meta key.
+	 * @param mixed  $meta_value Meta value.
+	 *
+	 * @since 1.6.3
+	 */
+	public function handle_deleted_meta( $meta_ids, $object_id, $meta_key, $meta_value ) {
+		if ( 'cpl_service_type' !== $meta_key ) {
+			return;
+		}
+
+		if ( Item::get_instance()->post_type !== get_post_type( $object_id ) ) {
+			return;
+		}
+
+		if ( $this->skip_service_type_sync( $object_id ) ) {
+			return;
+		}
+
+		try {
+			$item = ItemModel::get_instance_from_origin( $object_id );
+			$item->update_service_types( [] );
+		} catch ( Exception $e ) {
+			error_log( 'CP Library Service Type Meta Delete: ' . $e->getMessage() );
+		}
+	}
+
+	/**
 	 * Handle meta updates for service type field
 	 *
 	 * @param int $meta_id ID of the meta value
@@ -241,13 +355,85 @@ class ServiceType extends PostType {
 			return;
 		}
 
+		// update_post_meta() fires this before cmb2_save_field, so the guard has to
+		// be here too or the variations flow gets overwritten before
+		// save_item_service_type() ever gets the chance to refuse.
+		if ( $this->skip_service_type_sync( $object_id ) ) {
+			return;
+		}
+
+		if ( $this->is_unresolved( $meta_value, $service_type_ids = $this->process_service_type_data( $meta_value ) ) ) {
+			return;
+		}
+
 		try {
 			$item = ItemModel::get_instance_from_origin( $object_id );
-			$service_type_ids = $this->process_service_type_data( $meta_value );
 			$item->update_service_types( $service_type_ids );
 		} catch ( Exception $e ) {
 			error_log( 'CP Library Service Type Meta Update: ' . $e->getMessage() );
 		}
+	}
+
+	/**
+	 * Pull this field's value out of the data being saved
+	 *
+	 * CMB2 fires cmb2_save_field_{id} for every registered field on any save it
+	 * performs, even when the field's key is absent from the data. Absence means
+	 * two different things: an emptied multiselect posts nothing, so the metabox's
+	 * own submission — identified by its nonce — is a request to clear; any other
+	 * save (a programmatic CMB2::save_fields() with a subset of fields, another
+	 * box's form) simply didn't include the field, and treating that as a clear
+	 * would strip associations the caller never touched.
+	 *
+	 * @param \CMB2_Field $field The field being saved.
+	 *
+	 * @return array|string|null The submitted value, [] for an explicit clear, or
+	 *                           null when the field was not part of the save.
+	 * @since 1.6.3
+	 */
+	protected function get_submitted_field_data( $field ) {
+		if ( isset( $field->data_to_save[ $field->id( true ) ] ) ) {
+			return $field->data_to_save[ $field->id( true ) ];
+		}
+
+		$cmb = function_exists( 'cmb2_get_metabox' ) ? cmb2_get_metabox( $field->cmb_id, $field->object_id ) : null;
+
+		if ( $cmb && isset( $field->data_to_save[ $cmb->nonce() ] ) ) {
+			return [];
+		}
+
+		return null;
+	}
+
+	/**
+	 * Whether a submitted value named service types we could not match
+	 *
+	 * Names arrive from feeds and importers, and a name we can't match — unpublished,
+	 * misspelled, or delimited — resolves to nothing. Treating that as "no service
+	 * types" would clear associations the caller never meant to touch (and, for a
+	 * variant, the source that identifies which variation it is), so only a genuinely
+	 * empty submission is allowed to clear.
+	 *
+	 * @param mixed $raw The submitted meta value.
+	 * @param array $ids The ids it resolved to.
+	 *
+	 * @return bool
+	 * @since 1.6.3
+	 */
+	protected function is_unresolved( $raw, $ids ) {
+		if ( ! empty( $ids ) ) {
+			return false;
+		}
+
+		$submitted = array_filter( array_map( 'trim', array_filter( (array) $raw, 'is_scalar' ) ), 'strlen' );
+
+		if ( empty( $submitted ) ) {
+			return false;
+		}
+
+		error_log( sprintf( 'CP Library Service Type Lookup: no %s matched "%s"; leaving existing associations in place.', $this->plural_label, implode( ', ', $submitted ) ) );
+
+		return true;
 	}
 
 	/**
@@ -257,7 +443,6 @@ class ServiceType extends PostType {
 	 * @return array Array of service type IDs
 	 */
 	protected function process_service_type_data( $data ) {
-		global $wpdb;
 		$service_type_ids = [];
 
 		// If single value, convert to array
@@ -269,23 +454,61 @@ class ServiceType extends PostType {
 			if ( is_numeric( $value ) ) {
 				// Already a service type ID
 				$service_type_ids[] = absint( $value );
-			} else if ( is_string( $value ) && ! empty( $value ) ) {
-				// Try to find service type by post_title or post_name
-				$value = sanitize_text_field( $value );
-				$service_type = $wpdb->get_row( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND (post_title = %s OR post_name = %s) AND post_status = 'publish' LIMIT 1", $this->post_type, $value, $value ) );
+				continue;
+			}
 
-				if ( $service_type ) {
-					try {
-						$service_type_model = \CP_Library\Models\ServiceType::get_instance_from_origin( $service_type->ID );
-						$service_type_ids[] = $service_type_model->id;
-					} catch ( Exception $e ) {
-						error_log( 'CP Library Service Type Lookup: ' . $e->getMessage() );
-					}
+			if ( ! is_string( $value ) || '' === trim( $value ) ) {
+				continue;
+			}
+
+			$value = sanitize_text_field( $value );
+
+			if ( $id = $this->find_service_type_by_name( $value ) ) {
+				$service_type_ids[] = $id;
+				continue;
+			}
+
+			// a feed can deliver several names in one column; only split once the whole
+			// string fails to match, so titles containing a comma still resolve first
+			if ( false === strpos( $value, ',' ) ) {
+				continue;
+			}
+
+			foreach ( array_filter( array_map( 'trim', explode( ',', $value ) ) ) as $name ) {
+				if ( $id = $this->find_service_type_by_name( $name ) ) {
+					$service_type_ids[] = $id;
 				}
 			}
 		}
 
 		return $service_type_ids;
+	}
+
+	/**
+	 * Look up a service type id by post title or slug
+	 *
+	 * @param string $name
+	 *
+	 * @return int Service type model id, or 0 when no published service type matches.
+	 * @since 1.6.3
+	 */
+	protected function find_service_type_by_name( $name ) {
+		global $wpdb;
+
+		$service_type = $wpdb->get_row( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND (post_title = %s OR post_name = %s) AND post_status = 'publish' LIMIT 1", $this->post_type, $name, $name ) );
+
+		if ( ! $service_type ) {
+			return 0;
+		}
+
+		try {
+			$service_type_model = ServiceType_Model::get_instance_from_origin( $service_type->ID );
+			return $service_type_model->id;
+		} catch ( Exception $e ) {
+			error_log( 'CP Library Service Type Lookup: ' . $e->getMessage() );
+		}
+
+		return 0;
 	}
 
 
