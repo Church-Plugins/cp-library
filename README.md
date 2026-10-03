@@ -24,6 +24,32 @@ npm run build
 
 ### Change Log
 
+#### 1.7.0
+* **Major Feature**: Full-site Import/Export (Tools → Import/Export → Full Migration) — exports sermons (with variations, timestamps, transcripts and downloads), series, speakers, service types, templates, taxonomy terms and optionally plugin settings. Imports run in resumable batches; re-importing the same file updates instead of duplicating.
+* **Major Feature**: WP-CLI commands for full-site migration (`wp cpl export` / `wp cpl import`) with `--dry-run`, `--download-media`, `--include-settings`, `--match-by-slug` and `--batch-size` options
+* Enhancement: `SermonSync::upsert()` can set a sermon's service type and supply `thumbnail_id` artwork for series and service types — a hand-picked image is never overwritten
+* Enhancement: PHPUnit harness — WP-free unit suite (Brain Monkey) plus a WordPress integration suite; `vendor/` removed from version control, run `composer install` after pulling
+* Bug Fix: Sermons with emoji in the title no longer fail to save on sites whose `cpl_*` tables predate 4-byte character support (ChurchPlugins 1.1.18)
+* Bug Fix: Series/Speaker/Service Type podcast feeds serve the full-size featured image for channel art (previously 600×600, below Apple's 1400×1400 minimum)
+* Bug Fix: Series/Speaker assignment saves reliably when the stored value already matches (duplicated sermons); clearing the field removes the assignment
+* Bug Fix: One-time upgrade cleanup removes orphaned Speaker/Series/Service Type associations (the stray comma in speaker lists) and collapses duplicated ones (double-listed sermons in feeds)
+* Bug Fix: Re-saving a sermon with duplicate Speaker/Series rows removes only the surplus row, never the one being kept
+* Bug Fix: When Service Types drive variations, saving the parent sermon no longer overwrites the service type that identifies each variation
+* Bug Fix: A save that doesn't include the Speaker/Series/Service Type field (e.g. programmatic CMB2 saves) no longer clears those assignments
+* Bug Fix: WP All Import — a blank or unmatched Speaker/Series column no longer clears existing assignments; comma-separated names are matched individually
+* Bug Fix: Permanently deleting a Series removes it from every sermon it contained
+* Bug Fix: Listen starts playback on the first click (including Safari/iOS); video stays in the feature area after audio has played; embed audio renders in the feature area again
+
+#### 1.6.2
+* Bug Fix: Imported sermons (CSV import and SermonAudio adapter) were silently flagged as hidden and excluded from the main sermon list; imports now default to visible
+* Change: The per-sermon visibility checkbox is now "Exclude from Main List" (default unchecked), matching the Series and Service Type metaboxes
+* Feature: Tools → Migrate Visibility Settings, and Reset All Sermons to Visible for affected sites
+* Feature: WP-CLI command for SermonAudio imports (`wp cp sermonaudio import`) with `--dry-run`, `--recent[=count]` and `--max-batches`
+* Enhancement: Minimum audio duration filter for the SermonAudio adapter
+* Bug Fix: Vimeo videos reliably unmute on iOS
+* Bug Fix: All scripture references display on sermon detail views
+* Bug Fix: Sermon sort order corrected on speaker pages and taxonomy archives
+
 #### 1.6.1
 * Bug Fix: Fix speaker single page not displaying sermons
 * Enhancement: Change default SearchWP engine to "sermons" so the default engine can be used for the main site search
