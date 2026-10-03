@@ -158,10 +158,10 @@
 	#cpl-scripture-list-chapter,
 	#cpl-scripture-list-verse {
 		margin-top: 0.5rem;
-    	margin-left: 0.5rem;
+		margin-left: 0.5rem;
 		position: absolute;
-    	top: 2rem;
-    	z-index: 1;
+		top: 2rem;
+		z-index: 99;
 		width: 75%;
 		height: 350px;
 		border: 1px solid lightgray;

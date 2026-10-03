@@ -46,6 +46,7 @@ class Init {
 		Tools::get_instance();
 		Analytics\Init::get_instance();
 		Migrate\Init::get_instance();
+		ImportExport\Admin::get_instance();
 
 	}
 

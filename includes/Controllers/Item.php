@@ -363,20 +363,28 @@ class Item extends Controller{
 
 		try {
 			$item_types = $this->model->get_types();
-
-			if ( ! empty( $item_types ) ) {
-				foreach ( $item_types as $type_id ) {
-					$type = new ItemType( $type_id, false );
-					$types[] = [
-						'id'        => $type->model->id,
-						'origin_id' => $type->model->origin_id,
-						'title'     => $type->get_title(),
-						'permalink' => $type->get_permalink(),
-					];
-				}
-			}
 		} catch( \ChurchPlugins\Exception $e ) {
 			error_log( $e );
+			$item_types = [];
+		}
+
+		foreach ( (array) $item_types as $type_id ) {
+			// legacy rows can have a NULL/0 item_type_id
+			if ( ! absint( $type_id ) ) {
+				continue;
+			}
+
+			try {
+				$type = new ItemType( $type_id, false );
+				$types[] = [
+					'id'        => $type->model->id,
+					'origin_id' => $type->model->origin_id,
+					'title'     => $type->get_title(),
+					'permalink' => $type->get_permalink(),
+				];
+			} catch ( \Exception $e ) {
+				error_log( $e );
+			}
 		}
 
 		return $this->filter( $types, __FUNCTION__ );
@@ -424,10 +432,32 @@ class Item extends Controller{
 		$speakers = [];
 
 		foreach( $speaker_ids as $id ) {
-			$speaker  = Speaker::get_instance( $id );
+			// legacy rows can have a NULL/0 source_id that resolves to an empty model
+			if ( ! absint( $id ) ) {
+				continue;
+			}
+
+			try {
+				$speaker = Speaker::get_instance( $id );
+			} catch ( \Exception $e ) {
+				error_log( $e );
+				continue;
+			}
+
+			$title = $speaker->title;
+
+			// recover the title from the origin post if the source row is missing it
+			if ( empty( $title ) && $speaker->origin_id ) {
+				$title = get_the_title( $speaker->origin_id );
+			}
+
+			if ( empty( $title ) ) {
+				continue;
+			}
+
 			$speakers[] = [
 				'id'    => $speaker->id,
-				'title' => $speaker->title,
+				'title' => $title,
 				'origin_id' => $speaker->origin_id,
 			];
 		}
