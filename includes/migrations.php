@@ -111,7 +111,7 @@ add_action( 'cpl_migrate', 'cp_library_migrate_1_6_3', 10, 2 );
  *
  * @param array $item_ids Item model ids.
  *
- * @since 1.6.3
+ * @since 1.7.0
  */
 function cp_library_invalidate_item_caches( $item_ids ) {
 	global $wpdb;

@@ -171,7 +171,7 @@ class ItemType extends Table  {
 	 * @param string $column Column to match against.
 	 *
 	 * @return int|false
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 */
 	public function delete_all_meta( $value, $column ) {
 		global $wpdb;

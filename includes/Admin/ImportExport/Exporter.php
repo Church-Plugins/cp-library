@@ -8,7 +8,7 @@
  * libraries can be exported with flat memory usage.
  *
  * @package CP_Library
- * @since   1.6.3
+ * @since   1.7.0
  */
 
 namespace CP_Library\Admin\ImportExport;
@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Exporter
  *
- * @since 1.6.3
+ * @since 1.7.0
  */
 class Exporter {
 

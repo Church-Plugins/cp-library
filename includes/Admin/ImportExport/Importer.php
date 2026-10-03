@@ -9,7 +9,7 @@
  * map, relation wiring through the Model API, and optional media sideloading.
  *
  * @package CP_Library
- * @since   1.6.3
+ * @since   1.7.0
  */
 
 namespace CP_Library\Admin\ImportExport;
@@ -25,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Importer
  *
- * @since 1.6.3
+ * @since 1.7.0
  */
 class Importer {
 

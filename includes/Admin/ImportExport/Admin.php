@@ -11,7 +11,7 @@
  *   it in bounded AJAX ticks so 10,000+ sermons never hit a PHP timeout.
  *
  * @package CP_Library
- * @since   1.6.3
+ * @since   1.7.0
  */
 
 namespace CP_Library\Admin\ImportExport;
@@ -22,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Admin
  *
- * @since 1.6.3
+ * @since 1.7.0
  */
 class Admin {
 

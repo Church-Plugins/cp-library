@@ -245,7 +245,7 @@ class ServiceType extends PostType {
 	 * @param int $object_id Post ID.
 	 *
 	 * @return bool
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 */
 	protected function skip_service_type_sync( $object_id ) {
 		// variant children get their service type from the variations save flow
@@ -271,7 +271,7 @@ class ServiceType extends PostType {
 	 * @param string      $action  The save action performed.
 	 * @param \CMB2_Field $field   The field object.
 	 *
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 */
 	public function save_item_service_type( $updated, $action, $field ) {
 		$object_id = $field->object_id;
@@ -308,7 +308,7 @@ class ServiceType extends PostType {
 	 * @param string $meta_key   Meta key.
 	 * @param mixed  $meta_value Meta value.
 	 *
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 */
 	public function handle_deleted_meta( $meta_ids, $object_id, $meta_key, $meta_value ) {
 		if ( 'cpl_service_type' !== $meta_key ) {
@@ -389,7 +389,7 @@ class ServiceType extends PostType {
 	 *
 	 * @return array|string|null The submitted value, [] for an explicit clear, or
 	 *                           null when the field was not part of the save.
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 */
 	protected function get_submitted_field_data( $field ) {
 		if ( isset( $field->data_to_save[ $field->id( true ) ] ) ) {
@@ -418,7 +418,7 @@ class ServiceType extends PostType {
 	 * @param array $ids The ids it resolved to.
 	 *
 	 * @return bool
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 */
 	protected function is_unresolved( $raw, $ids ) {
 		if ( ! empty( $ids ) ) {
@@ -490,7 +490,7 @@ class ServiceType extends PostType {
 	 * @param string $name
 	 *
 	 * @return int Service type model id, or 0 when no published service type matches.
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 */
 	protected function find_service_type_by_name( $name ) {
 		global $wpdb;

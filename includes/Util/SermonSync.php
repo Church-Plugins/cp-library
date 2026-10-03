@@ -213,7 +213,7 @@ class SermonSync {
 	 * row created by get_instance_from_origin() runs ServiceType::insert(), which
 	 * calls add_type() itself — so no separate type registration is needed here.
 	 *
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 *
 	 * @param Item       $item         The item model.
 	 * @param array|null $service_type `[ 'id' => extId, 'title' => string, 'thumbnail_id' => int ]` or null.
@@ -266,7 +266,7 @@ class SermonSync {
 	 * chose. That applies with particular force to service types, whose image is used
 	 * as podcast channel artwork and may have been sized deliberately for Apple.
 	 *
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 *
 	 * @param int $post_id      The series ( `cpl_item_type` ) or service type
 	 *                          ( `cpl_service_type` ) post id.

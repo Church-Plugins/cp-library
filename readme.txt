@@ -4,7 +4,7 @@ Tags: sermons, church, podcast, speakers, series
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.6.3
+Stable tag: 1.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -113,7 +113,7 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 
 == Changelog ==
 
-= 1.6.3 =
+= 1.7.0 =
 * New: **Tools → Import/Export → Full Migration** — move an entire sermon library between sites in one step. Exports sermons (with variations, timestamps, transcripts and downloads), series, speakers, service types, templates and taxonomy terms, and optionally your plugin settings. Imports run in small batches and can be resumed, so libraries with tens of thousands of sermons don't hit a PHP timeout. Re-importing the same file updates the existing content instead of duplicating it.
 * New: WP-CLI commands for full-site migration (`wp cpl export` and `wp cpl import`), with `--dry-run`, `--download-media`, `--include-settings` and `--batch-size` options. Recommended for very large libraries.
 * Fix: Sermons whose title contains an emoji no longer fail to save. On sites whose CP Sermons tables predate 4-byte character support, WordPress refuses the write rather than truncating it, so those sermons silently never imported — one site was losing 152 of 502 sermons on every sync. The sermon now saves, with the emoji omitted from the internal record only; the sermon's own title keeps it. No database changes are made.
@@ -174,7 +174,7 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 
 == Upgrade Notice ==
 
-= 1.6.3 =
+= 1.7.0 =
 Adds a full-site migration tool for moving a sermon library between sites, and fixes several Speaker/Series assignment bugs. A one-time cleanup runs on upgrade to remove orphaned and duplicate Speaker/Series associations. If you use WP All Import, note that a blank or unmatched Speaker/Series column no longer clears existing assignments.
 
 = 1.6.2 =

@@ -3,7 +3,7 @@
  * Shared helpers for the full-site Export/Import engine.
  *
  * @package CP_Library
- * @since   1.6.3
+ * @since   1.7.0
  */
 
 namespace CP_Library\Admin\ImportExport;
@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * Constants and helpers shared by the Exporter, Importer, admin UI and CLI.
  *
- * @since 1.6.3
+ * @since 1.7.0
  */
 class Util {
 

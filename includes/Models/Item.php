@@ -136,7 +136,7 @@ class Item extends Table  {
 	 *
 	 * @return array
 	 *
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 *
 	 * @author Tanner Moushey
 	 */
@@ -165,7 +165,7 @@ class Item extends Table  {
 	 *     @type array $surplus id => number of rows to delete for that id.
 	 * }
 	 *
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 *
 	 * @author Tanner Moushey
 	 */
@@ -203,7 +203,7 @@ class Item extends Table  {
 	 * @param array  $surplus     source id => number of rows to delete.
 	 * @param string $model_class Source model class the ids belong to.
 	 *
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 *
 	 * @author Tanner Moushey
 	 */

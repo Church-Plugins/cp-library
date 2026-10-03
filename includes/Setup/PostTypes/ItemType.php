@@ -479,7 +479,7 @@ class ItemType extends PostType  {
 	 * @param string      $action  The save action performed.
 	 * @param \CMB2_Field $field   The field object.
 	 *
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 */
 	public function save_item_series( $updated, $action, $field ) {
 		$object_id = $field->object_id;
@@ -517,7 +517,7 @@ class ItemType extends PostType  {
 	 * @param string $meta_key   Meta key.
 	 * @param mixed  $meta_value Meta value.
 	 *
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 */
 	public function handle_deleted_meta( $meta_ids, $object_id, $meta_key, $meta_value ) {
 		if ( 'cpl_series' !== $meta_key ) {
@@ -597,7 +597,7 @@ class ItemType extends PostType  {
 	 *
 	 * @return array|string|null The submitted value, [] for an explicit clear, or
 	 *                           null when the field was not part of the save.
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 */
 	protected function get_submitted_field_data( $field ) {
 		if ( isset( $field->data_to_save[ $field->id( true ) ] ) ) {
@@ -625,7 +625,7 @@ class ItemType extends PostType  {
 	 * @param array $ids The ids it resolved to.
 	 *
 	 * @return bool
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 */
 	protected function is_unresolved( $raw, $ids ) {
 		if ( ! empty( $ids ) ) {
@@ -697,7 +697,7 @@ class ItemType extends PostType  {
 	 * @param string $name
 	 *
 	 * @return int Series model id, or 0 when no published series matches.
-	 * @since 1.6.3
+	 * @since 1.7.0
 	 */
 	protected function find_series_by_name( $name ) {
 		global $wpdb;
