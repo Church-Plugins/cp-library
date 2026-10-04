@@ -22,9 +22,10 @@
  * draft, pending, private, and future. A future sermon also keeps the date
  * it was scheduled for. Other existing sermons still take the SermonAudio
  * date, which is what 1.7.0 did. A pending sermon stays pending. One that
- * already has a slug keeps it. One with an empty post_name gets
- * sanitize_title() of the full title. The main retitle sends an empty
- * post_name so that fill is what preserves the permalink.
+ * has no slug is left without one; WordPress assigns a unique slug when
+ * the sermon is published. The main retitle sends an empty post_name so
+ * that fill is what preserves the permalink. Speakers and series keep
+ * their status on update, including draft.
  *
  * @package CP_Library
  */
@@ -176,13 +177,11 @@ class SermonAudioRetitleTest extends TestCase {
 	}
 
 	/**
-	 * Creating a pending sermon does not store a slug. The retitle leaves it
-	 * pending and gives it sanitize_title() of the full title. That is a real
-	 * permalink stem, not an empty post_name and not the abbreviated title.
-	 * wp_insert_post() clears the slug when the importer cannot publish the
-	 * post; the import puts it back without publishing.
+	 * A retitle leaves a pending sermon pending. Creating one stores no slug,
+	 * and the import does not invent one. WordPress assigns a unique slug
+	 * when the sermon is published.
 	 */
-	public function test_a_pending_sermon_with_no_slug_stays_pending_and_gets_the_full_title_slug() {
+	public function test_a_pending_sermon_stays_pending_after_a_retitle() {
 		$post_type = cp_library()->setup->post_types->item->post_type;
 		$full      = 'Example Sermon About Gathering Together, Part 4b';
 		$short     = 'Example Sermon About Gather...';
@@ -195,61 +194,18 @@ class SermonAudioRetitleTest extends TestCase {
 				'post_status' => 'pending',
 			)
 		);
-		update_post_meta( $post_id, 'external_id', 'sa-pending-empty' );
-
-		$this->assertSame( '', get_post( $post_id )->post_name );
-		$this->assertSame( 'pending', get_post( $post_id )->post_status );
-
-		$formatted              = $this->adapter->format_item( $this->sermon( 'sa-pending-empty', $short, $full ) );
-		$formatted['post_name'] = '';
-		$this->adapter->load_item( $formatted, ItemModel::class );
-
-		$post = get_post( $post_id );
-
-		$this->assertSame( 'pending', $post->post_status );
-		$this->assertSame( $full, $post->post_title );
-		$this->assertSame( sanitize_title( $full ), $post->post_name );
-		$this->assertNotSame( '', $post->post_name );
-		$this->assertNotSame( sanitize_title( $short ), $post->post_name );
-	}
-
-	/**
-	 * A pending sermon that already has a slug keeps it, and stays pending,
-	 * even when the payload sends an empty post_name and post_status publish.
-	 */
-	public function test_a_pending_sermon_stays_pending_and_keeps_its_slug() {
-		global $wpdb;
-
-		$post_type = cp_library()->setup->post_types->item->post_type;
-		$full      = 'Example Sermon About Gathering Together, Part 4c';
-		$slug      = 'kept-from-pending';
-
-		$post_id = self::factory()->post->create(
-			array(
-				'post_type'   => $post_type,
-				'post_title'  => 'Example Sermon About Gather...',
-				'post_status' => 'pending',
-			)
-		);
-		$wpdb->update(
-			$wpdb->posts,
-			array( 'post_name' => $slug ),
-			array( 'ID' => $post_id )
-		);
-		clean_post_cache( $post_id );
 		update_post_meta( $post_id, 'external_id', 'sa-pending' );
 
-		$this->assertSame( $slug, get_post( $post_id )->post_name );
+		$this->assertSame( 'pending', get_post( $post_id )->post_status );
+		$this->assertSame( '', get_post( $post_id )->post_name );
 
-		$formatted              = $this->adapter->format_item( $this->sermon( 'sa-pending', 'Example Sermon About Gather...', $full ) );
-		$formatted['post_name'] = '';
-		$this->adapter->load_item( $formatted, ItemModel::class );
+		$this->import( $this->sermon( 'sa-pending', $short, $full ) );
 
 		$post = get_post( $post_id );
 
 		$this->assertSame( 'pending', $post->post_status );
 		$this->assertSame( $full, $post->post_title );
-		$this->assertSame( $slug, $post->post_name );
+		$this->assertSame( '', $post->post_name );
 	}
 
 	/**
@@ -640,10 +596,10 @@ class SermonAudioRetitleTest extends TestCase {
 	}
 
 	/**
-	 * A sermon that already has a title must keep it when SermonAudio sends
-	 * no usable fullTitle or displayTitle. The formatted title is "" so the
-	 * sync hash does not become "Untitled sermon" and then disagree with the
-	 * title that was kept.
+	 * An already-imported sermon is updated through the importer's task(),
+	 * the same write the sync queue runs, when both API titles are null,
+	 * empty, or whitespace. The title already on the post is kept. The
+	 * SermonAudio date is still written, which shows the update ran.
 	 */
 	public function test_an_existing_sermon_keeps_its_title_when_both_api_titles_are_blank() {
 		$post_type = cp_library()->setup->post_types->item->post_type;
@@ -658,31 +614,28 @@ class SermonAudioRetitleTest extends TestCase {
 			$external_id = 'sa-keep-' . $label;
 			$post_id     = self::factory()->post->create(
 				array(
-					'post_type'   => $post_type,
-					'post_title'  => $kept,
-					'post_name'   => 'a-real-sermon-title-' . $label,
-					'post_status' => 'publish',
+					'post_type'     => $post_type,
+					'post_title'    => $kept,
+					'post_name'     => 'a-real-sermon-title-' . $label,
+					'post_status'   => 'publish',
+					'post_date'     => '2019-03-03 08:00:00',
+					'post_date_gmt' => '2019-03-03 08:00:00',
 				)
 			);
 			update_post_meta( $post_id, 'external_id', $external_id );
 
 			$formatted = $this->adapter->format_item( $this->sermon( $external_id, $titles[0], $titles[1] ) );
-			$again     = $this->adapter->format_item( $this->sermon( $external_id, $titles[0], $titles[1] ) );
 
 			$this->assertSame( '', $formatted['post_title'], $label );
-			$this->assertSame(
-				$this->adapter->create_store_key( $formatted ),
-				$this->adapter->create_store_key( $again ),
-				$label
-			);
+			$this->assertNotSame( '2019-03-03 08:00:00', $formatted['post_date'], $label );
 
-			$this->adapter->load_item( $formatted, ItemModel::class );
-			$this->adapter->load_item( $again, ItemModel::class );
+			$this->adapter->task( $formatted );
 
 			$post = get_post( $post_id );
 
 			$this->assertSame( $kept, $post->post_title, $label );
 			$this->assertNotSame( 'Untitled sermon', $post->post_title, $label );
+			$this->assertSame( $formatted['post_date'], $post->post_date, $label );
 			$this->assertSame( array( $post_id ), $this->posts_with_external_id( $post_type, $external_id ), $label );
 		}
 	}

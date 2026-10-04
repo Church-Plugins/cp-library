@@ -9,7 +9,7 @@
  * string, and displayTitle otherwise — including when fullTitle is null, "",
  * or whitespace only. The returned title is trim()'d, so surrounding
  * whitespace is dropped and whitespace between words is kept. A long
- * fullTitle is otherwise stored whole. When both titles are missing or
+ * A long title is kept aside from that trim. When both titles are missing or
  * blank, resolve_sermon_title() returns "". "Untitled sermon" is not part
  * of the formatted item: that fallback is only for a sermon that does not
  * exist yet, and putting it in the hashed payload would not match the title
@@ -236,6 +236,7 @@ class SermonAudioTitleTest extends TestCase {
 
 		$this->assertGreaterThan( 200, strlen( $long ), 'the fixture itself must be long' );
 		$this->assertSame( trim( $long ), $this->adapter->format_item( $sermon )['post_title'] );
+		$this->assertNotSame( $long, $this->adapter->format_item( $sermon )['post_title'], 'surrounding whitespace is trimmed' );
 		$this->assertStringContainsString( 'Part One Gathering', $this->adapter->format_item( $sermon )['post_title'] );
 	}
 

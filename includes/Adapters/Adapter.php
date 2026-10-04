@@ -317,16 +317,14 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * A missing or empty post_name is filled with the permalink the post
 	 * already has. wp_insert_post keeps a slug that was left out, but an empty
 	 * post_name is rebuilt from post_title. Filling only that gap keeps a
-	 * retitle from changing the URL. A pending post with no slug yet gets
-	 * one from its title. wp_insert_post() then clears post_name on a pending
-	 * update when the current user cannot publish that post; that slug is
-	 * written back without publishing the sermon. There is no
-	 * wp_insert_post_data callback: a nested insert is not given this slug.
+	 * retitle from changing the URL. A pending post that has no slug is left
+	 * that way; WordPress assigns a unique slug when it is published. There
+	 * is no wp_insert_post_data callback: a nested insert is not given this slug.
 	 *
 	 * Speakers and series come through here too. They do not send a post_name,
 	 * so an update still keeps the slug WordPress was already keeping, and a
 	 * new speaker or series still gets one generated from its title. An update
-	 * keeps their status too.
+	 * keeps their status too, including draft, private, and trash.
 	 *
 	 * New sermons omit post_name, so WordPress still generates the slug.
 	 *
@@ -334,8 +332,6 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * @return int|\WP_Error
 	 */
 	protected function insert_imported_post( $item ) {
-		$pending_slug = null;
-
 		if ( ! empty( $item['ID'] ) ) {
 			$existing = get_post( $item['ID'] );
 
@@ -352,53 +348,12 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 
 					if ( null !== $slug ) {
 						$item['post_name'] = $slug;
-					} elseif ( 'pending' === $existing->post_status ) {
-						$item['post_name'] = sanitize_title( isset( $item['post_title'] ) ? $item['post_title'] : '' );
 					}
-				}
-
-				if ( 'pending' === $existing->post_status && isset( $item['post_name'] ) && '' !== $item['post_name'] ) {
-					$pending_slug = $item['post_name'];
 				}
 			}
 		}
 
-		$post_id = wp_insert_post( $item, true );
-
-		if ( null !== $pending_slug && ! is_wp_error( $post_id ) ) {
-			$this->restore_pending_slug_if_cleared( $post_id, $pending_slug );
-		}
-
-		return $post_id;
-	}
-
-	/**
-	 * Put a pending sermon's slug back when wp_insert_post() cleared it.
-	 *
-	 * The clear runs when the current user cannot publish the post. The
-	 * status stays pending. The write is a direct column update because a
-	 * second wp_insert_post() would clear the slug again.
-	 *
-	 * @param int    $post_id Post that was just updated.
-	 * @param string $slug    Slug the pending post should keep.
-	 */
-	protected function restore_pending_slug_if_cleared( $post_id, $slug ) {
-		$post = get_post( $post_id );
-
-		if ( ! $post instanceof \WP_Post || 'pending' !== $post->post_status || '' !== $post->post_name ) {
-			return;
-		}
-
-		global $wpdb;
-
-		$wpdb->update(
-			$wpdb->posts,
-			array( 'post_name' => $slug ),
-			array( 'ID' => $post_id ),
-			array( '%s' ),
-			array( '%d' )
-		);
-		clean_post_cache( $post_id );
+		return wp_insert_post( $item, true );
 	}
 
 	/**
