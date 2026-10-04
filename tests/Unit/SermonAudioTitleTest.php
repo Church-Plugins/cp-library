@@ -8,12 +8,12 @@
  * and is nullable. The import must use fullTitle when it is a non-empty
  * string, and displayTitle otherwise — including when fullTitle is null, "",
  * or whitespace only. The returned title is trim()'d, so surrounding
- * whitespace is dropped and whitespace between words is kept. A long
- * A long title is kept aside from that trim. When both titles are missing or
- * blank, resolve_sermon_title() returns "". "Untitled sermon" is not part
- * of the formatted item: that fallback is only for a sermon that does not
- * exist yet, and putting it in the hashed payload would not match the title
- * an existing sermon keeps.
+ * whitespace is dropped and whitespace between words is kept. A long title
+ * is kept aside from that trim. When both titles are missing or blank,
+ * resolve_sermon_title() returns "". "Untitled sermon" is not part of the
+ * formatted item. That fallback applies to new sermons, or to an existing
+ * sermon that has no usable title. Putting it in the hashed payload would
+ * not match the title an existing sermon with a usable title keeps.
  *
  * The sync hash is the formatted item. Two fetches of the same blank payload
  * hash the same, so a sermon is not re-queued on every sync just because

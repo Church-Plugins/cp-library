@@ -27,9 +27,10 @@
  * a new permalink when it is published, because core clears a pending slug
  * when no user who can publish is logged in. The main retitle sends an
  * empty post_name so that fill is what preserves the permalink of a
- * published sermon. Speakers and series keep draft, private, and trash on
- * update. A blank speaker or series title is not replaced with "Untitled
- * sermon"; it is passed to wp_insert_post() as before.
+ * published sermon. Speakers and series keep any status on update. A blank
+ * speaker or series title is not replaced with "Untitled sermon"; it is
+ * passed to wp_insert_post() as before. "Untitled sermon" applies to new
+ * sermons, or to an existing sermon that has no usable title.
  *
  * @package CP_Library
  */
@@ -840,6 +841,59 @@ class SermonAudioRetitleTest extends TestCase {
 			$this->assertNotSame( 'Untitled sermon', $post->post_title, $label );
 			$this->assertSame( $formatted['post_date'], $post->post_date, $label );
 			$this->assertSame( array( $post_id ), $this->posts_with_external_id( $post_type, $external_id ), $label );
+		}
+	}
+
+	/**
+	 * "Untitled sermon" applies to an existing sermon that has no usable
+	 * title. An empty or whitespace title already stored on the post, plus
+	 * blank API titles, is saved as "Untitled sermon". The formatted item
+	 * stays "", so the sync hash does not include that fallback. The
+	 * SermonAudio date is still written, which shows the update ran.
+	 */
+	public function test_an_existing_sermon_with_no_usable_title_becomes_untitled_when_api_titles_are_blank() {
+		global $wpdb;
+
+		$post_type = cp_library()->setup->post_types->item->post_type;
+		$stored    = array(
+			'empty'      => '',
+			'whitespace' => " \n\t ",
+		);
+
+		foreach ( $stored as $label => $title ) {
+			$external_id = 'sa-untitled-stored-' . $label;
+			$post_id     = self::factory()->post->create(
+				array(
+					'post_type'     => $post_type,
+					'post_title'    => 'Placeholder',
+					'post_content'  => 'Notes',
+					'post_status'   => 'publish',
+					'post_date'     => '2019-03-03 08:00:00',
+					'post_date_gmt' => '2019-03-03 08:00:00',
+				)
+			);
+			$wpdb->update(
+				$wpdb->posts,
+				array( 'post_title' => $title ),
+				array( 'ID' => $post_id ),
+				array( '%s' ),
+				array( '%d' )
+			);
+			clean_post_cache( $post_id );
+			update_post_meta( $post_id, 'external_id', $external_id );
+
+			$this->assertSame( $title, get_post( $post_id )->post_title, $label );
+
+			$formatted = $this->adapter->format_item( $this->sermon( $external_id, null, " \t " ) );
+
+			$this->assertSame( '', $formatted['post_title'], $label );
+
+			$this->adapter->task( $formatted );
+
+			$post = get_post( $post_id );
+
+			$this->assertSame( 'Untitled sermon', $post->post_title, $label );
+			$this->assertSame( $formatted['post_date'], $post->post_date, $label );
 		}
 	}
 

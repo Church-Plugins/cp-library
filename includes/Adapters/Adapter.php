@@ -324,7 +324,7 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * Speakers and series come through here too. They do not send a post_name,
 	 * so an update still keeps the slug WordPress was already keeping, and a
 	 * new speaker or series still gets one generated from its title. An update
-	 * keeps their status too, including draft, private, and trash.
+	 * keeps any status they already have.
 	 *
 	 * New sermons omit post_name, so WordPress still generates the slug.
 	 *

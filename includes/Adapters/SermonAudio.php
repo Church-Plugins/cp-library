@@ -278,9 +278,9 @@ class SermonAudio extends Adapter {
 	 *
 	 * When both titles are missing or blank this returns "". The formatted
 	 * item is what the sync hash covers, so a blank payload must hash the
-	 * same way on every fetch. "Untitled sermon" is applied later, and only
-	 * when the sermon does not already exist. An existing sermon keeps the
-	 * title it has.
+	 * same way on every fetch. "Untitled sermon" applies to new sermons, or
+	 * to an existing sermon that has no usable title. An existing sermon
+	 * with a usable title keeps that title.
 	 *
 	 * @param object $sermon Sermon payload from the SermonAudio API.
 	 * @return string Trimmed title, or "" when neither field is usable.
@@ -310,14 +310,16 @@ class SermonAudio extends Adapter {
 	 *
 	 * Blank-title handling applies only to sermons. A blank API title is ""
 	 * on the formatted item, which is what the sync hash stores. For a sermon
-	 * that already exists, that blank must not replace the title on the post.
-	 * The kept title is slashed because wp_insert_post() unslashes its input,
-	 * and a stored backslash would otherwise be stripped. A new sermon with
-	 * no usable title is saved as "Untitled sermon".
+	 * that already exists and has a usable title, that blank must not replace
+	 * the title on the post. The kept title is slashed because wp_insert_post()
+	 * unslashes its input, and a stored backslash would otherwise be stripped.
+	 * "Untitled sermon" applies to new sermons, or to an existing sermon that
+	 * has no usable title.
 	 *
-	 * A usable sermon title from the API is slashed the same way. Speakers
-	 * and series are passed through untouched, as they were before this
-	 * handling existed.
+	 * A usable sermon title from the API is slashed the same way, so a
+	 * backslash is kept as sent. Speakers and series are passed through
+	 * untouched, as they were before this handling existed. An update keeps
+	 * any status they already have.
 	 *
 	 * @param array $item Post fields for wp_insert_post(), without external_id.
 	 * @return int|\WP_Error

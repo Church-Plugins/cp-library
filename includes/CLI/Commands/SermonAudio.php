@@ -22,9 +22,11 @@ class SermonAudio {
 	 * directly via the adapter's load_item() path, bypassing the async
 	 * dispatcher and WP_Background_Process queue used by the admin UI.
 	 * It also bypasses the sync hash, so every fetched sermon is written
-	 * again even when its payload has not changed. The default command is a
-	 * full import and therefore retitles every existing sermon that has a
-	 * usable API title. --recent bypasses the hash for the batch it fetches.
+	 * again even when its payload has not changed. It does not update the
+	 * sync-hash store, so a later cron run re-queues those sermons once.
+	 * The default command is a full import and therefore retitles every
+	 * existing sermon that has a usable API title. --recent bypasses the
+	 * hash for the batch it fetches.
 	 *
 	 * Defaults to a full import (every sermon, oldest first). Use --recent
 	 * to fetch only the most recently updated sermons — the same flow the
