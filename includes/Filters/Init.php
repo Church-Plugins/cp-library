@@ -84,6 +84,11 @@ class Init {
 
 		// Add template hooks
 		add_action( 'init', [ $this, 'add_template_hooks' ], 50 );
+
+		// Optional. New filter clicks on a Page no longer send post_type.
+		// This only rewrites a Page request that already has ?post_type= from
+		// a bookmark or a stale cache. See TemplateHelpers::strip_conflicting_post_type_query_var().
+		add_filter( 'request', [ TemplateHelpers::class, 'strip_conflicting_post_type_query_var' ] );
 	}
 
 	/**

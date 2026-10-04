@@ -263,4 +263,62 @@ class TemplateHelpers {
 
         return ! ( $is_page || $is_singular );
     }
+
+    /**
+     * Post types that 404 a Page when they arrive as a public query var.
+     *
+     * @return string[]
+     */
+    public static function filter_query_post_types() {
+        return array( 'cpl_item', 'cpl_item_type' );
+    }
+
+    /**
+     * Drop cpl_item / cpl_item_type from a Page's main query vars.
+     *
+     * Optional. The form and the filter script already omit `post_type` on
+     * Pages and other singulars, which is what stops new filter clicks from
+     * 404ing. This only heals a URL that already carries `?post_type=` —
+     * a bookmark, or HTML a cache still has from before the form change.
+     * Facet parameters are left in place. Requests without `pagename` or
+     * `page_id` (sermon, series, and taxonomy archives) are unchanged.
+     * Admin requests, including admin-ajax.php, are unchanged.
+     *
+     * Hooked to `request`.
+     *
+     * @param array $query_vars Parsed main-query vars.
+     * @return array
+     */
+    public static function strip_conflicting_post_type_query_var( $query_vars ) {
+        if ( is_admin() || ! is_array( $query_vars ) ) {
+            return $query_vars;
+        }
+
+        $is_page = ( isset( $query_vars['pagename'] ) && '' !== $query_vars['pagename'] )
+            || ! empty( $query_vars['page_id'] );
+
+        if ( ! $is_page || empty( $query_vars['post_type'] ) ) {
+            return $query_vars;
+        }
+
+        $blocked   = self::filter_query_post_types();
+        $post_type = $query_vars['post_type'];
+
+        if ( is_array( $post_type ) ) {
+            $post_type = array_values( array_diff( $post_type, $blocked ) );
+            if ( empty( $post_type ) ) {
+                unset( $query_vars['post_type'] );
+            } else {
+                $query_vars['post_type'] = $post_type;
+            }
+
+            return $query_vars;
+        }
+
+        if ( in_array( $post_type, $blocked, true ) ) {
+            unset( $query_vars['post_type'] );
+        }
+
+        return $query_vars;
+    }
 }
