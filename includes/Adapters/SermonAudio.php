@@ -267,6 +267,31 @@ class SermonAudio extends Adapter {
 	}
 
 	/**
+	 * Title to store for a SermonAudio sermon.
+	 *
+	 * SermonAudio's displayTitle is abbreviated, often with a trailing "...",
+	 * so separate parts of one series arrive with the same title. fullTitle is
+	 * the complete title and is nullable. Only a non-empty string is used;
+	 * null and "" fall back to displayTitle.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param object $sermon Sermon payload from the SermonAudio API.
+	 * @return string
+	 */
+	public static function resolve_sermon_title( $sermon ) {
+		if ( isset( $sermon->fullTitle ) && is_string( $sermon->fullTitle ) && '' !== $sermon->fullTitle ) {
+			return $sermon->fullTitle;
+		}
+
+		if ( isset( $sermon->displayTitle ) && is_string( $sermon->displayTitle ) ) {
+			return $sermon->displayTitle;
+		}
+
+		return '';
+	}
+
+	/**
 	 * Formats a Sermon
 	 *
 	 * @param \stdClass $item The sermon to format.
@@ -282,7 +307,7 @@ class SermonAudio extends Adapter {
 
 		$args = array(
 			'external_id'  => $item->sermonID,
-			'post_title'   => $item->displayTitle,
+			'post_title'   => self::resolve_sermon_title( $item ),
 			'post_date'    => $post_date,
 			'post_status'  => 'publish',
 			'post_type'    => cp_library()->setup->post_types->item->post_type,

@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### Unreleased
+* Bug Fix: SermonAudio imports use the sermon's full title when SermonAudio provides one (`fullTitle`), and fall back to the abbreviated title when it is missing or empty. Sermons already synced are retitled on the next sync; their permalinks stay the same.
+
 #### 1.7.0
 * **Major Feature**: Full-site Import/Export (Tools → Import/Export → Full Migration) — exports sermons (with variations, timestamps, transcripts and downloads), series, speakers, service types, templates, taxonomy terms and optionally plugin settings. Imports run in resumable batches; re-importing the same file updates instead of duplicating.
 * **Major Feature**: WP-CLI commands for full-site migration (`wp cpl export` / `wp cpl import`) with `--dry-run`, `--download-media`, `--include-settings`, `--match-by-slug` and `--batch-size` options

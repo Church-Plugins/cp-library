@@ -274,7 +274,7 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 		unset( $item['external_id'] );
 		unset( $item['cpl_data'] );
 
-		$post_id = wp_insert_post( $item, true );
+		$post_id = $this->insert_imported_post( $item );
 
 		if ( is_wp_error( $post_id ) ) {
 			throw new Exception( esc_html( $post_id->get_error_message() ) );
@@ -299,6 +299,72 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 		$this->process_cpl_data( $item_model, $cpl_data, $item['post_type'] );
 
 		return $item_model;
+	}
+
+	/**
+	 * Insert or update the WordPress post for an imported item.
+	 *
+	 * On update, the existing permalink is written back into post_name and
+	 * locked for this insert. wp_insert_post keeps a slug that was omitted, but
+	 * an empty post_name is rebuilt from post_title (wp-includes/post.php), and
+	 * wp_unique_post_slug still runs. A retitle — fullTitle replacing a
+	 * truncated displayTitle — must not change the URL. New items omit
+	 * post_name, so WordPress still generates the slug from the title.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param array $item Post fields for wp_insert_post(), without external_id.
+	 * @return int|\WP_Error
+	 */
+	protected function insert_imported_post( $item ) {
+		$locked_slug = null;
+
+		if ( ! empty( $item['ID'] ) ) {
+			$locked_slug = $this->existing_permalink_slug( $item['ID'] );
+
+			if ( null !== $locked_slug ) {
+				$item['post_name'] = $locked_slug;
+			}
+		}
+
+		$lock = null;
+
+		if ( null !== $locked_slug ) {
+			$lock = static function ( $data ) use ( $locked_slug ) {
+				$data['post_name'] = $locked_slug;
+
+				return $data;
+			};
+
+			// After wp_unique_post_slug and any other wp_insert_post_data callback.
+			add_filter( 'wp_insert_post_data', $lock, PHP_INT_MAX );
+		}
+
+		try {
+			return wp_insert_post( $item, true );
+		} finally {
+			if ( null !== $lock ) {
+				remove_filter( 'wp_insert_post_data', $lock, PHP_INT_MAX );
+			}
+		}
+	}
+
+	/**
+	 * Permalink slug already stored for a post, when it has one.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int $post_id Post being updated.
+	 * @return string|null Raw post_name, or null when the post has none.
+	 */
+	protected function existing_permalink_slug( $post_id ) {
+		$post = get_post( $post_id );
+
+		if ( ! $post instanceof \WP_Post || ! is_string( $post->post_name ) || '' === $post->post_name ) {
+			return null;
+		}
+
+		return $post->post_name;
 	}
 
 	/**

@@ -37,6 +37,22 @@ if ( ! file_exists( $_tests_dir . '/includes/functions.php' ) ) {
 
 require_once $_tests_dir . '/includes/functions.php';
 
+// Block registration refuses to boot unless build/blocks/<name>/block.json
+// exists. A full webpack build is not required for these tests; copy the
+// source metadata when a built copy is not already there. build/ is gitignored.
+$_cpl_block_jsons = glob( dirname( __DIR__ ) . '/blocks/*/block.json' ) ?: array();
+foreach ( $_cpl_block_jsons as $_cpl_block_json ) {
+	$_cpl_block_dest = dirname( __DIR__ ) . '/build/blocks/' . basename( dirname( $_cpl_block_json ) );
+	if ( file_exists( $_cpl_block_dest . '/block.json' ) ) {
+		continue;
+	}
+	if ( ! is_dir( $_cpl_block_dest ) ) {
+		mkdir( $_cpl_block_dest, 0777, true );
+	}
+	copy( $_cpl_block_json, $_cpl_block_dest . '/block.json' );
+}
+unset( $_cpl_block_jsons, $_cpl_block_json, $_cpl_block_dest );
+
 /**
  * Load the plugin into the test WordPress.
  *
@@ -48,6 +64,37 @@ function _cpl_manually_load_plugin() {
 	require dirname( __DIR__ ) . '/cp-library.php';
 }
 tests_add_filter( 'muplugins_loaded', '_cpl_manually_load_plugin' );
+
+/**
+ * Install custom tables before CP Library finishes booting.
+ *
+ * maybe_setup() returns before registering post types when the cpl_* tables
+ * are missing. The WordPress test install drops them on every run, and the
+ * activation hook that normally sets this option does not fire here. Setting
+ * it before ChurchPlugins loads (plugins_loaded at priority 9955) makes
+ * maybe_setup() create the tables and continue.
+ */
+function _cpl_install_tables_before_setup() {
+	update_option( 'cp_library_install_tables', 1 );
+}
+tests_add_filter( 'plugins_loaded', '_cpl_install_tables_before_setup', 0 );
+
+/**
+ * maybe_update() replays ALTERs for columns dbDelta already created. That is
+ * harmless and prints "duplicate column" errors, which the post-bootstrap
+ * install below also suppresses. Hide them while CP Library boots.
+ */
+function _cpl_quiet_table_install() {
+	global $wpdb;
+	$wpdb->suppress_errors( true );
+}
+
+function _cpl_restore_db_errors() {
+	global $wpdb;
+	$wpdb->suppress_errors( false );
+}
+tests_add_filter( 'cp_core_loaded', '_cpl_quiet_table_install', -10000 );
+tests_add_filter( 'cp_core_loaded', '_cpl_restore_db_errors', 10 );
 
 require $_tests_dir . '/includes/bootstrap.php';
 
