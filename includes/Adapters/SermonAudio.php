@@ -271,23 +271,26 @@ class SermonAudio extends Adapter {
 	 *
 	 * SermonAudio's displayTitle is abbreviated, often with a trailing "...",
 	 * so separate parts of one series arrive with the same title. fullTitle is
-	 * the complete title and is nullable. It is trim()'d before use: a result
-	 * with characters other than whitespace is kept (surrounding spaces on a
-	 * real title are left as SermonAudio sent them), and null, "", or a
-	 * whitespace-only value falls back to displayTitle, trim()'d the same way.
+	 * the complete title and is nullable. A usable value is returned trim()'d:
+	 * surrounding whitespace is removed, and whitespace between words is kept.
+	 * Null, "", and a whitespace-only fullTitle fall back to displayTitle,
+	 * trim()'d the same way.
 	 *
-	 * When both titles are missing or blank, the title is "Untitled sermon".
-	 * The SermonAudio sermon id is not used as the title.
+	 * When both titles are missing or blank this returns "". The formatted
+	 * item is what the sync hash covers, so a blank payload must hash the
+	 * same way on every fetch. "Untitled sermon" is applied later, and only
+	 * when the sermon does not already exist. An existing sermon keeps the
+	 * title it has.
 	 *
 	 * @param object $sermon Sermon payload from the SermonAudio API.
-	 * @return string
+	 * @return string Trimmed title, or "" when neither field is usable.
 	 */
 	public static function resolve_sermon_title( $sermon ) {
 		if ( isset( $sermon->fullTitle ) && is_string( $sermon->fullTitle ) ) {
 			$full_title = trim( $sermon->fullTitle );
 
 			if ( '' !== $full_title ) {
-				return $sermon->fullTitle;
+				return $full_title;
 			}
 		}
 
@@ -295,11 +298,52 @@ class SermonAudio extends Adapter {
 			$display_title = trim( $sermon->displayTitle );
 
 			if ( '' !== $display_title ) {
-				return $sermon->displayTitle;
+				return $display_title;
 			}
 		}
 
-		return __( 'Untitled sermon', 'cp-library' );
+		return '';
+	}
+
+	/**
+	 * Insert or update the WordPress post for an imported sermon.
+	 *
+	 * A blank API title is "" on the formatted item, which is what the sync
+	 * hash stores. For a sermon that already exists, that blank must not
+	 * replace the title on the post. A new sermon with no usable title is
+	 * saved as "Untitled sermon".
+	 *
+	 * @param array $item Post fields for wp_insert_post(), without external_id.
+	 * @return int|\WP_Error
+	 */
+	protected function insert_imported_post( $item ) {
+		$title = isset( $item['post_title'] ) ? $item['post_title'] : '';
+
+		if ( ! self::title_is_usable( $title ) ) {
+			$kept = null;
+
+			if ( ! empty( $item['ID'] ) ) {
+				$existing = get_post( $item['ID'] );
+
+				if ( $existing instanceof \WP_Post && self::title_is_usable( $existing->post_title ) ) {
+					$kept = $existing->post_title;
+				}
+			}
+
+			$item['post_title'] = null !== $kept ? $kept : __( 'Untitled sermon', 'cp-library' );
+		}
+
+		return parent::insert_imported_post( $item );
+	}
+
+	/**
+	 * Whether a title has characters other than whitespace.
+	 *
+	 * @param mixed $title Title from the API or from an existing post.
+	 * @return bool
+	 */
+	private static function title_is_usable( $title ) {
+		return is_string( $title ) && '' !== trim( $title );
 	}
 
 	/**

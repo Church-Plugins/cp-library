@@ -7,14 +7,17 @@
  * (and, for new sermons, the same slug stem). fullTitle is the complete title
  * and is nullable. The import must use fullTitle when it is a non-empty
  * string, and displayTitle otherwise — including when fullTitle is null, "",
- * or whitespace only (fullTitle is trim()'d, and a whitespace-only result
- * falls back). Nothing in that choice truncates the title; a long fullTitle
- * is stored whole, including surrounding spaces when the rest is not blank.
- * When both titles are missing or blank, the title is "Untitled sermon".
- * The SermonAudio sermon id is not used as the title.
+ * or whitespace only. The returned title is trim()'d, so surrounding
+ * whitespace is dropped and whitespace between words is kept. A long
+ * fullTitle is otherwise stored whole. When both titles are missing or
+ * blank, resolve_sermon_title() returns "". "Untitled sermon" is not part
+ * of the formatted item: that fallback is only for a sermon that does not
+ * exist yet, and putting it in the hashed payload would not match the title
+ * an existing sermon keeps.
  *
- * The sync hash is the formatted item, so a title change re-queues a sermon
- * that was already imported. That re-queue is what retitles it.
+ * The sync hash is the formatted item. Two fetches of the same blank payload
+ * hash the same, so a sermon is not re-queued on every sync just because
+ * SermonAudio sent no title. A real title change still changes the hash.
  *
  * @package CP_Library
  */
@@ -116,7 +119,7 @@ class SermonAudioTitleTest extends TestCase {
 		$this->assertSame( 'A Sermon With No Long Title', $this->adapter->format_item( $sermon )['post_title'] );
 	}
 
-	public function test_blank_titles_fall_back_to_untitled_sermon() {
+	public function test_blank_titles_stay_empty_in_the_formatted_item() {
 		$sermon = $this->sermon(
 			array(
 				'displayTitle' => null,
@@ -125,11 +128,12 @@ class SermonAudioTitleTest extends TestCase {
 			)
 		);
 
-		$this->assertSame( 'Untitled sermon', $this->adapter->format_item( $sermon )['post_title'] );
+		$this->assertSame( '', $this->adapter->format_item( $sermon )['post_title'] );
 		$this->assertNotSame( 'sa-99', $this->adapter->format_item( $sermon )['post_title'] );
+		$this->assertNotSame( 'Untitled sermon', $this->adapter->format_item( $sermon )['post_title'] );
 	}
 
-	public function test_null_display_title_and_null_full_title_use_untitled_sermon() {
+	public function test_null_display_title_and_null_full_title_stay_empty() {
 		$sermon = $this->sermon(
 			array(
 				'displayTitle' => null,
@@ -138,10 +142,10 @@ class SermonAudioTitleTest extends TestCase {
 			)
 		);
 
-		$this->assertSame( 'Untitled sermon', $this->adapter->format_item( $sermon )['post_title'] );
+		$this->assertSame( '', $this->adapter->format_item( $sermon )['post_title'] );
 	}
 
-	public function test_null_display_title_and_empty_full_title_use_untitled_sermon() {
+	public function test_null_display_title_and_empty_full_title_stay_empty() {
 		$sermon = $this->sermon(
 			array(
 				'displayTitle' => null,
@@ -150,10 +154,10 @@ class SermonAudioTitleTest extends TestCase {
 			)
 		);
 
-		$this->assertSame( 'Untitled sermon', $this->adapter->format_item( $sermon )['post_title'] );
+		$this->assertSame( '', $this->adapter->format_item( $sermon )['post_title'] );
 	}
 
-	public function test_blank_titles_and_no_sermon_id_still_use_untitled_sermon() {
+	public function test_blank_titles_and_no_sermon_id_stay_empty() {
 		$sermon = $this->sermon(
 			array(
 				'displayTitle' => null,
@@ -162,11 +166,67 @@ class SermonAudioTitleTest extends TestCase {
 		);
 		unset( $sermon->sermonID );
 
-		$this->assertSame( 'Untitled sermon', SermonAudio::resolve_sermon_title( $sermon ) );
+		$this->assertSame( '', SermonAudio::resolve_sermon_title( $sermon ) );
+	}
+
+	public function test_surrounding_whitespace_is_trimmed_and_inner_whitespace_is_kept() {
+		$sermon = $this->sermon(
+			array(
+				'displayTitle' => 'short',
+				'fullTitle'    => "  Gathering  Together \n",
+			)
+		);
+
+		$this->assertSame( 'Gathering  Together', $this->adapter->format_item( $sermon )['post_title'] );
+	}
+
+	public function test_a_blank_full_title_returns_the_trimmed_display_title() {
+		$sermon = $this->sermon(
+			array(
+				'displayTitle' => "  Abbreviated   Title  ",
+				'fullTitle'    => '   ',
+			)
+		);
+
+		$this->assertSame( 'Abbreviated   Title', SermonAudio::resolve_sermon_title( $sermon ) );
+	}
+
+	public function test_a_blank_payload_hashes_the_same_on_every_fetch() {
+		$first  = $this->adapter->format_item(
+			$this->sermon(
+				array(
+					'displayTitle' => null,
+					'fullTitle'    => '',
+				)
+			)
+		);
+		$second = $this->adapter->format_item(
+			$this->sermon(
+				array(
+					'displayTitle' => " \t ",
+					'fullTitle'    => null,
+				)
+			)
+		);
+
+		$this->assertSame( '', $first['post_title'] );
+		$this->assertSame( '', $second['post_title'] );
+		$this->assertSame(
+			$this->adapter->create_store_key( $first ),
+			$this->adapter->create_store_key( $second ),
+			'a blank title must not change the sync hash between fetches'
+		);
+
+		$as_untitled               = $first;
+		$as_untitled['post_title'] = 'Untitled sermon';
+		$this->assertNotSame(
+			$this->adapter->create_store_key( $first ),
+			$this->adapter->create_store_key( $as_untitled )
+		);
 	}
 
 	public function test_a_very_long_full_title_is_kept_intact() {
-		$long   = str_repeat( 'Gathering Together Part One ', 20 );
+		$long = str_repeat( 'Gathering Together Part One ', 20 );
 		$sermon = $this->sermon(
 			array(
 				'displayTitle' => 'Gathering Together Part...',
@@ -175,7 +235,8 @@ class SermonAudioTitleTest extends TestCase {
 		);
 
 		$this->assertGreaterThan( 200, strlen( $long ), 'the fixture itself must be long' );
-		$this->assertSame( $long, $this->adapter->format_item( $sermon )['post_title'] );
+		$this->assertSame( trim( $long ), $this->adapter->format_item( $sermon )['post_title'] );
+		$this->assertStringContainsString( 'Part One Gathering', $this->adapter->format_item( $sermon )['post_title'] );
 	}
 
 	public function test_a_title_change_changes_the_sync_hash_so_the_sermon_is_requeued() {

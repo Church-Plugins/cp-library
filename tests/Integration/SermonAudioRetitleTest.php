@@ -640,6 +640,72 @@ class SermonAudioRetitleTest extends TestCase {
 	}
 
 	/**
+	 * A sermon that already has a title must keep it when SermonAudio sends
+	 * no usable fullTitle or displayTitle. The formatted title is "" so the
+	 * sync hash does not become "Untitled sermon" and then disagree with the
+	 * title that was kept.
+	 */
+	public function test_an_existing_sermon_keeps_its_title_when_both_api_titles_are_blank() {
+		$post_type = cp_library()->setup->post_types->item->post_type;
+		$kept      = 'A Real Sermon Title';
+		$payloads  = array(
+			'null'       => array( null, null ),
+			'empty'      => array( '', '' ),
+			'whitespace' => array( " \n\t ", "  \t" ),
+		);
+
+		foreach ( $payloads as $label => $titles ) {
+			$external_id = 'sa-keep-' . $label;
+			$post_id     = self::factory()->post->create(
+				array(
+					'post_type'   => $post_type,
+					'post_title'  => $kept,
+					'post_name'   => 'a-real-sermon-title-' . $label,
+					'post_status' => 'publish',
+				)
+			);
+			update_post_meta( $post_id, 'external_id', $external_id );
+
+			$formatted = $this->adapter->format_item( $this->sermon( $external_id, $titles[0], $titles[1] ) );
+			$again     = $this->adapter->format_item( $this->sermon( $external_id, $titles[0], $titles[1] ) );
+
+			$this->assertSame( '', $formatted['post_title'], $label );
+			$this->assertSame(
+				$this->adapter->create_store_key( $formatted ),
+				$this->adapter->create_store_key( $again ),
+				$label
+			);
+
+			$this->adapter->load_item( $formatted, ItemModel::class );
+			$this->adapter->load_item( $again, ItemModel::class );
+
+			$post = get_post( $post_id );
+
+			$this->assertSame( $kept, $post->post_title, $label );
+			$this->assertNotSame( 'Untitled sermon', $post->post_title, $label );
+			$this->assertSame( array( $post_id ), $this->posts_with_external_id( $post_type, $external_id ), $label );
+		}
+	}
+
+	public function test_a_new_sermon_with_blank_titles_is_saved_as_untitled() {
+		$payloads = array(
+			'null'       => array( null, null ),
+			'empty'      => array( '', '' ),
+			'whitespace' => array( " \n\t ", "  \t" ),
+		);
+
+		foreach ( $payloads as $label => $titles ) {
+			$external_id = 'sa-new-blank-' . $label;
+			$model       = $this->import( $this->sermon( $external_id, $titles[0], $titles[1] ) );
+			$post        = get_post( $model->origin_id );
+
+			$this->assertSame( 'Untitled sermon', $post->post_title, $label );
+			$this->assertNotSame( $external_id, $post->post_title, $label );
+			$this->assertStringStartsWith( 'untitled-sermon', $post->post_name, $label );
+		}
+	}
+
+	/**
 	 * @param object $sermon
 	 * @return ItemModel
 	 */
