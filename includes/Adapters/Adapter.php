@@ -304,12 +304,19 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	/**
 	 * Insert or update the WordPress post for an imported item.
 	 *
-	 * On update, a missing or empty post_name is filled with the permalink
-	 * the post already has. wp_insert_post keeps a slug that was left out, but
-	 * an empty post_name is rebuilt from post_title. Filling only that gap
-	 * keeps a retitle from changing the URL. There is no wp_insert_post_data
-	 * callback: a nested insert (a revision, or a save_post hook creating a
-	 * post) is not given this slug.
+	 * On update, the post keeps the status it already has. format_item() always
+	 * sends publish, and writing that over an existing post republishes a
+	 * sermon an editor trashed and publishes one left as a draft. Pending is
+	 * the exception and is still published: leaving it pending makes
+	 * wp_insert_post() clear post_name when the importer cannot publish that
+	 * post type. A new sermon still uses the status in $item, which is publish.
+	 *
+	 * A missing or empty post_name is filled with the permalink the post
+	 * already has. wp_insert_post keeps a slug that was left out, but an empty
+	 * post_name is rebuilt from post_title. Filling only that gap keeps a
+	 * retitle from changing the URL. There is no wp_insert_post_data callback:
+	 * a nested insert (a revision, or a save_post hook creating a post) is not
+	 * given this slug.
 	 *
 	 * Speakers and series come through here too. They do not send a post_name,
 	 * so an update still keeps the slug WordPress was already keeping, and a
@@ -321,11 +328,21 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * @return int|\WP_Error
 	 */
 	protected function insert_imported_post( $item ) {
-		if ( ! empty( $item['ID'] ) && ( ! isset( $item['post_name'] ) || '' === $item['post_name'] ) ) {
-			$slug = $this->existing_permalink_slug( $item['ID'] );
+		if ( ! empty( $item['ID'] ) ) {
+			$existing = get_post( $item['ID'] );
 
-			if ( null !== $slug ) {
-				$item['post_name'] = $slug;
+			if ( $existing instanceof \WP_Post ) {
+				if ( 'pending' !== $existing->post_status ) {
+					$item['post_status'] = $existing->post_status;
+				}
+
+				if ( ! isset( $item['post_name'] ) || '' === $item['post_name'] ) {
+					$slug = $this->existing_permalink_slug( $item['ID'] );
+
+					if ( null !== $slug ) {
+						$item['post_name'] = $slug;
+					}
+				}
 			}
 		}
 

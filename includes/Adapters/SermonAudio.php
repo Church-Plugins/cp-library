@@ -271,9 +271,10 @@ class SermonAudio extends Adapter {
 	 *
 	 * SermonAudio's displayTitle is abbreviated, often with a trailing "...",
 	 * so separate parts of one series arrive with the same title. fullTitle is
-	 * the complete title and is nullable. A non-blank string is used; null,
-	 * "", and a whitespace-only value fall back to displayTitle. The returned
-	 * title is not trimmed when it has other characters.
+	 * the complete title and is nullable. It is trim()'d before use: a result
+	 * with characters other than whitespace is kept (surrounding spaces on a
+	 * real title are left as SermonAudio sent them), and null, "", or a
+	 * whitespace-only value falls back to displayTitle, trim()'d the same way.
 	 *
 	 * When both titles are missing or blank, the SermonAudio sermon id is used
 	 * so the post is not saved with an empty title. If that is missing too,
@@ -283,12 +284,20 @@ class SermonAudio extends Adapter {
 	 * @return string
 	 */
 	public static function resolve_sermon_title( $sermon ) {
-		if ( self::is_nonblank_title( isset( $sermon->fullTitle ) ? $sermon->fullTitle : null ) ) {
-			return $sermon->fullTitle;
+		if ( isset( $sermon->fullTitle ) && is_string( $sermon->fullTitle ) ) {
+			$full_title = trim( $sermon->fullTitle );
+
+			if ( '' !== $full_title ) {
+				return $sermon->fullTitle;
+			}
 		}
 
-		if ( self::is_nonblank_title( isset( $sermon->displayTitle ) ? $sermon->displayTitle : null ) ) {
-			return $sermon->displayTitle;
+		if ( isset( $sermon->displayTitle ) && is_string( $sermon->displayTitle ) ) {
+			$display_title = trim( $sermon->displayTitle );
+
+			if ( '' !== $display_title ) {
+				return $sermon->displayTitle;
+			}
 		}
 
 		if ( isset( $sermon->sermonID ) && is_scalar( $sermon->sermonID ) && '' !== trim( (string) $sermon->sermonID ) ) {
@@ -296,16 +305,6 @@ class SermonAudio extends Adapter {
 		}
 
 		return '';
-	}
-
-	/**
-	 * Whether a SermonAudio title field has characters other than whitespace.
-	 *
-	 * @param mixed $title fullTitle or displayTitle.
-	 * @return bool
-	 */
-	private static function is_nonblank_title( $title ) {
-		return is_string( $title ) && '' !== trim( $title );
 	}
 
 	/**

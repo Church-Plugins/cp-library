@@ -17,6 +17,13 @@
  * same title get distinct slugs. Speakers use the same insert helper and do
  * not pass a post_name, so an update keeps the slug it already had.
  *
+ * format_item() always sends post_status publish. On an update that status is
+ * replaced with the one the post already has, so a trashed sermon stays
+ * trashed and a draft stays a draft while the title changes. Pending is the
+ * exception: it is published, because leaving it pending makes wp_insert_post()
+ * clear post_name when the importer cannot publish that post type. A pending
+ * sermon that has no slug therefore receives sanitize_title() of the full title.
+ *
  * @package CP_Library
  */
 
@@ -65,6 +72,7 @@ class SermonAudioRetitleTest extends TestCase {
 
 		$post = get_post( $post_id );
 
+		$this->assertSame( 'publish', $post->post_status );
 		$this->assertSame( $full, $post->post_title );
 		$this->assertSame( $slug, $post->post_name, 'the permalink is the one the sermon already had' );
 		$this->assertNotSame( sanitize_title( $full ), $post->post_name );
@@ -127,11 +135,11 @@ class SermonAudioRetitleTest extends TestCase {
 	}
 
 	/**
-	 * A draft can already have a slug. Republishing it on import (format_item
-	 * always sends post_status publish) must keep that slug. The empty
-	 * post_name is what would otherwise rebuild it from the new title.
+	 * format_item() sends publish. The update must leave a draft as a draft
+	 * and keep a slug it already has. An empty post_name is what would
+	 * otherwise rebuild that slug from the new title.
 	 */
-	public function test_a_draft_sermon_keeps_its_slug_when_it_is_published() {
+	public function test_a_draft_sermon_stays_a_draft_and_keeps_its_slug() {
 		$post_type = cp_library()->setup->post_types->item->post_type;
 		$full      = 'Example Sermon About Gathering Together, Part 4';
 		$slug      = 'kept-from-draft';
@@ -147,6 +155,7 @@ class SermonAudioRetitleTest extends TestCase {
 		update_post_meta( $post_id, 'external_id', 'sa-draft' );
 
 		$this->assertSame( $slug, get_post( $post_id )->post_name, 'the fixture itself has a slug' );
+		$this->assertSame( 'publish', $this->adapter->format_item( $this->sermon( 'sa-draft', 'Example Sermon About Gather...', $full ) )['post_status'] );
 
 		$formatted              = $this->adapter->format_item( $this->sermon( 'sa-draft', 'Example Sermon About Gather...', $full ) );
 		$formatted['post_name'] = '';
@@ -154,25 +163,27 @@ class SermonAudioRetitleTest extends TestCase {
 
 		$post = get_post( $post_id );
 
-		$this->assertSame( 'publish', $post->post_status, 'format_item publishes; that is existing behavior' );
+		$this->assertSame( 'draft', $post->post_status );
 		$this->assertSame( $full, $post->post_title );
 		$this->assertSame( $slug, $post->post_name );
 	}
 
 	/**
 	 * Creating a pending sermon does not store a slug: wp_insert_post clears
-	 * post_name when the user cannot publish that post type. There is nothing
-	 * to preserve, so publishing it on import generates the slug from the
-	 * full title.
+	 * post_name when the user cannot publish that post type. The import
+	 * publishes it. The slug it gets is sanitize_title() of the full title,
+	 * the same slug a new sermon with that title would get — not an empty
+	 * post_name, and not a slug built from the abbreviated display title.
 	 */
 	public function test_a_pending_sermon_with_no_slug_is_published_under_the_full_title() {
 		$post_type = cp_library()->setup->post_types->item->post_type;
 		$full      = 'Example Sermon About Gathering Together, Part 4b';
+		$short     = 'Example Sermon About Gather...';
 
 		$post_id = self::factory()->post->create(
 			array(
 				'post_type'   => $post_type,
-				'post_title'  => 'Example Sermon About Gather...',
+				'post_title'  => $short,
 				'post_name'   => 'will-not-stick',
 				'post_status' => 'pending',
 			)
@@ -180,14 +191,17 @@ class SermonAudioRetitleTest extends TestCase {
 		update_post_meta( $post_id, 'external_id', 'sa-pending-empty' );
 
 		$this->assertSame( '', get_post( $post_id )->post_name );
+		$this->assertSame( 'pending', get_post( $post_id )->post_status );
 
-		$this->import( $this->sermon( 'sa-pending-empty', 'Example Sermon About Gather...', $full ) );
+		$this->import( $this->sermon( 'sa-pending-empty', $short, $full ) );
 
 		$post = get_post( $post_id );
 
 		$this->assertSame( 'publish', $post->post_status );
 		$this->assertSame( $full, $post->post_title );
 		$this->assertSame( sanitize_title( $full ), $post->post_name );
+		$this->assertNotSame( '', $post->post_name );
+		$this->assertNotSame( sanitize_title( $short ), $post->post_name );
 	}
 
 	/**
@@ -230,12 +244,12 @@ class SermonAudioRetitleTest extends TestCase {
 	}
 
 	/**
-	 * Re-importing a trashed sermon publishes it, because format_item() always
-	 * sends post_status publish. WordPress then puts back the pre-trash slug
-	 * stored in _wp_desired_post_slug. The slug must not stay __trashed, and
-	 * must not be rebuilt from the new title.
+	 * A full import retitles every fetched sermon. format_item() sends
+	 * publish, which used to untrash the sermon. The update must leave it in
+	 * the trash, change the title, and leave the trashed slug in place
+	 * (slug__trashed) rather than rebuilding it from the new title.
 	 */
-	public function test_a_trashed_sermon_is_published_with_its_pre_trash_slug() {
+	public function test_a_trashed_sermon_stays_trashed_when_its_title_changes() {
 		$post_type = cp_library()->setup->post_types->item->post_type;
 		$full      = 'Example Sermon About Gathering Together, Part 5';
 		$slug      = 'example-sermon-about-gather';
@@ -262,11 +276,12 @@ class SermonAudioRetitleTest extends TestCase {
 
 		$post = get_post( $post_id );
 
-		$this->assertSame( 'publish', $post->post_status );
+		$this->assertSame( 'trash', $post->post_status );
 		$this->assertSame( $full, $post->post_title );
-		$this->assertSame( $slug, $post->post_name );
-		$this->assertStringNotContainsString( '__trashed', $post->post_name );
-		$this->assertSame( array( $post_id ), $this->posts_with_external_id( $post_type, 'sa-trashed' ) );
+		$this->assertSame( $slug . '__trashed', $post->post_name );
+		$this->assertNotSame( sanitize_title( $full ), $post->post_name );
+		$this->assertSame( $slug, get_post_meta( $post_id, '_wp_desired_post_slug', true ) );
+		$this->assertSame( array( $post_id ), $this->posts_with_external_id( $post_type, 'sa-trashed', array( 'trash', 'publish', 'draft', 'pending' ) ) );
 	}
 
 	public function test_two_new_sermons_with_the_same_title_get_unique_slugs() {
@@ -498,15 +513,16 @@ class SermonAudioRetitleTest extends TestCase {
 	}
 
 	/**
-	 * @param string $post_type
-	 * @param string $external_id
+	 * @param string          $post_type
+	 * @param string          $external_id
+	 * @param string|string[] $post_status get_posts() status. "any" skips trash.
 	 * @return int[]
 	 */
-	private function posts_with_external_id( $post_type, $external_id ) {
+	private function posts_with_external_id( $post_type, $external_id, $post_status = 'any' ) {
 		$ids = get_posts(
 			array(
 				'post_type'      => $post_type,
-				'post_status'    => 'any',
+				'post_status'    => $post_status,
 				'meta_key'       => 'external_id',
 				'meta_value'     => $external_id,
 				'fields'         => 'ids',

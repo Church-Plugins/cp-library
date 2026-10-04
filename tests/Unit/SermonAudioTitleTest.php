@@ -7,9 +7,12 @@
  * (and, for new sermons, the same slug stem). fullTitle is the complete title
  * and is nullable. The import must use fullTitle when it is a non-empty
  * string, and displayTitle otherwise — including when fullTitle is null, "",
- * or whitespace only. Nothing in that choice truncates the title; a long
- * fullTitle is stored whole. When both titles are missing or blank, the
- * SermonAudio sermon id is used. With no id either, the title is "".
+ * or whitespace only (fullTitle is trim()'d, and a whitespace-only result
+ * falls back). Nothing in that choice truncates the title; a long fullTitle
+ * is stored whole, including surrounding spaces when the rest is not blank.
+ * When both titles are missing or blank, the SermonAudio sermon id is used,
+ * including when displayTitle is null and fullTitle is null or "". With no
+ * id either, the title is "".
  *
  * The sync hash is the formatted item, so a title change re-queues a sermon
  * that was already imported. That re-queue is what retitles it.
@@ -123,6 +126,32 @@ class SermonAudioTitleTest extends TestCase {
 		);
 
 		$this->assertSame( 'sa-99', $this->adapter->format_item( $sermon )['post_title'] );
+	}
+
+	public function test_null_display_title_and_null_full_title_use_the_sermon_id() {
+		$sermon = $this->sermon(
+			array(
+				'displayTitle' => null,
+				'fullTitle'    => null,
+				'sermonID'     => 'sa-null-both',
+			)
+		);
+
+		$this->assertSame( 'sa-null-both', $this->adapter->format_item( $sermon )['post_title'] );
+		$this->assertNotSame( '', $this->adapter->format_item( $sermon )['post_title'] );
+	}
+
+	public function test_null_display_title_and_empty_full_title_use_the_sermon_id() {
+		$sermon = $this->sermon(
+			array(
+				'displayTitle' => null,
+				'fullTitle'    => '',
+				'sermonID'     => 'sa-empty-full',
+			)
+		);
+
+		$this->assertSame( 'sa-empty-full', $this->adapter->format_item( $sermon )['post_title'] );
+		$this->assertNotSame( '', $this->adapter->format_item( $sermon )['post_title'] );
 	}
 
 	public function test_blank_titles_and_no_sermon_id_produce_an_empty_title() {
