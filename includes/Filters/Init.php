@@ -84,6 +84,10 @@ class Init {
 
 		// Add template hooks
 		add_action( 'init', [ $this, 'add_template_hooks' ], 50 );
+
+		// A page permalink that also carries post_type=cpl_item 404s. Archive
+		// requests are left alone. See TemplateHelpers::strip_conflicting_post_type_query_var().
+		add_filter( 'request', [ TemplateHelpers::class, 'strip_conflicting_post_type_query_var' ] );
 	}
 
 	/**

@@ -700,8 +700,12 @@ abstract class AbstractFilterManager {
 			'post_type'    => $this->post_type,
 		] );
 
-		// Get request parameters
+		// Get request parameters. Off the sermon/series archives, drop a
+		// public post_type arg so "remove filter" links do not 404 a Page.
 		$get = $_GET;
+		if ( is_array( $get ) && ! TemplateHelpers::should_submit_post_type_query_arg() ) {
+			unset( $get['post_type'] );
+		}
 		$uri = explode( '?', $_SERVER['REQUEST_URI'] ?? '?' )[0];
 
 		// Pass the facet instances to the template
