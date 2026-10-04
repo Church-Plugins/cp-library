@@ -229,90 +229,38 @@ class TemplateHelpers {
     }
 
     /**
-     * Post types whose filter UI may place `post_type` on the query string.
-     *
-     * @return string[]
-     */
-    public static function filter_query_post_types() {
-        return array( 'cpl_item', 'cpl_item_type' );
-    }
-
-    /**
      * Whether the filter form should submit a public `post_type` query arg.
      *
-     * `post_type` is a public WordPress query var. On a Page — including one
-     * whose only sermon listing is the [cp-sermons] shortcode — WordPress
-     * merges it into the main query. With pretty permalinks that query is
-     * `pagename` plus `post_type=cpl_item`, the page lookup returns nothing,
-     * and WordPress 404s before the shortcode runs. Facet filtering does not
-     * read this query var: managers apply `$_GET` facet params to whatever
-     * query already has the right post type (the archive rewrite, or the
-     * shortcode's own WP_Query).
+     * Suppress it only when the original main query is a Page or any other
+     * singular. On a Page — including one whose only sermon listing is the
+     * [cp-sermons] shortcode — `post_type` is merged into the main query.
+     * With pretty permalinks that is `pagename` plus `post_type=cpl_item`,
+     * the page lookup returns nothing, and WordPress 404s before the
+     * shortcode runs. A singular sermon, speaker, or service type has the
+     * same collision.
      *
-     * Sermon and series archives already select their post type from the
-     * rewrite, so the param is safe there and existing archive URLs keep it.
+     * Everywhere else the param stays. `apply_facet_filters()` returns
+     * before it applies any facet when `$query->get( 'post_type' )` is
+     * empty, and a taxonomy archive has no post type of its own. The hidden
+     * field is what puts `post_type` on that request so the next load is
+     * filtered. Sermon and series archives keep it too.
      *
-     * This reads `$wp_the_query`, not `is_post_type_archive()`. The shortcode
-     * replaces the global `$wp_query` with a `cpl_item` query before the form
-     * template renders, which would make `is_post_type_archive()` true on an
-     * ordinary page.
+     * This reads `$wp_the_query`, not the global `$wp_query`. The shortcode
+     * replaces `$wp_query` with a `cpl_item` query before the form renders,
+     * which is not a page, but the original main query still is.
      *
      * @return bool
      */
     public static function should_submit_post_type_query_arg() {
         global $wp_the_query;
 
-        if ( ! is_object( $wp_the_query ) || ! method_exists( $wp_the_query, 'is_post_type_archive' ) ) {
-            return false;
+        if ( ! is_object( $wp_the_query ) ) {
+            return true;
         }
 
-        return (bool) $wp_the_query->is_post_type_archive( self::filter_query_post_types() );
-    }
+        $is_page     = method_exists( $wp_the_query, 'is_page' ) && $wp_the_query->is_page();
+        $is_singular = method_exists( $wp_the_query, 'is_singular' ) && $wp_the_query->is_singular();
 
-    /**
-     * Drop cpl_item / cpl_item_type from a Page's main query vars.
-     *
-     * Bookmarked, cached, or previously submitted filter URLs still carry
-     * `?post_type=cpl_item` on a page permalink, and that 404s the page.
-     * Facet parameters are left in place. Archive requests have no
-     * `pagename` or `page_id`, so they are unchanged. Admin requests,
-     * including admin-ajax.php, are unchanged.
-     *
-     * Hooked to `request`.
-     *
-     * @param array $query_vars Parsed main-query vars.
-     * @return array
-     */
-    public static function strip_conflicting_post_type_query_var( $query_vars ) {
-        if ( is_admin() || ! is_array( $query_vars ) ) {
-            return $query_vars;
-        }
-
-        $is_page = ( isset( $query_vars['pagename'] ) && '' !== $query_vars['pagename'] )
-            || ! empty( $query_vars['page_id'] );
-
-        if ( ! $is_page || empty( $query_vars['post_type'] ) ) {
-            return $query_vars;
-        }
-
-        $blocked   = self::filter_query_post_types();
-        $post_type = $query_vars['post_type'];
-
-        if ( is_array( $post_type ) ) {
-            $post_type = array_values( array_diff( $post_type, $blocked ) );
-            if ( empty( $post_type ) ) {
-                unset( $query_vars['post_type'] );
-            } else {
-                $query_vars['post_type'] = $post_type;
-            }
-
-            return $query_vars;
-        }
-
-        if ( in_array( $post_type, $blocked, true ) ) {
-            unset( $query_vars['post_type'] );
-        }
-
-        return $query_vars;
+        return ! ( $is_page || $is_singular );
     }
 }

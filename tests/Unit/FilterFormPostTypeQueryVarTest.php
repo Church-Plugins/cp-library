@@ -12,9 +12,14 @@
  * ran. The same request without post_type returns 200 and is still filtered,
  * because facet params are read from $_GET onto the shortcode's own query.
  *
+ * The param is suppressed only on a Page or other singular. Taxonomy
+ * archives have no post_type of their own, and apply_facet_filters()
+ * returns before applying facets when that query var is empty, so those
+ * archives still have to submit it.
+ *
  * The [cp-sermons] shortcode replaces the global $wp_query with a cpl_item
- * query before the form renders, so is_post_type_archive() would lie here.
- * The decision has to read $wp_the_query, the original main query.
+ * query before the form renders. That swapped query is not a page. The
+ * decision has to read $wp_the_query, which still is.
  *
  * @package CP_Library
  */
@@ -23,39 +28,42 @@ namespace CP_Library\Tests\Unit;
 
 use Brain\Monkey;
 use Brain\Monkey\Functions;
-use CP_Library\Filters\TemplateHelpers;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Query stand-in. Only is_post_type_archive() is reached.
+ * Query stand-in. Only is_page() and is_singular() are reached.
+ *
+ * A Page is singular. A taxonomy archive and a post type archive are neither.
  */
-class PostTypeArchiveQuery {
+class MainQueryFlags {
 
-	/** @var string[] */
-	private $archives;
+	/** @var bool */
+	private $page;
 
-	public function __construct( array $archives ) {
-		$this->archives = $archives;
+	/** @var bool */
+	private $singular;
+
+	/**
+	 * @param bool      $page     is_page().
+	 * @param bool|null $singular is_singular(). Defaults to the page flag,
+	 *                            which is how WordPress treats a Page.
+	 */
+	public function __construct( $page, $singular = null ) {
+		$this->page     = (bool) $page;
+		$this->singular = null === $singular ? (bool) $page : (bool) $singular;
 	}
 
-	public function is_post_type_archive( $post_types = '' ) {
-		if ( '' === $post_types || null === $post_types ) {
-			return ! empty( $this->archives );
-		}
+	public function is_page() {
+		return $this->page;
+	}
 
-		foreach ( (array) $post_types as $type ) {
-			if ( in_array( $type, $this->archives, true ) ) {
-				return true;
-			}
-		}
-
-		return false;
+	public function is_singular() {
+		return $this->singular;
 	}
 }
 
 /**
  * @covers \CP_Library\Filters\TemplateHelpers::should_submit_post_type_query_arg
- * @covers \CP_Library\Filters\TemplateHelpers::strip_conflicting_post_type_query_var
  */
 class FilterFormPostTypeQueryVarTest extends TestCase {
 
@@ -98,7 +106,6 @@ class FilterFormPostTypeQueryVarTest extends TestCase {
 				echo $text;
 			}
 		);
-		Functions\when( 'is_admin' )->justReturn( false );
 	}
 
 	protected function tearDown(): void {
@@ -111,7 +118,7 @@ class FilterFormPostTypeQueryVarTest extends TestCase {
 	public function test_page_form_does_not_emit_public_post_type_param() {
 		$html = $this->render_form(
 			array( 'post_type' => 'cpl_item' ),
-			new PostTypeArchiveQuery( array() )
+			new MainQueryFlags( true, true )
 		);
 
 		$this->assertStringNotContainsString(
@@ -126,22 +133,45 @@ class FilterFormPostTypeQueryVarTest extends TestCase {
 		);
 	}
 
-	public function test_shortcode_replaced_query_does_not_count_as_an_archive() {
-		// What is_post_type_archive() would see after [cp-sermons] swaps $wp_query.
-		$GLOBALS['wp_query'] = new PostTypeArchiveQuery( array( 'cpl_item' ) );
+	public function test_shortcode_swapped_query_still_counts_as_a_page() {
+		// The swapped sermon query is not a page. Reading it would submit post_type.
+		$GLOBALS['wp_query'] = new MainQueryFlags( false, false );
 
 		$html = $this->render_form(
 			array( 'post_type' => 'cpl_item' ),
-			new PostTypeArchiveQuery( array() )
+			new MainQueryFlags( true, true )
 		);
 
 		$this->assertStringNotContainsString( 'name="post_type"', $html );
 	}
 
+	public function test_singular_does_not_submit_post_type() {
+		$html = $this->render_form(
+			array( 'post_type' => 'cpl_item' ),
+			new MainQueryFlags( false, true )
+		);
+
+		$this->assertStringNotContainsString( 'name="post_type"', $html );
+		$this->assertStringContainsString( 'data-post-type="cpl_item"', $html );
+	}
+
+	public function test_taxonomy_archive_still_submits_post_type() {
+		// A topic/scripture/season archive is not a page and not singular.
+		$html = $this->render_form(
+			array( 'post_type' => 'cpl_item' ),
+			new MainQueryFlags( false, false )
+		);
+
+		$this->assertStringContainsString(
+			'<input type="hidden" name="post_type" value="cpl_item">',
+			$html
+		);
+	}
+
 	public function test_sermon_archive_still_submits_post_type() {
 		$html = $this->render_form(
 			array( 'post_type' => 'cpl_item' ),
-			new PostTypeArchiveQuery( array( 'cpl_item' ) )
+			new MainQueryFlags( false, false )
 		);
 
 		$this->assertStringContainsString(
@@ -153,7 +183,7 @@ class FilterFormPostTypeQueryVarTest extends TestCase {
 	public function test_series_archive_still_submits_its_post_type() {
 		$html = $this->render_form(
 			array( 'post_type' => 'cpl_item_type' ),
-			new PostTypeArchiveQuery( array( 'cpl_item_type' ) )
+			new MainQueryFlags( false, false )
 		);
 
 		$this->assertStringContainsString(
@@ -165,7 +195,7 @@ class FilterFormPostTypeQueryVarTest extends TestCase {
 	public function test_series_form_on_a_page_does_not_submit_post_type() {
 		$html = $this->render_form(
 			array( 'post_type' => 'cpl_item_type' ),
-			new PostTypeArchiveQuery( array() )
+			new MainQueryFlags( true, true )
 		);
 
 		$this->assertStringNotContainsString( 'name="post_type"', $html );
@@ -181,100 +211,19 @@ class FilterFormPostTypeQueryVarTest extends TestCase {
 					'service_type_id' => '9',
 				),
 			),
-			new PostTypeArchiveQuery( array() )
+			new MainQueryFlags( true, true )
 		);
 
 		$this->assertStringNotContainsString( 'name="post_type"', $html );
 		$this->assertStringContainsString( 'name="service_type_id"', $html );
 	}
 
-	public function test_page_request_drops_post_type_and_keeps_facet_params() {
-		$vars = TemplateHelpers::strip_conflicting_post_type_query_var(
-			array(
-				'pagename'      => 'test-sermons',
-				'post_type'     => 'cpl_item',
-				'facet-speaker' => '17',
-			)
-		);
-
-		$this->assertSame(
-			array(
-				'pagename'      => 'test-sermons',
-				'facet-speaker' => '17',
-			),
-			$vars
-		);
-	}
-
-	public function test_plain_permalink_page_drops_either_library_post_type() {
-		$vars = TemplateHelpers::strip_conflicting_post_type_query_var(
-			array(
-				'page_id'   => '12',
-				'post_type' => 'cpl_item_type',
-			)
-		);
-
-		$this->assertSame( array( 'page_id' => '12' ), $vars );
-	}
-
-	public function test_archive_request_keeps_post_type() {
-		$vars = array(
-			'post_type'     => 'cpl_item',
-			'facet-speaker' => '17',
-		);
-
-		$this->assertSame( $vars, TemplateHelpers::strip_conflicting_post_type_query_var( $vars ) );
-	}
-
-	public function test_series_archive_request_keeps_post_type() {
-		$vars = array( 'post_type' => 'cpl_item_type' );
-
-		$this->assertSame( $vars, TemplateHelpers::strip_conflicting_post_type_query_var( $vars ) );
-	}
-
-	public function test_unrelated_post_type_on_a_page_is_left_alone() {
-		$vars = array(
-			'pagename'  => 'test-sermons',
-			'post_type' => 'post',
-		);
-
-		$this->assertSame( $vars, TemplateHelpers::strip_conflicting_post_type_query_var( $vars ) );
-	}
-
-	public function test_admin_request_is_not_rewritten() {
-		Functions\when( 'is_admin' )->justReturn( true );
-
-		$vars = array(
-			'pagename'  => 'test-sermons',
-			'post_type' => 'cpl_item',
-		);
-
-		$this->assertSame( $vars, TemplateHelpers::strip_conflicting_post_type_query_var( $vars ) );
-	}
-
-	public function test_array_post_type_on_a_page_drops_only_library_types() {
-		$vars = TemplateHelpers::strip_conflicting_post_type_query_var(
-			array(
-				'pagename'  => 'test-sermons',
-				'post_type' => array( 'cpl_item', 'post' ),
-			)
-		);
-
-		$this->assertSame(
-			array(
-				'pagename'  => 'test-sermons',
-				'post_type' => array( 'post' ),
-			),
-			$vars
-		);
-	}
-
 	/**
-	 * @param array                 $args
-	 * @param PostTypeArchiveQuery $main_query
+	 * @param array          $args
+	 * @param MainQueryFlags $main_query
 	 * @return string
 	 */
-	private function render_form( array $args, PostTypeArchiveQuery $main_query ) {
+	private function render_form( array $args, MainQueryFlags $main_query ) {
 		global $wp_the_query;
 
 		$wp_the_query = $main_query;

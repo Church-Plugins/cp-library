@@ -902,9 +902,10 @@ class CPLibraryFilter {
 		const urlParams = new URLSearchParams(window.location.search);
 		const formData = new FormData(form);
 
-		// The hidden post_type input is rendered only on cpl_item / cpl_item_type
-		// archives. Elsewhere it is a public query var that 404s a Page, so
-		// drop it even when the current URL still carries a bookmarked value.
+		// The hidden post_type input is omitted on Pages and other singulars,
+		// where that public query var 404s the permalink. Taxonomy archives
+		// and the sermon/series archives still render it. Drop post_type from
+		// the built URL when the input is absent, including a bookmarked value.
 		const formSubmitsPostType = !!form.querySelector('input[name="post_type"]');
 		const mergedParams = mergeFilterFormIntoSearchParams(
 			urlParams,

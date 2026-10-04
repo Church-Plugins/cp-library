@@ -100,9 +100,9 @@ extract($args);
         <?php endif; ?>
 
         <?php
-        // `post_type` is a public query var. Submitting it on a Page 404s the
-        // main query under pretty permalinks. Sermon and series archives may
-        // still submit it; everywhere else the wrapper's data-post-type is enough.
+        // `post_type` is a public query var. Submitting it on a Page or other
+        // singular 404s the main query under pretty permalinks. Taxonomy
+        // archives and the sermon/series archives still submit it.
         $submit_post_type = \CP_Library\Filters\TemplateHelpers::should_submit_post_type_query_arg();
 
         // Add hidden fields for context-specific parameters

@@ -114,7 +114,10 @@ test('1.7.0 URL builder copies the hidden post_type field', () => {
 	assert.equal(params.get('facet-speaker'), '17');
 });
 
-test('1.7.0 workaround: removing that input before submit leaves post_type off a clean page URL', () => {
+test('1.7.0 workaround: removing that input on a page leaves post_type off a clean URL', () => {
+	// The snippet may only remove the input when is_page() or is_singular()
+	// is true. A taxonomy archive must keep it. This case is the page click:
+	// the field is already gone, and the current URL does not have post_type.
 	const afterSnippet = [
 		['facet-speaker[]', '17'],
 		['cpl_search', 'hope'],
