@@ -21,11 +21,15 @@
  * an update the status the post already has is put back, including trash,
  * draft, pending, private, and future. A future sermon also keeps the date
  * it was scheduled for. Other existing sermons still take the SermonAudio
- * date, which is what 1.7.0 did. A pending sermon stays pending. One that
- * has no slug is left without one; WordPress assigns a unique slug when
- * the sermon is published. The main retitle sends an empty post_name so
- * that fill is what preserves the permalink. Speakers and series keep
- * their status on update, including draft.
+ * date, which is what 1.7.0 did. A future sermon whose stored date is
+ * already past is published by WordPress on update. A pending sermon stays
+ * pending. One that has no slug is left without one; WordPress may assign
+ * a new permalink when it is published, because core clears a pending slug
+ * when no user who can publish is logged in. The main retitle sends an
+ * empty post_name so that fill is what preserves the permalink of a
+ * published sermon. Speakers and series keep draft, private, and trash on
+ * update. A blank speaker or series title is not replaced with "Untitled
+ * sermon"; it is passed to wp_insert_post() as before.
  *
  * @package CP_Library
  */
@@ -596,6 +600,205 @@ class SermonAudioRetitleTest extends TestCase {
 	}
 
 	/**
+	 * Blank speaker names and series titles are not sermon titles. They must
+	 * not become "Untitled sermon". What is stored is whatever wp_insert_post()
+	 * did before this PR. title_save_pre trims, so a whitespace-only title is
+	 * stored as "". A blank title overwrites an existing one when the insert
+	 * is accepted. A series also supports excerpts, so a blank title with
+	 * blank content is rejected as empty and the existing series is left
+	 * unchanged. A speaker does not support excerpts, so the same payload
+	 * clears the speaker title.
+	 */
+	public function test_a_blank_speaker_or_series_title_is_not_untitled_sermon() {
+		$speaker_type = cp_library()->setup->post_types->speaker->post_type;
+		$series_type  = cp_library()->setup->post_types->item_type->post_type;
+		$blanks       = array(
+			'empty'      => '',
+			'null'       => null,
+			'whitespace' => " \n\t ",
+		);
+
+		foreach ( $blanks as $label => $blank ) {
+			// title_save_pre is trim(). trim(null) on PHP 8.1+ prints a
+			// deprecation and then stores "". Coerce null one priority
+			// earlier so that notice does not fail the suite. The title
+			// saved is still empty, which is what WordPress stores.
+			$coerce_null = null;
+			if ( null === $blank ) {
+				$coerce_null = static function ( $title ) {
+					return is_string( $title ) ? $title : '';
+				};
+				add_filter( 'title_save_pre', $coerce_null, 9 );
+			}
+
+			try {
+				$new_speaker = $this->adapter->load_item(
+					array(
+						'external_id'  => 'spk-new-' . $label,
+						'post_title'   => $blank,
+						'post_status'  => 'publish',
+						'post_type'    => $speaker_type,
+						'post_content' => '',
+					),
+					SpeakerModel::class
+				);
+				$new_series  = $this->adapter->load_item(
+					array(
+						'external_id'  => 'series-new-' . $label,
+						'post_title'   => $blank,
+						'post_status'  => 'publish',
+						'post_type'    => $series_type,
+						'post_content' => 'A description',
+					),
+					ItemTypeModel::class
+				);
+
+				$this->assertNotSame( 'Untitled sermon', get_post( $new_speaker->origin_id )->post_title, $label );
+				$this->assertNotSame( 'Untitled sermon', get_post( $new_series->origin_id )->post_title, $label );
+				$this->assertSame( $this->title_wp_stores( $blank ), get_post( $new_speaker->origin_id )->post_title, 'new speaker ' . $label );
+				$this->assertSame( $this->title_wp_stores( $blank ), get_post( $new_series->origin_id )->post_title, 'new series ' . $label );
+
+				$speaker_id = self::factory()->post->create(
+					array(
+						'post_type'   => $speaker_type,
+						'post_title'  => 'Kept Speaker',
+						'post_status' => 'publish',
+					)
+				);
+				$series_id  = self::factory()->post->create(
+					array(
+						'post_type'    => $series_type,
+						'post_title'   => 'Kept Series',
+						'post_content' => 'Existing description',
+						'post_status'  => 'publish',
+					)
+				);
+				update_post_meta( $speaker_id, 'external_id', 'spk-old-' . $label );
+				update_post_meta( $series_id, 'external_id', 'series-old-' . $label );
+
+				$this->adapter->load_item(
+					array(
+						'external_id'  => 'spk-old-' . $label,
+						'post_title'   => $blank,
+						'post_status'  => 'publish',
+						'post_type'    => $speaker_type,
+						'post_content' => '',
+					),
+					SpeakerModel::class
+				);
+				$this->adapter->load_item(
+					array(
+						'external_id'  => 'series-old-' . $label,
+						'post_title'   => $blank,
+						'post_status'  => 'publish',
+						'post_type'    => $series_type,
+						'post_content' => 'A description',
+					),
+					ItemTypeModel::class
+				);
+
+				$this->assertNotSame( 'Untitled sermon', get_post( $speaker_id )->post_title, $label );
+				$this->assertNotSame( 'Untitled sermon', get_post( $series_id )->post_title, $label );
+				$this->assertSame( $this->title_wp_stores( $blank ), get_post( $speaker_id )->post_title, 'existing speaker ' . $label );
+				$this->assertSame( $this->title_wp_stores( $blank ), get_post( $series_id )->post_title, 'existing series ' . $label );
+			} finally {
+				if ( null !== $coerce_null ) {
+					remove_filter( 'title_save_pre', $coerce_null, 9 );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Series supports excerpts, so WordPress rejects a series whose title,
+	 * content, and excerpt are all empty. The existing series is not updated.
+	 * A speaker does not support excerpts, so the same empty payload clears
+	 * its title.
+	 */
+	public function test_an_empty_series_is_rejected_and_an_empty_speaker_title_is_cleared() {
+		$speaker_type = cp_library()->setup->post_types->speaker->post_type;
+		$series_type  = cp_library()->setup->post_types->item_type->post_type;
+
+		$speaker_id = self::factory()->post->create(
+			array(
+				'post_type'   => $speaker_type,
+				'post_title'  => 'Kept Speaker',
+				'post_status' => 'publish',
+			)
+		);
+		$series_id  = self::factory()->post->create(
+			array(
+				'post_type'   => $series_type,
+				'post_title'  => 'Kept Series',
+				'post_status' => 'publish',
+			)
+		);
+		update_post_meta( $speaker_id, 'external_id', 'spk-empty-all' );
+		update_post_meta( $series_id, 'external_id', 'series-empty-all' );
+
+		$this->adapter->load_item(
+			array(
+				'external_id'  => 'spk-empty-all',
+				'post_title'   => '',
+				'post_status'  => 'publish',
+				'post_type'    => $speaker_type,
+				'post_content' => '',
+			),
+			SpeakerModel::class
+		);
+
+		$series_error = null;
+		try {
+			$this->adapter->load_item(
+				array(
+					'external_id'  => 'series-empty-all',
+					'post_title'   => '',
+					'post_status'  => 'publish',
+					'post_type'    => $series_type,
+					'post_content' => '',
+				),
+				ItemTypeModel::class
+			);
+		} catch ( \Exception $e ) {
+			$series_error = $e->getMessage();
+		}
+
+		$this->assertSame( '', get_post( $speaker_id )->post_title );
+		$this->assertNotSame( 'Untitled sermon', get_post( $speaker_id )->post_title );
+		$this->assertNotNull( $series_error );
+		$this->assertStringContainsString( 'empty', strtolower( $series_error ) );
+		$this->assertSame( 'Kept Series', get_post( $series_id )->post_title );
+	}
+
+	public function test_an_existing_sermon_keeps_a_backslash_in_its_title_when_the_api_titles_are_blank() {
+		$post_type = cp_library()->setup->post_types->item->post_type;
+		$kept      = 'Grace \\ Truth';
+
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'   => $post_type,
+				'post_title'  => wp_slash( $kept ),
+				'post_status' => 'publish',
+			)
+		);
+		update_post_meta( $post_id, 'external_id', 'sa-backslash' );
+		$this->assertSame( $kept, get_post( $post_id )->post_title );
+
+		$formatted = $this->adapter->format_item( $this->sermon( 'sa-backslash', null, " \t " ) );
+		$this->assertSame( '', $formatted['post_title'] );
+		$this->adapter->task( $formatted );
+
+		$this->assertSame( $kept, get_post( $post_id )->post_title );
+	}
+
+	public function test_an_api_title_containing_a_backslash_is_stored_unchanged() {
+		$full  = 'Grace \\ Truth';
+		$model = $this->import( $this->sermon( 'sa-backslash-api', 'Grace...', $full ) );
+
+		$this->assertSame( $full, get_post( $model->origin_id )->post_title );
+	}
+
+	/**
 	 * An already-imported sermon is updated through the importer's task(),
 	 * the same write the sync queue runs, when both API titles are null,
 	 * empty, or whitespace. The title already on the post is kept. The
@@ -656,6 +859,23 @@ class SermonAudioRetitleTest extends TestCase {
 			$this->assertNotSame( $external_id, $post->post_title, $label );
 			$this->assertStringStartsWith( 'untitled-sermon', $post->post_name, $label );
 		}
+	}
+
+	/**
+	 * Title wp_insert_post() stores for a value that was not slashed first.
+	 *
+	 * Null and "" become an empty title. title_save_pre runs trim(), so a
+	 * whitespace-only string is stored as "" too.
+	 *
+	 * @param string|null $title
+	 * @return string
+	 */
+	private function title_wp_stores( $title ) {
+		if ( ! is_string( $title ) ) {
+			return '';
+		}
+
+		return trim( $title );
 	}
 
 	/**

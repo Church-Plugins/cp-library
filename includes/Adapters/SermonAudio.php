@@ -306,17 +306,29 @@ class SermonAudio extends Adapter {
 	}
 
 	/**
-	 * Insert or update the WordPress post for an imported sermon.
+	 * Insert or update the WordPress post for an imported item.
 	 *
-	 * A blank API title is "" on the formatted item, which is what the sync
-	 * hash stores. For a sermon that already exists, that blank must not
-	 * replace the title on the post. A new sermon with no usable title is
-	 * saved as "Untitled sermon".
+	 * Blank-title handling applies only to sermons. A blank API title is ""
+	 * on the formatted item, which is what the sync hash stores. For a sermon
+	 * that already exists, that blank must not replace the title on the post.
+	 * The kept title is slashed because wp_insert_post() unslashes its input,
+	 * and a stored backslash would otherwise be stripped. A new sermon with
+	 * no usable title is saved as "Untitled sermon".
+	 *
+	 * A usable sermon title from the API is slashed the same way. Speakers
+	 * and series are passed through untouched, as they were before this
+	 * handling existed.
 	 *
 	 * @param array $item Post fields for wp_insert_post(), without external_id.
 	 * @return int|\WP_Error
 	 */
 	protected function insert_imported_post( $item ) {
+		$sermon_type = cp_library()->setup->post_types->item->post_type;
+
+		if ( ! isset( $item['post_type'] ) || $sermon_type !== $item['post_type'] ) {
+			return parent::insert_imported_post( $item );
+		}
+
 		$title = isset( $item['post_title'] ) ? $item['post_title'] : '';
 
 		if ( ! self::title_is_usable( $title ) ) {
@@ -326,11 +338,15 @@ class SermonAudio extends Adapter {
 				$existing = get_post( $item['ID'] );
 
 				if ( $existing instanceof \WP_Post && self::title_is_usable( $existing->post_title ) ) {
-					$kept = $existing->post_title;
+					// wp_insert_post() runs wp_unslash(). Slash the raw DB value
+					// so a backslash in the stored title survives.
+					$kept = wp_slash( $existing->post_title );
 				}
 			}
 
 			$item['post_title'] = null !== $kept ? $kept : __( 'Untitled sermon', 'cp-library' );
+		} else {
+			$item['post_title'] = wp_slash( $title );
 		}
 
 		return parent::insert_imported_post( $item );

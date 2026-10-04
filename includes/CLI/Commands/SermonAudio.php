@@ -21,6 +21,10 @@ class SermonAudio {
 	 * Runs synchronously: paginates through the SermonAudio API and writes
 	 * directly via the adapter's load_item() path, bypassing the async
 	 * dispatcher and WP_Background_Process queue used by the admin UI.
+	 * It also bypasses the sync hash, so every fetched sermon is written
+	 * again even when its payload has not changed. The default command is a
+	 * full import and therefore retitles every existing sermon that has a
+	 * usable API title. --recent bypasses the hash for the batch it fetches.
 	 *
 	 * Defaults to a full import (every sermon, oldest first). Use --recent
 	 * to fetch only the most recently updated sermons — the same flow the
@@ -291,6 +295,12 @@ class SermonAudio {
 		try {
 			$model = $adapter->load_item( $formatted, $adapter->get_model_from_key( $post_type_key ) );
 			$stats[ $stat_group . ( $is_update ? '_updated' : '_created' ) ]++;
+			if ( '' === trim( (string) $title ) && is_object( $model ) && ! empty( $model->origin_id ) ) {
+				$saved_title = get_post_field( 'post_title', $model->origin_id );
+				if ( is_string( $saved_title ) && '' !== $saved_title ) {
+					$title = $saved_title;
+				}
+			}
 			WP_CLI::log( sprintf( '  %s %s: %s', $is_update ? 'updated' : 'created', $stat_group, $title ) );
 			return $model;
 		} catch ( \Exception | \Throwable $e ) {
