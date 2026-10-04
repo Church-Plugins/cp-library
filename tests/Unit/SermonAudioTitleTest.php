@@ -10,9 +10,8 @@
  * or whitespace only (fullTitle is trim()'d, and a whitespace-only result
  * falls back). Nothing in that choice truncates the title; a long fullTitle
  * is stored whole, including surrounding spaces when the rest is not blank.
- * When both titles are missing or blank, the SermonAudio sermon id is used,
- * including when displayTitle is null and fullTitle is null or "". With no
- * id either, the title is "".
+ * When both titles are missing or blank, the title is "Untitled sermon".
+ * The SermonAudio sermon id is not used as the title.
  *
  * The sync hash is the formatted item, so a title change re-queues a sermon
  * that was already imported. That re-queue is what retitles it.
@@ -47,6 +46,7 @@ class SermonAudioTitleTest extends TestCase {
 		}
 
 		Functions\when( 'wp_kses_post' )->returnArg();
+		Functions\when( '__' )->returnArg();
 
 		$item_type            = new \stdClass();
 		$item_type->post_type = 'cpl_item';
@@ -116,7 +116,7 @@ class SermonAudioTitleTest extends TestCase {
 		$this->assertSame( 'A Sermon With No Long Title', $this->adapter->format_item( $sermon )['post_title'] );
 	}
 
-	public function test_blank_titles_fall_back_to_the_sermon_id() {
+	public function test_blank_titles_fall_back_to_untitled_sermon() {
 		$sermon = $this->sermon(
 			array(
 				'displayTitle' => null,
@@ -125,10 +125,11 @@ class SermonAudioTitleTest extends TestCase {
 			)
 		);
 
-		$this->assertSame( 'sa-99', $this->adapter->format_item( $sermon )['post_title'] );
+		$this->assertSame( 'Untitled sermon', $this->adapter->format_item( $sermon )['post_title'] );
+		$this->assertNotSame( 'sa-99', $this->adapter->format_item( $sermon )['post_title'] );
 	}
 
-	public function test_null_display_title_and_null_full_title_use_the_sermon_id() {
+	public function test_null_display_title_and_null_full_title_use_untitled_sermon() {
 		$sermon = $this->sermon(
 			array(
 				'displayTitle' => null,
@@ -137,11 +138,10 @@ class SermonAudioTitleTest extends TestCase {
 			)
 		);
 
-		$this->assertSame( 'sa-null-both', $this->adapter->format_item( $sermon )['post_title'] );
-		$this->assertNotSame( '', $this->adapter->format_item( $sermon )['post_title'] );
+		$this->assertSame( 'Untitled sermon', $this->adapter->format_item( $sermon )['post_title'] );
 	}
 
-	public function test_null_display_title_and_empty_full_title_use_the_sermon_id() {
+	public function test_null_display_title_and_empty_full_title_use_untitled_sermon() {
 		$sermon = $this->sermon(
 			array(
 				'displayTitle' => null,
@@ -150,11 +150,10 @@ class SermonAudioTitleTest extends TestCase {
 			)
 		);
 
-		$this->assertSame( 'sa-empty-full', $this->adapter->format_item( $sermon )['post_title'] );
-		$this->assertNotSame( '', $this->adapter->format_item( $sermon )['post_title'] );
+		$this->assertSame( 'Untitled sermon', $this->adapter->format_item( $sermon )['post_title'] );
 	}
 
-	public function test_blank_titles_and_no_sermon_id_produce_an_empty_title() {
+	public function test_blank_titles_and_no_sermon_id_still_use_untitled_sermon() {
 		$sermon = $this->sermon(
 			array(
 				'displayTitle' => null,
@@ -163,7 +162,7 @@ class SermonAudioTitleTest extends TestCase {
 		);
 		unset( $sermon->sermonID );
 
-		$this->assertSame( '', SermonAudio::resolve_sermon_title( $sermon ) );
+		$this->assertSame( 'Untitled sermon', SermonAudio::resolve_sermon_title( $sermon ) );
 	}
 
 	public function test_a_very_long_full_title_is_kept_intact() {

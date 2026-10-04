@@ -276,9 +276,8 @@ class SermonAudio extends Adapter {
 	 * real title are left as SermonAudio sent them), and null, "", or a
 	 * whitespace-only value falls back to displayTitle, trim()'d the same way.
 	 *
-	 * When both titles are missing or blank, the SermonAudio sermon id is used
-	 * so the post is not saved with an empty title. If that is missing too,
-	 * the result is "".
+	 * When both titles are missing or blank, the title is "Untitled sermon".
+	 * The SermonAudio sermon id is not used as the title.
 	 *
 	 * @param object $sermon Sermon payload from the SermonAudio API.
 	 * @return string
@@ -300,11 +299,7 @@ class SermonAudio extends Adapter {
 			}
 		}
 
-		if ( isset( $sermon->sermonID ) && is_scalar( $sermon->sermonID ) && '' !== trim( (string) $sermon->sermonID ) ) {
-			return (string) $sermon->sermonID;
-		}
-
-		return '';
+		return __( 'Untitled sermon', 'cp-library' );
 	}
 
 	/**

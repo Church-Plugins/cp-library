@@ -17,12 +17,14 @@
  * same title get distinct slugs. Speakers use the same insert helper and do
  * not pass a post_name, so an update keeps the slug it already had.
  *
- * format_item() always sends post_status publish. On an update that status is
- * replaced with the one the post already has, so a trashed sermon stays
- * trashed and a draft stays a draft while the title changes. Pending is the
- * exception: it is published, because leaving it pending makes wp_insert_post()
- * clear post_name when the importer cannot publish that post type. A pending
- * sermon that has no slug therefore receives sanitize_title() of the full title.
+ * format_item() always sends post_status publish and a SermonAudio date. On
+ * an update the status the post already has is put back, including trash,
+ * draft, pending, private, and future. A future sermon also keeps the date
+ * it was scheduled for. Other existing sermons still take the SermonAudio
+ * date, which is what 1.7.0 did. A pending sermon stays pending. One that
+ * already has a slug keeps it. One with an empty post_name gets
+ * sanitize_title() of the full title. The main retitle sends an empty
+ * post_name so that fill is what preserves the permalink.
  *
  * @package CP_Library
  */
@@ -31,6 +33,7 @@ namespace CP_Library\Tests\Integration;
 
 use CP_Library\Adapters\SermonAudio;
 use CP_Library\Models\Item as ItemModel;
+use CP_Library\Models\ItemType as ItemTypeModel;
 use CP_Library\Models\Speaker as SpeakerModel;
 
 /**
@@ -66,9 +69,13 @@ class SermonAudioRetitleTest extends TestCase {
 		);
 		update_post_meta( $post_id, 'external_id', 'sa-gather-1' );
 
-		$this->import( $this->sermon( 'sa-gather-1', $short, $full ) );
-		// A second sync must still match the same post, not insert another.
-		$this->import( $this->sermon( 'sa-gather-1', $short, $full ) );
+		// An empty post_name is what makes wp_insert_post rebuild the slug
+		// from the new title. Omitting the key would keep the slug even
+		// without the pre-fill. This payload includes the empty key.
+		$formatted              = $this->adapter->format_item( $this->sermon( 'sa-gather-1', $short, $full ) );
+		$formatted['post_name'] = '';
+		$this->adapter->load_item( $formatted, ItemModel::class );
+		$this->adapter->load_item( $formatted, ItemModel::class );
 
 		$post = get_post( $post_id );
 
@@ -169,13 +176,13 @@ class SermonAudioRetitleTest extends TestCase {
 	}
 
 	/**
-	 * Creating a pending sermon does not store a slug: wp_insert_post clears
-	 * post_name when the user cannot publish that post type. The import
-	 * publishes it. The slug it gets is sanitize_title() of the full title,
-	 * the same slug a new sermon with that title would get — not an empty
-	 * post_name, and not a slug built from the abbreviated display title.
+	 * Creating a pending sermon does not store a slug. The retitle leaves it
+	 * pending and gives it sanitize_title() of the full title. That is a real
+	 * permalink stem, not an empty post_name and not the abbreviated title.
+	 * wp_insert_post() clears the slug when the importer cannot publish the
+	 * post; the import puts it back without publishing.
 	 */
-	public function test_a_pending_sermon_with_no_slug_is_published_under_the_full_title() {
+	public function test_a_pending_sermon_with_no_slug_stays_pending_and_gets_the_full_title_slug() {
 		$post_type = cp_library()->setup->post_types->item->post_type;
 		$full      = 'Example Sermon About Gathering Together, Part 4b';
 		$short     = 'Example Sermon About Gather...';
@@ -193,11 +200,13 @@ class SermonAudioRetitleTest extends TestCase {
 		$this->assertSame( '', get_post( $post_id )->post_name );
 		$this->assertSame( 'pending', get_post( $post_id )->post_status );
 
-		$this->import( $this->sermon( 'sa-pending-empty', $short, $full ) );
+		$formatted              = $this->adapter->format_item( $this->sermon( 'sa-pending-empty', $short, $full ) );
+		$formatted['post_name'] = '';
+		$this->adapter->load_item( $formatted, ItemModel::class );
 
 		$post = get_post( $post_id );
 
-		$this->assertSame( 'publish', $post->post_status );
+		$this->assertSame( 'pending', $post->post_status );
 		$this->assertSame( $full, $post->post_title );
 		$this->assertSame( sanitize_title( $full ), $post->post_name );
 		$this->assertNotSame( '', $post->post_name );
@@ -205,10 +214,10 @@ class SermonAudioRetitleTest extends TestCase {
 	}
 
 	/**
-	 * A pending sermon that already has a slug (set outside wp_insert_post)
-	 * keeps it when the import publishes the sermon.
+	 * A pending sermon that already has a slug keeps it, and stays pending,
+	 * even when the payload sends an empty post_name and post_status publish.
 	 */
-	public function test_a_pending_sermon_keeps_a_slug_it_already_has() {
+	public function test_a_pending_sermon_stays_pending_and_keeps_its_slug() {
 		global $wpdb;
 
 		$post_type = cp_library()->setup->post_types->item->post_type;
@@ -238,9 +247,99 @@ class SermonAudioRetitleTest extends TestCase {
 
 		$post = get_post( $post_id );
 
-		$this->assertSame( 'publish', $post->post_status );
+		$this->assertSame( 'pending', $post->post_status );
 		$this->assertSame( $full, $post->post_title );
 		$this->assertSame( $slug, $post->post_name );
+	}
+
+	/**
+	 * A scheduled sermon stays future, and keeps the date it was scheduled
+	 * for. format_item() sends a past SermonAudio date; writing that date
+	 * would make wp_insert_post() publish the sermon. A published sermon
+	 * still takes the SermonAudio date, which is the 1.7.0 update behavior.
+	 */
+	public function test_a_future_sermon_stays_future_and_keeps_its_scheduled_date() {
+		$post_type = cp_library()->setup->post_types->item->post_type;
+		$full      = 'Example Sermon About Gathering Together, Part 9';
+		$scheduled = '2030-06-15 09:30:00';
+
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'     => $post_type,
+				'post_title'    => 'Example Sermon About Gather...',
+				'post_name'     => 'scheduled-sermon',
+				'post_status'   => 'future',
+				'post_date'     => $scheduled,
+				'post_date_gmt' => $scheduled,
+			)
+		);
+		update_post_meta( $post_id, 'external_id', 'sa-future' );
+
+		$before = get_post( $post_id );
+		$this->assertSame( 'future', $before->post_status );
+		$this->assertSame( $scheduled, $before->post_date );
+
+		$formatted              = $this->adapter->format_item( $this->sermon( 'sa-future', 'Example Sermon About Gather...', $full ) );
+		$formatted['post_name'] = '';
+		$this->assertNotSame( $scheduled, $formatted['post_date'] );
+		$this->adapter->load_item( $formatted, ItemModel::class );
+
+		$post = get_post( $post_id );
+
+		$this->assertSame( 'future', $post->post_status );
+		$this->assertSame( $before->post_date, $post->post_date );
+		$this->assertSame( $before->post_date_gmt, $post->post_date_gmt );
+		$this->assertSame( $full, $post->post_title );
+		$this->assertSame( 'scheduled-sermon', $post->post_name );
+	}
+
+	public function test_a_published_sermon_still_takes_the_sermonaudio_date() {
+		$post_type = cp_library()->setup->post_types->item->post_type;
+		$full      = 'Example Sermon About Gathering Together, Part 9b';
+
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'     => $post_type,
+				'post_title'    => 'Example Sermon About Gather...',
+				'post_status'   => 'publish',
+				'post_date'     => '2019-03-03 08:00:00',
+				'post_date_gmt' => '2019-03-03 08:00:00',
+			)
+		);
+		update_post_meta( $post_id, 'external_id', 'sa-dated' );
+
+		$formatted = $this->adapter->format_item( $this->sermon( 'sa-dated', 'Example Sermon About Gather...', $full ) );
+		$this->assertNotSame( '2019-03-03 08:00:00', $formatted['post_date'] );
+		$this->adapter->load_item( $formatted, ItemModel::class );
+
+		$post = get_post( $post_id );
+
+		$this->assertSame( 'publish', $post->post_status );
+		$this->assertSame( $formatted['post_date'], $post->post_date );
+		$this->assertSame( $full, $post->post_title );
+	}
+
+	public function test_a_private_sermon_stays_private() {
+		$post_type = cp_library()->setup->post_types->item->post_type;
+		$full      = 'Example Sermon About Gathering Together, Part 9c';
+
+		$post_id = self::factory()->post->create(
+			array(
+				'post_type'   => $post_type,
+				'post_title'  => 'Example Sermon About Gather...',
+				'post_name'   => 'kept-private',
+				'post_status' => 'private',
+			)
+		);
+		update_post_meta( $post_id, 'external_id', 'sa-private' );
+
+		$this->import( $this->sermon( 'sa-private', 'Example Sermon About Gather...', $full ) );
+
+		$post = get_post( $post_id );
+
+		$this->assertSame( 'private', $post->post_status );
+		$this->assertSame( $full, $post->post_title );
+		$this->assertSame( 'kept-private', $post->post_name );
 	}
 
 	/**
@@ -479,6 +578,65 @@ class SermonAudioRetitleTest extends TestCase {
 
 		$this->assertSame( 'jane-doe', get_post( $created->origin_id )->post_name );
 		$this->assertNotSame( $post_id, (int) $created->origin_id );
+	}
+
+	/**
+	 * Speakers and series use the same update path. A draft of either stays
+	 * a draft when the payload says publish, and keeps its slug.
+	 */
+	public function test_a_draft_speaker_and_a_draft_series_keep_their_status() {
+		$speaker_type = cp_library()->setup->post_types->speaker->post_type;
+		$series_type  = cp_library()->setup->post_types->item_type->post_type;
+
+		$speaker_id = self::factory()->post->create(
+			array(
+				'post_type'   => $speaker_type,
+				'post_title'  => 'John Smith',
+				'post_name'   => 'john-smith',
+				'post_status' => 'draft',
+			)
+		);
+		$series_id = self::factory()->post->create(
+			array(
+				'post_type'   => $series_type,
+				'post_title'  => 'Gathering',
+				'post_name'   => 'gathering',
+				'post_status' => 'draft',
+			)
+		);
+		update_post_meta( $speaker_id, 'external_id', 'spk-draft' );
+		update_post_meta( $series_id, 'external_id', 'series-draft' );
+
+		$this->adapter->load_item(
+			array(
+				'external_id' => 'spk-draft',
+				'post_title'  => 'John Smith Jr.',
+				'post_status' => 'publish',
+				'post_type'   => $speaker_type,
+				'post_name'   => '',
+			),
+			SpeakerModel::class
+		);
+		$this->adapter->load_item(
+			array(
+				'external_id' => 'series-draft',
+				'post_title'  => 'Gathering Together',
+				'post_status' => 'publish',
+				'post_type'   => $series_type,
+				'post_name'   => '',
+			),
+			ItemTypeModel::class
+		);
+
+		$speaker = get_post( $speaker_id );
+		$series  = get_post( $series_id );
+
+		$this->assertSame( 'draft', $speaker->post_status );
+		$this->assertSame( 'John Smith Jr.', $speaker->post_title );
+		$this->assertSame( 'john-smith', $speaker->post_name );
+		$this->assertSame( 'draft', $series->post_status );
+		$this->assertSame( 'Gathering Together', $series->post_title );
+		$this->assertSame( 'gathering', $series->post_name );
 	}
 
 	/**
