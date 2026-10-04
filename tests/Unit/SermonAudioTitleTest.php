@@ -6,8 +6,10 @@
  * trailing "...", so the parts of one series were imported as the same title
  * (and, for new sermons, the same slug stem). fullTitle is the complete title
  * and is nullable. The import must use fullTitle when it is a non-empty
- * string, and displayTitle otherwise — including when fullTitle is null or "".
- * Nothing in that choice truncates the title; a long fullTitle is stored whole.
+ * string, and displayTitle otherwise — including when fullTitle is null, "",
+ * or whitespace only. Nothing in that choice truncates the title; a long
+ * fullTitle is stored whole. When both titles are missing or blank, the
+ * SermonAudio sermon id is used. With no id either, the title is "".
  *
  * The sync hash is the formatted item, so a title change re-queues a sermon
  * that was already imported. That re-queue is what retitles it.
@@ -100,6 +102,41 @@ class SermonAudioTitleTest extends TestCase {
 		$this->assertSame( 'A Sermon With No Long Title', $this->adapter->format_item( $sermon )['post_title'] );
 	}
 
+	public function test_whitespace_only_full_title_falls_back_to_display_title() {
+		$sermon = $this->sermon(
+			array(
+				'displayTitle' => 'A Sermon With No Long Title',
+				'fullTitle'    => " \n\t ",
+			)
+		);
+
+		$this->assertSame( 'A Sermon With No Long Title', $this->adapter->format_item( $sermon )['post_title'] );
+	}
+
+	public function test_blank_titles_fall_back_to_the_sermon_id() {
+		$sermon = $this->sermon(
+			array(
+				'displayTitle' => null,
+				'fullTitle'    => '   ',
+				'sermonID'     => 'sa-99',
+			)
+		);
+
+		$this->assertSame( 'sa-99', $this->adapter->format_item( $sermon )['post_title'] );
+	}
+
+	public function test_blank_titles_and_no_sermon_id_produce_an_empty_title() {
+		$sermon = $this->sermon(
+			array(
+				'displayTitle' => null,
+				'fullTitle'    => null,
+			)
+		);
+		unset( $sermon->sermonID );
+
+		$this->assertSame( '', SermonAudio::resolve_sermon_title( $sermon ) );
+	}
+
 	public function test_a_very_long_full_title_is_kept_intact() {
 		$long   = str_repeat( 'Gathering Together Part One ', 20 );
 		$sermon = $this->sermon(
@@ -134,7 +171,7 @@ class SermonAudioTitleTest extends TestCase {
 		$this->assertNotSame(
 			$this->adapter->create_store_key( $truncated ),
 			$this->adapter->create_store_key( $complete ),
-			'the stored hash includes the title, so the next sync queues the sermon once'
+			'the stored hash includes the title, so a fetched sermon whose title changed is queued once'
 		);
 	}
 

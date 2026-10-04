@@ -114,7 +114,7 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 == Changelog ==
 
 = Unreleased =
-* Fix: SermonAudio imports now use the sermon's full title when SermonAudio provides one, and the abbreviated title when that full title is missing or empty. Sermons already imported are retitled on the next sync, and their permalinks stay the same.
+* Fix: SermonAudio imports now use the sermon's full title when SermonAudio provides one, and the abbreviated title when that full title is missing or blank. Sermons already imported are retitled when they are fetched again: the most recent ones (Check Count, default 50) on the next scheduled sync or Check Now, and older ones on Start full import. Their permalinks stay the same.
 
 = 1.7.0 =
 * New: **Tools → Import/Export → Full Migration** — move an entire sermon library between sites in one step. Exports sermons (with variations, timestamps, transcripts and downloads), series, speakers, service types, templates and taxonomy terms, and optionally your plugin settings. Imports run in small batches and can be resumed, so libraries with tens of thousands of sermons don't hit a PHP timeout. Re-importing the same file updates the existing content instead of duplicating it.

@@ -271,24 +271,41 @@ class SermonAudio extends Adapter {
 	 *
 	 * SermonAudio's displayTitle is abbreviated, often with a trailing "...",
 	 * so separate parts of one series arrive with the same title. fullTitle is
-	 * the complete title and is nullable. Only a non-empty string is used;
-	 * null and "" fall back to displayTitle.
+	 * the complete title and is nullable. A non-blank string is used; null,
+	 * "", and a whitespace-only value fall back to displayTitle. The returned
+	 * title is not trimmed when it has other characters.
 	 *
-	 * @since 1.7.1
+	 * When both titles are missing or blank, the SermonAudio sermon id is used
+	 * so the post is not saved with an empty title. If that is missing too,
+	 * the result is "".
 	 *
 	 * @param object $sermon Sermon payload from the SermonAudio API.
 	 * @return string
 	 */
 	public static function resolve_sermon_title( $sermon ) {
-		if ( isset( $sermon->fullTitle ) && is_string( $sermon->fullTitle ) && '' !== $sermon->fullTitle ) {
+		if ( self::is_nonblank_title( isset( $sermon->fullTitle ) ? $sermon->fullTitle : null ) ) {
 			return $sermon->fullTitle;
 		}
 
-		if ( isset( $sermon->displayTitle ) && is_string( $sermon->displayTitle ) ) {
+		if ( self::is_nonblank_title( isset( $sermon->displayTitle ) ? $sermon->displayTitle : null ) ) {
 			return $sermon->displayTitle;
 		}
 
+		if ( isset( $sermon->sermonID ) && is_scalar( $sermon->sermonID ) && '' !== trim( (string) $sermon->sermonID ) ) {
+			return (string) $sermon->sermonID;
+		}
+
 		return '';
+	}
+
+	/**
+	 * Whether a SermonAudio title field has characters other than whitespace.
+	 *
+	 * @param mixed $title fullTitle or displayTitle.
+	 * @return bool
+	 */
+	private static function is_nonblank_title( $title ) {
+		return is_string( $title ) && '' !== trim( $title );
 	}
 
 	/**

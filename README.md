@@ -25,7 +25,7 @@ npm run build
 ### Change Log
 
 #### Unreleased
-* Bug Fix: SermonAudio imports use the sermon's full title when SermonAudio provides one (`fullTitle`), and fall back to the abbreviated title when it is missing or empty. Sermons already synced are retitled on the next sync; their permalinks stay the same.
+* Bug Fix: SermonAudio imports use the sermon's full title when SermonAudio provides one (`fullTitle`), and fall back to the abbreviated title when it is missing or blank. Already-imported sermons are retitled when fetched again: the most recent ones (Check Count, default 50) on the next scheduled sync or Check Now, and older ones on a full import. Permalinks stay the same.
 
 #### 1.7.0
 * **Major Feature**: Full-site Import/Export (Tools → Import/Export → Full Migration) — exports sermons (with variations, timestamps, transcripts and downloads), series, speakers, service types, templates, taxonomy terms and optionally plugin settings. Imports run in resumable batches; re-importing the same file updates instead of duplicating.

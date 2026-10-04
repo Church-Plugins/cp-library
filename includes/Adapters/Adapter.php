@@ -304,55 +304,36 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	/**
 	 * Insert or update the WordPress post for an imported item.
 	 *
-	 * On update, the existing permalink is written back into post_name and
-	 * locked for this insert. wp_insert_post keeps a slug that was omitted, but
-	 * an empty post_name is rebuilt from post_title (wp-includes/post.php), and
-	 * wp_unique_post_slug still runs. A retitle — fullTitle replacing a
-	 * truncated displayTitle — must not change the URL. New items omit
-	 * post_name, so WordPress still generates the slug from the title.
+	 * On update, a missing or empty post_name is filled with the permalink
+	 * the post already has. wp_insert_post keeps a slug that was left out, but
+	 * an empty post_name is rebuilt from post_title. Filling only that gap
+	 * keeps a retitle from changing the URL. There is no wp_insert_post_data
+	 * callback: a nested insert (a revision, or a save_post hook creating a
+	 * post) is not given this slug.
 	 *
-	 * @since 1.7.1
+	 * Speakers and series come through here too. They do not send a post_name,
+	 * so an update still keeps the slug WordPress was already keeping, and a
+	 * new speaker or series still gets one generated from its title.
+	 *
+	 * New sermons omit post_name, so WordPress still generates the slug.
 	 *
 	 * @param array $item Post fields for wp_insert_post(), without external_id.
 	 * @return int|\WP_Error
 	 */
 	protected function insert_imported_post( $item ) {
-		$locked_slug = null;
+		if ( ! empty( $item['ID'] ) && ( ! isset( $item['post_name'] ) || '' === $item['post_name'] ) ) {
+			$slug = $this->existing_permalink_slug( $item['ID'] );
 
-		if ( ! empty( $item['ID'] ) ) {
-			$locked_slug = $this->existing_permalink_slug( $item['ID'] );
-
-			if ( null !== $locked_slug ) {
-				$item['post_name'] = $locked_slug;
+			if ( null !== $slug ) {
+				$item['post_name'] = $slug;
 			}
 		}
 
-		$lock = null;
-
-		if ( null !== $locked_slug ) {
-			$lock = static function ( $data ) use ( $locked_slug ) {
-				$data['post_name'] = $locked_slug;
-
-				return $data;
-			};
-
-			// After wp_unique_post_slug and any other wp_insert_post_data callback.
-			add_filter( 'wp_insert_post_data', $lock, PHP_INT_MAX );
-		}
-
-		try {
-			return wp_insert_post( $item, true );
-		} finally {
-			if ( null !== $lock ) {
-				remove_filter( 'wp_insert_post_data', $lock, PHP_INT_MAX );
-			}
-		}
+		return wp_insert_post( $item, true );
 	}
 
 	/**
 	 * Permalink slug already stored for a post, when it has one.
-	 *
-	 * @since 1.7.1
 	 *
 	 * @param int $post_id Post being updated.
 	 * @return string|null Raw post_name, or null when the post has none.
