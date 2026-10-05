@@ -78,6 +78,10 @@ The export feature downloads all of your sermon data as a single CSV file.
 
 The export includes all sermons regardless of their status (published, draft, private, and scheduled). The exported CSV contains the following columns: Title, Description, Transcript, Series, Date, Passage, Location, Service Type, Speaker, Topics, Season, Scripture, Thumbnail, Video, Audio, and Downloads.
 
+## Full Migration
+
+Full Migration is available in CP Sermons 1.7.0 and later for moving an entire sermon library between sites. It is separate from the CSV import and export above. See [Full Migration: Export & Import](full-migration.md).
+
 ## Visibility Recovery Tools
 
 Two one-click tools help you recover from the visibility-related issues addressed in version 1.6.2.
