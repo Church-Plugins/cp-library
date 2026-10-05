@@ -20,6 +20,7 @@ Welcome to the CP Sermon Library documentation. This guide covers installation, 
 - [Persistent Player](features/persistent-player.md) — Site-wide audio player
 - [Analytics](features/analytics.md) — Engagement tracking and reporting
 - [Settings](features/settings.md) — Complete settings reference
+- [Full Migration](features/full-migration.md) — Export and import an entire sermon library
 
 ## Advanced
 
