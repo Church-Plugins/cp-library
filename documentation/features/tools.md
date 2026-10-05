@@ -6,6 +6,8 @@ The Tools page provides utilities for importing and exporting sermon data in bul
 
 The Tools page has two tabs: **Import/Export** and **Log**.
 
+On the Import/Export tab you will also find **Full Migration** export and import (CP Sermons 1.7.0 and later). Full Migration moves an entire sermon library between WordPress sites. See [Full Migration: Export & Import](full-migration.md) for details. CSV import and export remain available for spreadsheet-style bulk edits.
+
 ## CSV Import
 
 The CSV importer lets you create sermons in bulk from a spreadsheet file.
@@ -80,7 +82,9 @@ The export includes all sermons regardless of their status (published, draft, pr
 
 ## Full Migration
 
-Full Migration is available in CP Sermons 1.7.0 and later for moving an entire sermon library between sites. It is separate from the CSV import and export above. See [Full Migration: Export & Import](full-migration.md).
+CP Sermons 1.7.0 and later include **Full Migration Export** and **Full Migration Import** on the same Import/Export tab, below the CSV tools. Use Full Migration when you want to move an entire sermon library (sermons, series, speakers, service types, templates, taxonomies, and optionally settings) to another WordPress site in one file.
+
+For steps, options, and WP-CLI (`wp cpl export` / `wp cpl import`), see [Full Migration: Export & Import](full-migration.md).
 
 ## Visibility Recovery Tools
 
