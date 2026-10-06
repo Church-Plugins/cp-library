@@ -50,7 +50,7 @@ The persistent player is a site-wide audio bar that continues playing as visitor
 
 ### How do I set up a podcast feed?
 
-First, enable the podcast feed in Series → Settings → Advanced → Enable Podcast Feed. Then navigate to Series → Settings → Podcast tab and fill in the required fields (title, description, author, cover artwork). Your feed URL is `https://yoursite.com/messages/feed/podcast`. See [Podcast Setup](../features/podcast-setup.md).
+First, enable the podcast feed in Series → Settings → Advanced → Enable Podcast Feed. Then navigate to Series → Settings → Podcast tab and fill in the required fields (title, description, **Provider**, cover artwork). Your feed URL is `https://yoursite.com/messages/feed/podcast`. See [Podcast Setup](../features/podcast-setup.md).
 
 ### Can I create separate podcast feeds for different series or speakers?
 

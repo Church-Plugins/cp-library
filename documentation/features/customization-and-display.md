@@ -241,7 +241,7 @@ Navigate to Series → Settings → Advanced to adjust:
 
 ### Filter button labels
 
-Filter buttons show **Speaker**, **Service Type**, **Year**, **Topic**, **Scripture**, and **Season**. **Singular Label** and **Plural Label** do not change that text.
+Sermon archive: **Topic**, **Scripture**, **Season**, **Speaker**, **Service Type**, **Year**. Series archive: **Season**, **Year**, **Number of Sermons**. **Singular Label** and **Plural Label** do not change that text.
 
 ### Filter Contexts
 
