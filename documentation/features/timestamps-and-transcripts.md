@@ -50,7 +50,7 @@ Transcripts make your sermon content searchable, accessible, and beneficial for 
 
 For sermons with YouTube videos, you can import auto-generated captions as transcripts:
 
-1. Set **Message Video** to a `youtube.com` URL and update the sermon
+1. Set **Message Video** to the YouTube URL and update the sermon
 2. In **Transcript**, click **Import from YouTube**, or in the sermon list click **Import** in the Transcript column
 3. Review and edit the imported transcript
 4. Update the sermon

@@ -75,7 +75,7 @@ On **CP Sermons Sermons/Series**, open **Settings**:
 5. Set **Order by** to **Newest to oldest**, **Oldest to newest**, **A → Z**, or **Z → A**.
 6. Use the toolbar **List view** or **Grid view**. In **Grid view**, set **Columns**.
 
-The **Filters** panel can limit the query with **Taxonomies**, **Authors**, and **Parents**.
+The **Filters** panel shows **Taxonomies**. For sermons, **Parents** is included when variations are on.
 
 **Item Graphic** has an **Aspect ratio** setting. Spacing controls depend on the block.
 
@@ -101,7 +101,7 @@ CP Sermon Library includes a **Templates** post type that lets you build custom 
 
 1. Navigate to Series → Templates in the admin
 2. Click "Add New"
-3. Build your layout using CP Sermon Library blocks (CP Sermons Sermons/Series, Sermon Actions, Item Graphic, Item Title, Item Date, Item Description, Sermon Season, etc.)
+3. Build your layout with **CP Sermons Sermons/Series**, **Sermon Template**, **Sermon Actions**, **Item Graphic**, **Item Title**, **Item Date**, **Item Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**, and **Item Pagination**
 4. Publish the template
 
 When editing a template, the inserter allows CP Sermons blocks plus core blocks such as **Paragraph**, **Heading**, **Group**, **Columns**, and **Spacer**.
@@ -213,7 +213,7 @@ Navigate to Series → Settings → Advanced to adjust:
 - **Count Threshold** (default 3)
 - **Show Counts**: **Show** or **Hide**
 
-**Disable Filters** on the Messages tab and the Series tab hides facets on those archives. The **Disable Filters** field on the Advanced tab is marked deprecated in its description.
+**Disable Filters** on the Messages tab hides **Topics**, **Scripture**, **Seasons**, **Speakers**, and **Year** on the sermon archive. On the Series tab it hides **Topics**, **Scripture**, **Seasons**, and **Year**. The **Disable Filters** field on the Advanced tab is marked deprecated in its description.
 
 ### Filter button labels
 
