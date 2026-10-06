@@ -6,6 +6,7 @@
  */
 
 import * as ErrorHandler from './errorHandler';
+import { mergeFilterFormIntoSearchParams } from './filterQuery';
 
 class CPLibraryFilter {
 	/**
@@ -901,49 +902,16 @@ class CPLibraryFilter {
 		const urlParams = new URLSearchParams(window.location.search);
 		const formData = new FormData(form);
 
-		// Create a new URLSearchParams object for merged parameters
-		const mergedParams = new URLSearchParams();
-
-		// Add existing parameters to mergedParams (except pagination)
-		for (const [key, value] of urlParams.entries()) {
-			// Skip pagination parameters
-			if (key !== 'paged' && key !== 'page') {
-				mergedParams.append(key, value);
-			}
-		}
-
-		// Add form parameters to mergedParams, handling arrays properly
-		for (const [key, value] of formData.entries()) {
-			// Extract clean key (remove [] for array parameters)
-			const cleanKey = key.endsWith('[]') ? key.slice(0, -2) : key;
-
-			// Skip empty values
-			if (!value || !value.trim()) {
-				continue;
-			}
-
-			// If parameter already exists in URL (might be from a different facet)
-			if (urlParams.has(cleanKey) || urlParams.has(key)) {
-				// For array parameters (facets)
-				if (key.endsWith('[]')) {
-					// Keep existing values in URL
-					mergedParams.append(cleanKey, value);
-				}
-				// For non-array parameters (like search)
-				else {
-					// Replace with form value
-					mergedParams.set(cleanKey, value);
-				}
-			}
-			// Parameter doesn't exist in URL
-			else {
-				if (key.endsWith('[]')) {
-					mergedParams.append(cleanKey, value);
-				} else {
-					mergedParams.set(cleanKey, value);
-				}
-			}
-		}
+		// The hidden post_type input is omitted on Pages and other singulars,
+		// where that public query var 404s the permalink. Taxonomy archives
+		// and the sermon/series archives still render it. Drop post_type from
+		// the built URL when the input is absent, including a bookmarked value.
+		const formSubmitsPostType = !!form.querySelector('input[name="post_type"]');
+		const mergedParams = mergeFilterFormIntoSearchParams(
+			urlParams,
+			formData.entries(),
+			formSubmitsPostType
+		);
 
 		// Create the final URL
 		const finalUrl = baseUrl + finalPath + (

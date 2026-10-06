@@ -227,4 +227,98 @@ class TemplateHelpers {
 
         return '';
     }
+
+    /**
+     * Whether the filter form should submit a public `post_type` query arg.
+     *
+     * Suppress it only when the original main query is a Page or any other
+     * singular. On a Page — including one whose only sermon listing is the
+     * [cp-sermons] shortcode — `post_type` is merged into the main query.
+     * With pretty permalinks that is `pagename` plus `post_type=cpl_item`,
+     * the page lookup returns nothing, and WordPress 404s before the
+     * shortcode runs. A singular sermon, speaker, or service type has the
+     * same collision.
+     *
+     * Everywhere else the param stays. `apply_facet_filters()` returns
+     * before it applies any facet when `$query->get( 'post_type' )` is
+     * empty, and a taxonomy archive has no post type of its own. The hidden
+     * field is what puts `post_type` on that request so the next load is
+     * filtered. Sermon and series archives keep it too.
+     *
+     * This reads `$wp_the_query`, not the global `$wp_query`. The shortcode
+     * replaces `$wp_query` with a `cpl_item` query before the form renders,
+     * which is not a page, but the original main query still is.
+     *
+     * @return bool
+     */
+    public static function should_submit_post_type_query_arg() {
+        global $wp_the_query;
+
+        if ( ! is_object( $wp_the_query ) ) {
+            return true;
+        }
+
+        $is_page     = method_exists( $wp_the_query, 'is_page' ) && $wp_the_query->is_page();
+        $is_singular = method_exists( $wp_the_query, 'is_singular' ) && $wp_the_query->is_singular();
+
+        return ! ( $is_page || $is_singular );
+    }
+
+    /**
+     * Post types that 404 a Page when they arrive as a public query var.
+     *
+     * @return string[]
+     */
+    public static function filter_query_post_types() {
+        return array( 'cpl_item', 'cpl_item_type' );
+    }
+
+    /**
+     * Drop cpl_item / cpl_item_type from a Page's main query vars.
+     *
+     * Optional. The form and the filter script already omit `post_type` on
+     * Pages and other singulars, which is what stops new filter clicks from
+     * 404ing. This only heals a URL that already carries `?post_type=` —
+     * a bookmark, or HTML a cache still has from before the form change.
+     * Facet parameters are left in place. Requests without `pagename` or
+     * `page_id` (sermon, series, and taxonomy archives) are unchanged.
+     * Admin requests, including admin-ajax.php, are unchanged.
+     *
+     * Hooked to `request`.
+     *
+     * @param array $query_vars Parsed main-query vars.
+     * @return array
+     */
+    public static function strip_conflicting_post_type_query_var( $query_vars ) {
+        if ( is_admin() || ! is_array( $query_vars ) ) {
+            return $query_vars;
+        }
+
+        $is_page = ( isset( $query_vars['pagename'] ) && '' !== $query_vars['pagename'] )
+            || ! empty( $query_vars['page_id'] );
+
+        if ( ! $is_page || empty( $query_vars['post_type'] ) ) {
+            return $query_vars;
+        }
+
+        $blocked   = self::filter_query_post_types();
+        $post_type = $query_vars['post_type'];
+
+        if ( is_array( $post_type ) ) {
+            $post_type = array_values( array_diff( $post_type, $blocked ) );
+            if ( empty( $post_type ) ) {
+                unset( $query_vars['post_type'] );
+            } else {
+                $query_vars['post_type'] = $post_type;
+            }
+
+            return $query_vars;
+        }
+
+        if ( in_array( $post_type, $blocked, true ) ) {
+            unset( $query_vars['post_type'] );
+        }
+
+        return $query_vars;
+    }
 }
