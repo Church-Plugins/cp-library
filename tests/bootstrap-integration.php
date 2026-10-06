@@ -64,3 +64,9 @@ global $wpdb;
 $_cpl_suppress = $wpdb->suppress_errors( true );
 \ChurchPlugins\Setup\Init::get_instance()->update_install( true );
 $wpdb->suppress_errors( $_cpl_suppress );
+
+// Plugin setup returns before post types are registered when the custom tables
+// do not exist yet. They exist now, so finish that setup.
+if ( ! cp_library()->setup ) {
+	cp_library()->maybe_setup();
+}

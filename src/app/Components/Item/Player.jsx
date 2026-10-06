@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
-import { cplVar, cplLog, cplMarker, isURL, forceUnmuteVimeoPlayer } from '../../utils/helpers';
+import { cplVar, cplLog, cplItemLogId, cplMarker, isURL, forceUnmuteVimeoPlayer } from '../../utils/helpers';
 import PlayerWrapper from '../PlayerWrapper';
 import useBreakpoints from '../../Hooks/useBreakpoints';
 import { usePersistentPlayer } from '../../Contexts/PersistentPlayerContext';
@@ -132,7 +132,7 @@ export default function Player({ item }) {
 			e.stopPropagation();
 		}
 
-		cplLog(item.id, 'fullscreen');
+		cplLog(cplItemLogId(currentItem), 'fullscreen');
 
 		try {
 			// Try screenfull for all video types (works for YouTube iframes, HTML5 video, etc.)
@@ -500,7 +500,7 @@ export default function Player({ item }) {
 			return;
 		}
 
-		cplLog(item.id, 'play');
+		cplLog(cplItemLogId(currentItem), 'play');
 		setHasPlayed(true);
 	}, [isPlaying])
 

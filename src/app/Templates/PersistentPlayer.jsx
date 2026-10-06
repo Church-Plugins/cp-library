@@ -13,7 +13,7 @@ import VolumeOff from '@mui/icons-material/VolumeOff';
 import VolumeUp from '@mui/icons-material/VolumeUp';
 import useBreakpoints from '../Hooks/useBreakpoints';
 import formatDuration from '../utils/formatDuration';
-import { cplLog, cplMarker, forceUnmuteVimeoPlayer } from '../utils/helpers';
+import { cplItemLogId, cplLog, cplMarker, forceUnmuteVimeoPlayer } from '../utils/helpers';
 
 import ErrorDisplay from '../Elements/ErrorDisplay';
 import PlayPause from '../Elements/Buttons/PlayPause';
@@ -124,7 +124,7 @@ export default function PersistentPlayer (props) {
 	};
 
 	const handleClickFullscreen = () => {
-		cplLog(item.id, 'fullscreen');
+		cplLog(cplItemLogId(item), 'fullscreen');
 		api.openInFullscreen();
 		return false;
 	};
