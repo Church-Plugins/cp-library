@@ -153,6 +153,20 @@ class AdminRequestActionsTest extends TestCase {
 	}
 
 	/**
+	 * The request dispatcher runs on init. Firing the scheduled hook from that
+	 * dispatch is not a scheduled run.
+	 */
+	public function test_init_dispatch_of_cron_hook_does_nothing() {
+		wp_set_current_user( 0 );
+		$this->ensure_adapter_hooks();
+
+		$before = cp_library()->logging->get_file_contents();
+		$this->dispatch_during_init( 'cpl_adapter_cron_sermon_audio' );
+
+		$this->assertSame( $before, cp_library()->logging->get_file_contents() );
+	}
+
+	/**
 	 * The scheduled adapter hook runs the pull without a signed-in user.
 	 */
 	public function test_scheduled_hook_runs_the_pull() {
@@ -254,6 +268,42 @@ class AdminRequestActionsTest extends TestCase {
 		\ChurchPlugins\Admin\_Init::get_instance()->request_actions();
 
 		$this->assertSame( $before, cp_library()->logging->get_file_contents() );
+	}
+
+	/**
+	 * Run the request dispatcher while `init` is the current action.
+	 *
+	 * Other init callbacks are set aside for this call and restored afterward.
+	 *
+	 * @param string $action Request action name.
+	 */
+	private function dispatch_during_init( $action ) {
+		global $wp_filter;
+
+		$saved             = isset( $wp_filter['init'] ) ? $wp_filter['init'] : null;
+		$wp_filter['init'] = new \WP_Hook();
+		$previous_get      = $_GET;
+
+		add_action(
+			'init',
+			function () use ( $action ) {
+				$_GET['cp_action']     = $action;
+				$_REQUEST['cp_action'] = $action;
+				unset( $_REQUEST['_wpnonce'], $_GET['_wpnonce'], $_POST['_wpnonce'] );
+				\ChurchPlugins\Admin\_Init::get_instance()->request_actions();
+			}
+		);
+
+		try {
+			do_action( 'init' );
+		} finally {
+			$_GET = $previous_get;
+			if ( null === $saved ) {
+				unset( $wp_filter['init'] );
+			} else {
+				$wp_filter['init'] = $saved;
+			}
+		}
 	}
 
 	/**

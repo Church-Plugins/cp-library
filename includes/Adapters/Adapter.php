@@ -143,15 +143,26 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	/**
 	 * Whether this call is the adapter's scheduled event.
 	 *
-	 * The settings button and other request hooks send a nonce. The scheduled
-	 * event is the adapter cron hook.
+	 * WP-Cron runs due events after WordPress has loaded, and `wp cron event run`
+	 * fires the hook from the command. Neither of those is inside `init`. The
+	 * request dispatcher runs on `init`, and a request can name this cron hook
+	 * as its action. Those calls are not scheduled runs.
 	 *
 	 * @since 1.7.1
 	 *
 	 * @return bool
 	 */
 	protected function is_scheduled_run() {
-		return doing_action( $this->_cron_hook );
+		if ( ! doing_action( $this->_cron_hook ) || doing_action( 'init' ) ) {
+			return false;
+		}
+
+		$request_action = '';
+		if ( isset( $_REQUEST['cp_action'] ) && is_string( $_REQUEST['cp_action'] ) ) {
+			$request_action = sanitize_key( wp_unslash( $_REQUEST['cp_action'] ) );
+		}
+
+		return $this->_cron_hook !== $request_action;
 	}
 
 	/**
