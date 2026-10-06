@@ -1124,7 +1124,8 @@ class Settings {
 	 * @return void
 	 */
 	public function custom_button_form_field( $field, $escaped_value, $object_id, $object_type, $field_type_object ) {
-		$url = add_query_arg( isset( $field->args['query_args'] ) ? $field->args['query_args'] : array(), admin_url( 'admin-post.php' ) );
+		$query_args = Request::with_nonce( isset( $field->args['query_args'] ) ? $field->args['query_args'] : array() );
+		$url        = add_query_arg( $query_args, admin_url( 'admin-post.php' ) );
 
 		// if ( ! empty( $field->args['name'] ) ) {
 		// 	echo sprintf( '<h5 class="cmb2-metabox-title">%s</h5>', $field->args['name'] );

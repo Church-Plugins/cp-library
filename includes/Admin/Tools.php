@@ -468,6 +468,7 @@ class Tools
 			<div class="inside">
 				<?php $action_url = esc_url(add_query_arg('cp_action', 'cp_export_items', admin_url())); ?>
 				<form id="cpl_export_data" action="<?php echo $action_url ?>" method="POST" enctype="multipart/form-data">
+					<?php wp_nonce_field( 'cp_export_items' ); ?>
 					<button class="button button-primary"><?php echo sprintf(esc_html__('Export all %s as CSV', 'cp-library'), cp_library()->setup->post_types->item->plural_label); ?></button>
 				</form>
 			</div>
@@ -698,6 +699,10 @@ class Tools
 	 */
 	public function export_data()
 	{
+		if ( ! Request::allowed( 'manage_options', 'cp_export_items' ) ) {
+			return;
+		}
+
 		$return_value = [];
 
 		$args = [
@@ -744,6 +749,21 @@ class Tools
 		}
 
 		fclose($file_handle);
+
+		/**
+		 * Whether to send the CSV response.
+		 *
+		 * Return false to leave the file in place without sending it.
+		 *
+		 * @since 1.7.1
+		 *
+		 * @param bool   $send      Whether to send the file.
+		 * @param string $file_path Absolute path of the CSV.
+		 * @param string $filename  Download name.
+		 */
+		if ( ! apply_filters( 'cpl_export_items_output', true, $file_path, $filename ) ) {
+			return;
+		}
 
 		header("Content-Type: text/csv; charset=utf-8");
 		header("Content-disposition: attachment; filename=\"" . $filename . "\"");

@@ -651,8 +651,13 @@ jQuery($ => {
  */
 jQuery($ => {
 	$('td.column-transcript .cpl-import-transcript-btn').on('click', function(e) {
-		const url    = $(this).data('url')
-		const postId = url.split('post_id=')[1]
+		const url = $(this).data('url')
+		let postId = ''
+		try {
+			postId = new URL(url, window.location.origin).searchParams.get('post_id') || ''
+		} catch (error) {
+			postId = ''
+		}
 
 		$(this).addClass('loading');
 
