@@ -67,12 +67,11 @@ You can access podcast feeds scoped to specific series, speakers, or service typ
 
 ## Excluding Sermons from the Podcast
 
-To exclude a specific sermon from the podcast feed:
+**Exclude from Podcast** is on the sermon edit screen only after **Enable Podcast Feed** is set to **Enable**.
 
 1. Edit the sermon
-2. Find the "Exclude from Podcast" checkbox
-3. Check the box to remove this sermon from the feed
-4. Update the sermon
+2. In **Message Details**, check **Exclude from Podcast**
+3. Update the sermon
 
 ## Validating Your Podcast Feed
 

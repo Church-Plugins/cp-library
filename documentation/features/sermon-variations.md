@@ -51,12 +51,10 @@ Before creating variations, set up your service types:
 When variations are enabled in settings, the sermon editor includes a variation checkbox:
 
 1. Edit a sermon
-2. Check the **Add Variations** checkbox in the **Message Details** box
-3. Inline fields appear for each configured service type, where each variation can have its own:
-   - Speaker
-   - Audio/video files
-   - Date
-4. Save the sermon
+2. Check **Add Variations** in **Message Details**
+3. Update the sermon. A group then appears for each service type (or other variation source).
+4. In each group, set **Speaker** (when Speakers are enabled), **Date**, **Video URL**, and **Audio URL**
+5. Update the sermon again
 
 Variations are stored as child posts of the parent sermon, maintaining the relationship between different instances of the same message.
 

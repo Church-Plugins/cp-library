@@ -20,11 +20,12 @@ If more than one supported plugin has data in the database, the wizard will list
 
 ## Using the Migration Wizard
 
-1. After activating CP Sermon Library, the migration wizard will appear if legacy data is found.
-2. The wizard displays each detected source plugin along with the number of items available to migrate.
-3. Select the source plugin to migrate from and start the migration.
-4. The migration runs as a **background process** -- you can continue using WordPress while it works. The wizard page shows a live progress bar with the percentage of items completed.
-5. Duplicate items are automatically prevented. If a sermon has already been migrated (tracked via a `migration_id` on each imported post), that sermon is updated in place rather than duplicated. This means you can safely re-run a migration without creating duplicate content.
+1. After activating CP Sermon Library, you are sent to the migration screen if legacy data is found. Open it later from **Series > Migrate**.
+2. Click **Launch Wizard**.
+3. Each detected plugin is listed with a count such as **3 Sermons found**. Click **Get Started** on the one you want.
+4. Click the button labeled **Copy {count} sermon from {plugin name}** or **Copy {count} sermons from {plugin name}**.
+5. The migration runs as a **background process**. The wizard shows a progress percentage, then **Migration complete!** Click **Close**.
+6. If a sermon was already migrated, it is updated in place. Re-running does not create a second copy. The match is stored as `migration_id` on the imported sermon.
 
 The source plugin does **not** need to be active for migration to work. The wizard reads directly from the database, so it can detect and migrate data even after the original plugin has been deactivated.
 
@@ -43,8 +44,8 @@ If you're starting fresh without existing sermon data, proceed directly to confi
 
 1. **Configure Labels** — Navigate to Series → Settings to customize content labels (rename "Messages" to "Sermons," etc.)
 2. **Set Up Post Types** — Enable Series, Speakers, and optionally Service Types in the Advanced settings tab
-3. **Configure Display** — Set your preferred template and layout options in the Messages settings tab
-4. **Set Up Podcast** — Configure podcast feed settings in the Podcast tab (if needed)
+3. **Configure Display** — On the Messages tab, set **Single Page Template**, **Image Aspect Ratio**, **Info Items**, and **Meta Items**
+4. **Set Up Podcast** — On the Advanced tab, set **Enable Podcast Feed** to **Enable**, save, then fill in the Podcast tab
 5. **Add Content** — Start adding speakers, series, and sermons
 
 See the [Installation Guide](installation.md) for detailed first-steps instructions.

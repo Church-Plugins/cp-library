@@ -56,11 +56,11 @@ Apply scripture references to sermons using the **Scripture** box when editing a
 
 ### Date
 
-All sermons include a date field for chronological organization. This date is used for:
+The sermon date is the WordPress publish date in the **Publish** box. That date is used to:
 
-- Sorting sermons chronologically
-- Filtering sermons by date range
-- Displaying sermon publication date
+- Sort sermons
+- Build the **Year** filter on the archive
+- Show the publish date on the site
 
 ### Seasons
 
@@ -125,22 +125,17 @@ To add a manually created transcript:
 3. Use the formatting tools to structure the content
 4. Update the sermon to save the transcript
 
-### YouTube Auto-Pull (If Configured)
+### YouTube Transcript Import
 
-If you have configured the YouTube integration:
+The **Import from YouTube** button is shown when **Message Video** contains `youtube.com`.
 
-1. Edit the sermon with a YouTube video URL
-2. Click "Import from YouTube"
-3. The transcript will be automatically retrieved and added
-4. Edit as needed and update the sermon
+1. Edit the sermon and set **Message Video** to a `youtube.com` URL
+2. In the **Transcript** box, click **Import from YouTube**
+3. Edit the transcript if needed and update the sermon
 
 ## Searching & Filtering Sermons
 
-Site visitors can search and filter sermons using:
-
-- The sermon archive page search functionality
-- Sermon filter widgets
-- Custom shortcodes with filter parameters
+Site visitors can search and filter sermons on the sermon archive. The filter form includes a search field and the facets that are not turned off under **Disable Filters**.
 
 As an administrator, you can filter sermons in the admin area by:
 

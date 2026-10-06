@@ -52,20 +52,20 @@ Control what information displays with each sermon. The choices are **Publish Da
 
 - **Transcript** — **Show** or **Hide** the transcript section on sermon pages (default: **Hide**)
 
-### Variation Settings
+### Variations
 
-If variations are enabled (see Advanced tab):
+**Enable Variations (beta)** and **Variation Source** appear only after a variation source exists. Turn on **Enable Service Types** on the Advanced tab (or a supported add-on), save, and reopen the Messages tab. Until then, this section only explains that Service Types or an add-on is required.
 
-- **Enable Variations (beta)** — Enable sermon variations for this content type
-- **Variation Source** — Select the source for variations (e.g., Service Types)
+- **Enable Variations (beta)** — **Enable** or **Disable** (default: **Disable**)
+- **Variation Source** — Select the source for variations (for example, Service Types)
 
 ### Filter Settings
 
-- **Disable Filters** — Selectively disable individual filter facets (topics, scripture, seasons, speakers, year) on the sermon archive page
+- **Disable Filters** — Check the facets to hide on the sermon archive: **Topics**, **Scripture**, **Seasons**, **Speakers** (when Speakers are enabled), and **Year**
 
-### Podcast Exclusion
+## Exclude a Sermon from the Podcast
 
-At the individual sermon level, each sermon has an "Exclude from Podcast" checkbox in its edit screen to prevent it from appearing in the podcast feed.
+After **Enable Podcast Feed** is set to **Enable**, each sermon edit screen shows **Exclude from Podcast** in **Message Details**. Check it to keep that sermon out of the feed.
 
 ## Series Tab (`cpl_item_type_options`)
 
@@ -76,7 +76,7 @@ At the individual sermon level, each sermon has an "Exclude from Podcast" checkb
 - **Messages Per Series** — Number of sermons shown on a single series page
 - **Messages sort order** — **Descending** or **Ascending**
 - **Messages sort by** — **Title** or **Publish Date**
-- **Disable Filters** — Selectively disable individual filter facets (topics, scripture, seasons, year) on the series archive page
+- **Disable Filters** — Check the facets to hide on the series archive: **Topics**, **Scripture**, **Seasons**, and **Year**
 
 ## Speaker Tab (`cpl_speaker_options`)
 
@@ -88,7 +88,7 @@ At the individual sermon level, each sermon has an "Exclude from Podcast" checkb
 > **Note:** This tab only appears when Service Types are enabled in the Advanced tab.
 
 - **Singular Label** and **Plural Label** — Customize service type terminology
-- **Default Service Type** — Set the default service type for new sermons
+- **Default Service Type** — Shown after at least one service type exists. With none created, the tab shows a link to add one.
 
 ## Podcast Tab (`cpl_podcast_options`)
 
@@ -162,7 +162,7 @@ Configure your SermonAudio connection and import settings:
 ## License Tab
 
 - **License Key** — Enter your Church Plugins license key
-- **Activate License** / **Deactivate License** — Manage license activation. A green check mark is shown next to an active key.
+- **Activate License** / **Deactivate License** — Enter **License Key**, click **Save Changes**, then use the button that appears. **Activate License** shows when the saved key is not active. **Deactivate License** shows when it is. A green check mark is shown next to an active key.
 
 ## Saving and Applying Settings
 

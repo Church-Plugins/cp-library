@@ -102,22 +102,19 @@ See the [Podcast Setup Guide](../features/podcast-setup.md) for detailed instruc
 CP Sermon Library provides Gutenberg blocks for displaying sermons:
 
 1. Create or edit a page
-2. Add sermon blocks (Sermon Grid/List, Latest Sermon, Series Grid/List)
-3. Configure block settings in the sidebar
+2. Insert the **CP Sermons Sermons/Series** block, or a pattern such as **Latest Sermon**, **Latest Sermons - Grid View**, or **Latest Series - List View**
+3. In the block sidebar, set **Type**, **Items to show**, and **Order by**. Use the toolbar **List view** or **Grid view**.
 4. Preview and publish your page
 
 ### Using Shortcodes
 
 As an alternative to blocks, you can use shortcodes:
 
-- `[cpl_item_list]` — Display a list of sermons
-- `[cpl_item]` or `[cp-sermon]` — Display a single sermon
+- `[cpl_item id="123"]` or `[cp-sermon id="123"]` — Display one sermon. `template="alt"` uses the alternate layout.
 - `[cp-sermons]` — Display the sermons archive
+- `[cpl_template id="123"]` — Display a template
 
-Shortcode attributes are passed to the frontend app for rendering. Example:
-```
-[cpl_item_list count="6" columns="3"]
-```
+`[cpl_item]` also accepts `player`, `details`, `location`, and `service-type`. See [Customization and Display](../features/customization-and-display.md).
 
 ### Using Archive Pages
 
