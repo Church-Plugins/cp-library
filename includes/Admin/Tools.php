@@ -857,9 +857,10 @@ class Tools
 		$sql = $wpdb->prepare(
 			"SELECT post_title, COUNT({$wpdb->posts}.ID) AS speaker_count
 			FROM {$wpdb->posts}
-			WHERE post_type='cpl_speaker'
+			WHERE post_type = %s
 			GROUP BY post_title
-			HAVING speaker_count > 1"
+			HAVING speaker_count > 1",
+			'cpl_speaker'
 		);
 
 		$speakers = $wpdb->get_results($sql);

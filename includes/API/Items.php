@@ -96,7 +96,7 @@ class Items extends WP_REST_Controller {
 			),
 		) );
 
-		register_rest_route( $this->namespace, $this->rest_base . '/(?P<item_id>[^.\/]+)/log/', array(
+		register_rest_route( $this->namespace, $this->rest_base . '/(?P<item_id>\d+)/log/', array(
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'log' ),
@@ -119,7 +119,9 @@ class Items extends WP_REST_Controller {
 
 		try {
 
-			if ( ! $item_id = $request->get_param( 'item_id' ) ) {
+			$item_id = $this->log_item_id( $request->get_param( 'item_id' ) );
+
+			if ( ! $item_id ) {
 				throw new Exception( 'No item_id specified' );
 			}
 
@@ -127,16 +129,30 @@ class Items extends WP_REST_Controller {
 				throw new Exception( 'No action specified' );
 			}
 
-			if( $action === 'view_duration' ) {
+			if ( ! is_string( $action ) || ! in_array( $action, $this->get_log_actions(), true ) ) {
+				throw new Exception( 'Invalid action specified' );
+			}
+
+			// Throws when this id is not an item row.
+			ItemModel::get_instance( $item_id );
+
+			if ( ! $this->get_log_ip() || $this->is_log_rate_limited( $item_id ) ) {
+				return;
+			}
+
+			if ( 'view_duration' === $action ) {
 				$this->handle_view_duration( $request );
 				return;
 			}
+
+			$payload = $request->get_param( 'payload' );
+			$payload = is_scalar( $payload ) && '' !== $payload ? substr( sanitize_text_field( (string) $payload ), 0, 255 ) : null;
 
 			$data = Log::insert( [
 				'object_type' => 'item',
 				'object_id' => $item_id,
 				'action' =>  $action,
-				'data' => $request->get_param( 'payload' )
+				'data' => $payload
 			] );
 
 		} catch ( \ChurchPlugins\Exception $e ) {
@@ -149,6 +165,99 @@ class Items extends WP_REST_Controller {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Whole-number item id from the log route, or 0 when the value is not one.
+	 *
+	 * @param mixed $raw Route parameter.
+	 * @return int
+	 */
+	public function log_item_id( $raw ) {
+		if ( is_int( $raw ) ) {
+			return absint( $raw );
+		}
+
+		if ( is_string( $raw ) && preg_match( '/^[0-9]+$/', $raw ) ) {
+			return absint( $raw );
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Actions the player sends to the log route.
+	 *
+	 * Only `view_duration` includes a structured payload. The others are sent
+	 * with no payload. `cpl_log_actions` can add an action a site already sends.
+	 *
+	 * @return array
+	 */
+	public function get_log_actions() {
+		$actions = [
+			'play',
+			'persistent',
+			'fullscreen',
+			'download',
+			'share_facebook',
+			'share_twitter',
+			'video_widget_play',
+			'audio_widget_play',
+			'video_view',
+			'audio_view',
+			'engaged_video_view',
+			'engaged_audio_view',
+			'view_duration',
+		];
+
+		return apply_filters( 'cpl_log_actions', $actions );
+	}
+
+	/**
+	 * Visitor address used for view-duration rows and for rate limiting.
+	 *
+	 * Always `REMOTE_ADDR`, checked with `FILTER_VALIDATE_IP`. Forwarded
+	 * headers are not read. A host that terminates the connection in front
+	 * of PHP should place the visitor address in `REMOTE_ADDR`.
+	 *
+	 * @return string|false
+	 */
+	public function get_log_ip() {
+		$remote = isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : '';
+		$ip     = filter_var( $remote, FILTER_VALIDATE_IP );
+
+		return $ip ? $ip : false;
+	}
+
+	/**
+	 * Whether this address has already logged this item too many times.
+	 *
+	 * The player does not poll. A view total is sent when the sermon changes
+	 * or the page unloads, and the other actions fire once per play. The
+	 * default of 2000 writes per minute for one address and one item stays
+	 * above that, including where many visitors share `REMOTE_ADDR`.
+	 *
+	 * Filter `cpl_log_rate_limit` to change the per-minute maximum.
+	 *
+	 * @param int $item_id Item id.
+	 * @return bool True when the write should be skipped.
+	 */
+	public function is_log_rate_limited( $item_id ) {
+		if ( ! $ip = $this->get_log_ip() ) {
+			return true;
+		}
+
+		$limit = absint( apply_filters( 'cpl_log_rate_limit', 2000, $item_id ) );
+		$key   = 'cpl_log_' . md5( $ip . '|' . $item_id );
+		$count = absint( get_transient( $key ) );
+
+		if ( $count >= $limit ) {
+			return true;
+		}
+
+		set_transient( $key, $count + 1, MINUTE_IN_SECONDS );
+
+		return false;
 	}
 
 	/**
@@ -535,8 +644,12 @@ class Items extends WP_REST_Controller {
 
 		$action  = $request->get_param( 'action' );
 		$payload = $request->get_param( 'payload' );
-		$item_id = $request->get_param( 'item_id' );
-		$user_ip = $request->get_header('x-forwarded-for');
+		$item_id = $this->log_item_id( $request->get_param( 'item_id' ) );
+		$user_ip = $this->get_log_ip();
+
+		if ( ! $item_id || ! $user_ip ) {
+			return;
+		}
 
 		if( ! (
 			is_array( $payload ) &&
@@ -548,9 +661,18 @@ class Items extends WP_REST_Controller {
 			throw new Exception( "Invalid payload", 400 );
 		}
 
+		$watched_seconds = absint( $payload['watchedSeconds'] );
+		$max_duration    = absint( $payload['maxDuration'] );
+		$watched_seconds = min( $watched_seconds, $max_duration );
+
 		global $wpdb;
 
-		$query = $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}cp_log WHERE object_id = '$item_id' AND JSON_EXTRACT(data, '$.user_ip') = '$user_ip'" );
+		$query = $wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}cp_log WHERE object_id = %d AND action = %s AND JSON_UNQUOTE(JSON_EXTRACT(data, '$.user_ip')) = %s LIMIT 1",
+			$item_id,
+			'view_duration',
+			$user_ip
+		);
 
 		$data = $wpdb->get_row( $query );
 
@@ -561,7 +683,7 @@ class Items extends WP_REST_Controller {
 				'action' =>  $action,
 				'data' => json_encode(array(
 					'user_ip' => $user_ip,
-					'watch_duration' => absint( $payload['watchedSeconds'] )
+					'watch_duration' => $watched_seconds
 				))
 			] );
 			return;
@@ -569,10 +691,11 @@ class Items extends WP_REST_Controller {
 
 		$log = Log::get_instance( $data->id );
 
-		$data = json_decode( $data->data );
+		$data     = json_decode( $data->data );
+		$previous = ( is_object( $data ) && isset( $data->watch_duration ) ) ? $data->watch_duration : 0;
 
-		$total_watch_duration = absint( $payload ) + absint( $data->watch_duration );
-		$total_watch_duration = min( $total_watch_duration, $payload['maxDuration'] );
+		$total_watch_duration = absint( $previous ) + $watched_seconds;
+		$total_watch_duration = min( $total_watch_duration, $max_duration );
 
 		$log->update([
 			'data' => json_encode(array(
