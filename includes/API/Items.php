@@ -214,11 +214,9 @@ class Items extends WP_REST_Controller {
 	}
 
 	/**
-	 * Visitor address used for view-duration rows and for rate limiting.
+	 * Address used for the rate limit.
 	 *
-	 * Always `REMOTE_ADDR`, checked with `FILTER_VALIDATE_IP`. Forwarded
-	 * headers are not read. A host that terminates the connection in front
-	 * of PHP should place the visitor address in `REMOTE_ADDR`.
+	 * Always `REMOTE_ADDR`, checked with `FILTER_VALIDATE_IP`.
 	 *
 	 * @return string|false
 	 */
@@ -227,6 +225,36 @@ class Items extends WP_REST_Controller {
 		$ip     = filter_var( $remote, FILTER_VALIDATE_IP );
 
 		return $ip ? $ip : false;
+	}
+
+	/**
+	 * Address stored on a view-duration row.
+	 *
+	 * The first comma-separated X-Forwarded-For entry is used when it is an
+	 * IP. Otherwise `REMOTE_ADDR` is used, when that is an IP. The rate limit
+	 * does not use this value.
+	 *
+	 * Filter `cpl_log_viewer_ip` to replace the address.
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return string|false
+	 */
+	public function get_log_viewer_ip( $request ) {
+		$header = $request->get_header( 'x-forwarded-for' );
+		$ip     = false;
+
+		if ( is_string( $header ) && '' !== $header ) {
+			$first = trim( explode( ',', $header )[0] );
+			$ip    = filter_var( $first, FILTER_VALIDATE_IP );
+		}
+
+		if ( ! $ip ) {
+			$ip = $this->get_log_ip();
+		}
+
+		$ip = apply_filters( 'cpl_log_viewer_ip', $ip, $request );
+
+		return ( is_string( $ip ) && filter_var( $ip, FILTER_VALIDATE_IP ) ) ? $ip : false;
 	}
 
 	/**
@@ -645,7 +673,7 @@ class Items extends WP_REST_Controller {
 		$action  = $request->get_param( 'action' );
 		$payload = $request->get_param( 'payload' );
 		$item_id = $this->log_item_id( $request->get_param( 'item_id' ) );
-		$user_ip = $this->get_log_ip();
+		$user_ip = $this->get_log_viewer_ip( $request );
 
 		if ( ! $item_id || ! $user_ip ) {
 			return;

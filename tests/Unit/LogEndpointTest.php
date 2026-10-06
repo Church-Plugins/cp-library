@@ -5,8 +5,9 @@
  * A non-numeric id, an unknown item, and an unknown action are turned away
  * before a log row is written. Watch time is the payload's watched seconds
  * added to the stored total and capped by max duration. Query values are
- * passed as prepare() arguments. The visitor address is REMOTE_ADDR, and a
- * forwarded header is not used in its place.
+ * passed as prepare() arguments. The rate limit uses REMOTE_ADDR. A
+ * view-duration row uses the first valid forwarded address, or REMOTE_ADDR
+ * when that value is not an IP.
  *
  * @package CP_Library
  */
@@ -84,6 +85,7 @@ namespace CP_Library\Tests\Unit {
 	 * @covers \CP_Library\API\Items::log
 	 * @covers \CP_Library\API\Items::handle_view_duration
 	 * @covers \CP_Library\API\Items::get_log_ip
+	 * @covers \CP_Library\API\Items::get_log_viewer_ip
 	 * @covers \CP_Library\API\Items::is_log_rate_limited
 	 */
 	class LogEndpointTest extends TestCase {
@@ -183,7 +185,18 @@ namespace CP_Library\Tests\Unit {
 			);
 
 			$this->assertSame( 65, $stored['watch_duration'] );
-			$this->assertSame( '203.0.113.7', $stored['user_ip'], 'a forwarded address is not stored' );
+			$this->assertSame( '198.51.100.2', $stored['user_ip'] );
+			$this->assertSame( [ 5, 'view_duration', '198.51.100.2' ], $this->wpdb->prepared[0][1] );
+		}
+
+		public function test_valid_forwarded_address_is_the_viewer_key() {
+			$stored = $this->run_duration( 10, $this->payload( 5, 100 ), [
+				'x-forwarded-for' => ' 2001:db8::1 , 203.0.113.8',
+			] );
+
+			$this->assertSame( '2001:db8::1', $stored['user_ip'] );
+			$this->assertSame( [ 5, 'view_duration', '2001:db8::1' ], $this->wpdb->prepared[0][1] );
+			$this->assertStringNotContainsString( '203.0.113.8', $this->wpdb->prepared[0][0] );
 		}
 
 		public function test_watch_duration_is_capped_at_max_duration() {
@@ -254,17 +267,60 @@ namespace CP_Library\Tests\Unit {
 			$this->assertSame( [], $this->wpdb->inserted );
 		}
 
-		public function test_invalid_ip_header_is_ignored() {
-			$stored = $this->run_duration( 10, $this->payload( 5, 100 ), [ 'x-forwarded-for' => 'not-an-ip' ] );
+		/**
+		 * @dataProvider invalid_forwarded_addresses
+		 */
+		public function test_invalid_forwarded_address_falls_back_to_remote_addr( $header ) {
+			$stored = $this->run_duration( 10, $this->payload( 5, 100 ), [ 'x-forwarded-for' => $header ] );
 
-			$this->assertSame( [ 5, 'view_duration', '203.0.113.7' ], $this->wpdb->prepared[0][1] );
+			list( $query, $args ) = $this->wpdb->prepared[0];
+
+			$this->assertSame( [ 5, 'view_duration', '203.0.113.7' ], $args );
 			$this->assertSame( '203.0.113.7', $stored['user_ip'] );
-			$this->assertStringNotContainsString( 'not-an-ip', $this->wpdb->prepared[0][0] );
+			if ( '' !== $header ) {
+				$this->assertStringNotContainsString( $header, $query );
+				$this->assertNotContains( $header, $args );
+			}
+		}
 
+		public function invalid_forwarded_addresses() {
+			return [
+				'extra text' => [ "1.2.3.4' OR 1=1--" ],
+				'not an ip'  => [ 'not-an-ip' ],
+				'empty'      => [ '' ],
+			];
+		}
+
+		public function test_invalid_remote_addr_blocks_the_rate_limit() {
 			$_SERVER['REMOTE_ADDR'] = 'not-an-ip';
 
 			$this->assertFalse( $this->api->get_log_ip() );
 			$this->assertTrue( $this->api->is_log_rate_limited( 5 ) );
+		}
+
+		public function test_changing_forwarded_address_keeps_the_same_rate_limit_key() {
+			$store = [];
+
+			Functions\when( 'get_transient' )->alias( function ( $key ) use ( &$store ) {
+				return $store[ $key ] ?? false;
+			} );
+			Functions\when( 'set_transient' )->alias( function ( $key, $value ) use ( &$store ) {
+				$store[ $key ] = $value;
+				return true;
+			} );
+
+			$this->wpdb->rows = array_fill( 0, 10, (object) [ 'id' => 5, 'origin_id' => 9 ] );
+
+			for ( $i = 1; $i <= 10; $i++ ) {
+				$this->api->log( $this->request(
+					[ 'item_id' => '5', 'action' => 'view_duration', 'payload' => null ],
+					[ 'x-forwarded-for' => '198.51.100.' . $i ]
+				) );
+			}
+
+			$expected = 'cpl_log_' . md5( '203.0.113.7|5' );
+
+			$this->assertSame( [ $expected => 10 ], $store );
 		}
 	}
 }
