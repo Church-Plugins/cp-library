@@ -6,7 +6,7 @@ Service Types allow you to categorize sermons by the type of service they were d
 
 Service Types are disabled by default. To enable them:
 
-1. Navigate to Messages → Settings → Advanced
+1. Navigate to Series → Settings → Advanced
 2. Find the "Modules" section
 3. Enable "Service Types"
 4. Save changes
@@ -15,7 +15,7 @@ Service Types are disabled by default. To enable them:
 
 Once enabled, you can create service types:
 
-1. Navigate to Messages → Service Types
+1. Navigate to Series → Service Types
 2. Click "Add New"
 3. Enter a name for the service type (e.g., "Sunday Morning")
 4. Add a description if desired
@@ -27,8 +27,8 @@ Once enabled, you can create service types:
 To assign a service type to a sermon:
 
 1. Edit a sermon
-2. Find the "Service Type" box in the sidebar
-3. Select one or more service types
+2. Find the **Service Type** box in the sidebar
+3. Select one service type (**Assign Service Type** allows one selection)
 4. Update the sermon
 
 ## Service Type Archives
@@ -36,7 +36,7 @@ To assign a service type to a sermon:
 Each service type has its own archive page that displays all sermons for that service type. The URL format is:
 
 ```
-/messages/service-type/[service-type-slug]/
+/service-types/[service-type-slug]/
 ```
 
 ## Filtering by Service Type
@@ -82,7 +82,7 @@ For more details on the filter system, see the [Filter System Documentation](../
 Service Types serve as the foundation for [sermon variations](sermon-variations.md). When variations are enabled:
 
 1. Each sermon can have multiple variations, each linked to a different service type
-2. Variations track different speakers, media files, and timestamps
+2. Variations track different speakers and media files
 3. Service-specific podcast feeds can be created
 
 ## Best Practices

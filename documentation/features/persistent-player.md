@@ -51,16 +51,16 @@ Once playing:
 
 The inline player on the sermon detail page (used for video) includes additional controls:
 
-- **Fullscreen** -- Expands the video to fill the screen. Available on desktop browsers only; hidden on iOS due to platform restrictions on the fullscreen API.
-- **Picture-in-Picture** -- Sends the current video to the persistent player so playback continues while browsing.
+- **Open in fullscreen** -- Expands the video to fill the screen. Shown on desktop browsers that are not iOS.
+- **Open in persistent player** -- Sends the current video to the persistent player so playback continues while browsing.
 
 ### iOS and Mobile Considerations
 
-On iOS devices (iPhone, iPad), browser autoplay restrictions may cause video or audio to start muted. When this happens, the player displays a "Tap to enable sound" overlay. Tapping the overlay unmutes playback. This is a standard iOS browser limitation that applies to all websites, not specific to this plugin.
+On iOS devices (iPhone, iPad), browser autoplay restrictions may cause video or audio to start muted. When this happens, audio in the persistent player displays **Tap to enable sound**. Video displays **Tap here to enable sound**. Tapping the overlay unmutes playback. This is a standard iOS browser limitation that applies to all websites, not specific to this plugin.
 
 ## Player Color
 
-The persistent player uses the **Primary Color** set in Messages -> Settings -> Main tab. This color applies to the player controls and progress bar.
+The persistent player uses the **Primary Color** set in Series → Settings → Main. This color applies to the progress bar.
 
 ## Theme Compatibility
 
@@ -91,5 +91,5 @@ The persistent player is designed to work with most WordPress themes. If you exp
 
 ### Video Plays Without Sound on Mobile
 
-- This is caused by iOS autoplay restrictions. Tap the "Tap to enable sound" overlay that appears on the player to unmute.
+- This is caused by iOS autoplay restrictions. Tap **Tap to enable sound** (audio) or **Tap here to enable sound** (video).
 - If the overlay does not appear, try tapping directly on the video area or the volume controls.

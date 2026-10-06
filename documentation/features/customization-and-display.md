@@ -19,9 +19,9 @@ These archives are accessible at URLs like:
 - /messages/ (or your custom slug)
 - /series/
 - /speakers/
-- /topic/faith/
+- /topics/faith/
 - /scripture/john-3/
-- /season/summer-2023/
+- /seasons/summer-2023/
 
 ### Layout Options
 
@@ -47,8 +47,8 @@ The plugin includes multiple layout options for displaying sermons:
 Templates can be customized in several ways:
 
 1. **Settings**
-   - Navigate to Messages → Settings → Messages tab
-   - Choose Single Page Template (default or vertical)
+   - Navigate to Series → Settings → Messages tab
+   - Choose **Single Page Template** (**Default (2 column)** or **Vertical (1 column)**)
    - Set Image Aspect Ratio for thumbnails
    - Configure Info Items and Meta Items display
 
@@ -113,7 +113,7 @@ CP Sermon Library includes a **Templates** post type that lets you build custom 
 
 ### Creating a Template
 
-1. Navigate to Messages → Templates in the admin
+1. Navigate to Series → Templates in the admin
 2. Click "Add New"
 3. Build your layout using CP Sermon Library blocks (Sermon Query, Sermon Actions, Sermon Graphic, Sermon Title, etc.)
 4. Publish the template
@@ -201,7 +201,7 @@ You can control which sermons appear in the main sermon list:
 3. Check the **Exclude from Main List** box to remove this sermon from the main list (leave unchecked to keep it visible)
 4. Sermons hidden from the main list are still accessible via their direct URL, taxonomy archives, and search
 
-> **Changed in 1.6.2:** This checkbox was previously labeled "Show in Main List" and defaulted to checked. The default is now "visible" without an explicit setting, so imports and other programmatic saves no longer hide sermons by accident. If you upgraded from an earlier 1.6.x release, run **Messages → Tools → Migrate Visibility Settings** to carry forward any sermons you previously hid by hand.
+> **Changed in 1.6.2:** This checkbox was previously labeled "Show in Main List" and defaulted to checked. The default is now "visible" without an explicit setting, so imports and other programmatic saves no longer hide sermons by accident. If you upgraded from an earlier 1.6.x release, run **Series → Tools → Migrate Visibility Settings** to carry forward any sermons you previously hid by hand.
 
 ### Series Visibility Control
 
@@ -234,19 +234,18 @@ Control how filters appear on your sermon pages:
 
 ### Filter Settings
 
-Navigate to Messages → Settings → Advanced to adjust:
-- Filter sorting (by count or alphabetically)
-- Minimum count threshold for filters
-- Show/hide count numbers
-- Disable specific filters
-- Control filter display on mobile
+Navigate to Series → Settings → Advanced to adjust:
+- **Sort Topics**, **Sort Scripture**, **Sort Seasons**, and **Sort Speakers**: **By Message Count** or **Alphabetically** (Scripture uses **By Scripture Order**)
+- **Count Threshold** (default 3)
+- **Show Counts**: **Show** or **Hide**
 
 ### Customizing Filter Labels
 
 Customize the labels used in filters:
-1. Navigate to Messages → Settings (Speaker tab, or Advanced tab for other post types)
-2. Adjust the Singular and Plural Labels
-3. These changes will be reflected in the filter UI
+1. Navigate to Series → Settings
+2. Open the Messages, Series, or Speakers tab
+3. Change **Singular Label** and **Plural Label**
+4. These labels are what the filters show
 
 ### Filter Contexts
 
