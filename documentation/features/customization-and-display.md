@@ -62,7 +62,7 @@ CP Sermon Library includes Gutenberg blocks for displaying sermon content:
 
 Blocks you place inside a template:
 
-- **Sermon Actions**, **Item Graphic**, **Item Title**, **Item Date**, **Item Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**
+- **Sermon Actions**, **Item Graphic**, **Item Title**, **Item Date**, **Item Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**, **Sermon Season**
 
 ### Block Customization
 
@@ -101,7 +101,7 @@ CP Sermon Library includes a **Templates** post type that lets you build custom 
 
 1. Navigate to Series → Templates in the admin
 2. Click "Add New"
-3. Build your layout with **CP Sermons Sermons/Series**, **Sermon Template**, **Sermon Actions**, **Item Graphic**, **Item Title**, **Item Date**, **Item Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**, and **Item Pagination**
+3. Build your layout with **CP Sermons Sermons/Series**, **Sermon Template**, **Sermon Actions**, **Item Graphic**, **Item Title**, **Item Date**, **Item Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**, **Sermon Season**, and **Item Pagination**
 4. Publish the template
 
 When editing a template, the inserter allows CP Sermons blocks plus core blocks such as **Paragraph**, **Heading**, **Group**, **Columns**, and **Spacer**.
@@ -213,7 +213,7 @@ Navigate to Series → Settings → Advanced to adjust:
 - **Count Threshold** (default 3)
 - **Show Counts**: **Show** or **Hide**
 
-**Disable Filters** on the Messages tab hides **Topics**, **Scripture**, **Seasons**, **Speakers**, and **Year** on the sermon archive. On the Series tab it hides **Topics**, **Scripture**, **Seasons**, and **Year**. The **Disable Filters** field on the Advanced tab is marked deprecated in its description.
+**Disable Filters** on the Messages tab hides **Topics**, **Scripture**, **Seasons**, **Speakers**, and **Year** on the sermon archive. On the Series tab it hides **Seasons** and **Year**. The **Disable Filters** field on the Advanced tab is marked deprecated in its description.
 
 ### Filter button labels
 

@@ -76,7 +76,7 @@ After **Enable Podcast Feed** is set to **Enable**, each sermon edit screen show
 - **Messages Per Series** — Number of sermons shown on a single series page
 - **Messages sort order** — **Descending** or **Ascending**
 - **Messages sort by** — **Title** or **Publish Date**
-- **Disable Filters** — Check the facets to hide on the series archive: **Topics**, **Scripture**, **Seasons**, and **Year**
+- **Disable Filters** — On the series archive this hides **Seasons** and **Year**
 
 ## Speaker Tab (`cpl_speaker_options`)
 

@@ -127,13 +127,13 @@ To add a manually created transcript:
 
 ### YouTube Transcript Import
 
-1. Edit the sermon, set **Message Video** to the YouTube URL, and update the sermon
+1. Use a youtube.com/watch?v=… link in **Message Video**, then update the sermon. Short youtu.be links don't show this button; use **Import** in the sermon list instead.
 2. In the **Transcript** box, click **Import from YouTube**
 3. Edit the transcript if needed and update the sermon
 
 ## Searching & Filtering Sermons
 
-Site visitors can search and filter sermons on the sermon archive. The filter form includes a search field and the facets left on under **Disable Filters** (**Topics**, **Scripture**, **Seasons**, **Speakers**, and **Year**).
+Site visitors can search and filter sermons on the sermon archive. The filter form includes a search field, **Service Type**, and the facets left on under **Disable Filters** (**Topics**, **Scripture**, **Seasons**, **Speakers**, and **Year**).
 
 As an administrator, you can filter sermons in the admin area by:
 
