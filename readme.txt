@@ -115,6 +115,7 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 
 = 1.7.1 =
 * Security hardening for item log endpoint.
+* The analytics average view time now averages each separate listen instead of summing each visitor's listens, so repeat listeners can lower the number.
 
 = 1.7.0 =
 * New: **Tools → Import/Export → Full Migration** — move an entire sermon library between sites in one step. Exports sermons (with variations, timestamps, transcripts and downloads), series, speakers, service types, templates and taxonomy terms, and optionally your plugin settings. Imports run in small batches and can be resumed, so libraries with tens of thousands of sermons don't hit a PHP timeout. Re-importing the same file updates the existing content instead of duplicating it.

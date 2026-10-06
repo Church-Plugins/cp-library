@@ -43,6 +43,7 @@ class AdminRequestActionsTest extends TestCase {
 	}
 
 	public function tear_down() {
+		remove_filter( 'wp_doing_cron', '__return_true' );
 		$_REQUEST = $this->previous_request;
 		wp_set_current_user( 0 );
 
@@ -138,6 +139,36 @@ class AdminRequestActionsTest extends TestCase {
 		$this->assertStringContainsString( 'Invalid API key', substr( (string) $after, strlen( (string) $before ) ) );
 	}
 
+	/**
+	 * A request can turn the cron flag on and still dispatch the settings action.
+	 * That dispatch is not the scheduled event.
+	 */
+	public function test_request_pull_with_cron_flag_does_nothing() {
+		wp_set_current_user( 0 );
+		$this->ensure_adapter_hooks();
+		add_filter( 'wp_doing_cron', '__return_true' );
+
+		$this->assertNotFalse( has_action( 'cpl_adapter_pull_sermon_audio', [ $this->adapter(), 'update_check' ] ) );
+		$this->assert_dispatched_pull_skipped( 'cpl_adapter_pull_sermon_audio' );
+	}
+
+	/**
+	 * The scheduled adapter hook runs the pull without a signed-in user.
+	 */
+	public function test_scheduled_hook_runs_the_pull() {
+		wp_set_current_user( 0 );
+		$this->ensure_adapter_hooks();
+		add_filter( 'wp_doing_cron', '__return_true' );
+		$this->assertNotFalse( has_action( 'cpl_adapter_cron_sermon_audio', [ $this->adapter(), 'update_check' ] ) );
+
+		$before = cp_library()->logging->get_file_contents();
+
+		do_action( 'cpl_adapter_cron_sermon_audio' );
+
+		$after = cp_library()->logging->get_file_contents();
+		$this->assertStringContainsString( 'Invalid API key', substr( (string) $after, strlen( (string) $before ) ) );
+	}
+
 	public function test_logged_out_transcript_import_does_nothing() {
 		wp_set_current_user( 0 );
 		$this->assert_transcript_skipped();
@@ -207,6 +238,33 @@ class AdminRequestActionsTest extends TestCase {
 		$this->adapter()->update_check();
 
 		$this->assertSame( $before, cp_library()->logging->get_file_contents() );
+	}
+
+	/**
+	 * Dispatch one admin request the way the framework does on init.
+	 *
+	 * @param string $action Request action name.
+	 */
+	private function assert_dispatched_pull_skipped( $action ) {
+		$before = cp_library()->logging->get_file_contents();
+
+		$_GET['cp_action']     = $action;
+		$_REQUEST['cp_action'] = $action;
+		unset( $_REQUEST['_wpnonce'], $_GET['_wpnonce'], $_POST['_wpnonce'] );
+		\ChurchPlugins\Admin\_Init::get_instance()->request_actions();
+
+		$this->assertSame( $before, cp_library()->logging->get_file_contents() );
+	}
+
+	/**
+	 * Attach the adapter hooks when the adapter is not enabled in settings.
+	 */
+	private function ensure_adapter_hooks() {
+		$adapter = $this->adapter();
+
+		if ( false === has_action( 'cpl_adapter_pull_sermon_audio', [ $adapter, 'update_check' ] ) ) {
+			$adapter->actions();
+		}
 	}
 
 	private function assert_transcript_skipped() {

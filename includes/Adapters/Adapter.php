@@ -141,20 +141,23 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	abstract public function process_cpl_data( $item, $cpl_data, $post_type );
 
 	/**
-	 * Whether this call is the scheduled check rather than the settings button.
+	 * Whether this call is the adapter's scheduled event.
+	 *
+	 * The settings button and other request hooks send a nonce. The scheduled
+	 * event is the adapter cron hook.
 	 *
 	 * @since 1.7.1
 	 *
 	 * @return bool
 	 */
 	protected function is_scheduled_run() {
-		return function_exists( 'wp_doing_cron' ) && wp_doing_cron();
+		return doing_action( $this->_cron_hook );
 	}
 
 	/**
 	 * Updates when the cron runs.
 	 *
-	 * The settings button sends a nonce. A scheduled run does not.
+	 * The settings button sends a nonce. The scheduled event does not.
 	 *
 	 * @return void
 	 */
