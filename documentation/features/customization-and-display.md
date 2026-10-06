@@ -67,12 +67,12 @@ CP Sermon Library includes Gutenberg blocks for displaying sermon content:
 
 ### Core Blocks
 
-- **Sermon Query** - Display sermons with configurable filters, layout, and pagination
+- **CP Sermons Sermons/Series** - Display sermons with configurable filters, layout, and pagination
 - **Sermon Template** - Display a sermon using a custom template
-- **Shortcode Template** - Embed shortcode-based sermon displays within block layouts
+- **CP Sermons Template** - Embed shortcode-based sermon displays within block layouts
 
 Individual sermon detail blocks are also available for use within templates:
-- **Sermon Actions** (play buttons), **Sermon Graphic** (thumbnail), **Sermon Title**, **Sermon Date**, **Sermon Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**
+- **Sermon Actions** (play buttons), **Item Graphic** (thumbnail), **Item Title**, **Item Date**, **Item Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**, **Sermon Season**
 
 ### Block Customization
 
@@ -115,7 +115,7 @@ CP Sermon Library includes a **Templates** post type that lets you build custom 
 
 1. Navigate to Series → Templates in the admin
 2. Click "Add New"
-3. Build your layout using CP Sermon Library blocks (Sermon Query, Sermon Actions, Sermon Graphic, Sermon Title, etc.)
+3. Build your layout using CP Sermon Library blocks (CP Sermons Sermons/Series, Sermon Actions, Item Graphic, Item Title, Item Date, Item Description, Sermon Season, etc.)
 4. Publish the template
 
 When editing a template, only CP Library blocks are available in the block inserter, ensuring your layout uses the correct sermon components.
@@ -126,7 +126,7 @@ Once you've created a template, you can use it in several ways:
 
 - **Shortcode** — Each template displays a `[cpl_template id="123"]` shortcode in a sidebar metabox. Copy this shortcode and paste it into any page or post.
 - **Page Builders** — The Beaver Builder, Divi, and Elementor modules each provide a "CP Sermons Template" module that lets you select and embed any template you've created (see [Page Builder Integration](../advanced/integrations.md#page-builder-integration)).
-- **Shortcode Template Block** — Use the "Shortcode Template" Gutenberg block to embed a template within other block layouts.
+- **CP Sermons Template** — Use the "CP Sermons Template" Gutenberg block to embed a template within other block layouts.
 
 ## Using Shortcodes for Custom Displays
 
