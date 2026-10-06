@@ -274,7 +274,7 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 		unset( $item['external_id'] );
 		unset( $item['cpl_data'] );
 
-		$post_id = wp_insert_post( $item, true );
+		$post_id = $this->insert_imported_post( $item );
 
 		if ( is_wp_error( $post_id ) ) {
 			throw new Exception( esc_html( $post_id->get_error_message() ) );
@@ -299,6 +299,77 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 		$this->process_cpl_data( $item_model, $cpl_data, $item['post_type'] );
 
 		return $item_model;
+	}
+
+	/**
+	 * Insert or update the WordPress post for an imported item.
+	 *
+	 * On update, the post keeps the status it already has, including trash,
+	 * draft, pending, private, and future. format_item() always sends publish.
+	 * A new sermon still uses the status in $item, which is publish.
+	 *
+	 * 1.7.0 wrote the SermonAudio date over an existing sermon's post_date.
+	 * That stays, except when the post is scheduled: wp_insert_post() turns
+	 * future into publish when the date is not still in the future, so a
+	 * past preach date would unschedule it. A future post keeps the
+	 * post_date and post_date_gmt it already has.
+	 *
+	 * A missing or empty post_name is filled with the permalink the post
+	 * already has. wp_insert_post keeps a slug that was left out, but an empty
+	 * post_name is rebuilt from post_title. Filling only that gap keeps a
+	 * retitle from changing the URL. A pending post that has no slug is left
+	 * that way; WordPress assigns a unique slug when it is published. There
+	 * is no wp_insert_post_data callback: a nested insert is not given this slug.
+	 *
+	 * Speakers and series come through here too. They do not send a post_name,
+	 * so an update still keeps the slug WordPress was already keeping, and a
+	 * new speaker or series still gets one generated from its title. An update
+	 * keeps any status they already have.
+	 *
+	 * New sermons omit post_name, so WordPress still generates the slug.
+	 *
+	 * @param array $item Post fields for wp_insert_post(), without external_id.
+	 * @return int|\WP_Error
+	 */
+	protected function insert_imported_post( $item ) {
+		if ( ! empty( $item['ID'] ) ) {
+			$existing = get_post( $item['ID'] );
+
+			if ( $existing instanceof \WP_Post ) {
+				$item['post_status'] = $existing->post_status;
+
+				if ( 'future' === $existing->post_status ) {
+					$item['post_date']     = $existing->post_date;
+					$item['post_date_gmt'] = $existing->post_date_gmt;
+				}
+
+				if ( ! isset( $item['post_name'] ) || '' === $item['post_name'] ) {
+					$slug = $this->existing_permalink_slug( $item['ID'] );
+
+					if ( null !== $slug ) {
+						$item['post_name'] = $slug;
+					}
+				}
+			}
+		}
+
+		return wp_insert_post( $item, true );
+	}
+
+	/**
+	 * Permalink slug already stored for a post, when it has one.
+	 *
+	 * @param int $post_id Post being updated.
+	 * @return string|null Raw post_name, or null when the post has none.
+	 */
+	protected function existing_permalink_slug( $post_id ) {
+		$post = get_post( $post_id );
+
+		if ( ! $post instanceof \WP_Post || ! is_string( $post->post_name ) || '' === $post->post_name ) {
+			return null;
+		}
+
+		return $post->post_name;
 	}
 
 	/**

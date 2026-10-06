@@ -267,6 +267,104 @@ class SermonAudio extends Adapter {
 	}
 
 	/**
+	 * Title to store for a SermonAudio sermon.
+	 *
+	 * SermonAudio's displayTitle is abbreviated, often with a trailing "...",
+	 * so separate parts of one series arrive with the same title. fullTitle is
+	 * the complete title and is nullable. A usable value is returned trim()'d:
+	 * surrounding whitespace is removed, and whitespace between words is kept.
+	 * Null, "", and a whitespace-only fullTitle fall back to displayTitle,
+	 * trim()'d the same way.
+	 *
+	 * When both titles are missing or blank this returns "". The formatted
+	 * item is what the sync hash covers, so a blank payload must hash the
+	 * same way on every fetch. "Untitled sermon" applies to new sermons, or
+	 * to an existing sermon that has no usable title. An existing sermon
+	 * with a usable title keeps that title.
+	 *
+	 * @param object $sermon Sermon payload from the SermonAudio API.
+	 * @return string Trimmed title, or "" when neither field is usable.
+	 */
+	public static function resolve_sermon_title( $sermon ) {
+		if ( isset( $sermon->fullTitle ) && is_string( $sermon->fullTitle ) ) {
+			$full_title = trim( $sermon->fullTitle );
+
+			if ( '' !== $full_title ) {
+				return $full_title;
+			}
+		}
+
+		if ( isset( $sermon->displayTitle ) && is_string( $sermon->displayTitle ) ) {
+			$display_title = trim( $sermon->displayTitle );
+
+			if ( '' !== $display_title ) {
+				return $display_title;
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Insert or update the WordPress post for an imported item.
+	 *
+	 * Blank-title handling applies only to sermons. A blank API title is ""
+	 * on the formatted item, which is what the sync hash stores. For a sermon
+	 * that already exists and has a usable title, that blank must not replace
+	 * the title on the post. The kept title is slashed because wp_insert_post()
+	 * unslashes its input, and a stored backslash would otherwise be stripped.
+	 * "Untitled sermon" applies to new sermons, or to an existing sermon that
+	 * has no usable title.
+	 *
+	 * A usable sermon title from the API is slashed the same way, so a
+	 * backslash is kept as sent. Speakers and series are passed through
+	 * untouched, as they were before this handling existed. An update keeps
+	 * any status they already have.
+	 *
+	 * @param array $item Post fields for wp_insert_post(), without external_id.
+	 * @return int|\WP_Error
+	 */
+	protected function insert_imported_post( $item ) {
+		$sermon_type = cp_library()->setup->post_types->item->post_type;
+
+		if ( ! isset( $item['post_type'] ) || $sermon_type !== $item['post_type'] ) {
+			return parent::insert_imported_post( $item );
+		}
+
+		$title = isset( $item['post_title'] ) ? $item['post_title'] : '';
+
+		if ( ! self::title_is_usable( $title ) ) {
+			$kept = null;
+
+			if ( ! empty( $item['ID'] ) ) {
+				$existing = get_post( $item['ID'] );
+
+				if ( $existing instanceof \WP_Post && self::title_is_usable( $existing->post_title ) ) {
+					// wp_insert_post() runs wp_unslash(). Slash the raw DB value
+					// so a backslash in the stored title survives.
+					$kept = wp_slash( $existing->post_title );
+				}
+			}
+
+			$item['post_title'] = null !== $kept ? $kept : __( 'Untitled sermon', 'cp-library' );
+		} else {
+			$item['post_title'] = wp_slash( $title );
+		}
+
+		return parent::insert_imported_post( $item );
+	}
+
+	/**
+	 * Whether a title has characters other than whitespace.
+	 *
+	 * @param mixed $title Title from the API or from an existing post.
+	 * @return bool
+	 */
+	private static function title_is_usable( $title ) {
+		return is_string( $title ) && '' !== trim( $title );
+	}
+
+	/**
 	 * Formats a Sermon
 	 *
 	 * @param \stdClass $item The sermon to format.
@@ -282,7 +380,7 @@ class SermonAudio extends Adapter {
 
 		$args = array(
 			'external_id'  => $item->sermonID,
-			'post_title'   => $item->displayTitle,
+			'post_title'   => self::resolve_sermon_title( $item ),
 			'post_date'    => $post_date,
 			'post_status'  => 'publish',
 			'post_type'    => cp_library()->setup->post_types->item->post_type,
