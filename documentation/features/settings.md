@@ -1,8 +1,8 @@
 # Settings & Configuration
 
-This guide provides an overview of CP Sermon Library settings. Access settings at Messages → Settings in your WordPress dashboard.
+This guide provides an overview of CP Sermon Library settings. Access settings at Series → Settings in your WordPress dashboard.
 
-> **Note:** The settings menu appears under your configured content label. The default is **Messages** → Settings.
+> **Note:** The settings menu appears under the post type chosen by **Set default menu item**. The default top-level menu is **Series**.
 
 ## Main Tab (`cpl_main_options`)
 
@@ -18,7 +18,7 @@ Upload an image to use as the logo for your messages.
 
 Upload a fallback thumbnail image used when a sermon or series doesn't have a featured image set.
 
-### Button Labels
+### Labels
 
 - **Play Video Button** — Text displayed on the video play button (default: "Watch")
 - **Play Audio Button** — Text displayed on the audio play button (default: "Listen")
@@ -32,63 +32,63 @@ Upload a fallback thumbnail image used when a sermon or series doesn't have a fe
 Customize the terminology used for sermons:
 
 - **Singular Label** — What to call a single sermon (default: "Message")
-- **Plural Label** — What to call the collection (default: "Messages") — this also sets the admin menu name
+- **Plural Label** — What to call the collection (default: "Messages") — this sets the Messages menu label. The top-level menu follows **Set default menu item**, which defaults to Series.
 - **Slug** — URL base for sermon archives (default: derived from the plural label)
 
-### Display Options
+### Template Options
 
-- **Single Page Template** — Choose the layout for individual sermon pages (default or vertical)
-- **Image Aspect Ratio** — Set the aspect ratio for sermon thumbnails
+- **Single Page Template** — Choose the layout for individual sermon pages (**Default (2 column)** or **Vertical (1 column)**)
+- **Image Aspect Ratio** — Set the aspect ratio for sermon thumbnails. Options: **Use Series Aspect Ratio**, **Square (1:1)**, **Standard (4:3)**, **Landscape (16:9)**
 - **Messages Per Page** — Number of sermons to display on the archive page
 
 ### Info Items & Meta Items
 
-Control what information displays with each sermon:
+Control what information displays with each sermon. The choices are **Publish Date**, **Topics**, **Scripture**, and, when those modules are enabled, **Speakers**, **Series**, and **Service Types**.
 
-- **Info Items** — Content shown prominently (e.g., date, speaker, series)
-- **Meta Items** — Secondary content (e.g., topics, scripture, downloads)
+- **Info Items** — Items shown under the title on the single view, grid view, and list view
+- **Meta Items** — Items shown above the title on the single view and at the bottom of the card in the list view
 
 ### Transcript Settings
 
-- **Show Transcript** — Show or hide the transcript section on sermon pages
+- **Transcript** — **Show** or **Hide** the transcript section on sermon pages (default: **Hide**)
 
-### Variation Settings
+### Variations
 
-If variations are enabled (see Advanced tab):
+**Enable Variations (beta)** and **Variation Source** appear only after a variation source exists. Turn on **Enable Service Types** on the Advanced tab (or a supported add-on), save, and reopen the Messages tab. Until then, this section only explains that Service Types or an add-on is required.
 
-- **Variations Enabled** — Enable sermon variations for this content type
-- **Variation Source** — Select the source for variations (e.g., Service Types)
+- **Enable Variations (beta)** — **Enable** or **Disable** (default: **Disable**)
+- **Variation Source** — Select the source for variations (for example, Service Types)
 
 ### Filter Settings
 
-- **Disable Filters** — Selectively disable individual filter facets (topics, scripture, seasons, speakers, service types, year) on the sermon archive page
+- **Disable Filters** — Check the facets to hide on the sermon archive: **Topics**, **Scripture**, **Seasons**, **Speakers** (when Speakers are enabled), and **Year**
 
-### Podcast Exclusion
+## Exclude a Sermon from the Podcast
 
-At the individual sermon level, each sermon has an "Exclude from Podcast" checkbox in its edit screen to prevent it from appearing in the podcast feed.
+After **Enable Podcast Feed** is set to **Enable**, each sermon edit screen shows **Exclude from Podcast** in **Message Details**. Check it to keep that sermon out of the feed.
 
 ## Series Tab (`cpl_item_type_options`)
 
-- **Singular/Plural Labels** — Customize series terminology
+- **Singular Label** and **Plural Label** — Customize series terminology
 - **Slug** — URL base for series archives
-- **Image Aspect Ratio** — Aspect ratio for series artwork
+- **Image Aspect Ratio** — **Default (No Aspect Ratio)**, **Square (1:1)**, **Standard (4:3)**, or **Landscape (16:9)**
 - **Series Per Page** — Number of series to display on the archive page
-- **Messages Per Series** — Number of sermons shown within a single series view
-- **Messages Sort Order** — How sermons are ordered within a series (ascending or descending)
-- **Messages Sort By** — Sort sermons by title or publish date
-- **Disable Filters** — Selectively disable individual filter facets (topics, scripture, seasons, year) on the series archive page
+- **Messages Per Series** — Number of sermons shown on a single series page
+- **Messages sort order** — **Descending** or **Ascending**
+- **Messages sort by** — **Title** or **Publish Date**
+- **Disable Filters** — On the series archive this hides **Seasons** and **Year**
 
 ## Speaker Tab (`cpl_speaker_options`)
 
-- **Singular/Plural Labels** — Customize speaker terminology (changing the plural label also changes the URL slug)
-- **Enable Permalinks** — Create individual speaker archive pages
+- **Singular Label** and **Plural Label** — Customize speaker terminology (changing **Plural Label** also changes the URL slug)
+- **Enable Speaker permalinks** — Link the speaker's name to the speaker page that shows their messages
 
 ## Service Type Tab (`cpl_service_type_options`)
 
 > **Note:** This tab only appears when Service Types are enabled in the Advanced tab.
 
-- **Singular/Plural Labels** — Customize service type terminology
-- **Default Service Type** — Set the default service type for new sermons
+- **Singular Label** and **Plural Label** — Customize service type terminology
+- **Default Service Type** — Shown after at least one service type exists. With none created, the tab shows a link to add one.
 
 ## Podcast Tab (`cpl_podcast_options`)
 
@@ -96,7 +96,7 @@ At the individual sermon level, each sermon has an "Exclude from Podcast" checkb
 
 Configure your podcast feed settings:
 
-- **Podcast Image** — Cover artwork (1400×1400px minimum, square format)
+- **Image** — Cover artwork (the field description asks for 1400×1400 to 3000×3000, JPG or PNG)
 - **Title** — Your podcast name
 - **Subtitle** — Brief description
 - **Description** — Full podcast description
@@ -121,12 +121,12 @@ Enable or disable content types and features:
 - **Enable Series** — Toggle the Series post type (enabled by default)
 - **Enable Speakers** — Toggle the Speakers post type (enabled by default)
 - **Enable Service Types** — Toggle Service Types for multi-service churches (disabled by default)
-- **Enable Podcast Feed** — Toggle the podcast feed (disabled by default). When enabled, a Podcast settings tab appears.
-- **Adapter Integrations** — Enable/disable integrations like SermonAudio (disabled by default). When enabled, an adapter-specific settings tab appears.
+- **Enable Podcast Feed** — Toggle the podcast feed. When enabled, a Podcast settings tab appears.
+- **Enable Sermon Audio Integration** — Enable or disable the Sermon Audio connection (disabled by default). When enabled, a **Sermon Audio** settings tab appears.
 
 ### Settings
 
-- **Default Menu Item** — Choose whether the admin menu defaults to Messages or Series (defaults to Series; only appears when Series is enabled)
+- **Set default menu item** — Choose whether the admin menu uses **Messages** or **Series** (defaults to **Series**; only appears when Series is enabled)
 
 ### Built-in Terms
 
@@ -138,11 +138,11 @@ Enable or disable content types and features:
 - **Show Counts** — Show or hide the count of items in each filter option
 - **Count Threshold** — Minimum number of sermons for a filter option to display (default: 3)
 - **Disable Filters** — *(Deprecated)* Use the per-post-type "Disable Filters" settings on the Messages and Series tabs instead
-- **Sort per Taxonomy** — Sort filter options by sermon count or alphabetically (configured per taxonomy: topics, scripture, seasons, speakers)
+- **Sort Topics**, **Sort Scripture**, **Sort Seasons**, and **Sort Speakers** (when Speakers are enabled) — **By Message Count** or **Alphabetically**. Scripture uses **By Scripture Order** instead of **Alphabetically**.
 
-### Debug Mode
+### Data
 
-- **Enable Debug** — Turn on verbose debugging output in Messages → Tools → Log
+- **Enable Debug** — Turn on verbose debugging output in Series → Tools → Log
 
 ## Sermon Audio Tab (`cpl_sermon_audio_adapter_options`)
 
@@ -162,8 +162,7 @@ Configure your SermonAudio connection and import settings:
 ## License Tab
 
 - **License Key** — Enter your Church Plugins license key
-- **Activate/Deactivate** — Manage license activation
-- **License Status** — View current status (active, expired, etc.)
+- **Activate License** / **Deactivate License** — Enter **License Key**, click **Save Changes**, then use the button that appears. **Activate License** shows when the saved key is not active. **Deactivate License** shows when it is. A green check mark is shown next to an active key.
 
 ## Saving and Applying Settings
 

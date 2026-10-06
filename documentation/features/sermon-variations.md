@@ -26,19 +26,19 @@ Variations require Service Types to be enabled. See [Service Types](service-type
 
 ### Enabling Variations
 
-1. Navigate to Messages → Settings → Advanced
-2. Enable "Service Types" in the Modules section
+1. Navigate to Series → Settings → Advanced
+2. Enable **Enable Service Types** in the Modules section
 3. Save Changes
-4. Navigate to Messages → Settings → Messages tab
-5. Enable "Variations"
-6. Select the "Variation Source" (e.g., Service Types)
+4. Navigate to Series → Settings → Messages tab
+5. Select **Enable** for **Enable Variations (beta)**
+6. Select the **Variation Source** (for example, Service Types)
 7. Save Changes
 
 ### Creating Service Types
 
 Before creating variations, set up your service types:
 
-1. Navigate to Messages → Service Types
+1. Navigate to Series → Service Types
 2. Click "Add New"
 3. Enter the service type name (e.g., "Sunday Morning," "Youth Service")
 4. Add a description if desired
@@ -51,12 +51,10 @@ Before creating variations, set up your service types:
 When variations are enabled in settings, the sermon editor includes a variation checkbox:
 
 1. Edit a sermon
-2. Check the "Add Variations" checkbox in the sermon details
-3. Inline fields appear for each configured service type, where each variation can have its own:
-   - Speaker
-   - Audio/video files
-   - Date
-4. Save the sermon
+2. Check **Add Variations** in **Message Details**
+3. Update the sermon. A group then appears for each service type (or other variation source).
+4. In each group, set **Speaker** (when Speakers are enabled), **Date**, **Video URL**, and **Audio URL**
+5. Update the sermon again
 
 Variations are stored as child posts of the parent sermon, maintaining the relationship between different instances of the same message.
 
@@ -82,10 +80,6 @@ Assign different speakers to variations, useful for:
 ### Frontend Display
 
 When a sermon has variations, visitors can switch between them on the sermon page. The variation selector shows the available service types.
-
-### Accessing Specific Variations
-
-Each variation can be accessed via URL parameters on the sermon page.
 
 ## Using Variations with Podcast Feeds
 
@@ -115,14 +109,14 @@ See [Podcast Setup](podcast-setup.md) for feed configuration details.
 
 ### Common Issues
 
-- **Variation Fields Not Showing** — Verify Service Types are enabled in Messages → Settings → Advanced and Variations are enabled in Messages → Settings → Messages tab
+- **Variation Fields Not Showing** — Verify Service Types are enabled in Series → Settings → Advanced and **Enable Variations (beta)** is set to **Enable** in Series → Settings → Messages tab
 - **Variations Not Displaying on Frontend** — Check template compatibility with your theme
 - **Media Not Loading** — Verify media file paths are correct for each variation
 
-### Debug Mode
+### Enable Debug
 
 For troubleshooting variation issues:
 
-1. Navigate to Messages → Settings → Advanced
-2. Enable "Debug Mode"
-3. Check the log at Messages → Tools → Log for variation-related errors
+1. Navigate to Series → Settings → Advanced
+2. Set **Enable Debug** to **Enable**
+3. Check the log at Series → Tools → Log for variation-related errors

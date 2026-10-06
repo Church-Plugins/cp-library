@@ -29,19 +29,20 @@ This guide covers installing CP Sermon Library, activating your license, and con
 
 After activation:
 
-1. Check that a new **Messages** menu appears in your WordPress dashboard (this is the default label — you can rename it in settings)
-2. Navigate to Messages → Settings to confirm all options are accessible
+1. Check that a new **Series** menu appears in your WordPress dashboard (this is the default top-level menu)
+2. Navigate to Series → Settings to confirm all options are accessible
 
-> **Note:** Throughout this documentation, we reference the admin menu as **Messages →**. If you rename your content label (e.g., to "Sermons" or "Teachings"), the menu name will change to match.
+> **Note:** **Set default menu item** defaults to Series. Settings and Tools are under that menu. If you set it to Messages, or you rename a label, the menu name changes to match.
 
 ## Activating Your License
 
 To receive updates and support, activate your license:
 
-1. Navigate to Messages → Settings → License tab
-2. Enter your license key (found in your Church Plugins account)
-3. Click "Activate License"
-4. Verify the license status shows as "active"
+1. Navigate to Series → Settings → License tab
+2. Enter your license key in **License Key** (found in your Church Plugins account)
+3. Click **Save Changes**
+4. Click **Activate License**
+5. A green check mark shows when the license is active
 
 ## Initial Configuration
 
@@ -49,23 +50,23 @@ To receive updates and support, activate your license:
 
 You can customize the terminology used throughout the plugin:
 
-1. Navigate to Messages → Settings
+1. Navigate to Series → Settings
 2. Select the tab for the content type you want to rename (Messages, Series, or Speaker)
-3. Change the Singular Label, Plural Label, and Slug
-4. Save changes — the admin menu name will update to match the Messages plural label
+3. Change **Singular Label** and **Plural Label**. On the Messages and Series tabs, also change **Slug**. The Speaker tab has no **Slug** field.
+4. Save changes. The top-level menu uses the plural label of the post type selected in **Set default menu item** (Series by default).
 
 ### Sermon Settings
 
-1. Navigate to Messages → Settings → Messages tab (or your custom label)
+1. Navigate to Series → Settings → Messages tab (or your custom label)
 2. Configure display options (single page template, image aspect ratio)
 3. Set info items and meta items to control what displays with each sermon
 
 ### Podcast Settings (Optional)
 
-1. Navigate to Messages → Settings → Advanced and enable "Podcast Feed"
+1. Navigate to Series → Settings → Advanced and set **Enable Podcast Feed** to **Enable**
 2. Save Changes — a Podcast tab will appear
-3. Navigate to Messages → Settings → Podcast tab
-4. Enter podcast title, description, and author information
+3. Navigate to Series → Settings → Podcast tab
+4. Enter the **Title**, **Description**, and **Provider**
 5. Upload podcast artwork (1400×1400px minimum)
 6. Configure feed categories
 
@@ -75,19 +76,19 @@ See the [Podcast Setup Guide](../features/podcast-setup.md) for detailed instruc
 
 ### 1. Add Speakers
 
-1. Navigate to Messages → Speakers → Add New
+1. Navigate to Series → Speakers and click **Add New**
 2. Enter speaker name, bio, and photo
 3. Publish the speaker profile
 
 ### 2. Create a Series
 
-1. Navigate to Messages → Series → Add New
+1. Open **Series** and click **Add New**
 2. Enter series title, description, and artwork
 3. Publish the series
 
 ### 3. Add Your First Sermon
 
-1. Navigate to Messages → Add New
+1. Navigate to Series → Messages and click **Add New**
 2. Enter sermon title and content
 3. Add media files (audio/video)
 4. Select the speaker and series
@@ -101,22 +102,19 @@ See the [Podcast Setup Guide](../features/podcast-setup.md) for detailed instruc
 CP Sermon Library provides Gutenberg blocks for displaying sermons:
 
 1. Create or edit a page
-2. Add sermon blocks (Sermon Grid/List, Latest Sermon, Series Grid/List)
-3. Configure block settings in the sidebar
+2. Insert the **CP Sermons Sermons/Series** block, or a pattern such as **Latest Sermon**, **Latest Sermons - Grid View**, or **Latest Series - List View**
+3. In the block sidebar, set **Type**, **Items to show**, and **Order by**. Use the toolbar **List view** or **Grid view**.
 4. Preview and publish your page
 
 ### Using Shortcodes
 
 As an alternative to blocks, you can use shortcodes:
 
-- `[cpl_item_list]` — Display a list of sermons
-- `[cpl_item]` or `[cp-sermon]` — Display a single sermon
+- `[cpl_item id="123"]` or `[cp-sermon id="123"]` — Display one sermon. `template="alt"` uses the alternate layout.
 - `[cp-sermons]` — Display the sermons archive
+- `[cpl_template id="123"]` — Display a template
 
-Shortcode attributes are passed to the frontend app for rendering. Example:
-```
-[cpl_item_list count="6" columns="3"]
-```
+`[cpl_item]` also accepts `player`, `details`, `location`, and `service-type`. See [Customization and Display](../features/customization-and-display.md).
 
 ### Using Archive Pages
 
@@ -138,7 +136,7 @@ If the plugin detects data from Sermon Manager, Series Engine, or Church Content
 
 Import sermons from a spreadsheet:
 
-1. Navigate to Messages → Tools
+1. Navigate to Series → Tools
 2. Use the Import/Export tab
 3. Download the sample CSV template
 4. Fill in your sermon data following the template format

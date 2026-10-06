@@ -19,36 +19,25 @@ These archives are accessible at URLs like:
 - /messages/ (or your custom slug)
 - /series/
 - /speakers/
-- /topic/faith/
+- /topics/faith/
 - /scripture/john-3/
-- /season/summer-2023/
+- /seasons/summer-2023/
 
 ### Layout Options
 
-The plugin includes multiple layout options for displaying sermons:
+Sermon and series archives render as a list.
 
-1. **Grid Layout**
-   - Displays sermons in a responsive grid
-   - Shows featured images prominently
-   - Great for visual impact
+On a page, the **CP Sermons Sermons/Series** block toolbar has **List view** and **Grid view**. **Grid view** shows a **Columns** control.
 
-2. **List Layout**
-   - Displays sermons in a vertical list
-   - Shows more metadata for each sermon
-   - Ideal for chronological browsing
-
-3. **Vertical Layout**
-   - A hybrid layout with larger images
-   - Shows more details than grid, less than list
-   - Good balance of visual appeal and information
+**Vertical (1 column)** is only the **Single Page Template** option on Series → Settings → Messages. It changes the single sermon page, not the archive.
 
 ### Template Customization
 
 Templates can be customized in several ways:
 
 1. **Settings**
-   - Navigate to Messages → Settings → Messages tab
-   - Choose Single Page Template (default or vertical)
+   - Navigate to Series → Settings → Messages tab
+   - Choose **Single Page Template** (**Default (2 column)** or **Vertical (1 column)**)
    - Set Image Aspect Ratio for thumbnails
    - Configure Info Items and Meta Items display
 
@@ -67,45 +56,42 @@ CP Sermon Library includes Gutenberg blocks for displaying sermon content:
 
 ### Core Blocks
 
-- **Sermon Query** - Display sermons with configurable filters, layout, and pagination
-- **Sermon Template** - Display a sermon using a custom template
-- **Shortcode Template** - Embed shortcode-based sermon displays within block layouts
+- **CP Sermons Sermons/Series** — List sermons or series
+- **Sermon Template** — The inner template for items inside that query
+- **CP Sermons Template** — Embed a template you built under Series → Templates
 
-Individual sermon detail blocks are also available for use within templates:
-- **Sermon Actions** (play buttons), **Sermon Graphic** (thumbnail), **Sermon Title**, **Sermon Date**, **Sermon Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**
+Blocks you place inside a template:
+
+- **Sermon Actions**, **Item Graphic**, **Item Title**, **Item Date**, **Item Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**, **Sermon Season**
 
 ### Block Customization
 
-Each block includes customization options:
+On **CP Sermons Sermons/Series**, open **Settings**:
 
-1. **Content Selection**
-   - Filter by series, speaker, topics, etc.
-   - Set number of items to display
-   - Control sorting order
+1. Set **Type** to **Sermons** or **Series**.
+2. Set **Items to show**.
+3. Turn on **Single Item** to pick one sermon or series.
+4. For sermons that are not a single item, **Show Upcoming** is available.
+5. Set **Order by** to **Newest to oldest**, **Oldest to newest**, **A → Z**, or **Z → A**.
+6. Use the toolbar **List view** or **Grid view**. In **Grid view**, set **Columns**.
 
-2. **Layout Options**
-   - Choose grid or list layout
-   - Set number of columns
-   - Adjust image size and aspect ratio
+The **Filters** panel shows **Taxonomies**. For sermons, **Parents** is included when variations are on.
 
-3. **Style Options**
-   - Customize colors and typography
-   - Control spacing and padding
-   - Show/hide specific elements
+**Item Graphic** has an **Aspect ratio** setting. Spacing controls depend on the block.
 
 ### Block Patterns
 
 CP Sermon Library includes pre-built block patterns you can insert from the Gutenberg pattern inserter:
 
-- **Latest Sermon** — Displays the most recent sermon
-- **Latest Series** — Displays the most recent series
-- **Latest Both** — Displays both the latest sermon and latest series
-- **Sermon Grid** — Grid layout for sermons
-- **Sermon List** — List layout for sermons
-- **Series Grid** — Grid layout for series
-- **Series List** — List layout for series
+- **Latest Sermon** — Most recent sermon (category **Messages**)
+- **Latest Series** — Most recent series (category **Series**)
+- **Latest Sermon + Series** — Both
+- **Latest Sermons - Grid View**
+- **Latest Sermons - List View**
+- **Latest Series - Grid View**
+- **Latest Series - List View**
 
-To use a pattern, click the "+" inserter in the block editor, switch to the "Patterns" tab, and look under the "Sermons" or "Series" categories.
+To use a pattern, click the "+" inserter in the block editor, switch to the **Patterns** tab, and look under **Messages** or **Series**. Those category names follow your plural labels.
 
 ## Sermon Templates (Custom Layouts)
 
@@ -113,20 +99,20 @@ CP Sermon Library includes a **Templates** post type that lets you build custom 
 
 ### Creating a Template
 
-1. Navigate to Messages → Templates in the admin
+1. Navigate to Series → Templates in the admin
 2. Click "Add New"
-3. Build your layout using CP Sermon Library blocks (Sermon Query, Sermon Actions, Sermon Graphic, Sermon Title, etc.)
+3. Build your layout with **CP Sermons Sermons/Series**, **Sermon Template**, **Sermon Actions**, **Item Graphic**, **Item Title**, **Item Date**, **Item Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**, **Sermon Season**, and **Item Pagination**
 4. Publish the template
 
-When editing a template, only CP Library blocks are available in the block inserter, ensuring your layout uses the correct sermon components.
+When editing a template, the inserter allows CP Sermons blocks plus core blocks such as **Paragraph**, **Heading**, **Group**, **Columns**, and **Spacer**.
 
 ### Using Templates
 
 Once you've created a template, you can use it in several ways:
 
-- **Shortcode** — Each template displays a `[cpl_template id="123"]` shortcode in a sidebar metabox. Copy this shortcode and paste it into any page or post.
+- **Shortcode** — Each template shows `[cpl_template id=123]` in a sidebar metabox (the id is not quoted). Copy it into any page or post. `[cpl_template id="123"]` also works.
 - **Page Builders** — The Beaver Builder, Divi, and Elementor modules each provide a "CP Sermons Template" module that lets you select and embed any template you've created (see [Page Builder Integration](../advanced/integrations.md#page-builder-integration)).
-- **Shortcode Template Block** — Use the "Shortcode Template" Gutenberg block to embed a template within other block layouts.
+- **CP Sermons Template** block — Insert this block and choose a template.
 
 ## Using Shortcodes for Custom Displays
 
@@ -134,37 +120,30 @@ CP Sermon Library provides several shortcodes for displaying sermon content:
 
 ### Core Shortcodes
 
-- `[cpl_item_list]` - Display a list of sermons
 - `[cpl_item]` or `[cp-sermon]` - Display a single sermon
 - `[cpl_item_widget]` - Display a sermon widget
 - `[cpl_video_widget]` - Display a video widget
 - `[cp-sermons]` - Display the sermons archive
-- `[cpl_player]` - Display the sermon player
 - `[cpl_template id="123"]` - Display a sermon template (see Sermon Templates above)
 
 ### Shortcode Parameters
 
-Common parameters for `[cpl_item_list]`:
+`[cpl_item]` and `[cp-sermon]` accept:
 
-- `id` - Specify a sermon ID
-- `count` - Number of sermons to display
-- `columns` - Number of columns for grid layouts
-- `series` - Filter by series slug
-- `speaker` - Filter by speaker slug
-- `topic` - Filter by topic slug
-- `scripture` - Filter by scripture reference
-- `season` - Filter by season slug
-- `pagination` - Show pagination (true/false)
+- `id` — Sermon post ID. Omit it to show the latest sermon.
+- `player` — `true` or `false` (default `true`)
+- `details` — `true` or `false` (default `true`)
+- `location` — Location id, when CP Locations is in use
+- `service-type` — Service type post ID. Used when `id` is omitted, to pick the latest sermon for that service type.
+- `template` — `alt` for the alternate widget layout. Any other value uses the standard layout.
 
-For `[cpl_item]` / `[cp-sermon]`:
+Example:
 
-- `id` - Specify the sermon ID to display
-- `template` - Use `alt` for the alternate widget layout (default: standard layout)
-
-Example shortcode with multiple parameters:
 ```
-[cpl_item_list count="10" columns="3" series="easter-2023" pagination="true"]
+[cpl_item id="123" template="alt"]
 ```
+
+`[cp-sermons]` prints the sermon archive and takes no attributes. `[cpl_template id="123"]` prints a template. `[cpl_item_widget]` and `[cpl_video_widget]` print the latest audio or video sermon and take no attributes.
 
 ## Series Display Options
 
@@ -172,16 +151,11 @@ Series can be displayed in several ways:
 
 ### Series Archive
 
-The series archive displays all series, sorted by date:
-- Grid layout shows series thumbnails
-- Clicking a series shows all sermons in that series
+The series archive is a list, ordered by the date of the latest sermon in each series. Open a series to see its description, artwork, and sermons.
 
-### Series Grid/List Block
+### Series in the Query Block
 
-The Series Grid/List block allows you to:
-- Display selected series in grid or list format
-- Filter series by specific criteria
-- Customize the appearance of series items
+Insert **CP Sermons Sermons/Series**, set **Type** to **Series**, then choose **List view** or **Grid view**. Use **Items to show**, **Order by**, and the **Filters** panel the same way you do for sermons.
 
 ### Series Single View
 
@@ -201,7 +175,7 @@ You can control which sermons appear in the main sermon list:
 3. Check the **Exclude from Main List** box to remove this sermon from the main list (leave unchecked to keep it visible)
 4. Sermons hidden from the main list are still accessible via their direct URL, taxonomy archives, and search
 
-> **Changed in 1.6.2:** This checkbox was previously labeled "Show in Main List" and defaulted to checked. The default is now "visible" without an explicit setting, so imports and other programmatic saves no longer hide sermons by accident. If you upgraded from an earlier 1.6.x release, run **Messages → Tools → Migrate Visibility Settings** to carry forward any sermons you previously hid by hand.
+> **Changed in 1.6.2:** This checkbox was previously labeled "Show in Main List" and defaulted to checked. The default is now "visible" without an explicit setting, so imports and other programmatic saves no longer hide sermons by accident. If you upgraded from an earlier 1.6.x release, run **Series → Tools → Migrate Visibility Settings** to carry forward any sermons you previously hid by hand.
 
 ### Series Visibility Control
 
@@ -234,19 +208,16 @@ Control how filters appear on your sermon pages:
 
 ### Filter Settings
 
-Navigate to Messages → Settings → Advanced to adjust:
-- Filter sorting (by count or alphabetically)
-- Minimum count threshold for filters
-- Show/hide count numbers
-- Disable specific filters
-- Control filter display on mobile
+Navigate to Series → Settings → Advanced to adjust:
+- **Sort Topics**, **Sort Scripture**, **Sort Seasons**, and **Sort Speakers**: **By Message Count** or **Alphabetically** (Scripture uses **By Scripture Order**)
+- **Count Threshold** (default 3)
+- **Show Counts**: **Show** or **Hide**
 
-### Customizing Filter Labels
+**Disable Filters** on the Messages tab hides **Topics**, **Scripture**, **Seasons**, **Speakers**, and **Year** on the sermon archive. On the Series tab it hides **Seasons** and **Year**. The **Disable Filters** field on the Advanced tab is marked deprecated in its description.
 
-Customize the labels used in filters:
-1. Navigate to Messages → Settings (Speaker tab, or Advanced tab for other post types)
-2. Adjust the Singular and Plural Labels
-3. These changes will be reflected in the filter UI
+### Filter button labels
+
+Sermon archive: **Topic**, **Scripture**, **Season**, **Speaker**, **Service Type**, **Year**. Series archive: **Season**, **Year**, **Number of Sermons**. **Singular Label** and **Plural Label** do not change that text.
 
 ### Filter Contexts
 

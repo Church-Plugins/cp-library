@@ -18,9 +18,9 @@ CP Sermon Library is a comprehensive WordPress plugin designed for churches and 
 
 ## Admin Menu
 
-After activation, the plugin adds a new top-level menu to your WordPress dashboard. By default, this menu is labeled **Messages** (matching the default content label). You can rename it to "Sermons," "Teachings," or any other term in the settings.
+After activation, the plugin adds a new top-level menu to your WordPress dashboard. By default, this menu is labeled **Series**.
 
-Throughout this documentation, we use **Messages →** to reference navigation paths. If you've changed your content label, substitute your chosen name.
+**Set default menu item** chooses that menu. The default is **Series**. If you set it to Messages, or you rename a label, the menu name changes to match. If Series is turned off, the menu is Messages (or your renamed label).
 
 ## How It Works
 

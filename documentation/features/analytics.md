@@ -4,7 +4,7 @@ CP Sermon Library includes built-in analytics to track sermon engagement. Analyt
 
 ## Accessing Analytics
 
-Navigate to Messages → Analytics to view the analytics dashboard.
+Navigate to Series → Analytics to view the analytics dashboard. You need a user who can manage site options (typically an Administrator).
 
 ## Available Metrics
 
@@ -12,18 +12,18 @@ The analytics dashboard tracks these metrics:
 
 ### Overview Stats
 
-- **Video Plays** — Total number of sermon video plays (counted after 30 seconds of playback)
-- **Audio Plays** — Total number of sermon audio plays (counted after 30 seconds of playback)
-- **Average Watch Time** — Average duration of media playback
-- **Engaged Plays** — Number of plays where the visitor watched/listened for a significant portion (70%+)
+- **Video plays** — Total number of sermon video plays (counted after 30 seconds of playback)
+- **Audio plays** — Total number of sermon audio plays (counted after 30 seconds of playback)
+- **Avg watch time** — Average duration of media playback
+- **Engaged plays** — Number of plays where the visitor watched or listened to 70% or more
 
 ### Per-Sermon Table
 
 The dashboard includes a table showing individual sermon performance:
 
 - **Views** — Total plays for each sermon
-- **Average Duration** — Average listening/watching time
-- **Engaged Plays** — Plays with significant engagement
+- **Avg duration** — Average listening/watching time
+- **Engaged Plays** — Percentage of plays that reached the engaged threshold
 
 ## Date Range Filtering
 
@@ -45,6 +45,5 @@ Analytics data can help you:
 ## Privacy Considerations
 
 - Analytics tracking is built into the media player
-- No personally identifiable information is collected
+- Play logs store the visitor IP address
 - Data is stored in your WordPress database
-- Compatible with common cookie consent plugins
