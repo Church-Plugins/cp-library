@@ -13,25 +13,23 @@ A sermon podcast is an audio feed of your church's messages that people can subs
 
 ## Enabling the Podcast Feed
 
-The podcast feed is **disabled by default**. To enable it:
-
-1. Navigate to Messages → Settings → Advanced
+1. Navigate to Series → Settings → Advanced
 2. Find "Enable Podcast Feed" and select **Enable**
 3. Click "Save Changes"
 
-Once enabled, a **Podcast** tab appears in Messages → Settings where you can configure your feed.
+Once enabled, a **Podcast** tab appears in Series → Settings where you can configure your feed.
 
 ## Configuring Podcast Settings
 
 All podcast settings are on the Podcast tab:
 
-1. Navigate to Messages → Settings → Podcast tab
+1. Navigate to Series → Settings → Podcast tab
 2. Configure the fields below
 3. Click "Save Changes"
 
 ### Essential Fields
 
-- **Podcast Image** — Upload square artwork (1400×1400px minimum, max 3000×3000px, JPG or PNG)
+- **Image** — Upload square artwork (the field description asks for 1400×1400 to 3000×3000, JPG or PNG)
 - **Title** — Your podcast name (typically your church name + "Sermons" or "Messages")
 - **Subtitle** — A brief description (1-2 sentences)
 - **Description** — A complete description of your podcast content
@@ -65,7 +63,7 @@ You can access podcast feeds scoped to specific series, speakers, or service typ
 
 - Series feed: `https://yoursite.com/series/series-slug/feed/podcast/`
 - Speaker feed: `https://yoursite.com/speakers/speaker-slug/feed/podcast/`
-- Service type feed: `https://yoursite.com/service-type/service-type-slug/feed/podcast/`
+- Service type feed: `https://yoursite.com/service-types/service-type-slug/feed/podcast/`
 
 ## Excluding Sermons from the Podcast
 

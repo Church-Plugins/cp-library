@@ -14,7 +14,7 @@
 
 ### Missing Plugin Pages
 
-**Issue**: The Library menu or sermon pages don't appear after activation.
+**Issue**: The Series menu or sermon pages don't appear after activation.
 
 **Solutions**:
 1. Go to Settings → Permalinks and click "Save Changes" to flush rewrite rules
@@ -60,8 +60,7 @@
 **Solutions**:
 1. Check that the missing sermons have audio files attached
 2. Verify the sermons are published (not draft or scheduled)
-3. Check if the feed has a category filter that excludes these sermons
-4. Ensure the sermons aren't marked as "Exclude from podcast"
+3. Ensure the sermons aren't marked **Exclude from Podcast**
 
 ### Feed Validation Errors
 

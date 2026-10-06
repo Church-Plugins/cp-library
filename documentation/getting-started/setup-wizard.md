@@ -6,7 +6,7 @@ CP Sermon Library includes a migration wizard to help you transfer sermon data f
 
 The migration wizard launches automatically when you first activate CP Sermon Library **if** the plugin detects existing sermon data from a supported source plugin. Detection works by checking the database for posts belonging to each supported plugin's post type. If no legacy data is detected, the wizard will not appear.
 
-After activation, the wizard also remains accessible from the **Messages > Migrate** submenu in the WordPress admin, so you can return to it at any time.
+After activation, the wizard also remains accessible from the **Series > Migrate** submenu in the WordPress admin, so you can return to it at any time. The **Migrate** menu is registered only when legacy data is detected on activation.
 
 ### Supported Source Plugins
 
@@ -24,8 +24,7 @@ If more than one supported plugin has data in the database, the wizard will list
 2. The wizard displays each detected source plugin along with the number of items available to migrate.
 3. Select the source plugin to migrate from and start the migration.
 4. The migration runs as a **background process** -- you can continue using WordPress while it works. The wizard page shows a live progress bar with the percentage of items completed.
-5. You can **pause and resume** the migration at any time if needed.
-6. Duplicate items are automatically prevented. If a sermon has already been migrated (tracked via a `migration_id` on each imported post), it will be skipped rather than duplicated. This means you can safely re-run a migration without creating duplicate content.
+5. Duplicate items are automatically prevented. If a sermon has already been migrated (tracked via a `migration_id` on each imported post), that sermon is updated in place rather than duplicated. This means you can safely re-run a migration without creating duplicate content.
 
 The source plugin does **not** need to be active for migration to work. The wizard reads directly from the database, so it can detect and migrate data even after the original plugin has been deactivated.
 
@@ -33,16 +32,16 @@ The source plugin does **not** need to be active for migration to work. The wiza
 
 Once migration is complete:
 
-1. Review your imported sermons under Messages → All Messages
+1. Review your imported sermons under Series → Messages
 2. Check that series, speakers, and media transferred correctly
-3. Navigate to Messages → Settings to configure your preferences
+3. Navigate to Series → Settings to configure your preferences
 4. Go to Settings → Permalinks and click "Save Changes" to update URL structure
 
 ## Manual Setup (No Migration)
 
 If you're starting fresh without existing sermon data, proceed directly to configuration:
 
-1. **Configure Labels** — Navigate to Messages → Settings to customize content labels (rename "Messages" to "Sermons," etc.)
+1. **Configure Labels** — Navigate to Series → Settings to customize content labels (rename "Messages" to "Sermons," etc.)
 2. **Set Up Post Types** — Enable Series, Speakers, and optionally Service Types in the Advanced settings tab
 3. **Configure Display** — Set your preferred template and layout options in the Messages settings tab
 4. **Set Up Podcast** — Configure podcast feed settings in the Podcast tab (if needed)
@@ -54,32 +53,32 @@ See the [Installation Guide](installation.md) for detailed first-steps instructi
 
 After migration or fresh setup, review these key settings areas:
 
-### Messages → Settings → Main Tab
+### Series → Settings → Main Tab
 - Primary color for the media player
 - Site logo and default thumbnail
-- Button labels (Play Video / Play Audio)
+- **Play Video Button** and **Play Audio Button** (under **Labels**)
 
-### Messages → Settings → Messages Tab
+### Series → Settings → Messages Tab
 - Content labels (singular/plural names and URL slug for sermons)
 - Single page template (default or vertical layout)
 - Image aspect ratio for sermon thumbnails
 - Info items and meta items to display
 - Transcript visibility
 
-### Messages → Settings → Series Tab
+### Series → Settings → Series Tab
 - Content labels (singular/plural names and URL slug for series)
 - Sort order and items per page
 
-### Messages → Settings → Speakers Tab
+### Series → Settings → Speakers Tab
 - Content labels (singular/plural names for speakers)
-- Enable/disable speaker permalink pages
+- **Enable Speaker permalinks**
 
-### Messages → Settings → Advanced Tab
+### Series → Settings → Advanced Tab
 - Enable/disable Series, Speakers, and Service Types
 - Filter display options (sorting, count thresholds)
 - Debug mode for troubleshooting
 
-### Messages → Settings → Podcast Tab
-- Podcast title, description, author
-- Cover artwork
-- iTunes categories
+### Series → Settings → Podcast Tab
+- Podcast title, description, and **Provider**
+- Cover artwork (**Image**)
+- **Category**
