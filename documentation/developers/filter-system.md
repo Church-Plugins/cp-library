@@ -59,7 +59,7 @@ When viewing sermons within a specific service type:
 
 To customize how filters appear and function:
 
-1. Navigate to Messages → Settings → Advanced
+1. Navigate to Series → Settings → Advanced
 2. Find the "Filter Settings" section
 3. Options include:
    - **Filter Sorting** - Sort filters by sermon count or alphabetically

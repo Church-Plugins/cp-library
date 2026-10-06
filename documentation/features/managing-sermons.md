@@ -13,8 +13,8 @@ To add a new sermon to your library:
 3. Add the sermon content in the main editor
 4. Configure sermon details in the metadata panels:
    - **Message Audio** and **Message Video** in **Message Details**
-   - **Assign Speaker** in the **Speaker** box
-   - **Add to Series** in the **Series** box
+   - **Select a Speaker** in the **Speaker** box
+   - **Select a Series** in the **Series** box
    - Scripture references in the **Scripture** box
    - Topics in the **Topics** box and seasons in the **Seasons** box
 5. Click "Publish" to make the sermon available on your site
@@ -33,7 +33,7 @@ Speakers help visitors find sermons by a specific pastor or guest speaker:
 4. Upload a profile image
 5. Click "Publish"
 
-When adding sermons, select the speaker with **Assign Speaker** in the **Speaker** box.
+When adding sermons, choose the speaker in the **Speaker** box (**Select a Speaker**).
 
 ### Topics
 
@@ -83,7 +83,7 @@ Sermon series allow you to group related sermons together:
 4. Upload a featured image
 5. Click "Publish"
 
-When adding sermons, assign them with **Add to Series** in the **Series** box.
+When adding sermons, choose the series in the **Series** box (**Select a Series**).
 
 ## Uploading Sermon Audio & Video
 

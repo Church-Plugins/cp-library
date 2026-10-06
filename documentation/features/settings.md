@@ -61,7 +61,7 @@ If variations are enabled (see Advanced tab):
 
 ### Filter Settings
 
-- **Disable Filters** — Selectively disable individual filter facets (topics, scripture, seasons, speakers, service types, year) on the sermon archive page
+- **Disable Filters** — Selectively disable individual filter facets (topics, scripture, seasons, speakers, year) on the sermon archive page
 
 ### Podcast Exclusion
 
@@ -121,7 +121,7 @@ Enable or disable content types and features:
 - **Enable Series** — Toggle the Series post type (enabled by default)
 - **Enable Speakers** — Toggle the Speakers post type (enabled by default)
 - **Enable Service Types** — Toggle Service Types for multi-service churches (disabled by default)
-- **Enable Podcast Feed** — Toggle the podcast feed (disabled by default). When enabled, a Podcast settings tab appears.
+- **Enable Podcast Feed** — Toggle the podcast feed. When enabled, a Podcast settings tab appears.
 - **Enable Sermon Audio Integration** — Enable or disable the Sermon Audio connection (disabled by default). When enabled, a **Sermon Audio** settings tab appears.
 
 ### Settings

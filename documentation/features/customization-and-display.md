@@ -239,13 +239,9 @@ Navigate to Series → Settings → Advanced to adjust:
 - **Count Threshold** (default 3)
 - **Show Counts**: **Show** or **Hide**
 
-### Customizing Filter Labels
+### Filter button labels
 
-Customize the labels used in filters:
-1. Navigate to Series → Settings
-2. Open the Messages, Series, or Speakers tab
-3. Change **Singular Label** and **Plural Label**
-4. These labels are what the filters show
+Filter buttons show **Speaker**, **Service Type**, **Year**, **Topic**, **Scripture**, and **Season**. **Singular Label** and **Plural Label** do not change that text.
 
 ### Filter Contexts
 

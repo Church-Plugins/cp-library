@@ -28,7 +28,7 @@ To assign a service type to a sermon:
 
 1. Edit a sermon
 2. Find the **Service Type** box in the sidebar
-3. Select one service type (**Assign Service Type** allows one selection)
+3. In the **Service Type** box, choose one service type (**Select a Service Type**)
 4. Update the sermon
 
 ## Service Type Archives

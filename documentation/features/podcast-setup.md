@@ -13,8 +13,6 @@ A sermon podcast is an audio feed of your church's messages that people can subs
 
 ## Enabling the Podcast Feed
 
-The podcast feed is **disabled by default**. To enable it:
-
 1. Navigate to Series → Settings → Advanced
 2. Find "Enable Podcast Feed" and select **Enable**
 3. Click "Save Changes"
