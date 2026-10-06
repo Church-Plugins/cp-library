@@ -119,6 +119,9 @@
 }
 
 #cpl_scripture_metabox {
+	// Keep the scripture popups above other editor controls whose stacking order was raised by a theme or plugin (kept below the WordPress admin bar, which is 99999).
+	position: relative;
+	z-index: 5000;
 
 	.widefat {
 		width: 95%;
