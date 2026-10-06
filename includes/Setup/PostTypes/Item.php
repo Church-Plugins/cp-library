@@ -325,10 +325,12 @@ class Item extends PostType  {
 					$output = sprintf(
 						'<button type="button" class="button cpl-import-transcript-btn" data-url="%s">%s</button>',
 						add_query_arg(
-							[
-								'cp_action' => 'cpl_import_transcript',
-								'post_id'   => $post_id,
-							],
+							\CP_Library\Admin\Request::with_nonce(
+								[
+									'cp_action' => 'cpl_import_transcript',
+									'post_id'   => $post_id,
+								]
+							),
 							admin_url( 'admin-post.php' )
 						),
 						\ChurchPlugins\Helpers::get_icon( 'youtube' ) . esc_html__( 'Import', 'cp-library' )

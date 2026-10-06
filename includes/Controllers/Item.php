@@ -742,6 +742,7 @@ class Item extends Controller{
 					'full'  => get_the_post_thumbnail_url( $item->get_variation_source_origin_id(), 'full' )
 				],
 				'id'             => $item->get_variation_source_origin_id(),
+				'logId'          => $item->model->id,
 				'audio'          => $item->get_audio(),
 				'video'          => $item->get_video(),
 				'speakers'       => $item->get_speakers(),

@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
-import { cplLog, forceUnmuteVimeoPlayer } from "../utils/helpers";
+import { cplItemLogId, cplLog, forceUnmuteVimeoPlayer } from "../utils/helpers";
 import VideoPlayer from 'react-player'
 import Cookies from 'js-cookie'
 
@@ -43,7 +43,7 @@ function PlayerWrapper({ item, mode, userInteractionToken, forceAudio = false, .
   // Safari can grant it playback permission before the first click, which means
   // this can render with no item. Nothing item-scoped (analytics, watch history)
   // applies until one is selected.
-  const itemId     = item?.id ?? null
+  const itemId     = cplItemLogId( item )
   const compoundId = `${mode}-${itemId}`
   // Same identity, readable from handlers registered once (beforeunload).
   const latest = useRef({ itemId, mode, compoundId })

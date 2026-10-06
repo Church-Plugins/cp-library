@@ -96,7 +96,7 @@ class Items extends WP_REST_Controller {
 			),
 		) );
 
-		register_rest_route( $this->namespace, $this->rest_base . '/(?P<item_id>[^.\/]+)/log/', array(
+		register_rest_route( $this->namespace, $this->rest_base . '/(?P<item_id>\d+)/log/', array(
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'log' ),
@@ -119,7 +119,9 @@ class Items extends WP_REST_Controller {
 
 		try {
 
-			if ( ! $item_id = $request->get_param( 'item_id' ) ) {
+			$item_id = $this->request_item_id( $request );
+
+			if ( ! $item_id ) {
 				throw new Exception( 'No item_id specified' );
 			}
 
@@ -127,16 +129,34 @@ class Items extends WP_REST_Controller {
 				throw new Exception( 'No action specified' );
 			}
 
-			if( $action === 'view_duration' ) {
+			if ( ! is_string( $action ) || ! in_array( $action, $this->get_log_actions(), true ) ) {
+				throw new Exception( 'Invalid action specified' );
+			}
+
+			// Throws when this id is not an item row.
+			$item = ItemModel::get_instance( $item_id );
+
+			if ( 'publish' !== get_post_status( $item->origin_id ) ) {
+				throw new Exception( 'Could not find object.' );
+			}
+
+			if ( ! $this->get_log_ip() || $this->is_log_rate_limited( $item_id ) ) {
+				return;
+			}
+
+			if ( 'view_duration' === $action ) {
 				$this->handle_view_duration( $request );
 				return;
 			}
+
+			$payload = $request->get_param( 'payload' );
+			$payload = is_scalar( $payload ) && '' !== $payload ? substr( sanitize_text_field( (string) $payload ), 0, 255 ) : null;
 
 			$data = Log::insert( [
 				'object_type' => 'item',
 				'object_id' => $item_id,
 				'action' =>  $action,
-				'data' => $request->get_param( 'payload' )
+				'data' => $payload
 			] );
 
 		} catch ( \ChurchPlugins\Exception $e ) {
@@ -149,6 +169,196 @@ class Items extends WP_REST_Controller {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Item id from the route, ignoring any value sent in the body.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return int
+	 */
+	public function request_item_id( $request ) {
+		$params = $request->get_url_params();
+		$raw    = ( is_array( $params ) && isset( $params['item_id'] ) ) ? $params['item_id'] : null;
+
+		return $this->log_item_id( $raw );
+	}
+
+	/**
+	 * Whole-number item id from the log route, or 0 when the value is not one.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param mixed $raw Route parameter.
+	 * @return int
+	 */
+	public function log_item_id( $raw ) {
+		if ( is_int( $raw ) ) {
+			return absint( $raw );
+		}
+
+		if ( is_string( $raw ) && preg_match( '/^[0-9]+$/', $raw ) ) {
+			return absint( $raw );
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Actions the player sends to the log route.
+	 *
+	 * Only `view_duration` includes a structured payload. The others are sent
+	 * with no payload. `cpl_log_actions` can add an action a site already sends.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return array
+	 */
+	public function get_log_actions() {
+		$actions = [
+			'play',
+			'persistent',
+			'fullscreen',
+			'download',
+			'share_facebook',
+			'share_twitter',
+			'video_widget_play',
+			'audio_widget_play',
+			'video_view',
+			'audio_view',
+			'engaged_video_view',
+			'engaged_audio_view',
+			'view_duration',
+		];
+
+		return apply_filters( 'cpl_log_actions', $actions );
+	}
+
+	/**
+	 * Address used for the rate limit.
+	 *
+	 * Always `REMOTE_ADDR`, checked with `FILTER_VALIDATE_IP`.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return string|false
+	 */
+	public function get_log_ip() {
+		$remote = isset( $_SERVER['REMOTE_ADDR'] ) ? $_SERVER['REMOTE_ADDR'] : '';
+		$ip     = filter_var( $remote, FILTER_VALIDATE_IP );
+
+		return $ip ? $ip : false;
+	}
+
+	/**
+	 * Viewer address for a view-duration row.
+	 *
+	 * The first comma-separated X-Forwarded-For entry is used when it is an
+	 * IP. Otherwise `REMOTE_ADDR` is used, when that is an IP. The row stores
+	 * `wp_hash()` of this address, or null when there is no valid address.
+	 * The rate limit does not use this value.
+	 *
+	 * Filter `cpl_log_viewer_ip` to replace the address.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @return string|false
+	 */
+	public function get_log_viewer_ip( $request ) {
+		$header = $request->get_header( 'x-forwarded-for' );
+		$ip     = false;
+
+		if ( is_string( $header ) && '' !== $header ) {
+			$first = trim( explode( ',', $header )[0] );
+			$ip    = filter_var( $first, FILTER_VALIDATE_IP );
+		}
+
+		if ( ! $ip ) {
+			$ip = $this->get_log_ip();
+		}
+
+		$ip = apply_filters( 'cpl_log_viewer_ip', $ip, $request );
+
+		return ( is_string( $ip ) && filter_var( $ip, FILTER_VALIDATE_IP ) ) ? $ip : false;
+	}
+
+	/**
+	 * Whether this address has already logged this item too many times this minute.
+	 *
+	 * The window is `floor( time() / 60 )`, so the count resets on the minute
+	 * rather than after a quiet period. The player does not poll. A view total
+	 * is sent when the sermon changes or the page unloads, and the other
+	 * actions fire once per play. The default of 10000 writes per minute for
+	 * one address and one item stays above that, including where many visitors
+	 * share `REMOTE_ADDR`.
+	 *
+	 * Filter `cpl_log_rate_limit` to change the per-minute maximum. Filter
+	 * `cpl_log_rate_limit_key` to change the bucket key.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int      $item_id Item id.
+	 * @param int|null $now     Unix time, or null for the current time.
+	 * @return bool True when the write should be skipped.
+	 */
+	public function is_log_rate_limited( $item_id, $now = null ) {
+		if ( ! $ip = $this->get_log_ip() ) {
+			return true;
+		}
+
+		$limit  = absint( apply_filters( 'cpl_log_rate_limit', 10000, $item_id ) );
+		$now    = null === $now ? time() : (int) $now;
+		$window = (int) floor( $now / MINUTE_IN_SECONDS );
+		$ttl    = max( 1, MINUTE_IN_SECONDS - ( $now % MINUTE_IN_SECONDS ) );
+		$key    = $this->log_rate_limit_key( $ip, $item_id, $window );
+
+		if ( function_exists( 'wp_using_ext_object_cache' ) && wp_using_ext_object_cache() ) {
+			$group = 'cpl_log_rate';
+			$count = wp_cache_incr( $key, 1, $group );
+
+			if ( false === $count ) {
+				wp_cache_add( $key, 0, $group, $ttl );
+				$count = wp_cache_incr( $key, 1, $group );
+			}
+
+			return absint( $count ) > $limit;
+		}
+
+		$count = get_transient( $key );
+
+		if ( false === $count ) {
+			set_transient( $key, 1, $ttl );
+			return 1 > $limit;
+		}
+
+		$count = absint( $count );
+
+		if ( $count >= $limit ) {
+			return true;
+		}
+
+		set_transient( $key, $count + 1, $ttl );
+
+		return false;
+	}
+
+	/**
+	 * Bucket key for one address, item, and minute.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param string $ip      Validated `REMOTE_ADDR`.
+	 * @param int    $item_id Item id.
+	 * @param int    $window  `floor( time() / 60 )`.
+	 * @return string
+	 */
+	public function log_rate_limit_key( $ip, $item_id, $window ) {
+		$key = 'cpl_log_' . md5( $ip . '|' . $item_id . '|' . $window );
+
+		return apply_filters( 'cpl_log_rate_limit_key', $key, $item_id, $ip, $window );
 	}
 
 	/**
@@ -535,8 +745,11 @@ class Items extends WP_REST_Controller {
 
 		$action  = $request->get_param( 'action' );
 		$payload = $request->get_param( 'payload' );
-		$item_id = $request->get_param( 'item_id' );
-		$user_ip = $request->get_header('x-forwarded-for');
+		$item_id = $this->request_item_id( $request );
+
+		if ( ! $item_id ) {
+			return;
+		}
 
 		if( ! (
 			is_array( $payload ) &&
@@ -548,39 +761,95 @@ class Items extends WP_REST_Controller {
 			throw new Exception( "Invalid payload", 400 );
 		}
 
-		global $wpdb;
+		$viewer = $this->get_log_viewer_ip( $request );
 
-		$query = $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}cp_log WHERE object_id = '$item_id' AND JSON_EXTRACT(data, '$.user_ip') = '$user_ip'" );
+		Log::insert( [
+			'object_type' => 'item',
+			'object_id'   => $item_id,
+			'action'      => $action,
+			'data'        => wp_json_encode( array(
+				// 32 hex characters from wp_hash(); the data column is longtext.
+				'user_ip'        => $viewer ? wp_hash( $viewer ) : null,
+				'watch_duration' => $this->capped_watch_seconds( $item_id, $payload ),
+			) ),
+		] );
+	}
 
-		$data = $wpdb->get_row( $query );
+	/**
+	 * Watched seconds limited by the client total and the server cap.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int   $item_id Item id.
+	 * @param array $payload `watchedSeconds` and `maxDuration`.
+	 * @return int
+	 */
+	public function capped_watch_seconds( $item_id, $payload ) {
+		$watched = absint( $payload['watchedSeconds'] );
+		$client  = absint( $payload['maxDuration'] );
 
-		if( ! $data ) {
-			Log::insert( [
-				'object_type' => 'item',
-				'object_id' => $item_id,
-				'action' =>  $action,
-				'data' => json_encode(array(
-					'user_ip' => $user_ip,
-					'watch_duration' => absint( $payload['watchedSeconds'] )
-				))
-			] );
-			return;
+		return min( $watched, $client, $this->log_watch_cap( $item_id ) );
+	}
+
+	/**
+	 * Upper bound for one view-duration row.
+	 *
+	 * Uses the item's audio length when that length is known. Otherwise uses
+	 * six hours, filterable with `cpl_log_max_watch_seconds`.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int $item_id Item id.
+	 * @return int
+	 */
+	public function log_watch_cap( $item_id ) {
+		$seconds = $this->known_media_seconds( $item_id );
+
+		if ( $seconds < 1 ) {
+			$fallback = 6 * ( defined( 'HOUR_IN_SECONDS' ) ? HOUR_IN_SECONDS : 3600 );
+			$seconds  = absint( apply_filters( 'cpl_log_max_watch_seconds', $fallback, $item_id ) );
 		}
 
-		$log = Log::get_instance( $data->id );
+		return max( 1, $seconds );
+	}
 
-		$data = json_decode( $data->data );
+	/**
+	 * Audio length in seconds, or 0 when the item has no known length.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @param int $item_id Item id.
+	 * @return int
+	 */
+	public function known_media_seconds( $item_id ) {
+		if ( ! function_exists( 'get_post_meta' ) || ! function_exists( 'wp_get_attachment_metadata' ) ) {
+			return 0;
+		}
 
-		$total_watch_duration = absint( $payload ) + absint( $data->watch_duration );
-		$total_watch_duration = min( $total_watch_duration, $payload['maxDuration'] );
+		try {
+			$item = ItemModel::get_instance( $item_id );
+		} catch ( \ChurchPlugins\Exception $e ) {
+			return 0;
+		}
 
-		$log->update([
-			'data' => json_encode(array(
-				'user_ip' => $user_ip,
-				'watch_duration' => $total_watch_duration
-			))
-		]);
+		$origin_id = isset( $item->origin_id ) ? absint( $item->origin_id ) : 0;
 
-		return;
+		if ( ! $origin_id ) {
+			return 0;
+		}
+
+		$attachment_id = absint( get_post_meta( $origin_id, 'audio_url_id', true ) );
+
+		if ( ! $attachment_id ) {
+			return 0;
+		}
+
+		$meta = wp_get_attachment_metadata( $attachment_id );
+
+		if ( empty( $meta['length_formatted'] ) || ! is_string( $meta['length_formatted'] ) ) {
+			return 0;
+		}
+
+		return absint( ItemModel::duration_to_seconds( $meta['length_formatted'] ) );
 	}
 }

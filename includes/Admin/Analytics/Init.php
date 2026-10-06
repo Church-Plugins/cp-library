@@ -222,7 +222,7 @@ class Init {
     $sql = "SELECT COUNT(DISTINCT item.id)
             FROM {$wpdb->prefix}cpl_item as item";
 
-    $total_rows = $wpdb->get_var( $wpdb->prepare( $sql ) );
+    $total_rows = $wpdb->get_var( $sql );
 
     $total_pages = ceil( $total_rows / self::$per_page );
 

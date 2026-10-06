@@ -555,44 +555,54 @@ class SeriesFilterManager extends AbstractFilterManager {
             $where_in = ' AND post_id IN (' . implode( ',', array_map( 'absint', $args['post__in'] ) ) . ')';
         }
 
-        // Get counts of series in each range
+        // Get counts of series in each range.
+        // $where_in is appended after prepare(). It is built from whole-number
+        // ids, and keeping it outside the placeholder string leaves any "%" in
+        // that clause unchanged.
         $range_counts = [];
 
         // 1-3 range
         $sql = $wpdb->prepare(
             "SELECT COUNT(*) FROM {$wpdb->postmeta}
-            WHERE meta_key = '_cpl_sermon_count'
-            AND meta_value BETWEEN 1 AND 3
-            {$where_in}",
+            WHERE meta_key = %s
+            AND meta_value BETWEEN %d AND %d",
+            '_cpl_sermon_count',
+            1,
+            3
         );
-        $range_counts['1-3'] = $wpdb->get_var( $sql );
+        $range_counts['1-3'] = $wpdb->get_var( $sql . $where_in );
 
         // 4-6 range
         $sql = $wpdb->prepare(
             "SELECT COUNT(*) FROM {$wpdb->postmeta}
-            WHERE meta_key = '_cpl_sermon_count'
-            AND meta_value BETWEEN 4 AND 6
-            {$where_in}",
+            WHERE meta_key = %s
+            AND meta_value BETWEEN %d AND %d",
+            '_cpl_sermon_count',
+            4,
+            6
         );
-        $range_counts['4-6'] = $wpdb->get_var( $sql );
+        $range_counts['4-6'] = $wpdb->get_var( $sql . $where_in );
 
         // 7-12 range
         $sql = $wpdb->prepare(
             "SELECT COUNT(*) FROM {$wpdb->postmeta}
-            WHERE meta_key = '_cpl_sermon_count'
-            AND meta_value BETWEEN 7 AND 12
-            {$where_in}",
+            WHERE meta_key = %s
+            AND meta_value BETWEEN %d AND %d",
+            '_cpl_sermon_count',
+            7,
+            12
         );
-        $range_counts['7-12'] = $wpdb->get_var( $sql );
+        $range_counts['7-12'] = $wpdb->get_var( $sql . $where_in );
 
         // 13+ range
         $sql = $wpdb->prepare(
             "SELECT COUNT(*) FROM {$wpdb->postmeta}
-            WHERE meta_key = '_cpl_sermon_count'
-            AND meta_value >= 13
-            {$where_in}",
+            WHERE meta_key = %s
+            AND meta_value >= %d",
+            '_cpl_sermon_count',
+            13
         );
-        $range_counts['13+'] = $wpdb->get_var( $sql );
+        $range_counts['13+'] = $wpdb->get_var( $sql . $where_in );
 
         // Format results
         $options = [];

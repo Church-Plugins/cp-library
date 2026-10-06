@@ -141,11 +141,42 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	abstract public function process_cpl_data( $item, $cpl_data, $post_type );
 
 	/**
-	 * Updates when the cron runs
+	 * Whether this call is the adapter's scheduled event.
+	 *
+	 * WP-Cron runs due events after WordPress has loaded, and `wp cron event run`
+	 * fires the hook from the command. Neither of those is inside `init`. The
+	 * request dispatcher runs on `init`, and a request can name this cron hook
+	 * as its action. Those calls are not scheduled runs.
+	 *
+	 * @since 1.7.1
+	 *
+	 * @return bool
+	 */
+	protected function is_scheduled_run() {
+		if ( ! doing_action( $this->_cron_hook ) || doing_action( 'init' ) ) {
+			return false;
+		}
+
+		$request_action = '';
+		if ( isset( $_REQUEST['cp_action'] ) && is_string( $_REQUEST['cp_action'] ) ) {
+			$request_action = sanitize_key( wp_unslash( $_REQUEST['cp_action'] ) );
+		}
+
+		return $this->_cron_hook !== $request_action;
+	}
+
+	/**
+	 * Updates when the cron runs.
+	 *
+	 * The settings button sends a nonce. The scheduled event does not.
 	 *
 	 * @return void
 	 */
 	public function update_check() {
+		if ( ! $this->is_scheduled_run() && ! \CP_Library\Admin\Request::allowed( 'manage_options', 'cpl_adapter_pull_' . $this->type ) ) {
+			return;
+		}
+
 		$is_json_request = isset( $_SERVER['CONTENT_TYPE'] ) && strpos( $_SERVER['CONTENT_TYPE'], 'application/json' ) === 0; // phpcs:ignore
 
 		$amount = absint( $this->get_setting( 'check_count', 50 ) );
@@ -170,6 +201,10 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * @return void
 	 */
 	public function do_full_import() {
+		if ( ! \CP_Library\Admin\Request::allowed( 'manage_options', 'cpl_adapter_import_' . $this->type ) ) {
+			return;
+		}
+
 		$this->delete_all(); // delete any queued items
 
 		$this->dispatcher->set_batch( 1 )->dispatch(); // start the fetching process

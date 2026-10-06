@@ -53,7 +53,11 @@ class YouTube {
 	 * Handle transcript import request
 	 */
 	public function handle_import_request() {
-		$post_id = absint( $_REQUEST['post_id'] ?? 0 );
+		$post_id = isset( $_REQUEST['post_id'] ) ? absint( wp_unslash( $_REQUEST['post_id'] ) ) : 0;
+
+		if ( ! \CP_Library\Admin\Request::allowed( 'edit_post', 'cpl_import_transcript', $post_id ) ) {
+			return;
+		}
 
 		if ( ! $post_id ) {
 			wp_send_json_error( 'No post ID provided' );
@@ -288,10 +292,10 @@ class YouTube {
 			})
 		</script>
 
-		<?php $import_url = add_query_arg( [
-			'cp_action'  => 'cpl_import_transcript',
-			'post_id' => $object_id,
-		], admin_url( 'admin-post.php' ) ); ?>
+		<?php $import_url = add_query_arg( \CP_Library\Admin\Request::with_nonce( [
+			'cp_action' => 'cpl_import_transcript',
+			'post_id'   => $object_id,
+		] ), admin_url( 'admin-post.php' ) ); ?>
 
 		<button type="button" id="cpl-import-transcript" data-url="<?php echo esc_url( $import_url ); ?>" class="button cpl-import-transcript-btn"><?php echo \ChurchPlugins\Helpers::get_icon( 'youtube' ) . esc_html__( 'Import from YouTube', 'cp-library' ); ?></button>
 
