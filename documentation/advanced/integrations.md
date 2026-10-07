@@ -20,7 +20,7 @@ CP Sermon Library supports embedding videos from:
 - **Vimeo** — Paste a Vimeo URL into the **Message Video** field
 - **Other services** — Paste the embed HTML from the service into **Message Video**. A pasted URL plays only if the built-in player supports that service.
 
-The **Message Video** field name follows your singular label.
+The **Message Video** field name follows your singular label. The **Message Details** box title does too.
 
 To embed external video:
 
@@ -119,7 +119,7 @@ CP Sermon Library is designed to work with other Church Plugins products:
 
 ### CP Locations
 
-This requires the CP Locations plugin with its location taxonomy turned on.
+This requires the CP Locations plugin with its location taxonomy enabled. Define `CP_LOCATIONS_TAX_ENABLED` as true in `wp-config.php`, or return true from the `cploc_location_taxonomy_enabled` filter.
 
 Link sermons to specific campuses or locations:
 
@@ -129,7 +129,7 @@ Link sermons to specific campuses or locations:
 
 ### CP Resources
 
-This requires the CP Resources plugin, with sermons chosen as a resource object type in CP Resources settings.
+This requires the CP Resources plugin, with sermons selected in the **Objects with Resources** setting in CP Resources settings.
 
 Associate downloadable resources with sermons:
 
@@ -205,7 +205,7 @@ If you use SearchWP, CP Sermon Library integrates with it to enhance admin searc
 CP Sermon Library is translation-ready:
 
 - Text domain: `cp-library`
-- The plugin does not ship translation files. It loads `cp-library-{locale}.mo` from `wp-content/languages/cp-library/`.
+- The plugin does not ship translation files. It loads `cp-library-{locale}.mo` from `wp-content/languages/cp-library/`. WordPress also loads `wp-content/languages/plugins/cp-library-{locale}.mo`.
 - Compatible with translation management plugins
 
 ### Multi-Language Sermons
