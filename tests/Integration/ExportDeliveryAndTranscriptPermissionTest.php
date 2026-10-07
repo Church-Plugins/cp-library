@@ -4,7 +4,8 @@
  * only for a user who can edit that sermon.
  *
  * An earlier export wrote a dated CSV into the uploads directory and left it
- * there. Transcript import ran for whatever post id it was given.
+ * there. Transcript import ran for whatever post id it was given, including
+ * the list-table bulk action, which calls import_transcript() directly.
  *
  * The tools forms include the request-action nonce field (`cp_action_nonce`,
  * action `cp_action_{name}`). A ChurchPlugins copy that does not read the
@@ -63,6 +64,7 @@ class QuietExport extends Tools {
  * @covers \CP_Library\Admin\Tools::export_data
  * @covers \CP_Library\Admin\Tools::request_action_nonce_field
  * @covers \CP_Library\Integrations\YouTube::handle_import_request
+ * @covers \CP_Library\Integrations\YouTube::import_transcript
  */
 class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 
@@ -193,6 +195,35 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 
 		$this->assertFalse( $response['success'] );
 		$this->assertFalse( $this->http_called );
+	}
+
+	public function test_import_transcript_is_refused_when_the_user_cannot_edit_the_post() {
+		$owner_id = self::factory()->user->create( array( 'role' => 'author' ) );
+		wp_set_current_user( $owner_id );
+		$post_id = $this->sermon_with_video();
+
+		$other_id = self::factory()->user->create( array( 'role' => 'author' ) );
+		wp_set_current_user( $other_id );
+		$this->assertFalse( current_user_can( 'edit_post', $post_id ) );
+
+		$result = YouTube::get_instance()->import_transcript( $post_id );
+
+		$this->assertWPError( $result );
+		$this->assertSame( 'forbidden', $result->get_error_code() );
+		$this->assertFalse( $this->http_called );
+		$this->assertSame( '', (string) get_post_meta( $post_id, 'transcript', true ) );
+	}
+
+	public function test_import_transcript_runs_when_the_user_can_edit_the_post() {
+		$owner_id = self::factory()->user->create( array( 'role' => 'author' ) );
+		wp_set_current_user( $owner_id );
+		$post_id = $this->sermon_with_video();
+		$this->assertTrue( current_user_can( 'edit_post', $post_id ) );
+
+		$result = YouTube::get_instance()->import_transcript( $post_id );
+
+		$this->assertTrue( $result );
+		$this->assertStringContainsString( 'Hello there', (string) get_post_meta( $post_id, 'transcript', true ) );
 	}
 
 	public function test_transcript_import_runs_when_the_user_can_edit_the_post() {

@@ -84,6 +84,10 @@ class YouTube {
 			return new \WP_Error( 'no_post_id', 'No post ID provided' );
 		}
 
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return new \WP_Error( 'forbidden', __( 'You cannot edit this item.', 'cp-library' ) );
+		}
+
 		try {
 			$item = new Item( $post_id );
 		} catch ( \ChurchPlugins\Exception $e ) {
