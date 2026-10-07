@@ -166,6 +166,7 @@ class Tools
 						enctype="multipart/form-data">
 						<div class="notice-wrap"></div>
 						<?php wp_nonce_field( 'cp_ajax_import_file', 'cp_ajax_import_file' ); ?>
+						<?php $this->request_action_nonce_field( 'cp_upload_import_file' ); ?>
 						<p>
 							<input name="file" id="cp-payments-import-file" type="file" />
 						</p>
@@ -468,6 +469,7 @@ class Tools
 			<div class="inside">
 				<?php $action_url = esc_url(add_query_arg('cp_action', 'cp_export_items', admin_url())); ?>
 				<form id="cpl_export_data" action="<?php echo $action_url ?>" method="POST" enctype="multipart/form-data">
+					<?php $this->request_action_nonce_field( 'cp_export_items' ); ?>
 					<button class="button button-primary"><?php echo sprintf(esc_html__('Export all %s as CSV', 'cp-library'), cp_library()->setup->post_types->item->plural_label); ?></button>
 				</form>
 			</div>
@@ -691,71 +693,168 @@ class Tools
 	}
 
 	/**
-	 * Exports all Sermons when form is submitted
+	 * Hidden field for a ChurchPlugins request action.
+	 *
+	 * Uses the helper on this site's ChurchPlugins copy when it provides one.
+	 * Otherwise prints the same field that helper prints: nonce action
+	 * `cp_action_{$action}` and input name `cp_action_nonce`. A copy that does
+	 * not read the field leaves it unused, and the form still posts as before.
+	 *
+	 * @param string $action Request action name.
+	 * @return void
+	 */
+	protected function request_action_nonce_field( $action ) {
+		if ( method_exists( \ChurchPlugins\Admin\_Init::class, 'request_action_nonce_field' ) ) {
+			echo \ChurchPlugins\Admin\_Init::request_action_nonce_field( $action ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Helper returns wp_nonce_field() markup.
+			return;
+		}
+
+		wp_nonce_field( 'cp_action_' . sanitize_key( $action ), 'cp_action_nonce' );
+	}
+
+	/**
+	 * Download name for the sermon CSV.
+	 *
+	 * @return string
+	 */
+	protected function export_filename() {
+		return sanitize_file_name(
+			sprintf(
+				'%s_%s.csv',
+				cp_library()->setup->post_types->item->plural_label,
+				date( 'Y-m-d' )
+			)
+		);
+	}
+
+	/**
+	 * Exports all sermons when the tools form is submitted.
+	 *
+	 * The CSV is streamed to the browser. Nothing is written under the uploads
+	 * directory. A dated file left by an earlier export is removed.
+	 *
 	 * @return void
 	 * @since 1.0.4
-	 * @author Jonathan Roley
 	 */
-	public function export_data()
-	{
-		$return_value = [];
+	public function export_data() {
+		$filename = $this->export_filename();
+		$this->remove_public_export_files( $filename );
 
 		$args = [
-			'post_type'      =>  CP_LIBRARY_UPREFIX . "_item",
-			'post_status'    => array('publish', 'private', 'draft', 'future'),
+			'post_type'      => CP_LIBRARY_UPREFIX . '_item',
+			'post_status'    => array( 'publish', 'private', 'draft', 'future' ),
 			'posts_per_page' => -1,
 		];
 
-		$posts = new \WP_Query($args);
+		$posts = new \WP_Query( $args );
 
-		$upload_dir = wp_upload_dir();
-		// WP-CLI may need to find a fallback directory
-		if (empty($upload_dir) || empty($upload_dir['path'])) {
-			$upload_dir['path'] = dirname(__FILE__);
-		} else {
-			wp_mkdir_p($upload_dir['path']);
-		}
+		$this->send_export_headers( $filename );
 
-		$filename = sanitize_file_name(sprintf("%s_" . date('Y-m-d') . ".csv", cp_library()->setup->post_types->item->plural_label));
-		$file_path = trailingslashit($upload_dir['path']) . $filename;
-		$file_handle = fopen($file_path, 'w');
-
+		$file_handle  = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 		$header_added = false;
 
-		foreach ($posts->posts as $post) {
-
+		foreach ( $posts->posts as $post ) {
 			try {
-				$item = new Item($post->ID);
+				$item = new Item( $post->ID );
 
-				$data = $item->get_api_data();
+				$data           = $item->get_api_data();
+				$formatted_data = $this->get_formatted_item( $data );
 
-				$formatted_data = $this->get_formatted_item($data);
-
-				if (! $header_added) {
-					fputcsv($file_handle, array_keys($formatted_data));
+				if ( ! $header_added ) {
+					fputcsv( $file_handle, array_keys( $formatted_data ) );
 					$header_added = true;
 				}
 
-				fputcsv($file_handle, $formatted_data);
-			} catch (\Exception $e) {
-				$return_value['error'] = $e->getMessage();
-				error_log($e->getMessage());
+				fputcsv( $file_handle, $formatted_data );
+			} catch ( \Exception $e ) {
+				error_log( $e->getMessage() );
 			}
 		}
 
-		fclose($file_handle);
+		fclose( $file_handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 
-		header("Content-Type: text/csv; charset=utf-8");
-		header("Content-disposition: attachment; filename=\"" . $filename . "\"");
+		$this->end_export();
+	}
 
-		if (isset($headers['content-length'])) {
-			header("Content-Length: " . $headers['content-length']);
+	/**
+	 * Send the download headers for the sermon CSV.
+	 *
+	 * @param string $filename Download filename.
+	 * @return void
+	 */
+	protected function send_export_headers( $filename ) {
+		if ( PHP_SESSION_ACTIVE === session_status() ) {
+			session_write_close();
 		}
 
-		session_write_close();
-		readfile(rawurldecode($file_path));
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+	}
 
-		exit();
+	/**
+	 * End the request after the CSV has been sent.
+	 *
+	 * @return void
+	 */
+	protected function end_export() {
+		exit;
+	}
+
+	/**
+	 * Remove dated export files from the public paths an earlier export used.
+	 *
+	 * Earlier exports wrote `{label}_{date}.csv` into the current uploads
+	 * folder, or next to this file when that folder was unavailable.
+	 *
+	 * @param string $filename Download name for this export.
+	 * @return void
+	 */
+	protected function remove_public_export_files( $filename ) {
+		$filename = sanitize_file_name( $filename );
+
+		if ( '' === $filename ) {
+			return;
+		}
+
+		$stem = preg_replace( '/\d{4}-\d{2}-\d{2}\.csv$/', '', $filename );
+		if ( ! is_string( $stem ) || '' === $stem ) {
+			$stem = $filename;
+		}
+
+		$directories = array( dirname( __FILE__ ) );
+		$upload_dir  = wp_upload_dir();
+
+		if ( empty( $upload_dir['error'] ) ) {
+			if ( ! empty( $upload_dir['path'] ) ) {
+				$directories[] = $upload_dir['path'];
+			}
+
+			if ( ! empty( $upload_dir['basedir'] ) ) {
+				$directories[] = $upload_dir['basedir'];
+				$months        = glob( trailingslashit( $upload_dir['basedir'] ) . '[0-9][0-9][0-9][0-9]/[0-9][0-9]', GLOB_ONLYDIR );
+
+				if ( is_array( $months ) ) {
+					$directories = array_merge( $directories, $months );
+				}
+			}
+		}
+
+		$pattern = '/^' . preg_quote( $stem, '/' ) . '\d{4}-\d{2}-\d{2}\.csv$/';
+
+		foreach ( array_unique( $directories ) as $directory ) {
+			$matches = glob( trailingslashit( $directory ) . '*.csv' );
+
+			if ( ! is_array( $matches ) ) {
+				continue;
+			}
+
+			foreach ( $matches as $path ) {
+				if ( is_file( $path ) && preg_match( $pattern, basename( $path ) ) ) {
+					wp_delete_file( $path );
+				}
+			}
+		}
 	}
 
 	/**

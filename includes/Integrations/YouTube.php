@@ -57,6 +57,12 @@ class YouTube {
 
 		if ( ! $post_id ) {
 			wp_send_json_error( 'No post ID provided' );
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			wp_send_json_error( __( 'You cannot edit this item.', 'cp-library' ) );
+			return;
 		}
 
 		$result = $this->import_transcript( $post_id );
