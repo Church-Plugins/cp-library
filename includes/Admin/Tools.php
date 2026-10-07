@@ -788,8 +788,23 @@ class Tools
 		}
 
 		nocache_headers();
-		header( 'Content-Type: text/csv; charset=utf-8' );
-		header( 'Content-Disposition: attachment; filename="' . $filename . '"' );
+
+		foreach ( $this->export_download_headers( $filename ) as $line ) {
+			header( $line );
+		}
+	}
+
+	/**
+	 * Download headers for the sermon CSV.
+	 *
+	 * @param string $filename Download filename.
+	 * @return string[]
+	 */
+	protected function export_download_headers( $filename ) {
+		return array(
+			'Content-Type: text/csv; charset=utf-8',
+			'Content-Disposition: attachment; filename="' . $filename . '"',
+		);
 	}
 
 	/**

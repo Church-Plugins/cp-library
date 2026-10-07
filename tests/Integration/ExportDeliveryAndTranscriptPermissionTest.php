@@ -33,12 +33,25 @@ class JsonEnded extends \RuntimeException {}
  */
 class QuietExport extends Tools {
 
+	/**
+	 * @var string[]
+	 */
+	public $download_headers = array();
+
 	public function __construct() {
 		// Skip hook registration.
 	}
 
 	public function filename() {
 		return $this->export_filename();
+	}
+
+	protected function send_export_headers( $filename ) {
+		$this->download_headers = $this->export_download_headers( $filename );
+
+		if ( ! headers_sent() ) {
+			parent::send_export_headers( $filename );
+		}
 	}
 
 	protected function end_export() {
@@ -118,10 +131,9 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 		$this->assertSame( array(), $this->csv_files( $upload['path'] ) );
 		$this->assertSame( array(), $this->csv_files( $upload['basedir'] ) );
 
-		$headers = strtolower( implode( "\n", headers_list() ) );
-		$this->assertStringContainsString( 'content-type: text/csv', $headers );
-		$this->assertStringContainsString( 'content-disposition: attachment;', $headers );
-		$this->assertStringContainsString( 'filename="' . strtolower( $filename ) . '"', $headers );
+		$headers = implode( "\n", $tools->download_headers );
+		$this->assertStringContainsString( 'Content-Type: text/csv; charset=utf-8', $headers );
+		$this->assertStringContainsString( 'Content-Disposition: attachment; filename="' . $filename . '"', $headers );
 	}
 
 	public function test_tools_forms_include_the_request_action_nonce() {
