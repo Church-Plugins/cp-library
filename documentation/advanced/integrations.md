@@ -20,7 +20,7 @@ CP Sermon Library supports embedding videos from:
 - **Vimeo** — Paste a Vimeo URL into the **Message Video** field
 - **Facebook, Dailymotion, and Wistia** — Paste the video URL into the **Message Video** field
 - **Direct video** — Paste a direct `.mp4` URL into the **Message Video** field
-- **Embed code** — Paste a service's embed HTML into **Message Video**. Pasted embed code is shown as-is. A pasted URL plays only for the sources above.
+- **Embed code** — Paste a service's embed HTML into **Message Video**. Embed code is filtered for safety. Only iframe, script, div and p tags are kept, and some iframe attributes (such as `allow`) are removed. Other URLs play only if the built-in player supports them (for example Twitch, Streamable, Vidyard, SoundCloud). For anything else, paste the embed code.
 
 The **Message Video** field name follows your singular label. The **Message Details** box title does too.
 
@@ -184,7 +184,7 @@ If you use WP All Import for bulk data imports, CP Sermon Library automatically 
 
 A blank `cpl_speaker`, `cpl_series`, or `cpl_service_type` value is skipped and leaves existing assignments in place.
 
-No configuration is required — the integration activates automatically when WP All Import is installed and active.
+No configuration is required — the integration activates automatically when WP All Import Pro is installed and active.
 
 ## SearchWP Integration
 
@@ -204,7 +204,7 @@ If you use SearchWP, CP Sermon Library integrates with it to enhance admin searc
 CP Sermon Library is translation-ready:
 
 - Text domain: `cp-library`
-- The plugin does not ship translation files. Translations load from both `wp-content/languages/plugins/cp-library-{locale}.mo` and `wp-content/languages/cp-library/cp-library-{locale}.mo`. When both files exist, the copy in `wp-content/languages/plugins/` is used.
+- The plugin does not ship translation files. Put `cp-library-{locale}.mo` in `wp-content/languages/plugins/`.
 - Compatible with translation management plugins
 
 ### Multi-Language Sermons
@@ -215,7 +215,7 @@ For sites with multiple languages:
 2. Create translations for sermon posts, series, and speaker profiles
 3. The plugin will display the appropriate language content based on the visitor's language preference
 
-Translations created with WPML or Polylang do not copy the sermon's video, audio, series, or speaker, because CP Sermon Library stores them in its own tables. Set them again on each translation.
+By default, translations don't carry over video, audio, series or speaker. Check each translation. Polylang meta sync or WPML copy settings may carry some over, because saving a sermon in the admin also writes those values to post meta.
 
 ## Caching Compatibility
 
