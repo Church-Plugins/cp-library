@@ -57,6 +57,12 @@ class YouTube {
 
 		if ( ! $post_id ) {
 			wp_send_json_error( 'No post ID provided' );
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			wp_send_json_error( __( 'You cannot edit this item.', 'cp-library' ) );
+			return;
 		}
 
 		$result = $this->import_transcript( $post_id );
@@ -76,6 +82,10 @@ class YouTube {
 	public function import_transcript( $post_id ) {
 		if ( ! $post_id ) {
 			return new \WP_Error( 'no_post_id', 'No post ID provided' );
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return new \WP_Error( 'forbidden', __( 'You cannot edit this item.', 'cp-library' ) );
 		}
 
 		try {
