@@ -16,9 +16,11 @@ For audio and video files, you can use:
 
 CP Sermon Library supports embedding videos from:
 
-- **YouTube** — Paste a YouTube URL into the **Message Video** field in the **Message Details** box
+- **YouTube** — Paste a YouTube watch, Shorts, or youtu.be URL into the **Message Video** field in the **Message Details** box
 - **Vimeo** — Paste a Vimeo URL into the **Message Video** field
-- **Other services** — Paste the embed HTML from the service into **Message Video**. A pasted URL plays only if the built-in player supports that service.
+- **Facebook, Dailymotion, and Wistia** — Paste the video URL into the **Message Video** field
+- **Direct video** — Paste a direct `.mp4` URL into the **Message Video** field
+- **Embed code** — Paste a service's embed HTML into **Message Video**. Pasted embed code is shown as-is. A pasted URL plays only for the sources above.
 
 The **Message Video** field name follows your singular label. The **Message Details** box title does too.
 
@@ -89,7 +91,7 @@ Paste any YouTube URL into a sermon's **Message Video** field for automatic embe
 
 ### Transcript Import
 
-YouTube videos with auto-generated captions can have their transcripts imported:
+Videos with captions, either uploaded or auto-generated, can have their transcripts imported. The first caption track YouTube lists is used, in any language. Use a youtube.com/watch?v= or youtu.be link:
 
 1. Add the YouTube video URL to the sermon's **Message Video** field
 2. In the sermon list, an "Import" button appears in the Transcript column for sermons with YouTube videos
@@ -124,8 +126,7 @@ This requires the CP Locations plugin with its location taxonomy enabled. Define
 Link sermons to specific campuses or locations:
 
 - Assign sermons to locations
-- Filter sermons by location on the frontend
-- Display location-specific sermon archives
+- Location-specific sermon archives, such as `/north-campus/messages/`, once the CP Locations location taxonomy is enabled (see above). The sermon filters do not include a location dropdown.
 
 ### CP Resources
 
@@ -203,7 +204,7 @@ If you use SearchWP, CP Sermon Library integrates with it to enhance admin searc
 CP Sermon Library is translation-ready:
 
 - Text domain: `cp-library`
-- The plugin does not ship translation files. It loads `cp-library-{locale}.mo` from `wp-content/languages/cp-library/`. WordPress also loads `wp-content/languages/plugins/cp-library-{locale}.mo`.
+- The plugin does not ship translation files. Translations load from both `wp-content/languages/plugins/cp-library-{locale}.mo` and `wp-content/languages/cp-library/cp-library-{locale}.mo`. When both files exist, the copy in `wp-content/languages/plugins/` is used.
 - Compatible with translation management plugins
 
 ### Multi-Language Sermons
@@ -214,21 +215,17 @@ For sites with multiple languages:
 2. Create translations for sermon posts, series, and speaker profiles
 3. The plugin will display the appropriate language content based on the visitor's language preference
 
+Translations created with WPML or Polylang do not copy the sermon's video, audio, series, or speaker, because CP Sermon Library stores them in its own tables. Set them again on each translation.
+
 ## Caching Compatibility
 
 ### General Cache Plugin Compatibility
 
-CP Sermon Library works with popular caching plugins. If you experience issues:
+CP Sermon Library works with popular caching plugins. Plays are recorded on cached pages, so analytics pages and endpoints do not need to be excluded from cache.
 
-1. Exclude dynamic pages (analytics tracking, podcast feeds) from caching
-2. Clear cache after changing sermon settings
-3. Ensure REST API endpoints are not cached
+1. Clear the cache after changing sermon settings
+2. If you want podcast feeds always fresh, exclude the feed URL from caching
 
 ### LiteSpeed Cache
 
-If using LiteSpeed Cache:
-
-1. Navigate to LiteSpeed Cache → Settings → Excludes
-2. Add sermon-related dynamic URLs to the exclusion list
-3. Exclude podcast feed URLs from caching
-4. Clear the cache after configuration changes
+LiteSpeed Cache works without extra settings: plays are recorded by a REST request that is never cached. If you want podcast feeds always fresh, add the feed URL (e.g. `/feed/podcast`) under **LiteSpeed Cache > Cache > Excludes > Do Not Cache URIs**, and purge the cache after changing sermon settings.
