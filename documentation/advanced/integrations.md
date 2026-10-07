@@ -16,14 +16,16 @@ For audio and video files, you can use:
 
 CP Sermon Library supports embedding videos from:
 
-- **YouTube** — Paste a YouTube URL into the Video URL field
-- **Vimeo** — Paste a Vimeo URL into the Video URL field
-- **Other oEmbed services** — Any oEmbed-compatible service works
+- **YouTube** — Paste a YouTube URL into the **Message Video** field in the **Message Details** box
+- **Vimeo** — Paste a Vimeo URL into the **Message Video** field
+- **Other services** — Paste the embed HTML from the service into **Message Video**. A pasted URL plays only if the built-in player supports that service.
+
+The **Message Video** field name follows your singular label.
 
 To embed external video:
 
 1. Edit a sermon
-2. In the Video URL field, paste the link to your video
+2. In the **Message Video** field, paste the link to your video
 3. The video will automatically embed on the sermon page
 
 ## SermonAudio Integration
@@ -44,7 +46,7 @@ Once enabled, a "Sermon Audio" settings tab appears:
 1. Navigate to Messages → Settings → Sermon Audio tab
 2. Enter your API Key (found at sermonaudio.com/members)
 3. Enter your Broadcaster ID
-4. Optionally set an "Ignore Before" date to skip older sermons
+4. Optionally set an **Ignore Messages Before** date to skip older sermons. The label follows your plural label.
 5. Optionally set a **Minimum Audio Duration** (in seconds) to skip short clips, intros, and announcements
 6. Click "Start full import" to begin importing sermons
 7. Configure the Update Check interval for automatic syncing of new content
@@ -83,13 +85,13 @@ Notes:
 
 ### Video Embedding
 
-Paste any YouTube URL into a sermon's Video URL field for automatic embedding.
+Paste any YouTube URL into a sermon's **Message Video** field for automatic embedding.
 
 ### Transcript Import
 
 YouTube videos with auto-generated captions can have their transcripts imported:
 
-1. Add the YouTube video URL to the sermon's Video URL field
+1. Add the YouTube video URL to the sermon's **Message Video** field
 2. In the sermon list, an "Import" button appears in the Transcript column for sermons with YouTube videos
 3. Click "Import" to pull captions from YouTube
 4. Review and edit the imported transcript
@@ -115,7 +117,9 @@ Once configured, OpenAI can be used to format and clean up sermon transcripts.
 
 CP Sermon Library is designed to work with other Church Plugins products:
 
-### CP Church Locations
+### CP Locations
+
+This requires the CP Locations plugin with its location taxonomy turned on.
 
 Link sermons to specific campuses or locations:
 
@@ -124,6 +128,8 @@ Link sermons to specific campuses or locations:
 - Display location-specific sermon archives
 
 ### CP Resources
+
+This requires the CP Resources plugin, with sermons chosen as a resource object type in CP Resources settings.
 
 Associate downloadable resources with sermons:
 
@@ -162,16 +168,20 @@ CP Sermon Library provides a **CP Sermons Template** module for each supported p
 1. Install and activate both plugins
 2. Create a sermon template in Messages → Templates
 3. Edit a page with Elementor
-4. Find the "CP Sermons Template" widget in the widget panel (under the "CP Library" category)
+4. Find the "CP Sermons Template" widget in the widget panel (under the **CP Sermons** category)
 5. Select your template from the dropdown
 
 ## WP All Import Integration
 
 If you use WP All Import for bulk data imports, CP Sermon Library automatically integrates with it. When WP All Import writes post meta for sermon posts, the plugin intercepts the following fields and routes them through its own data layer:
 
+- `cpl_speaker` — Assigns the sermon to a speaker
+- `cpl_series` — Assigns the sermon to a series
 - `cpl_service_type` — Assigns the sermon to a service type
 - `audio_url` — Sets the sermon's audio file URL
 - `video_url` — Sets the sermon's video file URL
+
+A blank `cpl_speaker`, `cpl_series`, or `cpl_service_type` value is skipped and leaves existing assignments in place.
 
 No configuration is required — the integration activates automatically when WP All Import is installed and active.
 
@@ -193,7 +203,7 @@ If you use SearchWP, CP Sermon Library integrates with it to enhance admin searc
 CP Sermon Library is translation-ready:
 
 - Text domain: `cp-library`
-- Language files in the `/languages` directory
+- The plugin does not ship translation files. It loads `cp-library-{locale}.mo` from `wp-content/languages/cp-library/`.
 - Compatible with translation management plugins
 
 ### Multi-Language Sermons
