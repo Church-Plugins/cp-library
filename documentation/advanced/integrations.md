@@ -137,8 +137,6 @@ Associate downloadable resources with sermons:
 - Display resources alongside sermon content
 - Organize resources by series or topic
 
-CP Sermons adds two options to its CSV import: **Import columns with the "resource_" prefix as resources** and **Attempt to import resource files to the Media Library**.
-
 ### The Events Calendar
 
 CP Sermon Library includes compatibility with The Events Calendar. If both plugins use the "Series" slug, CP Sermon Library automatically changes The Events Calendar's series slug to "event-series" to prevent URL conflicts.
