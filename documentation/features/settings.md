@@ -142,7 +142,7 @@ Enable or disable content types and features:
 
 ### Debug Mode
 
-- **Enable Debug** — Turn on verbose debugging output in Messages → Tools → Log
+- **Enable Debug** — Turn on verbose debugging output at **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item) > **Log**
 
 ## Sermon Audio Tab (`cpl_sermon_audio_adapter_options`)
 

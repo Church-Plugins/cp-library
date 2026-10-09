@@ -1,6 +1,6 @@
 # Tools: Import, Export & Maintenance
 
-The Tools page provides utilities for importing and exporting sermon data in bulk, merging duplicate speakers, and viewing debug logs. Access it by navigating to **Messages > Tools** in your WordPress admin.
+The Tools page provides utilities for importing and exporting sermon data in bulk, merging duplicate speakers, and viewing debug logs. Access it by navigating to **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item) in your WordPress admin.
 
 > **Note:** The default admin menu label is **Messages**. If you've renamed your content label (e.g., to "Sermons"), your menu will reflect that name instead.
 
@@ -28,7 +28,7 @@ Key formatting rules:
 
 ### Running an Import
 
-1. Navigate to **Messages > Tools**. The Import/Export tab is selected by default.
+1. Navigate to **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item). The Import/Export tab is selected by default.
 2. Click **Choose File** and select your CSV file.
 3. Click **Import CSV** to upload the file.
 4. A column mapping table appears. For each sermon field, select the corresponding CSV column from the dropdown. A data preview shows the first row of data for each mapped column.
@@ -74,7 +74,7 @@ The importer checks for existing sermons before creating new ones. A sermon is c
 
 The export feature downloads all of your sermon data as a single CSV file.
 
-1. Navigate to **Messages > Tools**.
+1. Navigate to **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item).
 2. Under the **Export data** section, click **Export all Messages as CSV**.
 3. A CSV file is generated and downloaded to your computer.
 
@@ -94,7 +94,7 @@ Two one-click tools help you recover from the visibility-related issues addresse
 
 Sites that used the "Show in Main List" checkbox under version 1.6.0 or 1.6.1 should run this once after upgrading. It converts the legacy meta key into the new format so any sermons you previously hid by hand stay hidden under the new "Exclude from Main List" convention.
 
-1. Navigate to **Messages > Tools**.
+1. Navigate to **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item).
 2. Under **Migrate Visibility Settings**, the page reports how many sermons still hold legacy meta. If the count is zero, no action is needed.
 3. Click **Migrate Visibility Settings** to start. A status indicator shows progress.
 4. Sermons that were previously hidden continue to be hidden. Sermons that were previously visible carry no extra meta — they simply default to visible.
@@ -105,7 +105,7 @@ The taxonomy term that controls visibility is left untouched by this tool — on
 
 Use this tool if imported sermons are missing from the main sermon list. It clears the hidden flag from every sermon at once.
 
-1. Navigate to **Messages > Tools**.
+1. Navigate to **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item).
 2. Under **Reset All Sermons to Visible**, click **Reset Sermon Visibility**.
 3. Confirm the prompt. A status indicator shows progress.
 4. Sermons whose Series or Service Type is excluded from the main list remain hidden — that inheritance is re-applied automatically.
@@ -128,7 +128,7 @@ When you merge duplicate speakers, the tool:
 
 To run the merge:
 
-1. Navigate to **Messages > Tools**.
+1. Navigate to **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item).
 2. Under **Merge Duplicate Speakers**, click **Merge Speakers**.
 3. A confirmation message appears when the merge is complete.
 

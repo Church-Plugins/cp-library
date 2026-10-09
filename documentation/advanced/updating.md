@@ -1,96 +1,39 @@
 # Updating & Versioning
 
-## How Updates Affect Sermon Archives
+## Version requirements
 
-When updating CP Sermon Library, it's important to understand how updates might affect your existing sermon content.
+CP Sermon Library **1.7.0** requires:
 
-### Data Preservation
+- WordPress **6.0** or newer
+- PHP **7.4** or newer
 
-Updates to CP Sermon Library are designed to preserve your existing data:
+It is tested up to WordPress **6.9**.
 
-- Sermon content and metadata remain intact
-- Series, speakers, and taxonomy relationships are preserved
-- Custom settings and configurations are maintained
+Those are the plugin header values **Requires at least**, **Requires PHP**, and **Tested up to**. `readme.txt` lists the same three values.
 
-### Database Changes
+## Changelog
 
-Some updates may include database structure changes:
+Release notes are published on the [CP Sermons changelog](https://churchplugins.com/wordpress-plugins/cp-sermons/changelog/). The same notes are in the plugin's `readme.txt` file, under Changelog.
 
-- The plugin will automatically update database tables when needed
-- No manual intervention is typically required
-- A backup is recommended before updating, especially for major version changes
+Read the notes for the version you are installing. The 1.7.0 notes say a one-time cleanup runs on upgrade. It removes orphaned Speaker, Series, and Service Type associations and collapses duplicated ones. The 1.6.2 notes add **Tools → Migrate Visibility Settings** and **Tools → Reset All Sermons to Visible**. The 1.6.2 upgrade notice in `readme.txt` says to open **Tools** after updating to migrate legacy visibility settings or reset sermons that were hidden. **Tools** is under **Series** by default, or under **Messages** if you changed **Set default menu item**.
 
-### Template Compatibility
+## What an upgrade runs
 
-If you have customized templates:
+When the version stored in WordPress does not match the installed plugin version, the plugin saves the new version and runs its upgrade routines.
 
-- Updates might introduce new template files or modify existing ones
-- Custom templates in your theme directory will not be overwritten
-- You may need to update custom templates to maintain compatibility with new features
+The routine that ships with this release deletes orphaned Speaker, Series, and Service Type association rows and collapses duplicate Speaker, Series, and Service Type rows, keeping the oldest row. It does not delete sermon posts. An earlier routine, for upgrades from before 1.5.0, sets **Set default menu item** to Series when that setting has no saved value.
 
-## Tracking Plugin Version Changes
+## Theme overrides
 
-Stay informed about updates and changes to CP Sermon Library:
+Any template file can be overridden by copying it to `cp-library/` in your theme, keeping the same path it has under the plugin's `templates/` directory. For example, `templates/default-template.php` is overridden by `cp-library/default-template.php` in your theme.
 
-### Changelog Access
+## Grouping sermons
 
-You can access the changelog in several ways:
+Group sermons with the content types the plugin registers:
 
-1. On the plugin update screen in WordPress
-2. In the plugin's readme.txt file
-3. On the official Church Plugins website
+- **Series** groups sermons. It is its own content type (the default label is Series).
+- **Seasons** and **Topics** are taxonomies you can assign to a sermon.
 
-### Version Numbering
+## Exporting sermons
 
-CP Sermon Library follows semantic versioning (X.Y.Z):
-
-- **X** (Major version): Significant changes that might affect compatibility
-- **Y** (Minor version): New features with backward compatibility
-- **Z** (Patch version): Bug fixes and small improvements
-
-### Update Notifications
-
-WordPress will notify you when updates are available:
-
-1. Look for update notifications in your WordPress dashboard
-2. Check the Plugins page for available updates
-3. Keep your license active to receive update notifications
-
-## Best Practices for Maintaining Historical Records
-
-To ensure your sermon library remains stable and well-maintained:
-
-### Regular Backups
-
-Implement a backup strategy for your sermon content:
-
-1. Use a WordPress backup plugin to schedule regular backups
-2. Export sermon data periodically using the built-in export tool
-3. Store backups in multiple locations
-
-### Before Updating
-
-Take these precautions before updating:
-
-1. Create a complete backup of your WordPress site
-2. Test updates on a staging site if possible
-3. Check the changelog for any breaking changes
-4. Deactivate potentially conflicting plugins temporarily
-
-### After Updating
-
-After updating the plugin:
-
-1. Verify that sermons display correctly
-2. Check that sermon playback works properly
-3. Confirm that podcast feeds are functioning
-4. Test any customizations to ensure they still work
-
-### Long-term Archiving
-
-For churches with large sermon libraries spanning many years:
-
-1. Consider organizing older sermons into yearly archives
-2. Use tags to mark significant historical events or sermon series
-3. Periodically verify that older media files are still accessible
-4. Consider offline backups for irreplaceable sermon content
+**Tools** (under **Series** by default, or **Messages** if you changed Set default menu item) > **Import/Export** can export every sermon as CSV. With the default plural label, the button reads **Export all Messages as CSV**.

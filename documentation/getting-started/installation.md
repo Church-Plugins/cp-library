@@ -109,14 +109,10 @@ CP Sermon Library provides Gutenberg blocks for displaying sermons:
 
 As an alternative to blocks, you can use shortcodes:
 
-- `[cpl_item_list]` — Display a list of sermons
 - `[cpl_item]` or `[cp-sermon]` — Display a single sermon
 - `[cp-sermons]` — Display the sermons archive
 
-Shortcode attributes are passed to the frontend app for rendering. Example:
-```
-[cpl_item_list count="6" columns="3"]
-```
+For a sermon list, use the **CP Sermons Sermons/Series** block.
 
 ### Using Archive Pages
 
@@ -138,7 +134,7 @@ If the plugin detects data from Sermon Manager, Series Engine, or Church Content
 
 Import sermons from a spreadsheet:
 
-1. Navigate to Messages → Tools
+1. Navigate to **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item)
 2. Use the Import/Export tab
 3. Download the sample CSV template
 4. Fill in your sermon data following the template format

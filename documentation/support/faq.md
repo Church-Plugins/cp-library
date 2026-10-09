@@ -11,7 +11,7 @@ Navigate to Messages → Add New. Enter the sermon title, add audio/video media,
 You have three options:
 
 1. **Gutenberg Blocks** — Use the sermon blocks in the WordPress block editor
-2. **Shortcodes** — Use `[cpl_item_list]` or `[cp-sermons]` shortcodes
+2. **Shortcodes** — Use `[cpl_item id="123"]` to show one sermon, or `[cp-sermons]` to show the sermon archive
 3. **Archive Pages** — Link to the automatic archive at `/messages/` (or your custom slug)
 
 See [Customization & Display](../features/customization-and-display.md) for details.
@@ -33,11 +33,11 @@ Yes. Navigate to Messages → Settings and select the tab for the content type y
 
 ### Can I use YouTube or Vimeo videos instead of uploading files?
 
-Yes. When editing a sermon, paste the YouTube or Vimeo URL into the Video URL field. The video will automatically embed on the sermon page.
+Yes. When editing a sermon, paste the YouTube or Vimeo URL into the **Message Video** field. The video will automatically embed on the sermon page.
 
 ### How does the persistent player work?
 
-The persistent player is a site-wide audio bar that continues playing as visitors navigate your site. It is always active — no configuration needed. See [Persistent Player](../features/persistent-player.md).
+The persistent player is a site-wide audio and video bar that continues playing as visitors navigate your site. It is always active — no configuration needed. See [Persistent Player](../features/persistent-player.md).
 
 ### Why won't my audio/video play?
 
@@ -50,11 +50,11 @@ The persistent player is a site-wide audio bar that continues playing as visitor
 
 ### How do I set up a podcast feed?
 
-First, enable the podcast feed in Messages → Settings → Advanced → Enable Podcast Feed. Then navigate to Messages → Settings → Podcast tab and fill in the required fields (title, description, author, cover artwork). Your feed URL is `https://yoursite.com/messages/feed/podcast`. See [Podcast Setup](../features/podcast-setup.md).
+Your feed is `/messages/feed/podcast/` (or your slug) and works as soon as the plugin is active; don't use `/feed/podcast/`, which gives an empty feed. To set the title and artwork, set **Enable Podcast Feed** to **Enable** on the Advanced tab, then fill in the **Podcast** tab (at least Title and Image). Until a Title is saved, the feed is named after the newest sermon. See [Podcast Setup](../features/podcast-setup.md).
 
 ### Can I create separate podcast feeds for different series or speakers?
 
-Yes. Append `/feed/podcast/` to any series or speaker archive URL. For example: `yoursite.com/series/series-slug/feed/podcast/`
+Yes. Each series and speaker also has its own podcast feed: add `/feed/podcast/` to the series or speaker page URL, for example `https://yoursite.com/series/series-slug/feed/podcast/` or `https://yoursite.com/speakers/speaker-slug/feed/podcast/`. (The `series` and `speakers` parts follow your Series slug and Speaker label settings.)
 
 ### Why is my podcast feed returning a 404 error?
 
@@ -62,7 +62,7 @@ Go to Settings → Permalinks and click "Save Changes" to flush rewrite rules. T
 
 ### How do I exclude a sermon from the podcast?
 
-Edit the sermon, find the "Exclude from Podcast" checkbox in the Message Details metabox, and check it.
+Edit the sermon, find the "Exclude from Podcast" checkbox in the Message Details metabox, and check it. This checkbox appears when **Enable Podcast Feed** is turned on.
 
 ## Organization & Filtering
 
@@ -80,17 +80,17 @@ Service Types categorize sermons by the service they were delivered in (Sunday M
 
 ### What are Sermon Variations?
 
-Variations let you create different versions of the same sermon for multiple services, each with their own speaker, media, and timestamps. See [Sermon Variations](../features/sermon-variations.md).
+Variations let you create different versions of the same sermon for multiple services, each with their own speaker, media, and timestamps. See [Sermon Variations](../features/sermon-variations.md). Variations need **Enable Service Types** turned on (**Advanced** tab), **Enable Variations (beta)** turned on (**Messages** tab), and a **Variation Source** picked (**Messages** tab).
 
 ### Can I hide certain sermons from the main list?
 
-Yes. Edit the sermon and check **Exclude from Main List** in the Visibility Settings panel. The sermon remains accessible via direct links and archives.
+Yes. Edit the sermon and check **Exclude from Main List** in the Visibility Settings panel. The sermon still appears on its own page and in taxonomy archives.
 
 ## Display & Templates
 
 ### How do I change the sermon layout?
 
-Navigate to Messages → Settings → Messages tab and choose the Single Page Template option. You can also set the layout per-instance when using blocks or shortcodes.
+Navigate to Messages → Settings → Messages tab and choose the Single Page Template option. To change the layout of one sermon list, use the **CP Sermons Sermons/Series** block: choose **List view** or **Grid view** in the block toolbar (Grid adds **Columns**), and choose which detail blocks appear inside the **Sermon Template**. For a single sermon, the `[cpl_item id="123" template="alt"]` shortcode shows the alternate layout; `player="false"` or `details="false"` hide the player or the sermon details.
 
 ### Can I customize sermon templates in my theme?
 
@@ -116,7 +116,7 @@ Updates appear in your WordPress dashboard. Create a backup before updating. See
 
 ### Where can I find debug information?
 
-Enable debug mode in Messages → Settings → Advanced. This enables detailed logging accessible at Messages → Tools → Log.
+Enable debug mode in Messages → Settings → Advanced. This enables detailed logging accessible at **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item) > **Log**.
 
 ## Still Need Help?
 
