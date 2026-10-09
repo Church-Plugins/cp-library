@@ -119,20 +119,73 @@ class Item extends Controller{
 	/**
 	 * Whether a single item may be returned to the current user.
 	 *
-	 * Public items that are not password-protected are readable. Otherwise the
-	 * current user must be able to read or edit the item.
+	 * When a password is required, only a user who can edit the item may read
+	 * it. A verified password cookie makes post_password_required() false, and
+	 * the item is then treated like any other item. Plain read access is not
+	 * enough while a password is still required. A child item also requires
+	 * the same result for its parent.
 	 *
 	 * @param int $post_id Item post ID.
 	 * @return bool
 	 */
 	public static function item_is_readable( $post_id ) {
-		$post_id = absint( $post_id );
+		return self::passes_with_ancestors( $post_id, 'post_is_readable', array() );
+	}
 
-		if ( ! $post_id ) {
-			return false;
+	/**
+	 * Whether an item can be shown on the front end.
+	 *
+	 * When a password is required, only a user who can edit the item may see
+	 * it. A verified password cookie makes post_password_required() false.
+	 * Other items are shown when they are publicly viewable, or when the
+	 * current user can edit them. A child item also requires the same result
+	 * for its parent.
+	 *
+	 * @param int $post_id Item post ID.
+	 * @return bool
+	 */
+	public static function item_is_viewable_or_editable( $post_id ) {
+		return self::passes_with_ancestors( $post_id, 'post_is_viewable_or_editable', array() );
+	}
+
+	/**
+	 * Posts to keep when a list includes child items.
+	 *
+	 * Child items stay only when the child and its parent pass the front-end check.
+	 *
+	 * @param array $posts Query results.
+	 * @return array
+	 */
+	public static function visible_child_list_posts( $posts ) {
+		if ( ! is_array( $posts ) ) {
+			return array();
 		}
 
-		if ( self::item_is_public( $post_id ) ) {
+		$visible = array();
+
+		foreach ( $posts as $post ) {
+			if ( is_object( $post ) && ! empty( $post->post_parent ) && ! self::item_is_viewable_or_editable( $post->ID ) ) {
+				continue;
+			}
+
+			$visible[] = $post;
+		}
+
+		return $visible;
+	}
+
+	/**
+	 * Whether this post itself may be read, before the parent is considered.
+	 *
+	 * @param int $post_id Item post ID.
+	 * @return bool
+	 */
+	protected static function post_is_readable( $post_id ) {
+		if ( post_password_required( $post_id ) ) {
+			return (bool) current_user_can( 'edit_post', $post_id );
+		}
+
+		if ( is_post_publicly_viewable( $post_id ) ) {
 			return true;
 		}
 
@@ -140,22 +193,17 @@ class Item extends Controller{
 	}
 
 	/**
-	 * Whether an item can be shown on the front end.
-	 *
-	 * Public items that are not password-protected are shown. A user who can
-	 * edit the item can still see it.
+	 * Whether this post itself may be shown, before the parent is considered.
 	 *
 	 * @param int $post_id Item post ID.
 	 * @return bool
 	 */
-	public static function item_is_viewable_or_editable( $post_id ) {
-		$post_id = absint( $post_id );
-
-		if ( ! $post_id ) {
-			return false;
+	protected static function post_is_viewable_or_editable( $post_id ) {
+		if ( post_password_required( $post_id ) ) {
+			return (bool) current_user_can( 'edit_post', $post_id );
 		}
 
-		if ( self::item_is_public( $post_id ) ) {
+		if ( is_post_publicly_viewable( $post_id ) ) {
 			return true;
 		}
 
@@ -163,13 +211,36 @@ class Item extends Controller{
 	}
 
 	/**
-	 * Whether the item is publicly viewable and not password-protected.
+	 * Require the post and each ancestor to pass the same check.
 	 *
-	 * @param int $post_id Item post ID.
+	 * @param int    $post_id Item post ID.
+	 * @param string $check   post_is_readable or post_is_viewable_or_editable.
+	 * @param array  $seen    Post IDs already accepted in this walk.
 	 * @return bool
 	 */
-	protected static function item_is_public( $post_id ) {
-		return is_post_publicly_viewable( $post_id ) && ! post_password_required( $post_id );
+	protected static function passes_with_ancestors( $post_id, $check, array $seen ) {
+		$post_id = absint( $post_id );
+
+		if ( ! $post_id ) {
+			return false;
+		}
+
+		if ( isset( $seen[ $post_id ] ) ) {
+			return true;
+		}
+
+		if ( ! self::$check( $post_id ) ) {
+			return false;
+		}
+
+		$seen[ $post_id ] = true;
+		$parent_id        = absint( wp_get_post_parent_id( $post_id ) );
+
+		if ( ! $parent_id || $parent_id === $post_id ) {
+			return true;
+		}
+
+		return self::passes_with_ancestors( $parent_id, $check, $seen );
 	}
 
 	/**

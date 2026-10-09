@@ -59,6 +59,7 @@ class Item extends PostType  {
 		if ( cp_library()->setup->variations->is_enabled() ) {
 			add_filter( 'post_type_link', [ $this, 'variation_link' ], 10, 2 );
 			add_action( 'pre_get_posts', [ $this, 'item_variation_query' ] );
+			add_filter( 'posts_results', [ $this, 'limit_child_visibility' ], 10, 2 );
 		}
 
 		// give other code a chance to hook into sources
@@ -148,11 +149,37 @@ class Item extends PostType  {
 			return;
 		}
 
+		$show_children = apply_filters( 'cpl_item_query_show_children', isset( $_GET['show-child-items'] ), $query );
+
 		// hide child items in queries (both frontend and admin)
-		if ( ! $query->get( 'post_parent' ) && ! apply_filters( 'cpl_item_query_show_children', isset( $_GET['show-child-items'] ), $query ) ) {
+		if ( ! $query->get( 'post_parent' ) && ! $show_children ) {
 			$query->set( 'post_parent', 0 );
+			return;
 		}
 
+		if ( $show_children ) {
+			$query->set( 'cpl_limit_child_visibility', true );
+		}
+
+	}
+
+	/**
+	 * Drop child items whose parent the current user cannot view.
+	 *
+	 * @param array $posts Query results.
+	 * @param mixed $query Current query.
+	 * @return array
+	 */
+	public function limit_child_visibility( $posts, $query ) {
+		if ( ! is_object( $query ) || ! method_exists( $query, 'get' ) || ! $query->get( 'cpl_limit_child_visibility' ) ) {
+			return $posts;
+		}
+
+		if ( $this->post_type != $query->get( 'post_type' ) ) {
+			return $posts;
+		}
+
+		return ItemController::visible_child_list_posts( $posts );
 	}
 
 	/**
@@ -324,13 +351,16 @@ class Item extends PostType  {
 				} else if ( $video_url && ( strpos( $video_url, 'youtube.com' ) !== false || strpos( $video_url, 'youtu.be' ) !== false ) ) {
 					$output = sprintf(
 						'<button type="button" class="button cpl-import-transcript-btn" data-url="%s">%s</button>',
-						add_query_arg(
-							[
-								'cp_action' => 'cpl_import_transcript',
-								'post_id'   => $post_id,
-							],
-							admin_url( 'admin-post.php' )
-						),
+						esc_url( wp_nonce_url(
+							add_query_arg(
+								[
+									'cp_action' => 'cpl_import_transcript',
+									'post_id'   => $post_id,
+								],
+								admin_url( 'admin-post.php' )
+							),
+							'cpl_import_transcript_' . absint( $post_id )
+						) ),
 						\ChurchPlugins\Helpers::get_icon( 'youtube' ) . esc_html__( 'Import', 'cp-library' )
 					);
 				} else {

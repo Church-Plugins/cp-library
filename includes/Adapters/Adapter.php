@@ -10,6 +10,7 @@
 namespace CP_Library\Adapters;
 
 use ChurchPlugins\Exception;
+use CP_Library\Admin\ActionGuard;
 use CP_Library\Admin\Settings;
 use CP_Library\Models\Table;
 use CP_Library\Models\Item;
@@ -85,8 +86,8 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	public function actions() {
 		add_action( $this->_cron_hook, array( $this, 'update_check' ) );
 		add_action( 'init', array( $this, 'schedule_cron' ) );
-		add_action( "cpl_adapter_pull_{$this->type}", array( $this, 'update_check' ) );
-		add_action( "cpl_adapter_import_{$this->type}", array( $this, 'do_full_import' ) );
+		add_action( "cpl_adapter_pull_{$this->type}", array( $this, 'handle_pull_action' ) );
+		add_action( "cpl_adapter_import_{$this->type}", array( $this, 'handle_import_action' ) );
 		add_filter( "cpl_dispatcher_{$this->type}_make_request", [ $this, 'fetch_batch' ], 10, 2 );
 		add_action( "cpl_dispatcher_{$this->type}_done", [ $this, 'fetch_complete' ], 10, 2 );
 	}
@@ -139,6 +140,34 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * @param string $post_type The post type of the item being processed.
 	 */
 	abstract public function process_cpl_data( $item, $cpl_data, $post_type );
+
+	/**
+	 * Run a pull requested from the settings screen.
+	 *
+	 * Scheduled pulls call update_check() directly.
+	 *
+	 * @return void
+	 */
+	public function handle_pull_action() {
+		if ( ! ActionGuard::allows( 'manage_options', 'cpl_adapter_pull_' . $this->type ) ) {
+			wp_send_json_error( array( 'error' => 'Could not update sermons' ) );
+		}
+
+		$this->update_check();
+	}
+
+	/**
+	 * Run a full import requested from the settings screen.
+	 *
+	 * @return void
+	 */
+	public function handle_import_action() {
+		if ( ! ActionGuard::allows( 'manage_options', 'cpl_adapter_import_' . $this->type ) ) {
+			wp_send_json_error( array( 'error' => 'Could not start the import' ) );
+		}
+
+		$this->do_full_import();
+	}
 
 	/**
 	 * Updates when the cron runs

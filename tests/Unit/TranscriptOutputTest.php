@@ -34,6 +34,9 @@ class TranscriptOutputTest extends TestCase {
 	private $can_edit = false;
 
 	/** @var bool */
+	private $can_read = false;
+
+	/** @var bool */
 	private $publicly_viewable = true;
 
 	/** @var bool */
@@ -73,9 +76,25 @@ class TranscriptOutputTest extends TestCase {
 
 		Functions\when( 'current_user_can' )->alias(
 			static function ( $cap, $post_id = 0 ) use ( $test ) {
-				return $test->canEdit() && 'edit_post' === $cap && 15 === (int) $post_id;
+				if ( 15 !== (int) $post_id ) {
+					return false;
+				}
+
+				if ( 'edit_post' === $cap ) {
+					return $test->canEdit();
+				}
+
+				if ( 'read_post' === $cap ) {
+					return $test->canRead();
+				}
+
+				return false;
 			}
 		);
+
+		Functions\when( 'wp_get_post_parent_id' )->justReturn( 0 );
+
+		Functions\when( 'get_the_ID' )->justReturn( 15 );
 
 		Functions\when( 'is_post_publicly_viewable' )->alias(
 			static function ( $post_id ) use ( $test ) {
@@ -105,6 +124,10 @@ class TranscriptOutputTest extends TestCase {
 
 	public function canEdit() {
 		return $this->can_edit;
+	}
+
+	public function canRead() {
+		return $this->can_read;
 	}
 
 	public function publiclyViewable() {
@@ -152,11 +175,49 @@ class TranscriptOutputTest extends TestCase {
 	}
 
 	public function test_transcript_is_absent_when_a_password_is_required() {
-		$this->show_transcript    = 1;
-		$this->can_edit           = false;
-		$this->password_required  = true;
+		$this->show_transcript   = 1;
+		$this->can_edit          = false;
+		$this->can_read          = true;
+		$this->password_required = true;
 
+		$this->assertFalse( Item::item_is_readable( 15 ) );
 		$this->assertSame( '', Item::transcript_for_output( 15 ) );
+		$this->assertSame( '', $this->renderTranscriptTemplate() );
+	}
+
+	public function test_transcript_template_renders_after_the_password_check_passes() {
+		$this->show_transcript   = 1;
+		$this->can_edit          = false;
+		$this->can_read          = true;
+		$this->password_required = false;
+		$this->publicly_viewable = true;
+
+		Functions\when( '_e' )->alias(
+			static function ( $text ) {
+				echo $text;
+			}
+		);
+		Functions\when( 'wp_kses_post' )->returnArg();
+
+		$this->assertTrue( Item::item_is_readable( 15 ) );
+		$this->assertStringContainsString( $this->stored, $this->renderTranscriptTemplate() );
+	}
+
+	public function test_editor_transcript_template_renders_when_a_password_is_required() {
+		$this->show_transcript   = 1;
+		$this->can_edit          = true;
+		$this->password_required = true;
+		$this->publicly_viewable = true;
+
+		Functions\when( '_e' )->alias(
+			static function ( $text ) {
+				echo $text;
+			}
+		);
+		Functions\when( 'wp_kses_post' )->returnArg();
+
+		$this->assertTrue( Item::item_is_readable( 15 ) );
+		$this->assertStringContainsString( $this->stored, $this->renderTranscriptTemplate() );
 	}
 
 	public function test_editor_receives_a_transcript_for_a_non_public_item() {
@@ -190,5 +251,15 @@ class TranscriptOutputTest extends TestCase {
 		};
 
 		return $item;
+	}
+
+	/**
+	 * @return string
+	 */
+	private function renderTranscriptTemplate() {
+		ob_start();
+		include dirname( __DIR__, 2 ) . '/templates/parts/item-single/transcript.php';
+
+		return ob_get_clean();
 	}
 }

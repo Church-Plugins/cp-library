@@ -196,11 +196,14 @@ class Items extends WP_REST_Controller {
 	/**
 	 * True when the item may be read, or a not-found error.
 	 *
-	 * @param mixed $item_id Item ID or slug.
+	 * @param mixed       $item_id Item ID or slug.
+	 * @param object|null|false $post Already resolved post, or false to resolve it.
 	 * @return true|WP_Error
 	 */
-	public function single_item_read_result( $item_id ) {
-		$post = $this->find_requested_post( $item_id );
+	public function single_item_read_result( $item_id, $post = false ) {
+		if ( false === $post ) {
+			$post = $this->find_requested_post( $item_id );
+		}
 
 		if ( ! $post || ! Item::item_is_readable( $post->ID ) ) {
 			return new WP_Error(
@@ -508,7 +511,7 @@ class Items extends WP_REST_Controller {
 	public function get_item( $request ) {
 		$item_id = $request->get_param( 'item_id' );
 		$post    = $this->find_requested_post( $item_id );
-		$access  = $this->single_item_read_result( $item_id );
+		$access  = $this->single_item_read_result( $item_id, $post );
 
 		if ( $access instanceof WP_Error ) {
 			return $access;

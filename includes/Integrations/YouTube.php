@@ -5,6 +5,7 @@
 
 namespace CP_Library\Integrations;
 
+use CP_Library\Admin\ActionGuard;
 use CP_Library\Admin\Settings;
 use CP_Library\Controllers\Item;
 
@@ -59,6 +60,10 @@ class YouTube {
 			wp_send_json_error( 'No post ID provided' );
 		}
 
+		if ( ! ActionGuard::allows( 'edit_post', 'cpl_import_transcript_' . $post_id, $post_id ) ) {
+			wp_send_json_error( 'Could not import the transcript' );
+		}
+
 		$result = $this->import_transcript( $post_id );
 
 		if ( is_wp_error( $result ) ) {
@@ -74,8 +79,14 @@ class YouTube {
 	 * @return true|\WP_Error
 	 */
 	public function import_transcript( $post_id ) {
+		$post_id = absint( $post_id );
+
 		if ( ! $post_id ) {
 			return new \WP_Error( 'no_post_id', 'No post ID provided' );
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return new \WP_Error( 'cannot_edit_item', 'Could not import the transcript' );
 		}
 
 		try {
@@ -288,10 +299,10 @@ class YouTube {
 			})
 		</script>
 
-		<?php $import_url = add_query_arg( [
+		<?php $import_url = wp_nonce_url( add_query_arg( [
 			'cp_action'  => 'cpl_import_transcript',
 			'post_id' => $object_id,
-		], admin_url( 'admin-post.php' ) ); ?>
+		], admin_url( 'admin-post.php' ) ), 'cpl_import_transcript_' . absint( $object_id ) ); ?>
 
 		<button type="button" id="cpl-import-transcript" data-url="<?php echo esc_url( $import_url ); ?>" class="button cpl-import-transcript-btn"><?php echo \ChurchPlugins\Helpers::get_icon( 'youtube' ) . esc_html__( 'Import from YouTube', 'cp-library' ); ?></button>
 

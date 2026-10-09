@@ -150,6 +150,7 @@ class Shortcode
 				'post_type' => cp_library()->setup->post_types->item->post_type,
 				'posts_per_page' => 1,
 				'post_status' => 'publish',
+				'has_password' => false,
 			];
 
 			if ( ! empty( $atts['location'] ) ) {
@@ -168,7 +169,7 @@ class Shortcode
 			$items = get_posts( $args );
 
 			if ( empty( $items ) ) {
-				return 'No ' . cp_library()->setup->post_types->item->plural_label . ' found.';
+				return $this->item_not_found_message();
 			}
 
 			$id = $items[0]->ID;
@@ -177,13 +178,13 @@ class Shortcode
 		}
 
 		if ( ! Item::item_is_viewable_or_editable( $id ) ) {
-			return 'No ' . cp_library()->setup->post_types->item->plural_label . ' found.';
+			return $this->item_not_found_message();
 		}
 
 		try {
 			$item = new Item( $id );
 		} catch( Exception $e ) {
-			return 'No ' . cp_library()->setup->post_types->item->plural_label . ' found.';
+			return $this->item_not_found_message();
 		}
 
 		$atts['item'] = $item->get_api_data( true );
@@ -197,6 +198,19 @@ class Shortcode
 
 		return ob_get_clean();
 
+	}
+
+	/**
+	 * Message shown when a shortcode item cannot be displayed.
+	 *
+	 * @return string
+	 */
+	protected function item_not_found_message() {
+		return sprintf(
+			/* translators: %s: plural item label */
+			__( 'No %s found.', 'cp-library' ),
+			cp_library()->setup->post_types->item->plural_label
+		);
 	}
 
 	public function render_source_list( $args ) {
