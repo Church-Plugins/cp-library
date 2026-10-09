@@ -18,27 +18,19 @@ Check the [frequently asked questions](faq.md) for quick answers to common quest
 
 ## Contacting Support
 
-### Submit a Support Ticket
+### Contact form
 
-For issues not covered in the documentation:
+For issues not covered in the documentation, use the [Contact form on churchplugins.com](https://churchplugins.com/contact/). If this is a support request, include the name of the plugin and a link to the site, along with:
 
-1. Log in to your account at [churchplugins.com](https://churchplugins.com)
-2. Navigate to My Account → Support
-3. Click "Submit a Ticket"
-4. Provide:
-   - A clear description of the issue
-   - Steps to reproduce the problem
-   - Your WordPress version and PHP version
-   - Any error messages you're seeing
-   - Screenshots if helpful
+- A clear description of the issue
+- Steps to reproduce the problem
+- Your WordPress version and PHP version
+- Any error messages you're seeing
+- Screenshots if helpful
 
-### Email Support
+### Email
 
-You can also reach our support team at **support@churchplugins.com**.
-
-### Response Times
-
-- Support tickets are typically answered within 1-2 business days
+You can also reach the support team at **support@churchplugins.com**.
 
 ## Before Contacting Support
 
@@ -66,7 +58,7 @@ For technical issues, enable debug mode before contacting support:
 2. Set **Enable Debug** to **Enable**
 3. Reproduce the issue
 4. Check the debug log at Messages → Tools → Log
-5. Include relevant log entries in your support ticket
+5. Include relevant log entries with your support request
 
 ## Community Resources
 
@@ -80,11 +72,4 @@ Visit [churchplugins.com](https://churchplugins.com) for:
 
 ## Feature Requests
 
-Have an idea for improving CP Sermon Library?
-
-1. Log in to your account at [churchplugins.com](https://churchplugins.com)
-2. Navigate to My Account → Support
-3. Submit a feature request ticket
-4. Describe the feature and how it would help your church
-
-We review all feature requests and prioritize based on community demand.
+Have an idea for improving CP Sermon Library? Send it through the [Contact form on churchplugins.com](https://churchplugins.com/contact/), or email **support@churchplugins.com**. Describe the feature and how it would help your church.
