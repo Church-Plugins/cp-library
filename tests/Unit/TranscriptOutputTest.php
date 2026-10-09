@@ -33,6 +33,12 @@ class TranscriptOutputTest extends TestCase {
 	/** @var bool */
 	private $can_edit = false;
 
+	/** @var bool */
+	private $publicly_viewable = true;
+
+	/** @var bool */
+	private $password_required = false;
+
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
@@ -70,6 +76,18 @@ class TranscriptOutputTest extends TestCase {
 				return $test->canEdit() && 'edit_post' === $cap && 15 === (int) $post_id;
 			}
 		);
+
+		Functions\when( 'is_post_publicly_viewable' )->alias(
+			static function ( $post_id ) use ( $test ) {
+				return $test->publiclyViewable() && 15 === (int) $post_id;
+			}
+		);
+
+		Functions\when( 'post_password_required' )->alias(
+			static function () use ( $test ) {
+				return $test->passwordRequired();
+			}
+		);
 	}
 
 	protected function tearDown(): void {
@@ -87,6 +105,14 @@ class TranscriptOutputTest extends TestCase {
 
 	public function canEdit() {
 		return $this->can_edit;
+	}
+
+	public function publiclyViewable() {
+		return $this->publicly_viewable;
+	}
+
+	public function passwordRequired() {
+		return $this->password_required;
 	}
 
 	public function test_hidden_transcript_is_absent_for_anonymous() {
@@ -114,6 +140,41 @@ class TranscriptOutputTest extends TestCase {
 		$this->assertSame( $this->stored, Item::transcript_for_output( 15 ) );
 		$this->assertSame( $this->stored, Item::rest_transcript_field( [ 'id' => 15 ] ) );
 		$this->assertSame( $this->stored, $this->item()->get_transcript() );
+	}
+
+	public function test_transcript_is_absent_when_the_item_is_not_public() {
+		$this->show_transcript   = 1;
+		$this->can_edit          = false;
+		$this->publicly_viewable = false;
+
+		$this->assertSame( '', Item::transcript_for_output( 15 ) );
+		$this->assertSame( '', $this->item()->transcript_for_api( true ) );
+	}
+
+	public function test_transcript_is_absent_when_a_password_is_required() {
+		$this->show_transcript    = 1;
+		$this->can_edit           = false;
+		$this->password_required  = true;
+
+		$this->assertSame( '', Item::transcript_for_output( 15 ) );
+	}
+
+	public function test_editor_receives_a_transcript_for_a_non_public_item() {
+		$this->show_transcript   = 0;
+		$this->can_edit          = true;
+		$this->publicly_viewable = false;
+
+		$this->assertSame( $this->stored, Item::transcript_for_output( 15 ) );
+	}
+
+	public function test_list_records_omit_the_transcript() {
+		$this->show_transcript = 1;
+		$this->can_edit        = true;
+
+		$item = $this->item();
+
+		$this->assertSame( '', $item->transcript_for_api( false ) );
+		$this->assertSame( $this->stored, $item->transcript_for_api( true ) );
 	}
 
 	/**

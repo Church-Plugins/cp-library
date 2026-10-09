@@ -103,4 +103,17 @@ class ShortcodeParamsTest extends TestCase {
 		$this->assertSame( 'kept-hyphen', $this->read_param( $output, 'service-type' ) );
 		$this->assertSame( 'kept-underscore', $this->read_param( $output, '_private' ) );
 	}
+
+	public function test_key_with_trailing_newline_is_dropped() {
+		$output = $this->script(
+			[
+				"note\n" => 'dropped-newline',
+				'note'   => 'kept',
+			]
+		);
+
+		$this->assertNull( $this->read_param( $output, "note\n" ) );
+		$this->assertStringNotContainsString( 'dropped-newline', $output );
+		$this->assertSame( 'kept', $this->read_param( $output, 'note' ) );
+	}
 }

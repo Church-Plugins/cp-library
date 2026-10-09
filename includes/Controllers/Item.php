@@ -70,8 +70,10 @@ class Item extends Controller{
 	/**
 	 * Transcript text included in item output.
 	 *
-	 * When transcripts are set to hidden, the stored text is left out unless
-	 * the current user can edit the item.
+	 * The text is included for a publicly viewable item that is not
+	 * password-protected, or for a user who can edit the item. When
+	 * transcripts are set to hidden, only a user who can edit the item
+	 * receives the text.
 	 *
 	 * @param int $post_id Item post ID.
 	 * @return string
@@ -84,11 +86,90 @@ class Item extends Controller{
 			$transcript = '';
 		}
 
+		if ( ! self::item_is_viewable_or_editable( $post_id ) ) {
+			return '';
+		}
+
 		if ( self::transcript_is_hidden() && ! self::user_can_edit_item( $post_id ) ) {
 			return '';
 		}
 
 		return $transcript;
+	}
+
+	/**
+	 * Transcript string for an item record.
+	 *
+	 * List and widget records pass false so the field stays empty. Single-item
+	 * records pass true.
+	 *
+	 * @param bool $include Whether this record should carry the transcript.
+	 * @return string
+	 */
+	public function transcript_for_api( $include ) {
+		if ( ! $include ) {
+			return '';
+		}
+
+		$transcript = $this->get_transcript();
+
+		return is_string( $transcript ) ? $transcript : '';
+	}
+
+	/**
+	 * Whether a single item may be returned to the current user.
+	 *
+	 * Public items that are not password-protected are readable. Otherwise the
+	 * current user must be able to read or edit the item.
+	 *
+	 * @param int $post_id Item post ID.
+	 * @return bool
+	 */
+	public static function item_is_readable( $post_id ) {
+		$post_id = absint( $post_id );
+
+		if ( ! $post_id ) {
+			return false;
+		}
+
+		if ( self::item_is_public( $post_id ) ) {
+			return true;
+		}
+
+		return current_user_can( 'read_post', $post_id ) || current_user_can( 'edit_post', $post_id );
+	}
+
+	/**
+	 * Whether an item can be shown on the front end.
+	 *
+	 * Public items that are not password-protected are shown. A user who can
+	 * edit the item can still see it.
+	 *
+	 * @param int $post_id Item post ID.
+	 * @return bool
+	 */
+	public static function item_is_viewable_or_editable( $post_id ) {
+		$post_id = absint( $post_id );
+
+		if ( ! $post_id ) {
+			return false;
+		}
+
+		if ( self::item_is_public( $post_id ) ) {
+			return true;
+		}
+
+		return (bool) current_user_can( 'edit_post', $post_id );
+	}
+
+	/**
+	 * Whether the item is publicly viewable and not password-protected.
+	 *
+	 * @param int $post_id Item post ID.
+	 * @return bool
+	 */
+	protected static function item_is_public( $post_id ) {
+		return is_post_publicly_viewable( $post_id ) && ! post_password_required( $post_id );
 	}
 
 	/**
@@ -983,7 +1064,7 @@ class Item extends Controller{
 	 * @return mixed|void
 	 * @author Tanner Moushey
 	 */
-	public function get_api_data( $include_variations = false ) {
+	public function get_api_data( $include_variations = false, $include_transcript = false ) {
 		$date = [];
 
 		try {
@@ -996,7 +1077,7 @@ class Item extends Controller{
 				'thumb'         => $this->get_thumbnail(),
 				'title'         => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
 				'desc'          => $this->get_content(),
-				'transcript'    => $this->get_transcript(),
+				'transcript'    => $this->transcript_for_api( $include_transcript ),
 				'date'          => [
 					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
 					'timestamp' => $this->get_publish_date()

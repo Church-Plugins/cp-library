@@ -98,7 +98,7 @@ class Shortcode
 			foreach( $args as $key => $value ) {
 				$key = (string) $key;
 
-				if ( ! preg_match( '/^[A-Za-z_][A-Za-z0-9_-]*$/', $key ) ) {
+				if ( ! preg_match( '/^[A-Za-z_][A-Za-z0-9_-]*\z/', $key ) ) {
 					continue;
 				}
 
@@ -176,6 +176,9 @@ class Shortcode
 			$id = $atts['id'];
 		}
 
+		if ( ! Item::item_is_viewable_or_editable( $id ) ) {
+			return 'No ' . cp_library()->setup->post_types->item->plural_label . ' found.';
+		}
 
 		try {
 			$item = new Item( $id );

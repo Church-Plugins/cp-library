@@ -727,7 +727,7 @@ class Tools
 			try {
 				$item = new Item($post->ID);
 
-				$data = $item->get_api_data();
+				$data = $item->get_api_data( false, true );
 
 				$formatted_data = $this->get_formatted_item($data);
 
