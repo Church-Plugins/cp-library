@@ -66,7 +66,7 @@ See [Timestamps & Transcripts](../features/timestamps-and-transcripts.md) for de
 
 ### How Filters Affect SEO
 
-When visitors filter your sermon archive (e.g., by topic or speaker), the plugin uses URL parameters (e.g., `/messages/?facet-topic=faith`). These filtered pages are typically handled by your SEO plugin's default behavior.
+When visitors filter your sermon archive (e.g., by topic or speaker), the plugin uses URL parameters (e.g., `/messages/?facet-cpl_topic=faith`). These filtered pages are typically handled by your SEO plugin's default behavior.
 
 **Best practices for filtered pages:**
 
@@ -87,8 +87,7 @@ When filters are active, visitors see:
 2. **Add transcripts** — Full text content dramatically improves search visibility
 3. **Use consistent taxonomy** — Apply topics, scripture, and seasons consistently
 4. **Don't change URLs** — Changing permalink settings after publishing can break existing links
-5. **Add alt text to images** — Use descriptive alt text for sermon and series artwork
-6. **Keep content fresh** — Regularly publish new sermons to signal active content to search engines
+5. **Keep content fresh** — Regularly publish new sermons to signal active content to search engines
 
 ## Developer Documentation
 

@@ -39,7 +39,6 @@ You can also reach our support team at **support@churchplugins.com**.
 ### Response Times
 
 - Support tickets are typically answered within 1-2 business days
-- Priority support is available for Pro license holders
 
 ## Before Contacting Support
 
@@ -64,7 +63,7 @@ To help us resolve your issue faster, please gather this information:
 For technical issues, enable debug mode before contacting support:
 
 1. Navigate to Messages → Settings → Advanced
-2. Set "Enable Debug" to enabled
+2. Set **Enable Debug** to **Enable**
 3. Reproduce the issue
 4. Check the debug log at Messages → Tools → Log
 5. Include relevant log entries in your support ticket
@@ -77,7 +76,7 @@ Visit [churchplugins.com](https://churchplugins.com) for:
 
 - Plugin updates and announcements
 - Blog posts with tips and best practices
-- Knowledge base articles
+- Documentation at [docs.churchplugins.com](https://docs.churchplugins.com)
 
 ## Feature Requests
 

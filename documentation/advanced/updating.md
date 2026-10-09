@@ -91,6 +91,6 @@ After updating the plugin:
 For churches with large sermon libraries spanning many years:
 
 1. Consider organizing older sermons into yearly archives
-2. Use tags to mark significant historical events or sermon series
+2. Use **Seasons** or **Topics** to mark significant events, and put sermons in a **Series** to group them.
 3. Periodically verify that older media files are still accessible
 4. Consider offline backups for irreplaceable sermon content

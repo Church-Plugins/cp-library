@@ -33,11 +33,11 @@ Yes. Navigate to Messages → Settings and select the tab for the content type y
 
 ### Can I use YouTube or Vimeo videos instead of uploading files?
 
-Yes. When editing a sermon, paste the YouTube or Vimeo URL into the Video URL field. The video will automatically embed on the sermon page.
+Yes. When editing a sermon, paste the YouTube or Vimeo URL into the **Message Video** field. The video will automatically embed on the sermon page.
 
 ### How does the persistent player work?
 
-The persistent player is a site-wide audio bar that continues playing as visitors navigate your site. It is always active — no configuration needed. See [Persistent Player](../features/persistent-player.md).
+The persistent player is a site-wide audio and video bar that continues playing as visitors navigate your site. It is always active — no configuration needed. See [Persistent Player](../features/persistent-player.md).
 
 ### Why won't my audio/video play?
 
@@ -84,7 +84,7 @@ Variations let you create different versions of the same sermon for multiple ser
 
 ### Can I hide certain sermons from the main list?
 
-Yes. Edit the sermon and check **Exclude from Main List** in the Visibility Settings panel. The sermon remains accessible via direct links and archives.
+Yes. Edit the sermon and check **Exclude from Main List** in the Visibility Settings panel. The sermon still appears on its own page and in taxonomy archives.
 
 ## Display & Templates
 
