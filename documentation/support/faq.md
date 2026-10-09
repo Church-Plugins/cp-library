@@ -116,7 +116,7 @@ Updates appear in your WordPress dashboard. Create a backup before updating. See
 
 ### Where can I find debug information?
 
-Enable debug mode in Messages → Settings → Advanced. This enables detailed logging accessible at Messages → Tools → Log.
+Enable debug mode in Messages → Settings → Advanced. This enables detailed logging accessible at **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item) > **Log**.
 
 ## Still Need Help?
 

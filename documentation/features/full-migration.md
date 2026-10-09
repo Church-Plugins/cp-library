@@ -6,7 +6,7 @@ Full Migration is separate from the CSV import and export on the same Tools tab.
 
 ## Where to Find It
 
-1. In your WordPress admin, navigate to **Messages > Tools**.
+1. In your WordPress admin, navigate to **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item).
 2. Stay on the **Import/Export** tab (it is selected by default).
 3. Scroll down to the **Full Migration Export** and **Full Migration Import** boxes. They appear below the CSV tools.
 
@@ -30,7 +30,7 @@ Featured image URLs travel with the content. Whether those files (and downloadab
 
 ## Exporting from the Admin
 
-1. On the source site, navigate to **Messages > Tools > Import/Export**.
+1. On the source site, navigate to **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item) > **Import/Export**.
 2. Under **Full Migration Export**, check **Include plugin settings** if you also want to copy your CP Sermons settings.
 3. Click **Download Export File**.
 4. Save the file somewhere you can reach from the destination site.
@@ -39,7 +39,7 @@ For very large libraries (roughly 5,000 sermons or more), we recommend using WP-
 
 ## Importing from the Admin
 
-1. On the destination site, navigate to **Messages > Tools > Import/Export**.
+1. On the destination site, navigate to **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item) > **Import/Export**.
 2. Under **Full Migration Import**, choose the `.ndjson.gz` (or `.ndjson`) file you exported from the source site.
 3. Choose your options:
    - **Download media files into this site (slower; without it, media keeps pointing at the source site)** -- Copies featured images and downloadable files into this site's Media Library.

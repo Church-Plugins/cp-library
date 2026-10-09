@@ -125,4 +125,4 @@ For troubleshooting variation issues:
 
 1. Navigate to Messages → Settings → Advanced
 2. Enable "Debug Mode"
-3. Check the log at Messages → Tools → Log for variation-related errors
+3. Check the log at **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item) > **Log** for variation-related errors

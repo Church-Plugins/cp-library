@@ -134,7 +134,7 @@ If the plugin detects data from Sermon Manager, Series Engine, or Church Content
 
 Import sermons from a spreadsheet:
 
-1. Navigate to Messages → Tools
+1. Navigate to **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item)
 2. Use the Import/Export tab
 3. Download the sample CSV template
 4. Fill in your sermon data following the template format

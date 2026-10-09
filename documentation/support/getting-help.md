@@ -57,7 +57,7 @@ For technical issues, enable debug mode before contacting support:
 1. Navigate to Messages → Settings → Advanced
 2. Set **Enable Debug** to **Enable**
 3. Reproduce the issue
-4. Check the debug log at Messages → Tools → Log
+4. Check the debug log at **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item) > **Log**
 5. Include relevant log entries with your support request
 
 ## Community Resources
