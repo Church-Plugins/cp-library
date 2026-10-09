@@ -164,6 +164,11 @@ class Item extends Controller{
 		$visible = array();
 
 		foreach ( $posts as $post ) {
+			if ( is_object( $post ) && isset( $post->post_type ) && 'cpl_item' !== $post->post_type ) {
+				$visible[] = $post;
+				continue;
+			}
+
 			if ( is_object( $post ) && ! empty( $post->post_parent ) && ! self::item_is_viewable_or_editable( $post->ID ) ) {
 				continue;
 			}

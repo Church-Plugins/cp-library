@@ -153,14 +153,16 @@ class Item extends PostType  {
 		}
 
 		$show_children = apply_filters( 'cpl_item_query_show_children', isset( $_GET['show-child-items'] ), $query );
+		$post_type     = $query->get( 'post_type' );
+		$item_only     = is_string( $post_type ) && $this->post_type === $post_type;
 
-		// hide child items in queries (both frontend and admin)
-		if ( ! $query->get( 'post_parent' ) && ! $show_children ) {
+		// Hide child items only when the query is exactly this post type.
+		if ( $item_only && ! $query->get( 'post_parent' ) && ! $show_children ) {
 			$query->set( 'post_parent', 0 );
 			return;
 		}
 
-		if ( $show_children ) {
+		if ( ! $item_only || $show_children ) {
 			$query->set( 'cpl_limit_child_visibility', true );
 		}
 
@@ -221,7 +223,9 @@ class Item extends PostType  {
 	/**
 	 * SQL fragment that keeps top-level items and children of viewable parents.
 	 *
-	 * Applied in the query so paging and found_posts stay aligned.
+	 * The clause applies only to the item post type. Other post types in a
+	 * mixed query are left unchanged. Applied in the query so paging and
+	 * found_posts stay aligned.
 	 *
 	 * @param string $posts_table Posts table name, including the prefix.
 	 * @param string $post_type   Item post type.
@@ -246,7 +250,7 @@ class Item extends PostType  {
 			$child   = "{$posts_table}.post_password = ''";
 		}
 
-		return " AND ( {$posts_table}.post_parent = 0 OR ( {$posts_table}.post_parent IN ( {$parents} ) AND ( {$child} ) ) )";
+		return " AND ( {$posts_table}.post_type != '{$post_type}' OR {$posts_table}.post_parent = 0 OR ( {$posts_table}.post_parent IN ( {$parents} ) AND ( {$child} ) ) )";
 	}
 
 	/**

@@ -416,6 +416,63 @@ namespace CP_Library\Tests\Unit {
 			$this->assertNull( $query->get( 'post_parent' ) );
 		}
 
+		public function test_mixed_post_type_query_keeps_other_children_and_limits_item_children() {
+			$type            = ( new ReflectionClass( ItemPostType::class ) )->newInstanceWithoutConstructor();
+			$type->post_type = 'cpl_item';
+			$query           = $this->query(
+				array(
+					'post_type' => array( 'post', 'page', 'cpl_item' ),
+				)
+			);
+
+			$type->item_variation_query( $query );
+
+			$this->assertNull( $query->get( 'post_parent' ) );
+			$this->assertTrue( (bool) $query->get( 'cpl_limit_child_visibility' ) );
+
+			$this->public_ids = array(
+				15 => true,
+				20 => false,
+				30 => true,
+				31 => true,
+			);
+			$this->parents    = array(
+				15 => 20,
+				30 => 31,
+			);
+
+			$visible = Item::visible_child_list_posts(
+				array(
+					(object) array(
+						'ID'          => 15,
+						'post_type'   => 'cpl_item',
+						'post_parent' => 20,
+					),
+					(object) array(
+						'ID'          => 30,
+						'post_type'   => 'cpl_item',
+						'post_parent' => 31,
+					),
+					(object) array(
+						'ID'          => 40,
+						'post_type'   => 'page',
+						'post_parent' => 8,
+					),
+					(object) array(
+						'ID'          => 41,
+						'post_type'   => 'post',
+						'post_parent' => 9,
+					),
+				)
+			);
+
+			$this->assertSame( array( 30, 40, 41 ), $this->idsOf( $visible ) );
+
+			$sql = ItemPostType::child_list_sql( 'wp_posts', 'cpl_item', 'public', 0 );
+			$this->assertStringContainsString( "wp_posts.post_type != 'cpl_item'", $sql );
+			$this->assertStringContainsString( 'wp_posts.post_parent = 0', $sql );
+		}
+
 		public function test_child_visibility_limit_matches_an_array_of_post_types() {
 			$_GET['show-child-items'] = '1';
 
