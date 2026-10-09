@@ -15,17 +15,17 @@ Those are the plugin header values **Requires at least**, **Requires PHP**, and 
 
 Release notes are published on the [CP Sermons changelog](https://churchplugins.com/wordpress-plugins/cp-sermons/changelog/). The same notes are in the plugin's `readme.txt` file, under Changelog.
 
-Read the notes for the version you are installing. The 1.7.0 notes say a one-time cleanup runs on upgrade. It removes orphaned Speaker, Series, and Service Type associations and collapses duplicated ones. The 1.6.2 notes add **Tools → Migrate Visibility Settings** and **Tools → Reset All Sermons to Visible**. The 1.6.2 upgrade notice in `readme.txt` says to open **Messages → Tools** after updating to migrate legacy visibility settings or reset sermons that were hidden.
+Read the notes for the version you are installing. The 1.7.0 notes say a one-time cleanup runs on upgrade. It removes orphaned Speaker, Series, and Service Type associations and collapses duplicated ones. The 1.6.2 notes add **Tools → Migrate Visibility Settings** and **Tools → Reset All Sermons to Visible**. The 1.6.2 upgrade notice in `readme.txt` says to open **Tools** after updating to migrate legacy visibility settings or reset sermons that were hidden. **Tools** is under **Series** by default, or under **Messages** if you changed **Set default menu item**.
 
 ## What an upgrade runs
 
 When the version stored in WordPress does not match the installed plugin version, the plugin saves the new version and runs its upgrade routines.
 
-The routine that ships with this release deletes orphaned Speaker, Series, and Service Type association rows and collapses duplicate Speaker and Series rows, keeping the oldest row. It does not delete sermon posts. An earlier routine, for upgrades from before 1.5.0, sets **Set default menu item** to Series when that setting has no saved value.
+The routine that ships with this release deletes orphaned Speaker, Series, and Service Type association rows and collapses duplicate Speaker, Series, and Service Type rows, keeping the oldest row. It does not delete sermon posts. An earlier routine, for upgrades from before 1.5.0, sets **Set default menu item** to Series when that setting has no saved value.
 
 ## Theme overrides
 
-The default content template can be overridden by placing `cp-library/default-template.php` in your theme.
+Any template file can be overridden by copying it to `cp-library/` in your theme, keeping the same path it has under the plugin's `templates/` directory. For example, `templates/default-template.php` is overridden by `cp-library/default-template.php` in your theme.
 
 ## Grouping sermons
 
@@ -36,4 +36,4 @@ Group sermons with the content types the plugin registers:
 
 ## Exporting sermons
 
-**Messages → Tools**, on the Import/Export tab, can export every sermon as CSV. With the default plural label, the button reads **Export all Messages as CSV**.
+**Tools** (under **Series** by default, or **Messages** if you changed Set default menu item) > **Import/Export** can export every sermon as CSV. With the default plural label, the button reads **Export all Messages as CSV**.

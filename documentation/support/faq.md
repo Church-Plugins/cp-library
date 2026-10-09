@@ -50,7 +50,7 @@ The persistent player is a site-wide audio and video bar that continues playing 
 
 ### How do I set up a podcast feed?
 
-The sermon podcast feed is `https://yoursite.com/messages/feed/podcast/`. Use that archive feed, not `/feed/podcast/`, which returns your blog posts. The feed URL works even before you turn on **Enable Podcast Feed**; the setting adds the **Podcast** settings tab and the **Exclude from Podcast** option. Without a saved podcast **Title**, the feed uses the first sermon's title. See [Podcast Setup](../features/podcast-setup.md).
+Your feed is `/messages/feed/podcast/` (or your slug) and works as soon as the plugin is active; don't use `/feed/podcast/`, which gives an empty feed. To set the title and artwork, set **Enable Podcast Feed** to **Enable** on the Advanced tab, then fill in the **Podcast** tab (at least Title and Image). Until a Title is saved, the feed is named after the newest sermon. See [Podcast Setup](../features/podcast-setup.md).
 
 ### Can I create separate podcast feeds for different series or speakers?
 
@@ -80,7 +80,7 @@ Service Types categorize sermons by the service they were delivered in (Sunday M
 
 ### What are Sermon Variations?
 
-Variations let you create different versions of the same sermon for multiple services, each with their own speaker, media, and timestamps. See [Sermon Variations](../features/sermon-variations.md). Variations need **Enable Service Types** turned on (**Advanced** tab) and **Enable Variations (beta)** turned on (**Messages** tab).
+Variations let you create different versions of the same sermon for multiple services, each with their own speaker, media, and timestamps. See [Sermon Variations](../features/sermon-variations.md). Variations need **Enable Service Types** turned on (**Advanced** tab), **Enable Variations (beta)** turned on (**Messages** tab), and a **Variation Source** picked (**Messages** tab).
 
 ### Can I hide certain sermons from the main list?
 
@@ -90,7 +90,7 @@ Yes. Edit the sermon and check **Exclude from Main List** in the Visibility Sett
 
 ### How do I change the sermon layout?
 
-Navigate to Messages → Settings → Messages tab and choose the Single Page Template option. To change the layout of one sermon list, use the **Sermon Query** block: choose list or grid layout (and the number of columns) in the block toolbar/settings, turn on **Show Filters**, and choose which sermon detail blocks appear inside the **Sermon Template**. For a single sermon, the `[cpl_item id="123" template="alt"]` shortcode shows the alternate layout; `player="false"` or `details="false"` hide the player or the sermon details.
+Navigate to Messages → Settings → Messages tab and choose the Single Page Template option. To change the layout of one sermon list, use the **CP Sermons Sermons/Series** block: choose **List view** or **Grid view** in the block toolbar (Grid adds **Columns**), and choose which detail blocks appear inside the **Sermon Template**. For a single sermon, the `[cpl_item id="123" template="alt"]` shortcode shows the alternate layout; `player="false"` or `details="false"` hide the player or the sermon details.
 
 ### Can I customize sermon templates in my theme?
 

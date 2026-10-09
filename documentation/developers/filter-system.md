@@ -8,7 +8,7 @@ This document explains the CP Sermon Library's filter system, its capabilities, 
 
 - **Multi-Post Type Support**: Filter both sermons and series content
 - **Enhanced Accessibility**: Full keyboard navigation and screen reader support
-- **SEO Optimization**: Structured data and canonical URL management
+- **SEO Optimization**: Structured data for filtered results
 - **Improved Error Handling**: Standardized error handling throughout
 - **Developer Friendly**: More extensible architecture
 

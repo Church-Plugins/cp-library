@@ -67,7 +67,7 @@ CP Sermon Library includes Gutenberg blocks for displaying sermon content:
 
 ### Core Blocks
 
-- **Sermon Query** - Display sermons with configurable filters, layout, and pagination
+- **CP Sermons Sermons/Series** - Display sermons or series in a list or grid
 - **Sermon Template** - Display a sermon using a custom template
 - **Shortcode Template** - Embed shortcode-based sermon displays within block layouts
 
@@ -115,7 +115,7 @@ CP Sermon Library includes a **Templates** post type that lets you build custom 
 
 1. Navigate to Messages → Templates in the admin
 2. Click "Add New"
-3. Build your layout using CP Sermon Library blocks (Sermon Query, Sermon Actions, Sermon Graphic, Sermon Title, etc.)
+3. Build your layout using CP Sermon Library blocks (CP Sermons Sermons/Series, Sermon Actions, Sermon Graphic, Sermon Title, etc.)
 4. Publish the template
 
 When editing a template, only CP Library blocks are available in the block inserter, ensuring your layout uses the correct sermon components.
@@ -134,7 +134,6 @@ CP Sermon Library provides several shortcodes for displaying sermon content:
 
 ### Core Shortcodes
 
-- `[cpl_item_list]` - Display a list of sermons
 - `[cpl_item]` or `[cp-sermon]` - Display a single sermon
 - `[cpl_item_widget]` - Display a sermon widget
 - `[cpl_video_widget]` - Display a video widget
@@ -142,29 +141,16 @@ CP Sermon Library provides several shortcodes for displaying sermon content:
 - `[cpl_player]` - Display the sermon player
 - `[cpl_template id="123"]` - Display a sermon template (see Sermon Templates above)
 
+For a sermon list, use the **CP Sermons Sermons/Series** block, or `[cp-sermons]` for the sermon archive.
+
 ### Shortcode Parameters
-
-Common parameters for `[cpl_item_list]`:
-
-- `id` - Specify a sermon ID
-- `count` - Number of sermons to display
-- `columns` - Number of columns for grid layouts
-- `series` - Filter by series slug
-- `speaker` - Filter by speaker slug
-- `topic` - Filter by topic slug
-- `scripture` - Filter by scripture reference
-- `season` - Filter by season slug
-- `pagination` - Show pagination (true/false)
 
 For `[cpl_item]` / `[cp-sermon]`:
 
 - `id` - Specify the sermon ID to display
 - `template` - Use `alt` for the alternate widget layout (default: standard layout)
-
-Example shortcode with multiple parameters:
-```
-[cpl_item_list count="10" columns="3" series="easter-2023" pagination="true"]
-```
+- `player` - Set to `false` to hide the player
+- `details` - Set to `false` to hide the sermon details
 
 ## Series Display Options
 

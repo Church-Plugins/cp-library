@@ -49,7 +49,7 @@ The default archive URL is `/messages/` (based on your plural label slug).
 
 ### Transcripts for SEO
 
-Transcripts add the full text of a message to the sermon page. To output the text on sermon pages, set **Transcript** to **Show** on the **Messages** tab of the Settings page (the default is **Hide**). **Hide** keeps the transcript off the sermon page and out of the feeds. When **Show** is on, the transcript is shown in a collapsed box with a **Show Transcript** button; the full text is still part of the page for search engines.
+Transcripts add the full text of a message to the sermon page. To output the text on sermon pages, set **Transcript** to **Show** on the **Messages** tab of the Settings page (the default is **Hide**). **Hide** keeps the transcript off the sermon page. When **Show** is on, the full text is part of the page. If that block is 200px or taller, it is shown in a collapsed box with a **Show Transcript** button.
 
 See [Timestamps & Transcripts](../features/timestamps-and-transcripts.md) for details.
 
