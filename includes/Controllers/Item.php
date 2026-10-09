@@ -35,8 +35,242 @@ class Item extends Controller{
 		return $this->filter( get_permalink( $this->post->ID ), __FUNCTION__ );
 	}
 
+	/**
+	 * Transcript included with this item.
+	 *
+	 * When transcripts are set to hidden, the text is included only for a user
+	 * who can edit the item.
+	 *
+	 * @return mixed|void
+	 */
 	public function get_transcript() {
-		return $this->filter( get_post_meta( get_the_ID(), 'transcript', true ), __FUNCTION__ );
+		$post_id = 0;
+
+		if ( is_object( $this->post ) && ! empty( $this->post->ID ) ) {
+			$post_id = $this->post->ID;
+		} elseif ( function_exists( 'get_the_ID' ) ) {
+			$post_id = get_the_ID();
+		}
+
+		return $this->filter( self::transcript_for_output( $post_id ), __FUNCTION__ );
+	}
+
+	/**
+	 * Transcript value for the public item REST field.
+	 *
+	 * @param array $object REST object data. The item post ID is `id`.
+	 * @return string
+	 */
+	public static function rest_transcript_field( $object ) {
+		$post_id = ( is_array( $object ) && isset( $object['id'] ) ) ? absint( $object['id'] ) : 0;
+
+		return self::transcript_for_output( $post_id );
+	}
+
+	/**
+	 * Transcript text included in item output.
+	 *
+	 * The text is included for a publicly viewable item that is not
+	 * password-protected, or for a user who can edit the item. When
+	 * transcripts are set to hidden, only a user who can edit the item
+	 * receives the text.
+	 *
+	 * @param int $post_id Item post ID.
+	 * @return string
+	 */
+	public static function transcript_for_output( $post_id ) {
+		$post_id    = absint( $post_id );
+		$transcript = get_post_meta( $post_id, 'transcript', true );
+
+		if ( ! is_string( $transcript ) ) {
+			$transcript = '';
+		}
+
+		if ( ! self::item_is_viewable_or_editable( $post_id ) ) {
+			return '';
+		}
+
+		if ( self::transcript_is_hidden() && ! self::user_can_edit_item( $post_id ) ) {
+			return '';
+		}
+
+		return $transcript;
+	}
+
+	/**
+	 * Transcript string for an item record.
+	 *
+	 * List and widget records pass false so the field stays empty. Single-item
+	 * records pass true.
+	 *
+	 * @param bool $include Whether this record should carry the transcript.
+	 * @return string
+	 */
+	public function transcript_for_api( $include ) {
+		if ( ! $include ) {
+			return '';
+		}
+
+		$transcript = $this->get_transcript();
+
+		return is_string( $transcript ) ? $transcript : '';
+	}
+
+	/**
+	 * Whether a single item may be returned to the current user.
+	 *
+	 * When a password is required, only a user who can edit the item may read
+	 * it. A verified password cookie makes post_password_required() false, and
+	 * the item is then treated like any other item. Plain read access is not
+	 * enough while a password is still required. A child item also requires
+	 * the same result for its parent.
+	 *
+	 * @param int $post_id Item post ID.
+	 * @return bool
+	 */
+	public static function item_is_readable( $post_id ) {
+		return self::passes_with_ancestors( $post_id, 'post_is_readable', array() );
+	}
+
+	/**
+	 * Whether an item can be shown on the front end.
+	 *
+	 * When a password is required, only a user who can edit the item may see
+	 * it. A verified password cookie makes post_password_required() false.
+	 * Other items are shown when they are publicly viewable, or when the
+	 * current user can edit them. A child item also requires the same result
+	 * for its parent.
+	 *
+	 * @param int $post_id Item post ID.
+	 * @return bool
+	 */
+	public static function item_is_viewable_or_editable( $post_id ) {
+		return self::passes_with_ancestors( $post_id, 'post_is_viewable_or_editable', array() );
+	}
+
+	/**
+	 * Posts to keep when a list includes child items.
+	 *
+	 * Child items stay only when the child and its parent pass the front-end check.
+	 *
+	 * @param array $posts Query results.
+	 * @return array
+	 */
+	public static function visible_child_list_posts( $posts ) {
+		if ( ! is_array( $posts ) ) {
+			return array();
+		}
+
+		$visible = array();
+
+		foreach ( $posts as $post ) {
+			if ( is_object( $post ) && isset( $post->post_type ) && 'cpl_item' !== $post->post_type ) {
+				$visible[] = $post;
+				continue;
+			}
+
+			if ( is_object( $post ) && ! empty( $post->post_parent ) && ! self::item_is_viewable_or_editable( $post->ID ) ) {
+				continue;
+			}
+
+			$visible[] = $post;
+		}
+
+		return $visible;
+	}
+
+	/**
+	 * Whether this post itself may be read, before the parent is considered.
+	 *
+	 * @param int $post_id Item post ID.
+	 * @return bool
+	 */
+	protected static function post_is_readable( $post_id ) {
+		if ( post_password_required( $post_id ) ) {
+			return (bool) current_user_can( 'edit_post', $post_id );
+		}
+
+		if ( is_post_publicly_viewable( $post_id ) ) {
+			return true;
+		}
+
+		return current_user_can( 'read_post', $post_id ) || current_user_can( 'edit_post', $post_id );
+	}
+
+	/**
+	 * Whether this post itself may be shown, before the parent is considered.
+	 *
+	 * @param int $post_id Item post ID.
+	 * @return bool
+	 */
+	protected static function post_is_viewable_or_editable( $post_id ) {
+		if ( post_password_required( $post_id ) ) {
+			return (bool) current_user_can( 'edit_post', $post_id );
+		}
+
+		if ( is_post_publicly_viewable( $post_id ) ) {
+			return true;
+		}
+
+		return (bool) current_user_can( 'edit_post', $post_id );
+	}
+
+	/**
+	 * Require the post and each ancestor to pass the same check.
+	 *
+	 * @param int    $post_id Item post ID.
+	 * @param string $check   post_is_readable or post_is_viewable_or_editable.
+	 * @param array  $seen    Post IDs already accepted in this walk.
+	 * @return bool
+	 */
+	protected static function passes_with_ancestors( $post_id, $check, array $seen ) {
+		$post_id = absint( $post_id );
+
+		if ( ! $post_id ) {
+			return false;
+		}
+
+		if ( isset( $seen[ $post_id ] ) ) {
+			return true;
+		}
+
+		if ( ! self::$check( $post_id ) ) {
+			return false;
+		}
+
+		$seen[ $post_id ] = true;
+		$parent_id        = absint( wp_get_post_parent_id( $post_id ) );
+
+		if ( ! $parent_id || $parent_id === $post_id ) {
+			return true;
+		}
+
+		return self::passes_with_ancestors( $parent_id, $check, $seen );
+	}
+
+	/**
+	 * Whether item settings mark transcripts as hidden.
+	 *
+	 * @return bool
+	 */
+	protected static function transcript_is_hidden() {
+		return ! Settings::get_item( 'show_transcript', false );
+	}
+
+	/**
+	 * Whether the current user can edit the item.
+	 *
+	 * @param int $post_id Item post ID.
+	 * @return bool
+	 */
+	protected static function user_can_edit_item( $post_id ) {
+		$post_id = absint( $post_id );
+
+		if ( ! $post_id ) {
+			return false;
+		}
+
+		return (bool) current_user_can( 'edit_post', $post_id );
 	}
 
 	public function get_locations() {
@@ -906,7 +1140,7 @@ class Item extends Controller{
 	 * @return mixed|void
 	 * @author Tanner Moushey
 	 */
-	public function get_api_data( $include_variations = false ) {
+	public function get_api_data( $include_variations = false, $include_transcript = false ) {
 		$date = [];
 
 		try {
@@ -919,7 +1153,7 @@ class Item extends Controller{
 				'thumb'         => $this->get_thumbnail(),
 				'title'         => htmlspecialchars_decode( $this->get_title(), ENT_QUOTES | ENT_HTML401 ),
 				'desc'          => $this->get_content(),
-				'transcript'    => $this->get_transcript(),
+				'transcript'    => $this->transcript_for_api( $include_transcript ),
 				'date'          => [
 					'desc'      => Convenience::relative_time( $this->get_publish_date() ),
 					'timestamp' => $this->get_publish_date()

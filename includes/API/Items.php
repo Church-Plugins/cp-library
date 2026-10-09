@@ -155,10 +155,93 @@ class Items extends WP_REST_Controller {
 	 * Checks if a given request has access to read and manage the user's passwords.
 	 *
 	 * @param WP_REST_Request $request Full details about the request.
-	 * @return bool True if the request has read access for the item, otherwise false.
+	 * @return true|WP_Error True when the request may continue, or a not-found error for one item.
 	 */
 	public function get_permissions_check( $request ) {
+		if ( ! $this->is_single_item_read( $request ) ) {
+			return true;
+		}
+
+		return $this->single_item_read_result( $request->get_param( 'item_id' ) );
+	}
+
+	/**
+	 * Whether this request is a read of one item.
+	 *
+	 * Collection reads and the item log route stay open.
+	 *
+	 * @param mixed $request
+	 * @return bool
+	 */
+	public function is_single_item_read( $request ) {
+		if ( ! is_object( $request ) || ! method_exists( $request, 'get_param' ) ) {
+			return false;
+		}
+
+		$item_id = $request->get_param( 'item_id' );
+
+		if ( null === $item_id || '' === $item_id ) {
+			return false;
+		}
+
+		if ( method_exists( $request, 'get_method' ) && 'GET' !== $request->get_method() ) {
+			return false;
+		}
+
+		$route = method_exists( $request, 'get_route' ) ? (string) $request->get_route() : '';
+
+		return false === strpos( $route, '/log' );
+	}
+
+	/**
+	 * True when the item may be read, or a not-found error.
+	 *
+	 * @param mixed       $item_id Item ID or slug.
+	 * @param object|null|false $post Already resolved post, or false to resolve it.
+	 * @return true|WP_Error
+	 */
+	public function single_item_read_result( $item_id, $post = false ) {
+		if ( false === $post ) {
+			$post = $this->find_requested_post( $item_id );
+		}
+
+		if ( ! $post || ! Item::item_is_readable( $post->ID ) ) {
+			return new WP_Error(
+				'cpl_item_not_found',
+				'Could not find the requested item',
+				[ 'status' => 404 ]
+			);
+		}
+
 		return true;
+	}
+
+	/**
+	 * Resolve a single-item request to a post of this type.
+	 *
+	 * @param mixed $item_id Item ID or slug.
+	 * @return object|null
+	 */
+	public function find_requested_post( $item_id ) {
+		if ( null === $item_id || '' === $item_id ) {
+			return null;
+		}
+
+		if ( ! is_numeric( $item_id ) ) {
+			$post = get_page_by_path( (string) $item_id, 'OBJECT', $this->post_type );
+		} else {
+			$post = get_post( absint( $item_id ) );
+		}
+
+		if ( ! is_object( $post ) || empty( $post->ID ) ) {
+			return null;
+		}
+
+		if ( ! empty( $this->post_type ) && isset( $post->post_type ) && $post->post_type !== $this->post_type ) {
+			return null;
+		}
+
+		return $post;
 	}
 
 	/**
@@ -404,7 +487,8 @@ class Items extends WP_REST_Controller {
 
 				// Check if include_variations parameter is set
 				$include_variations = $request->get_param( 'include_variations' ) === 'true';
-				$data = $item->get_api_data( $include_variations );
+				$include_transcript = $request->get_param( 'include_transcript' ) === 'true';
+				$data = $item->get_api_data( $include_variations, $include_transcript );
 
 				$return_value['items'][] = $data;
 			} catch ( Exception $e ) {
@@ -426,21 +510,19 @@ class Items extends WP_REST_Controller {
 	 */
 	public function get_item( $request ) {
 		$item_id = $request->get_param( 'item_id' );
+		$post    = $this->find_requested_post( $item_id );
+		$access  = $this->single_item_read_result( $item_id, $post );
+
+		if ( $access instanceof WP_Error ) {
+			return $access;
+		}
+
 		try {
-
-			if ( ! is_numeric( $item_id ) ) {
-				if ( ! $item = get_page_by_path( $item_id, OBJECT, $this->post_type ) ) {
-					throw new Exception( 'Could not find the requested item' );
-				}
-
-				$item_id = $item->ID;
-			}
-
-			$item = new Item( $item_id );
+			$item = new Item( $post->ID );
 
 			// Check if include_variations parameter is set
 			$include_variations = $request->get_param( 'include_variations' ) === 'true';
-			$data = $item->get_api_data( $include_variations );
+			$data = $item->get_api_data( $include_variations, true );
 		} catch ( Exception $e ) {
 			$data = [
 				'id' => $item_id,

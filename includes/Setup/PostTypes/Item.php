@@ -59,6 +59,8 @@ class Item extends PostType  {
 		if ( cp_library()->setup->variations->is_enabled() ) {
 			add_filter( 'post_type_link', [ $this, 'variation_link' ], 10, 2 );
 			add_action( 'pre_get_posts', [ $this, 'item_variation_query' ] );
+			add_filter( 'posts_where', [ $this, 'limit_child_visibility_where' ], 10, 2 );
+			add_filter( 'posts_results', [ $this, 'limit_child_visibility' ], 10, 2 );
 		}
 
 		// give other code a chance to hook into sources
@@ -134,25 +136,174 @@ class Item extends PostType  {
 	 */
 	public function item_variation_query( $query ) {
 
-		if ( $this->post_type != $query->get( 'post_type' ) ) {
+		if ( ! $this->query_includes_item_type( $query ) ) {
 			return;
 		}
 
 		if ( ! empty( $_GET['speaker'] ) ) {
+			$query->set( 'cpl_limit_child_visibility', true );
 			return;
 		}
 
 		// if we are filtering the variation, don't filter out the parents
 		if ( cp_library()->setup->post_types->service_type->post_type === cp_library()->setup->variations->get_source()
 			 && ! empty( $_GET['service-type'] ) ) {
+			$query->set( 'cpl_limit_child_visibility', true );
 			return;
 		}
 
-		// hide child items in queries (both frontend and admin)
-		if ( ! $query->get( 'post_parent' ) && ! apply_filters( 'cpl_item_query_show_children', isset( $_GET['show-child-items'] ), $query ) ) {
+		$show_children = apply_filters( 'cpl_item_query_show_children', isset( $_GET['show-child-items'] ), $query );
+		$post_type     = $query->get( 'post_type' );
+		$item_only     = is_string( $post_type ) && $this->post_type === $post_type;
+
+		// Hide child items only when the query is exactly this post type.
+		if ( $item_only && ! $query->get( 'post_parent' ) && ! $show_children ) {
 			$query->set( 'post_parent', 0 );
+			return;
 		}
 
+		if ( ! $item_only || $show_children ) {
+			$query->set( 'cpl_limit_child_visibility', true );
+		}
+
+	}
+
+	/**
+	 * Whether the query includes this item post type.
+	 *
+	 * post_type may be a string or a list of types.
+	 *
+	 * @param mixed $query Current query.
+	 * @return bool
+	 */
+	public function query_includes_item_type( $query ) {
+		if ( ! is_object( $query ) || ! method_exists( $query, 'get' ) ) {
+			return false;
+		}
+
+		$post_type = $query->get( 'post_type' );
+
+		if ( is_array( $post_type ) ) {
+			return in_array( $this->post_type, $post_type, true );
+		}
+
+		return $this->post_type === $post_type;
+	}
+
+	/**
+	 * Whether this query should limit child items.
+	 *
+	 * @param mixed $query Current query.
+	 * @return bool
+	 */
+	public function query_limits_child_visibility( $query ) {
+		return is_object( $query )
+			&& method_exists( $query, 'get' )
+			&& $query->get( 'cpl_limit_child_visibility' )
+			&& $this->query_includes_item_type( $query );
+	}
+
+	/**
+	 * How widely the current user may see child items.
+	 *
+	 * @return string public, own, or all.
+	 */
+	public function child_visibility_scope() {
+		if ( current_user_can( 'edit_others_posts' ) ) {
+			return 'all';
+		}
+
+		if ( current_user_can( 'edit_posts' ) ) {
+			return 'own';
+		}
+
+		return 'public';
+	}
+
+	/**
+	 * SQL fragment that keeps top-level items and children of viewable parents.
+	 *
+	 * The clause applies only to the item post type. Other post types in a
+	 * mixed query are left unchanged. Applied in the query so paging and
+	 * found_posts stay aligned.
+	 *
+	 * @param string $posts_table Posts table name, including the prefix.
+	 * @param string $post_type   Item post type.
+	 * @param string $scope       public, own, or all.
+	 * @param int    $user_id     Current user ID, used for the own scope.
+	 * @return string
+	 */
+	public static function child_list_sql( $posts_table, $post_type, $scope, $user_id ) {
+		$post_type = preg_replace( '/[^a-z0-9_]/', '', (string) $post_type );
+		$user_id   = absint( $user_id );
+		$statuses  = "'publish','private','draft','future','pending'";
+		$public    = "SELECT ID FROM {$posts_table} WHERE post_type = '{$post_type}' AND post_status = 'publish' AND post_password = ''";
+
+		if ( 'all' === $scope ) {
+			$parents = "SELECT ID FROM {$posts_table} WHERE post_type = '{$post_type}' AND post_status IN ({$statuses})";
+			$child   = '1=1';
+		} elseif ( 'own' === $scope ) {
+			$parents = $public . " UNION SELECT ID FROM {$posts_table} WHERE post_type = '{$post_type}' AND post_author = {$user_id} AND post_status IN ({$statuses})";
+			$child   = "{$posts_table}.post_password = '' OR {$posts_table}.post_author = {$user_id}";
+		} else {
+			$parents = $public;
+			$child   = "{$posts_table}.post_password = ''";
+		}
+
+		return " AND ( {$posts_table}.post_type != '{$post_type}' OR {$posts_table}.post_parent = 0 OR ( {$posts_table}.post_parent IN ( {$parents} ) AND ( {$child} ) ) )";
+	}
+
+	/**
+	 * Limit child items inside the SQL query.
+	 *
+	 * @param string $where  Existing WHERE clause.
+	 * @param mixed  $query  Current query.
+	 * @return string
+	 */
+	public function limit_child_visibility_where( $where, $query = null ) {
+		if ( ! $this->query_limits_child_visibility( $query ) ) {
+			return $where;
+		}
+
+		global $wpdb;
+
+		if ( ! is_object( $wpdb ) || empty( $wpdb->posts ) ) {
+			return $where;
+		}
+
+		$user_id = function_exists( 'get_current_user_id' ) ? get_current_user_id() : 0;
+
+		return $where . self::child_list_sql( $wpdb->posts, $this->post_type, $this->child_visibility_scope(), $user_id );
+	}
+
+	/**
+	 * Drop child items whose parent the current user cannot view.
+	 *
+	 * The SQL clause above does this before LIMIT. This pass covers anything
+	 * the clause left in, after parent posts are loaded into the cache.
+	 *
+	 * @param array $posts Query results.
+	 * @param mixed $query Current query.
+	 * @return array
+	 */
+	public function limit_child_visibility( $posts, $query ) {
+		if ( ! $this->query_limits_child_visibility( $query ) ) {
+			return $posts;
+		}
+
+		$parent_ids = array();
+
+		foreach ( (array) $posts as $post ) {
+			if ( is_object( $post ) && ! empty( $post->post_parent ) ) {
+				$parent_ids[] = (int) $post->post_parent;
+			}
+		}
+
+		if ( $parent_ids ) {
+			_prime_post_caches( array_values( array_unique( $parent_ids ) ) );
+		}
+
+		return ItemController::visible_child_list_posts( $posts );
 	}
 
 	/**
@@ -324,13 +475,16 @@ class Item extends PostType  {
 				} else if ( $video_url && ( strpos( $video_url, 'youtube.com' ) !== false || strpos( $video_url, 'youtu.be' ) !== false ) ) {
 					$output = sprintf(
 						'<button type="button" class="button cpl-import-transcript-btn" data-url="%s">%s</button>',
-						add_query_arg(
-							[
-								'cp_action' => 'cpl_import_transcript',
-								'post_id'   => $post_id,
-							],
-							admin_url( 'admin-post.php' )
-						),
+						esc_url( wp_nonce_url(
+							add_query_arg(
+								[
+									'cp_action' => 'cpl_import_transcript',
+									'post_id'   => $post_id,
+								],
+								admin_url( 'admin-post.php' )
+							),
+							'cpl_import_transcript_' . absint( $post_id )
+						) ),
 						\ChurchPlugins\Helpers::get_icon( 'youtube' ) . esc_html__( 'Import', 'cp-library' )
 					);
 				} else {
@@ -592,7 +746,7 @@ class Item extends PostType  {
 			$this->post_type,
 			'cpl_transcript',
 			[
-				'get_callback'    => fn( $object, $field_name, $request ) => get_post_meta( $object['id'], 'transcript', true )
+				'get_callback' => [ ItemController::class, 'rest_transcript_field' ],
 			]
 		);
 	}

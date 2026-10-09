@@ -466,8 +466,8 @@ class Tools
 		<div class="postbox cp-import-payment-history">
 			<h3><span><?php esc_html_e('Export data', 'cp-library') ?></span></h3>
 			<div class="inside">
-				<?php $action_url = esc_url(add_query_arg('cp_action', 'cp_export_items', admin_url())); ?>
-				<form id="cpl_export_data" action="<?php echo $action_url ?>" method="POST" enctype="multipart/form-data">
+				<?php $action_url = wp_nonce_url( add_query_arg( 'cp_action', 'cp_export_items', admin_url() ), 'cp_export_items' ); ?>
+				<form id="cpl_export_data" action="<?php echo esc_url( $action_url ); ?>" method="POST" enctype="multipart/form-data">
 					<button class="button button-primary"><?php echo sprintf(esc_html__('Export all %s as CSV', 'cp-library'), cp_library()->setup->post_types->item->plural_label); ?></button>
 				</form>
 			</div>
@@ -698,6 +698,16 @@ class Tools
 	 */
 	public function export_data()
 	{
+		if ( ! ActionGuard::allows( 'manage_options', 'cp_export_items' ) ) {
+			return;
+		}
+
+		$file_handle = $this->open_export_stream();
+
+		if ( ! is_resource( $file_handle ) ) {
+			return;
+		}
+
 		$return_value = [];
 
 		$args = [
@@ -708,17 +718,7 @@ class Tools
 
 		$posts = new \WP_Query($args);
 
-		$upload_dir = wp_upload_dir();
-		// WP-CLI may need to find a fallback directory
-		if (empty($upload_dir) || empty($upload_dir['path'])) {
-			$upload_dir['path'] = dirname(__FILE__);
-		} else {
-			wp_mkdir_p($upload_dir['path']);
-		}
-
 		$filename = sanitize_file_name(sprintf("%s_" . date('Y-m-d') . ".csv", cp_library()->setup->post_types->item->plural_label));
-		$file_path = trailingslashit($upload_dir['path']) . $filename;
-		$file_handle = fopen($file_path, 'w');
 
 		$header_added = false;
 
@@ -727,7 +727,7 @@ class Tools
 			try {
 				$item = new Item($post->ID);
 
-				$data = $item->get_api_data();
+				$data = $item->get_api_data( false, true );
 
 				$formatted_data = $this->get_formatted_item($data);
 
@@ -743,19 +743,25 @@ class Tools
 			}
 		}
 
-		fclose($file_handle);
+		rewind( $file_handle );
 
 		header("Content-Type: text/csv; charset=utf-8");
 		header("Content-disposition: attachment; filename=\"" . $filename . "\"");
 
-		if (isset($headers['content-length'])) {
-			header("Content-Length: " . $headers['content-length']);
-		}
-
 		session_write_close();
-		readfile(rawurldecode($file_path));
+		fpassthru( $file_handle );
+		fclose( $file_handle );
 
 		exit();
+	}
+
+	/**
+	 * Open a temporary stream for the CSV export.
+	 *
+	 * @return resource|false
+	 */
+	protected function open_export_stream() {
+		return fopen( 'php://temp', 'w+' );
 	}
 
 	/**

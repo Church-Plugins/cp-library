@@ -1,12 +1,15 @@
 <?php
 
 use CP_Library\Admin\Settings;
+use CP_Library\Controllers\Item;
 
 if ( ! Settings::get_item( 'show_transcript', false ) ) {
 	return;
 }
 
-if ( ! $transcript = get_post_meta( get_the_ID(), 'transcript', true ) ) {
+$transcript = Item::transcript_for_output( get_the_ID() );
+
+if ( ! $transcript ) {
 	return;
 }
 
