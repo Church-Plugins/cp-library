@@ -19,7 +19,8 @@ export default function Analytics() {
       data: {
         page,
         timeframe: timeframe,
-        action: 'cpl-analytics-load-items'
+        action: 'cpl-analytics-load-items',
+        nonce: window.cplAnalytics ? window.cplAnalytics.nonce : ''
       },
       success: (data) => {
         setItems(data)
@@ -35,7 +36,8 @@ export default function Analytics() {
       method: 'POST',
       data: {
         timeframe: timeframe,
-        action: 'cpl-analytics-get-overview'
+        action: 'cpl-analytics-get-overview',
+        nonce: window.cplAnalytics ? window.cplAnalytics.nonce : ''
       },
       success: (data) => {
         setOverview(data)

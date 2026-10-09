@@ -13,11 +13,13 @@ class Template extends Component {
 	}
 
 	fetchTemplate() {
+		const editor = window.cplTemplateEditor || {}
 		jQuery.ajax({
-			url: cplVars.ajax_url,
+			url: editor.ajax_url || ( window.cplVars && cplVars.ajax_url ),
 			data: {
 				action: 'cpl_render_template',
-				templateId: this.props.template_id
+				templateId: this.props.template_id,
+				nonce: editor.nonce || ''
 			},
 			success: (response) => {
 				this.setState({

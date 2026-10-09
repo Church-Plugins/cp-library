@@ -175,6 +175,10 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * @return void
 	 */
 	public function update_check() {
+		if ( ! $this->running_in_cron_or_as_manager() ) {
+			return;
+		}
+
 		$is_json_request = isset( $_SERVER['CONTENT_TYPE'] ) && strpos( $_SERVER['CONTENT_TYPE'], 'application/json' ) === 0; // phpcs:ignore
 
 		$amount = absint( $this->get_setting( 'check_count', 50 ) );
@@ -220,8 +224,27 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * @return void
 	 */
 	public function fetch_complete() {
+		if ( ! $this->running_in_cron_or_as_manager() ) {
+			return;
+		}
+
 		update_option( "cpl_{$this->type}_adapter_import_complete", true );
 		update_option( "cpl_{$this->type}_adapter_import_in_progress", false );
+	}
+
+	/**
+	 * Whether adapter work may run for this request.
+	 *
+	 * Cron may run it. Otherwise the current user must be able to manage options.
+	 *
+	 * @return bool
+	 */
+	public function running_in_cron_or_as_manager() {
+		if ( function_exists( 'wp_doing_cron' ) && wp_doing_cron() ) {
+			return true;
+		}
+
+		return (bool) current_user_can( 'manage_options' );
 	}
 
 	/**

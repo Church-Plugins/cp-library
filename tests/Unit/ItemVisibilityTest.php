@@ -36,7 +36,7 @@ namespace {
 					],
 					'variations' => new class() {
 						public function get_source() {
-							return '';
+							return isset( $GLOBALS['cpl_test_variation_source'] ) ? $GLOBALS['cpl_test_variation_source'] : '';
 						}
 
 						public function is_enabled() {
@@ -210,7 +210,7 @@ namespace CP_Library\Tests\Unit {
 		}
 
 		protected function tearDown(): void {
-			unset( $_GET['show-child-items'], $_GET['speaker'], $_GET['service-type'] );
+			unset( $_GET['show-child-items'], $_GET['speaker'], $_GET['service-type'], $GLOBALS['cpl_test_variation_source'], $GLOBALS['wpdb'] );
 			Monkey\tearDown();
 			parent::tearDown();
 		}
@@ -414,6 +414,129 @@ namespace CP_Library\Tests\Unit {
 
 			$this->assertTrue( (bool) $query->get( 'cpl_limit_child_visibility' ) );
 			$this->assertNull( $query->get( 'post_parent' ) );
+		}
+
+		public function test_speaker_filter_still_limits_child_visibility() {
+			$_GET['speaker'] = '12';
+
+			$type            = ( new ReflectionClass( ItemPostType::class ) )->newInstanceWithoutConstructor();
+			$type->post_type = 'cpl_item';
+			$query           = $this->query( [ 'post_type' => 'cpl_item' ] );
+
+			$type->item_variation_query( $query );
+
+			$this->assertTrue( (bool) $query->get( 'cpl_limit_child_visibility' ) );
+			$this->assertNull( $query->get( 'post_parent' ) );
+		}
+
+		public function test_service_type_filter_still_limits_child_visibility() {
+			$GLOBALS['cpl_test_variation_source'] = 'cpl_service_type';
+			$_GET['service-type']                 = '3';
+
+			$type            = ( new ReflectionClass( ItemPostType::class ) )->newInstanceWithoutConstructor();
+			$type->post_type = 'cpl_item';
+			$query           = $this->query( [ 'post_type' => 'cpl_item' ] );
+
+			$type->item_variation_query( $query );
+
+			$this->assertTrue( (bool) $query->get( 'cpl_limit_child_visibility' ) );
+			$this->assertNull( $query->get( 'post_parent' ) );
+		}
+
+		public function test_child_visibility_scope_follows_the_user() {
+			$type            = ( new ReflectionClass( ItemPostType::class ) )->newInstanceWithoutConstructor();
+			$type->post_type = 'cpl_item';
+
+			$this->assertSame( 'public', $type->child_visibility_scope() );
+
+			$this->caps_by_post = array(
+				0 => array( 'edit_posts' => true ),
+			);
+			$this->assertSame( 'own', $type->child_visibility_scope() );
+
+			$this->caps_by_post = array(
+				0 => array(
+					'edit_posts'        => true,
+					'edit_others_posts' => true,
+				),
+			);
+			$this->assertSame( 'all', $type->child_visibility_scope() );
+		}
+
+		public function test_child_list_sql_keeps_public_parents_for_a_subscriber() {
+			$sql = ItemPostType::child_list_sql( 'wp_posts', 'cpl_item', 'public', 0 );
+
+			$this->assertStringContainsString( 'wp_posts.post_parent = 0', $sql );
+			$this->assertStringContainsString( "post_status = 'publish'", $sql );
+			$this->assertStringContainsString( "post_password = ''", $sql );
+			$this->assertStringNotContainsString( 'post_author', $sql );
+		}
+
+		public function test_child_list_sql_includes_every_parent_for_an_editor() {
+			$sql = ItemPostType::child_list_sql( 'wp_posts', 'cpl_item', 'all', 4 );
+
+			$this->assertStringContainsString( 'draft', $sql );
+			$this->assertStringContainsString( 'private', $sql );
+			$this->assertStringNotContainsString( 'post_password', $sql );
+		}
+
+		public function test_child_list_where_uses_the_public_clause() {
+			$GLOBALS['wpdb'] = (object) array( 'posts' => 'wp_posts' );
+
+			Functions\when( 'get_current_user_id' )->justReturn( 0 );
+
+			$type            = ( new ReflectionClass( ItemPostType::class ) )->newInstanceWithoutConstructor();
+			$type->post_type = 'cpl_item';
+			$query           = $this->query(
+				array(
+					'post_type'                   => 'cpl_item',
+					'cpl_limit_child_visibility'  => true,
+				)
+			);
+
+			$where = $type->limit_child_visibility_where( ' AND 1=1', $query );
+
+			$this->assertStringContainsString( 'wp_posts.post_parent = 0', $where );
+			$this->assertStringContainsString( "post_password = ''", $where );
+			$this->assertSame( ' AND 1=1', $type->limit_child_visibility_where( ' AND 1=1', $this->query( array( 'post_type' => 'cpl_item' ) ) ) );
+		}
+
+		public function test_child_list_primes_parent_posts_before_filtering() {
+			$primed = array();
+
+			Functions\when( '_prime_post_caches' )->alias(
+				static function ( $ids ) use ( &$primed ) {
+					$primed = $ids;
+				}
+			);
+
+			$this->public_ids = array(
+				15 => true,
+				20 => true,
+			);
+			$this->parents    = array( 15 => 20 );
+
+			$type            = ( new ReflectionClass( ItemPostType::class ) )->newInstanceWithoutConstructor();
+			$type->post_type = 'cpl_item';
+			$query           = $this->query(
+				array(
+					'post_type'                  => 'cpl_item',
+					'cpl_limit_child_visibility' => true,
+				)
+			);
+
+			$result = $type->limit_child_visibility(
+				array(
+					(object) array(
+						'ID'          => 15,
+						'post_parent' => 20,
+					),
+				),
+				$query
+			);
+
+			$this->assertSame( array( 20 ), $primed );
+			$this->assertSame( array( 15 ), $this->idsOf( $result ) );
 		}
 
 		public function test_child_items_stay_hidden_unless_the_list_asks_for_them() {

@@ -83,7 +83,18 @@ class Extension extends \DiviExtension {
 	 * Register module assets
 	 */
 	public function enqueue_assets() {
-		cp_library()->enqueue_asset( 'divi', [ 'jquery' ], false, false, true );
+		$script = cp_library()->enqueue_asset( 'divi', [ 'jquery' ], false, false, true );
 		cp_library()->enqueue_asset( 'divi', [], false, true );
+
+		if ( is_array( $script ) && ! empty( $script['handle'] ) ) {
+			wp_localize_script(
+				$script['handle'],
+				'cplTemplateEditor',
+				array(
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( 'cpl_render_template' ),
+				)
+			);
+		}
 	}
 }
