@@ -66,9 +66,11 @@ class RequestGuardTest extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
+		unset( $_REQUEST['cp_action'] );
 	}
 
 	protected function tearDown(): void {
+		unset( $_REQUEST['cp_action'] );
 		Monkey\tearDown();
 		parent::tearDown();
 	}
@@ -215,6 +217,23 @@ class RequestGuardTest extends TestCase {
 
 		$adapter       = $this->adapter();
 		$adapter->type = 'probe';
+		$adapter->update_check();
+		$adapter->fetch_complete();
+
+		$this->assertFalse( $adapter->ran );
+	}
+
+	public function test_cron_allowance_does_not_apply_when_cp_action_is_set() {
+		$_REQUEST['cp_action'] = 'cpl_adapter_cron_probe';
+
+		Functions\when( 'wp_doing_cron' )->justReturn( true );
+		Functions\when( 'current_user_can' )->justReturn( false );
+		Functions\expect( 'update_option' )->never();
+
+		$adapter       = $this->adapter();
+		$adapter->type = 'probe';
+
+		$this->assertFalse( $adapter->running_in_cron_or_as_manager() );
 		$adapter->update_check();
 		$adapter->fetch_complete();
 

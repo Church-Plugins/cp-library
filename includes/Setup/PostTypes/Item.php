@@ -136,7 +136,7 @@ class Item extends PostType  {
 	 */
 	public function item_variation_query( $query ) {
 
-		if ( $this->post_type != $query->get( 'post_type' ) ) {
+		if ( ! $this->query_includes_item_type( $query ) ) {
 			return;
 		}
 
@@ -167,7 +167,29 @@ class Item extends PostType  {
 	}
 
 	/**
-	 * Whether this query should hide children of parents the user cannot view.
+	 * Whether the query includes this item post type.
+	 *
+	 * post_type may be a string or a list of types.
+	 *
+	 * @param mixed $query Current query.
+	 * @return bool
+	 */
+	public function query_includes_item_type( $query ) {
+		if ( ! is_object( $query ) || ! method_exists( $query, 'get' ) ) {
+			return false;
+		}
+
+		$post_type = $query->get( 'post_type' );
+
+		if ( is_array( $post_type ) ) {
+			return in_array( $this->post_type, $post_type, true );
+		}
+
+		return $this->post_type === $post_type;
+	}
+
+	/**
+	 * Whether this query should limit child items.
 	 *
 	 * @param mixed $query Current query.
 	 * @return bool
@@ -176,7 +198,7 @@ class Item extends PostType  {
 		return is_object( $query )
 			&& method_exists( $query, 'get' )
 			&& $query->get( 'cpl_limit_child_visibility' )
-			&& $this->post_type == $query->get( 'post_type' );
+			&& $this->query_includes_item_type( $query );
 	}
 
 	/**

@@ -416,6 +416,29 @@ namespace CP_Library\Tests\Unit {
 			$this->assertNull( $query->get( 'post_parent' ) );
 		}
 
+		public function test_child_visibility_limit_matches_an_array_of_post_types() {
+			$_GET['show-child-items'] = '1';
+
+			$type            = ( new ReflectionClass( ItemPostType::class ) )->newInstanceWithoutConstructor();
+			$type->post_type = 'cpl_item';
+			$query           = $this->query(
+				array(
+					'post_type' => array( 'post', 'cpl_item' ),
+				)
+			);
+
+			$type->item_variation_query( $query );
+
+			$this->assertTrue( (bool) $query->get( 'cpl_limit_child_visibility' ) );
+			$this->assertTrue( $type->query_includes_item_type( $query ) );
+			$this->assertTrue( $type->query_limits_child_visibility( $query ) );
+
+			$other = $this->query( array( 'post_type' => 'page' ) );
+			$type->item_variation_query( $other );
+			$this->assertNull( $other->get( 'cpl_limit_child_visibility' ) );
+			$this->assertFalse( $type->query_includes_item_type( $other ) );
+		}
+
 		public function test_speaker_filter_still_limits_child_visibility() {
 			$_GET['speaker'] = '12';
 

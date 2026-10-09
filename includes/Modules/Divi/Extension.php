@@ -86,15 +86,34 @@ class Extension extends \DiviExtension {
 		$script = cp_library()->enqueue_asset( 'divi', [ 'jquery' ], false, false, true );
 		cp_library()->enqueue_asset( 'divi', [], false, true );
 
-		if ( is_array( $script ) && ! empty( $script['handle'] ) ) {
-			wp_localize_script(
-				$script['handle'],
-				'cplTemplateEditor',
-				array(
-					'ajax_url' => admin_url( 'admin-ajax.php' ),
-					'nonce'    => wp_create_nonce( 'cpl_render_template' ),
-				)
-			);
+		if ( ! $this->divi_builder_is_active() || ! is_array( $script ) || empty( $script['handle'] ) ) {
+			return;
 		}
+
+		wp_localize_script(
+			$script['handle'],
+			'cplTemplateEditor',
+			array(
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'nonce'    => wp_create_nonce( 'cpl_render_template' ),
+			)
+		);
+	}
+
+	/**
+	 * Whether the Divi builder is active for this request.
+	 *
+	 * @return bool
+	 */
+	protected function divi_builder_is_active() {
+		if ( function_exists( 'et_core_is_fb_enabled' ) ) {
+			return (bool) et_core_is_fb_enabled();
+		}
+
+		if ( function_exists( 'et_fb_is_enabled' ) ) {
+			return (bool) et_fb_is_enabled();
+		}
+
+		return false;
 	}
 }

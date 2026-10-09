@@ -235,12 +235,15 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	/**
 	 * Whether adapter work may run for this request.
 	 *
-	 * Cron may run it. Otherwise the current user must be able to manage options.
+	 * Cron counts only when WordPress is running cron and the request has no
+	 * cp_action parameter. Every other call requires manage_options.
 	 *
 	 * @return bool
 	 */
 	public function running_in_cron_or_as_manager() {
-		if ( function_exists( 'wp_doing_cron' ) && wp_doing_cron() ) {
+		$is_cron = function_exists( 'wp_doing_cron' ) && wp_doing_cron() && empty( $_REQUEST['cp_action'] );
+
+		if ( $is_cron ) {
 			return true;
 		}
 
