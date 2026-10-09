@@ -89,10 +89,35 @@ class Shortcode
 		<script>
 			var cplParams = cplParams || {};
 		';
-		// Push shortcode parameters to the frontend so that JS has access to the data
+		// Push shortcode parameters to the frontend so that JS has access to the data.
+		// Only identifier keys are emitted, and each value is encoded so the script
+		// text stays a single assignment.
 		if( !empty( $args) && is_array( $args ) ) {
+			$flags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+
 			foreach( $args as $key => $value ) {
-				$output .= "cplParams." . $key . " = '" . $value . "';\n";
+				$key = (string) $key;
+
+				if ( ! preg_match( '/^[A-Za-z_][A-Za-z0-9_-]*$/', $key ) ) {
+					continue;
+				}
+
+				if ( is_bool( $value ) ) {
+					$value = $value ? '1' : '';
+				} elseif ( is_scalar( $value ) || null === $value ) {
+					$value = (string) $value;
+				} else {
+					continue;
+				}
+
+				$encoded_key   = wp_json_encode( $key, $flags );
+				$encoded_value = wp_json_encode( $value, $flags );
+
+				if ( ! is_string( $encoded_key ) || ! is_string( $encoded_value ) ) {
+					continue;
+				}
+
+				$output .= 'cplParams[' . $encoded_key . '] = ' . $encoded_value . ";\n";
 			}
 		}
 		$output .= '

@@ -592,7 +592,7 @@ class Item extends PostType  {
 			$this->post_type,
 			'cpl_transcript',
 			[
-				'get_callback'    => fn( $object, $field_name, $request ) => get_post_meta( $object['id'], 'transcript', true )
+				'get_callback' => [ ItemController::class, 'rest_transcript_field' ],
 			]
 		);
 	}

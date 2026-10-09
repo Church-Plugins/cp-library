@@ -35,8 +35,85 @@ class Item extends Controller{
 		return $this->filter( get_permalink( $this->post->ID ), __FUNCTION__ );
 	}
 
+	/**
+	 * Transcript included with this item.
+	 *
+	 * When transcripts are set to hidden, the text is included only for a user
+	 * who can edit the item.
+	 *
+	 * @return mixed|void
+	 */
 	public function get_transcript() {
-		return $this->filter( get_post_meta( get_the_ID(), 'transcript', true ), __FUNCTION__ );
+		$post_id = 0;
+
+		if ( is_object( $this->post ) && ! empty( $this->post->ID ) ) {
+			$post_id = $this->post->ID;
+		} elseif ( function_exists( 'get_the_ID' ) ) {
+			$post_id = get_the_ID();
+		}
+
+		return $this->filter( self::transcript_for_output( $post_id ), __FUNCTION__ );
+	}
+
+	/**
+	 * Transcript value for the public item REST field.
+	 *
+	 * @param array $object REST object data. The item post ID is `id`.
+	 * @return string
+	 */
+	public static function rest_transcript_field( $object ) {
+		$post_id = ( is_array( $object ) && isset( $object['id'] ) ) ? absint( $object['id'] ) : 0;
+
+		return self::transcript_for_output( $post_id );
+	}
+
+	/**
+	 * Transcript text included in item output.
+	 *
+	 * When transcripts are set to hidden, the stored text is left out unless
+	 * the current user can edit the item.
+	 *
+	 * @param int $post_id Item post ID.
+	 * @return string
+	 */
+	public static function transcript_for_output( $post_id ) {
+		$post_id    = absint( $post_id );
+		$transcript = get_post_meta( $post_id, 'transcript', true );
+
+		if ( ! is_string( $transcript ) ) {
+			$transcript = '';
+		}
+
+		if ( self::transcript_is_hidden() && ! self::user_can_edit_item( $post_id ) ) {
+			return '';
+		}
+
+		return $transcript;
+	}
+
+	/**
+	 * Whether item settings mark transcripts as hidden.
+	 *
+	 * @return bool
+	 */
+	protected static function transcript_is_hidden() {
+		return ! Settings::get_item( 'show_transcript', false );
+	}
+
+	/**
+	 * Whether the current user can edit the item.
+	 *
+	 * @param int $post_id Item post ID.
+	 * @return bool
+	 */
+	protected static function user_can_edit_item( $post_id ) {
+		$post_id = absint( $post_id );
+
+		if ( ! $post_id ) {
+			return false;
+		}
+
+		return (bool) current_user_can( 'edit_post', $post_id );
 	}
 
 	public function get_locations() {
