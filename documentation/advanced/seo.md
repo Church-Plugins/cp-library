@@ -54,11 +54,7 @@ The default archive URL is `/messages/` (based on your plural label slug).
 
 ### Transcripts for SEO
 
-Adding transcripts to your sermons significantly improves SEO:
-
-- Search engines can index the full text content
-- Increases the keywords your sermons rank for
-- Improves accessibility, which search engines reward
+Transcripts add the full text of a message to the sermon page. To output the text on sermon pages, set **Transcript** to **Show** on the **Messages** tab of the Settings page (the default is **Hide**). When the text is on the page, search engines can read it along with the rest of the page.
 
 See [Timestamps & Transcripts](../features/timestamps-and-transcripts.md) for details.
 
@@ -84,7 +80,7 @@ When filters are active, visitors see:
 ## Best Practices
 
 1. **Write descriptive titles** — Include keywords naturally in sermon and series titles
-2. **Add transcripts** — Full text content dramatically improves search visibility
+2. **Add transcripts** — Full text gives search engines more content to read. Set **Transcript** to **Show** so it appears on the page.
 3. **Use consistent taxonomy** — Apply topics, scripture, and seasons consistently
 4. **Don't change URLs** — Changing permalink settings after publishing can break existing links
 5. **Keep content fresh** — Regularly publish new sermons to signal active content to search engines

@@ -62,7 +62,7 @@ Go to Settings → Permalinks and click "Save Changes" to flush rewrite rules. T
 
 ### How do I exclude a sermon from the podcast?
 
-Edit the sermon, find the "Exclude from Podcast" checkbox in the Message Details metabox, and check it.
+Edit the sermon, find the "Exclude from Podcast" checkbox in the Message Details metabox, and check it. This checkbox appears when **Enable Podcast Feed** is turned on.
 
 ## Organization & Filtering
 
@@ -80,7 +80,7 @@ Service Types categorize sermons by the service they were delivered in (Sunday M
 
 ### What are Sermon Variations?
 
-Variations let you create different versions of the same sermon for multiple services, each with their own speaker, media, and timestamps. See [Sermon Variations](../features/sermon-variations.md).
+Variations let you create different versions of the same sermon for multiple services, each with their own speaker, media, and timestamps. See [Sermon Variations](../features/sermon-variations.md). Variations need **Enable Service Types** turned on (**Advanced** tab) and **Enable Variations (beta)** turned on (**Messages** tab).
 
 ### Can I hide certain sermons from the main list?
 
