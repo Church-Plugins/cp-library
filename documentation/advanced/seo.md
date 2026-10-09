@@ -8,14 +8,9 @@ CP Sermon Library follows WordPress SEO best practices. The plugin's URL structu
 
 ## SEO Plugin Compatibility
 
-CP Sermon Library works with popular WordPress SEO plugins:
+CP Sermon Library works with popular SEO plugins such as Yoast SEO, Rank Math, All in One SEO and The SEO Framework. The plugin does not add its own SEO tags. Sermons, series and speakers are public content types, so your SEO plugin adds its settings box to their edit screens and outputs the page title and canonical URL for them, using its own default templates unless you set a custom value. Yoast SEO adds no meta description unless you set one. Rank Math, All in One SEO and The SEO Framework use the excerpt as the default description on those single pages. Topic, Scripture and Season archive pages also get titles and canonical URLs from your SEO plugin, and no meta description unless you set one. Per-term SEO settings depend on the plugin: Yoast and The SEO Framework show them on Topic and Season edit screens, Rank Math only after you turn them on in its Titles & Meta settings, and All in One SEO only in its paid version. Scripture terms have no edit screen.
 
-- **Yoast SEO** — Full support for sermon posts, series, and taxonomy pages
-- **Rank Math** — Full support for sermon content
-- **All in One SEO Pack** — Compatible with sermon pages
-- **The SEO Framework** — Compatible with sermon pages
-
-These plugins can manage meta titles, descriptions, and canonical URLs for all sermon content types.
+Rank Math only outputs its tags after you complete (or skip) its setup wizard. With no SEO plugin, WordPress prints a canonical URL only on single pages and does not print a meta description.
 
 ## Optimizing Your Sermon Content for SEO
 
@@ -54,7 +49,7 @@ The default archive URL is `/messages/` (based on your plural label slug).
 
 ### Transcripts for SEO
 
-Transcripts add the full text of a message to the sermon page. To output the text on sermon pages, set **Transcript** to **Show** on the **Messages** tab of the Settings page (the default is **Hide**). When the text is on the page, search engines can read it along with the rest of the page.
+Transcripts add the full text of a message to the sermon page. To output the text on sermon pages, set **Transcript** to **Show** on the **Messages** tab of the Settings page (the default is **Hide**). **Hide** keeps the transcript off the sermon page and out of the feeds. When **Show** is on, the transcript is shown in a collapsed box with a **Show Transcript** button; the full text is still part of the page for search engines.
 
 See [Timestamps & Transcripts](../features/timestamps-and-transcripts.md) for details.
 
@@ -62,13 +57,7 @@ See [Timestamps & Transcripts](../features/timestamps-and-transcripts.md) for de
 
 ### How Filters Affect SEO
 
-When visitors filter your sermon archive (e.g., by topic or speaker), the plugin uses URL parameters (e.g., `/messages/?facet-cpl_topic=faith`). These filtered pages are typically handled by your SEO plugin's default behavior.
-
-**Best practices for filtered pages:**
-
-- Use your SEO plugin's settings to manage indexing of parameterized URLs
-- Filtered views use query parameters that most SEO plugins handle automatically
-- Links on filtered pages are still followed, so search engines discover your content
+Filtered views use URL parameters such as `/messages/?facet-cpl_topic=faith`. The plugin does not add its own canonical or robots tags to these pages. With no SEO plugin, a filtered archive has no canonical URL. SEO plugins such as Yoast SEO, Rank Math, All in One SEO and The SEO Framework point the canonical URL of a filtered view back to the unfiltered sermon archive. Filter options are form checkboxes, not links, so search engines discover sermons through the archive, pagination and individual sermon, series and topic links, which are all followed normally.
 
 ### User-Friendly Filter Display
 

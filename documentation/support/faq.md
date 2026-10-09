@@ -11,7 +11,7 @@ Navigate to Messages → Add New. Enter the sermon title, add audio/video media,
 You have three options:
 
 1. **Gutenberg Blocks** — Use the sermon blocks in the WordPress block editor
-2. **Shortcodes** — Use `[cpl_item_list]` or `[cp-sermons]` shortcodes
+2. **Shortcodes** — Use `[cpl_item id="123"]` to show one sermon, or `[cp-sermons]` to show the sermon archive
 3. **Archive Pages** — Link to the automatic archive at `/messages/` (or your custom slug)
 
 See [Customization & Display](../features/customization-and-display.md) for details.
@@ -50,11 +50,11 @@ The persistent player is a site-wide audio and video bar that continues playing 
 
 ### How do I set up a podcast feed?
 
-First, enable the podcast feed in Messages → Settings → Advanced → Enable Podcast Feed. Then navigate to Messages → Settings → Podcast tab and fill in the required fields (title, description, author, cover artwork). Your feed URL is `https://yoursite.com/messages/feed/podcast`. See [Podcast Setup](../features/podcast-setup.md).
+The sermon podcast feed is `https://yoursite.com/messages/feed/podcast/`. Use that archive feed, not `/feed/podcast/`, which returns your blog posts. The feed URL works even before you turn on **Enable Podcast Feed**; the setting adds the **Podcast** settings tab and the **Exclude from Podcast** option. Without a saved podcast **Title**, the feed uses the first sermon's title. See [Podcast Setup](../features/podcast-setup.md).
 
 ### Can I create separate podcast feeds for different series or speakers?
 
-Yes. Append `/feed/podcast/` to any series or speaker archive URL. For example: `yoursite.com/series/series-slug/feed/podcast/`
+Yes. Each series and speaker also has its own podcast feed: add `/feed/podcast/` to the series or speaker page URL, for example `https://yoursite.com/series/series-slug/feed/podcast/` or `https://yoursite.com/speakers/speaker-slug/feed/podcast/`. (The `series` and `speakers` parts follow your Series slug and Speaker label settings.)
 
 ### Why is my podcast feed returning a 404 error?
 
@@ -90,7 +90,7 @@ Yes. Edit the sermon and check **Exclude from Main List** in the Visibility Sett
 
 ### How do I change the sermon layout?
 
-Navigate to Messages → Settings → Messages tab and choose the Single Page Template option. You can also set the layout per-instance when using blocks or shortcodes.
+Navigate to Messages → Settings → Messages tab and choose the Single Page Template option. To change the layout of one sermon list, use the **Sermon Query** block: choose list or grid layout (and the number of columns) in the block toolbar/settings, turn on **Show Filters**, and choose which sermon detail blocks appear inside the **Sermon Template**. For a single sermon, the `[cpl_item id="123" template="alt"]` shortcode shows the alternate layout; `player="false"` or `details="false"` hide the player or the sermon details.
 
 ### Can I customize sermon templates in my theme?
 
