@@ -365,6 +365,331 @@ class SermonAudio extends Adapter {
 	}
 
 	/**
+	 * Rewrite a SermonAudio scripture reference so our book list can keep it.
+	 *
+	 * SermonAudio spells the book in English and separates references with ";".
+	 * The book it sends for the psalter is "Psalm". Our list
+	 * (templates/__data/scripture_detailed_20230427_124224.json) names that book
+	 * "Psalms". Scripture::get_book() keeps a passage only when it starts with
+	 * one of those names, so "Psalm 46" was dropped and never saved.
+	 *
+	 * The book at the start of $passage is replaced with that canonical name.
+	 * The same map covers the other singular/plural mismatch (Revelations) and
+	 * the usual abbreviations and alternate names (Ps, Song of Songs, 1 Cor).
+	 * Matching is case-insensitive, longest alias first, and stops at a
+	 * boundary, so "Psalms" is not rewritten again and "2 Corinthians" is not
+	 * read as "1 Corinthians". A passage that still matches nothing is returned
+	 * unchanged. A trailing period on an abbreviation is dropped, so "Ps. 23"
+	 * becomes "Psalms 23".
+	 *
+	 * @param string $passage One reference, without a separating semicolon.
+	 * @return string
+	 */
+	public static function normalize_scripture_passage( $passage ) {
+		$passage = trim( (string) $passage );
+
+		if ( '' === $passage ) {
+			return '';
+		}
+
+		$lower = strtolower( $passage );
+
+		foreach ( self::scripture_book_aliases() as $alias => $canonical ) {
+			$alias_lower = strtolower( $alias );
+			$length      = strlen( $alias_lower );
+
+			if ( strlen( $lower ) < $length || substr( $lower, 0, $length ) !== $alias_lower ) {
+				continue;
+			}
+
+			$next = substr( $passage, $length, 1 );
+
+			if ( '.' === $next ) {
+				$rest = substr( $passage, $length + 1 );
+			} elseif ( self::is_scripture_book_boundary( $next ) ) {
+				$rest = substr( $passage, $length );
+			} else {
+				continue;
+			}
+
+			return $canonical . $rest;
+		}
+
+		return $passage;
+	}
+
+	/**
+	 * Normalize every reference in a SermonAudio bibleText value.
+	 *
+	 * Non-strings are returned as given. Blank pieces from a trailing
+	 * semicolon are dropped. Pieces are joined back with "; ".
+	 *
+	 * @param mixed $bible_text bibleText from the SermonAudio API.
+	 * @return mixed
+	 */
+	public static function normalize_bible_text( $bible_text ) {
+		if ( ! is_string( $bible_text ) ) {
+			return $bible_text;
+		}
+
+		$normalized = array();
+
+		foreach ( explode( ';', $bible_text ) as $passage ) {
+			$passage = self::normalize_scripture_passage( $passage );
+
+			if ( '' !== $passage ) {
+				$normalized[] = $passage;
+			}
+		}
+
+		return implode( '; ', $normalized );
+	}
+
+	/**
+	 * Alias (and canonical name) to the book name in our scripture list.
+	 *
+	 * Keys are matched longest-first. Canonical names are included so a book
+	 * that is already spelled our way is left on that spelling.
+	 *
+	 * @return array<string,string>
+	 */
+	private static function scripture_book_aliases() {
+		static $aliases = null;
+
+		if ( null !== $aliases ) {
+			return $aliases;
+		}
+
+		$canonical = array(
+			'Genesis',
+			'Exodus',
+			'Leviticus',
+			'Numbers',
+			'Deuteronomy',
+			'Joshua',
+			'Judges',
+			'Ruth',
+			'1 Samuel',
+			'2 Samuel',
+			'1 Kings',
+			'2 Kings',
+			'1 Chronicles',
+			'2 Chronicles',
+			'Ezra',
+			'Nehemiah',
+			'Esther',
+			'Job',
+			'Psalms',
+			'Proverbs',
+			'Ecclesiastes',
+			'Song of Solomon',
+			'Isaiah',
+			'Jeremiah',
+			'Lamentations',
+			'Ezekiel',
+			'Daniel',
+			'Hosea',
+			'Joel',
+			'Amos',
+			'Obadiah',
+			'Jonah',
+			'Micah',
+			'Nahum',
+			'Habakkuk',
+			'Zephaniah',
+			'Haggai',
+			'Zechariah',
+			'Malachi',
+			'Matthew',
+			'Mark',
+			'Luke',
+			'John',
+			'Acts',
+			'Romans',
+			'1 Corinthians',
+			'2 Corinthians',
+			'Galatians',
+			'Ephesians',
+			'Philippians',
+			'Colossians',
+			'1 Thessalonians',
+			'2 Thessalonians',
+			'1 Timothy',
+			'2 Timothy',
+			'Titus',
+			'Philemon',
+			'Hebrews',
+			'James',
+			'1 Peter',
+			'2 Peter',
+			'1 John',
+			'2 John',
+			'3 John',
+			'Jude',
+			'Revelation',
+		);
+
+		$map = array();
+
+		foreach ( $canonical as $book ) {
+			$map[ $book ] = $book;
+		}
+
+		$extra = array(
+			'Psalm'                  => 'Psalms',
+			'Ps'                     => 'Psalms',
+			'Psa'                    => 'Psalms',
+			'Psm'                    => 'Psalms',
+			'Pss'                    => 'Psalms',
+			'Revelations'            => 'Revelation',
+			'Apocalypse'             => 'Revelation',
+			'Song of Songs'          => 'Song of Solomon',
+			'Canticles'              => 'Song of Solomon',
+			'Canticle of Canticles'  => 'Song of Solomon',
+			'Gen'                    => 'Genesis',
+			'Ge'                     => 'Genesis',
+			'Ex'                     => 'Exodus',
+			'Exo'                    => 'Exodus',
+			'Exod'                   => 'Exodus',
+			'Lev'                    => 'Leviticus',
+			'Num'                    => 'Numbers',
+			'Numb'                   => 'Numbers',
+			'Deut'                   => 'Deuteronomy',
+			'Dt'                     => 'Deuteronomy',
+			'Josh'                   => 'Joshua',
+			'Judg'                   => 'Judges',
+			'Jdg'                    => 'Judges',
+			'1 Sam'                  => '1 Samuel',
+			'2 Sam'                  => '2 Samuel',
+			'1 Sa'                   => '1 Samuel',
+			'2 Sa'                   => '2 Samuel',
+			'I Samuel'               => '1 Samuel',
+			'II Samuel'              => '2 Samuel',
+			'1 Kgs'                  => '1 Kings',
+			'2 Kgs'                  => '2 Kings',
+			'1 Ki'                   => '1 Kings',
+			'2 Ki'                   => '2 Kings',
+			'I Kings'                => '1 Kings',
+			'II Kings'               => '2 Kings',
+			'1 Chr'                  => '1 Chronicles',
+			'2 Chr'                  => '2 Chronicles',
+			'1 Ch'                   => '1 Chronicles',
+			'2 Ch'                   => '2 Chronicles',
+			'I Chronicles'           => '1 Chronicles',
+			'II Chronicles'          => '2 Chronicles',
+			'Neh'                    => 'Nehemiah',
+			'Esth'                   => 'Esther',
+			'Prov'                   => 'Proverbs',
+			'Pro'                    => 'Proverbs',
+			'Eccl'                   => 'Ecclesiastes',
+			'Eccles'                 => 'Ecclesiastes',
+			'Ecc'                    => 'Ecclesiastes',
+			'Isa'                    => 'Isaiah',
+			'Jer'                    => 'Jeremiah',
+			'Lam'                    => 'Lamentations',
+			'Ezek'                   => 'Ezekiel',
+			'Ezk'                    => 'Ezekiel',
+			'Dan'                    => 'Daniel',
+			'Hos'                    => 'Hosea',
+			'Obad'                   => 'Obadiah',
+			'Mic'                    => 'Micah',
+			'Nah'                    => 'Nahum',
+			'Hab'                    => 'Habakkuk',
+			'Zeph'                   => 'Zephaniah',
+			'Hag'                    => 'Haggai',
+			'Zech'                   => 'Zechariah',
+			'Zec'                    => 'Zechariah',
+			'Mal'                    => 'Malachi',
+			'Matt'                   => 'Matthew',
+			'Mt'                     => 'Matthew',
+			'Mk'                     => 'Mark',
+			'Mrk'                    => 'Mark',
+			'Lk'                     => 'Luke',
+			'Luk'                    => 'Luke',
+			'Jn'                     => 'John',
+			'Jhn'                    => 'John',
+			'Rom'                    => 'Romans',
+			'1 Cor'                  => '1 Corinthians',
+			'2 Cor'                  => '2 Corinthians',
+			'1 Co'                   => '1 Corinthians',
+			'2 Co'                   => '2 Corinthians',
+			'I Corinthians'          => '1 Corinthians',
+			'II Corinthians'         => '2 Corinthians',
+			'I Cor'                  => '1 Corinthians',
+			'II Cor'                 => '2 Corinthians',
+			'Gal'                    => 'Galatians',
+			'Eph'                    => 'Ephesians',
+			'Phil'                   => 'Philippians',
+			'Php'                    => 'Philippians',
+			'Col'                    => 'Colossians',
+			'1 Thess'                => '1 Thessalonians',
+			'2 Thess'                => '2 Thessalonians',
+			'1 Th'                   => '1 Thessalonians',
+			'2 Th'                   => '2 Thessalonians',
+			'I Thessalonians'        => '1 Thessalonians',
+			'II Thessalonians'       => '2 Thessalonians',
+			'1 Tim'                  => '1 Timothy',
+			'2 Tim'                  => '2 Timothy',
+			'1 Ti'                   => '1 Timothy',
+			'2 Ti'                   => '2 Timothy',
+			'I Timothy'              => '1 Timothy',
+			'II Timothy'             => '2 Timothy',
+			'Tit'                    => 'Titus',
+			'Philem'                 => 'Philemon',
+			'Phlm'                   => 'Philemon',
+			'Phm'                    => 'Philemon',
+			'Heb'                    => 'Hebrews',
+			'Jas'                    => 'James',
+			'Jam'                    => 'James',
+			'1 Pet'                  => '1 Peter',
+			'2 Pet'                  => '2 Peter',
+			'1 Pe'                   => '1 Peter',
+			'2 Pe'                   => '2 Peter',
+			'I Peter'                => '1 Peter',
+			'II Peter'               => '2 Peter',
+			'1 Jn'                   => '1 John',
+			'2 Jn'                   => '2 John',
+			'3 Jn'                   => '3 John',
+			'I John'                 => '1 John',
+			'II John'                => '2 John',
+			'III John'               => '3 John',
+			'Rev'                    => 'Revelation',
+		);
+
+		foreach ( $extra as $alias => $book ) {
+			$map[ $alias ] = $book;
+		}
+
+		uksort(
+			$map,
+			static function ( $a, $b ) {
+				return strlen( $b ) <=> strlen( $a );
+			}
+		);
+
+		$aliases = $map;
+
+		return $aliases;
+	}
+
+	/**
+	 * Whether the character after a book alias ends the book name.
+	 *
+	 * A letter continues the word ("Psalm" must not match inside "Psalms").
+	 * End of string, whitespace, and a chapter number or punctuation do.
+	 *
+	 * @param string $char One character, or "" at the end of the passage.
+	 * @return bool
+	 */
+	private static function is_scripture_book_boundary( $char ) {
+		if ( '' === $char ) {
+			return true;
+		}
+
+		return 1 === preg_match( '/[\s\d:;,\-–—()]/', $char );
+	}
+
+	/**
 	 * Formats a Sermon
 	 *
 	 * @param \stdClass $item The sermon to format.
@@ -399,7 +724,7 @@ class SermonAudio extends Adapter {
 		}
 
 		if ( $item->bibleText ) {
-			$args['cpl_data']['scripture'] = $item->bibleText;
+			$args['cpl_data']['scripture'] = self::normalize_bible_text( $item->bibleText );
 		}
 
 		if ( $item->eventType ) {
