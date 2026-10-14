@@ -374,13 +374,19 @@ class SermonAudio extends Adapter {
 	 * one of those names, so "Psalm 46" was dropped and never saved.
 	 *
 	 * The book at the start of $passage is replaced with that canonical name.
-	 * The same map covers the other singular/plural mismatch (Revelations) and
-	 * the usual abbreviations and alternate names (Ps, Song of Songs, 1 Cor).
-	 * Matching is case-insensitive, longest alias first, and stops at a
-	 * boundary, so "Psalms" is not rewritten again and "2 Corinthians" is not
-	 * read as "1 Corinthians". A passage that still matches nothing is returned
-	 * unchanged. A trailing period on an abbreviation is dropped, so "Ps. 23"
-	 * becomes "Psalms 23".
+	 * The same map covers the other singular/plural mismatch (Revelations),
+	 * the usual abbreviations (Ps, Song of Songs, 1 Cor), those abbreviations
+	 * with the space removed (1Cor, 2Co, 1Jn), and spelled-out ordinals
+	 * (First Corinthians, 1st John, 3rd John). Matching is case-insensitive,
+	 * longest alias first, and stops at a boundary, so "Psalms" is not
+	 * rewritten again, "Mal" is not "Mark", "Ezek" is not "Ezra", and
+	 * "2 Corinthians" is not read as "1 Corinthians". A passage that still
+	 * matches nothing is returned unchanged. A trailing period on an
+	 * abbreviation is dropped, so "Ps. 23" becomes "Psalms 23".
+	 *
+	 * A comma is not a separator here. "Psalm 23:1, 4" is one reference.
+	 * Callers that already split on commas (the CSV scripture column) pass
+	 * each piece in separately.
 	 *
 	 * @param string $passage One reference, without a separating semicolon.
 	 * @return string
@@ -660,6 +666,10 @@ class SermonAudio extends Adapter {
 			$map[ $alias ] = $book;
 		}
 
+		foreach ( self::numbered_book_forms() as $alias => $book ) {
+			$map[ $alias ] = $book;
+		}
+
 		uksort(
 			$map,
 			static function ( $a, $b ) {
@@ -670,6 +680,83 @@ class SermonAudio extends Adapter {
 		$aliases = $map;
 
 		return $aliases;
+	}
+
+	/**
+	 * No-space and spelled-out forms of the numbered books.
+	 *
+	 * "1Cor" and "First Corinthians" do not start with "1 Corinthians", so
+	 * get_book() drops them. The number stays attached to the name it belongs
+	 * to: "2Co" is 2 Corinthians, not 1 Corinthians, and "1Ch" is not "1Co".
+	 *
+	 * @return array<string,string>
+	 */
+	private static function numbered_book_forms() {
+		$shorts = array(
+			'Samuel'        => array( 'Sam', 'Sa' ),
+			'Kings'         => array( 'Kgs', 'Ki' ),
+			'Chronicles'    => array( 'Chr', 'Ch' ),
+			'Corinthians'   => array( 'Cor', 'Co' ),
+			'Thessalonians' => array( 'Thess', 'Th' ),
+			'Timothy'       => array( 'Tim', 'Ti' ),
+			'Peter'         => array( 'Pet', 'Pe' ),
+			'John'          => array( 'Jn', 'Jhn' ),
+		);
+
+		$words = array(
+			'1' => array( 'First', '1st' ),
+			'2' => array( 'Second', '2nd' ),
+			'3' => array( 'Third', '3rd' ),
+		);
+
+		$books = array(
+			'1 Samuel',
+			'2 Samuel',
+			'1 Kings',
+			'2 Kings',
+			'1 Chronicles',
+			'2 Chronicles',
+			'1 Corinthians',
+			'2 Corinthians',
+			'1 Thessalonians',
+			'2 Thessalonians',
+			'1 Timothy',
+			'2 Timothy',
+			'1 Peter',
+			'2 Peter',
+			'1 John',
+			'2 John',
+			'3 John',
+		);
+
+		$map = array();
+
+		foreach ( $books as $book ) {
+			list( $number, $name ) = explode( ' ', $book, 2 );
+			$abbreviations         = isset( $shorts[ $name ] ) ? $shorts[ $name ] : array();
+
+			$map[ $number . $name ] = $book;
+
+			foreach ( $abbreviations as $abbreviation ) {
+				$map[ $number . $abbreviation ] = $book;
+			}
+
+			if ( empty( $words[ $number ] ) ) {
+				continue;
+			}
+
+			foreach ( $words[ $number ] as $word ) {
+				$map[ $word . ' ' . $name ] = $book;
+				$map[ $word . $name ]       = $book;
+
+				foreach ( $abbreviations as $abbreviation ) {
+					$map[ $word . ' ' . $abbreviation ] = $book;
+					$map[ $word . $abbreviation ]       = $book;
+				}
+			}
+		}
+
+		return $map;
 	}
 
 	/**

@@ -20,6 +20,8 @@ namespace CP_Library\Tests\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use CP_Library\Adapters\SermonAudio;
+use CP_Library\Admin\Import\ImportSermons;
+use CP_Library\Setup\Taxonomies\Scripture;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
@@ -101,6 +103,35 @@ class SermonAudioScriptureTest extends TestCase {
 			'Matt 5:1'                 => 'Matthew 5:1',
 			'Genesis 1:1'              => 'Genesis 1:1',
 			'Not a book 1:1'           => 'Not a book 1:1',
+			'Mal 3:1'                  => 'Malachi 3:1',
+			'Malachi 3:1'              => 'Malachi 3:1',
+			'Mark 1:1'                 => 'Mark 1:1',
+			'Ezek 37'                  => 'Ezekiel 37',
+			'Ezekiel 37'               => 'Ezekiel 37',
+			'Ezra 7'                   => 'Ezra 7',
+			'Lam 3:22'                 => 'Lamentations 3:22',
+			'Lamentations 3'           => 'Lamentations 3',
+			'Ex 20:1'                  => 'Exodus 20:1',
+			'Exodus 20'                => 'Exodus 20',
+			'1Cor 13'                  => '1 Corinthians 13',
+			'1Cor. 13:4'               => '1 Corinthians 13:4',
+			'1Corinthians 13'          => '1 Corinthians 13',
+			'2Co 5:17'                 => '2 Corinthians 5:17',
+			'2Cor 5:17'                => '2 Corinthians 5:17',
+			'1Jn 1:9'                  => '1 John 1:9',
+			'2Jn 1'                    => '2 John 1',
+			'3Jn 1'                    => '3 John 1',
+			'1John 1:9'                => '1 John 1:9',
+			'First Corinthians 13'     => '1 Corinthians 13',
+			'Second Corinthians 5:17'  => '2 Corinthians 5:17',
+			'Third John 1'             => '3 John 1',
+			'1st Corinthians 13'       => '1 Corinthians 13',
+			'2nd Samuel 7'             => '2 Samuel 7',
+			'3rd John 1'               => '3 John 1',
+			'First John 1:9'           => '1 John 1:9',
+			'Second John 1'            => '2 John 1',
+			'1stCor 13'                => '1 Corinthians 13',
+			'Psalm 23:1, 4'            => 'Psalms 23:1, 4',
 		);
 
 		foreach ( $cases as $input => $expected ) {
@@ -143,5 +174,94 @@ class SermonAudioScriptureTest extends TestCase {
 
 		$this->assertSame( 'Psalms 55:22; 1 Corinthians 13', $formatted['cpl_data']['scripture'] );
 		$this->assertSame( 'Cast thy burden upon the LORD', $formatted['post_title'] );
+	}
+
+	public function test_csv_scripture_cell_normalizes_each_comma_separated_reference() {
+		$this->assertSame(
+			array( 'Psalms 23', 'John 3:16' ),
+			ImportSermons::scripture_passages( 'Ps 23, Jn 3:16' )
+		);
+		$this->assertSame(
+			array( 'Psalms 23' ),
+			ImportSermons::scripture_passages( 'Psalm 23' )
+		);
+		$this->assertSame(
+			array( '1 Corinthians 13', '2 Corinthians 5:17', '1 John 1:9' ),
+			ImportSermons::scripture_passages( '1Cor 13, 2Co 5:17, 1Jn 1:9' )
+		);
+		$this->assertSame(
+			array( '1 Corinthians 13', '3 John 1' ),
+			ImportSermons::scripture_passages( 'First Corinthians 13, 3rd John 1' )
+		);
+		$this->assertSame( array(), ImportSermons::scripture_passages( ' , ' ) );
+	}
+
+	/**
+	 * A comma inside one reference is a verse list. The shared rewriter leaves
+	 * it as one passage. The CSV column split is separate, and it does break
+	 * that verse list, because the importer already separated every comma.
+	 */
+	public function test_a_verse_list_comma_stays_one_passage_until_the_csv_split() {
+		$this->assertSame( 'Psalms 23:1, 4', SermonAudio::normalize_scripture_passage( 'Psalm 23:1, 4' ) );
+		$this->assertSame(
+			array( 'Psalms 23:1', '4' ),
+			ImportSermons::scripture_passages( 'Psalm 23:1, 4' )
+		);
+	}
+
+	public function test_admin_save_keeps_a_psalm_reference() {
+		$saved = null;
+		$terms = null;
+
+		$templates = new class( dirname( __DIR__, 2 ) ) {
+			/** @var string */
+			private $root;
+
+			public function __construct( $root ) {
+				$this->root = $root;
+			}
+
+			public function get_template_hierarchy( $template, $args = array() ) {
+				return $this->root . '/templates/' . $template;
+			}
+		};
+
+		$library           = new \stdClass();
+		$library->templates = $templates;
+		Functions\when( 'cp_library' )->justReturn( $library );
+		Functions\when( 'apply_filters' )->alias(
+			static function ( $tag, $value ) {
+				return $value;
+			}
+		);
+		Functions\when( 'sanitize_text_field' )->returnArg();
+		Functions\when( 'get_term_by' )->alias(
+			static function ( $field, $name ) {
+				return (object) array(
+					'term_id' => 42,
+					'name'    => $name,
+				);
+			}
+		);
+		Functions\when( 'update_post_meta' )->alias(
+			static function ( $post_id, $key, $value ) use ( &$saved ) {
+				$saved = $value;
+				return true;
+			}
+		);
+		Functions\when( 'wp_set_object_terms' )->alias(
+			static function ( $post_id, $term_ids ) use ( &$terms ) {
+				$terms = $term_ids;
+				return $term_ids;
+			}
+		);
+
+		$scripture           = ( new ReflectionClass( Scripture::class ) )->newInstanceWithoutConstructor();
+		$scripture->taxonomy = 'cpl_scripture';
+
+		$scripture->update_object_scripture( 15, array( 'Psalm 23', 'Jn 3:16', 'Not a book 1' ) );
+
+		$this->assertSame( array( 'Psalms 23', 'John 3:16' ), array_values( $saved ) );
+		$this->assertSame( array( 42, 42 ), $terms );
 	}
 }
