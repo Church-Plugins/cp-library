@@ -61,6 +61,9 @@ class YouTube {
 		add_action( 'cmb2_render_cpl_transcript_caption_upload', [ $this, 'display_caption_upload' ], 10, 5 );
 		add_action( 'wp_ajax_cpl_upload_transcript_caption', [ $this, 'handle_caption_upload' ] );
 		add_action( 'save_post', [ $this, 'save_caption_upload' ], 100 );
+		// Classic #post is not multipart, so Update never filled $_FILES. The block
+		// editor posts each metabox with FormData, which already includes this file.
+		add_action( 'post_edit_form_tag', [ $this, 'add_caption_form_enctype' ] );
 		add_filter( 'redirect_post_location', [ $this, 'filter_caption_upload_redirect' ] );
 		add_action( 'admin_notices', [ $this, 'render_admin_notices' ] );
 		add_filter( 'bulk_actions-edit-cpl_item', [ $this, 'add_bulk_actions' ] );
@@ -309,6 +312,7 @@ class YouTube {
 	public static function innertube_client( $video_id = '' ) {
 		$client = [
 			'clientName'    => 'ANDROID',
+			// Replace 20.10.38 when YouTube retires that client, or return clientVersion from the cpl_youtube_innertube_client filter.
 			'clientVersion' => '20.10.38',
 		];
 
@@ -567,7 +571,7 @@ class YouTube {
 	/**
 	 * Convert a WebVTT or SubRip caption file to plain transcript text.
 	 *
-	 * Timestamps, standalone cue numbers, file headers, and cue tags are removed.
+	 * Timestamps, the line directly before a timing line, file headers, and cue tags are removed.
 	 *
 	 * @param string $raw Caption file contents.
 	 * @return string
@@ -606,21 +610,13 @@ class YouTube {
 				continue;
 			}
 
-			if ( preg_match( '/^\d+$/', $line ) ) {
-				$next = '';
+			// Cue identifiers are not always numbers (`intro-2`). The identifier is
+			// the line immediately above the timing line. A blank line means the
+			// previous line is spoken text, not an identifier.
+			$next = ( $i + 1 < $count ) ? trim( $lines[ $i + 1 ] ) : '';
 
-				for ( $j = $i + 1; $j < $count; $j++ ) {
-					$candidate = trim( $lines[ $j ] );
-
-					if ( '' !== $candidate ) {
-						$next = $candidate;
-						break;
-					}
-				}
-
-				if ( self::is_timestamp_line( $next ) ) {
-					continue;
-				}
+			if ( self::is_timestamp_line( $next ) ) {
+				continue;
 			}
 
 			$text = self::strip_caption_markup( $line );
@@ -663,24 +659,47 @@ class YouTube {
 	 * @return string
 	 */
 	protected static function strip_caption_markup( $line ) {
-		$line = html_entity_decode( $line, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$line = html_entity_decode( (string) $line, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 		$line = preg_replace( '/\{[^}]*\}/', '', $line );
-		$line = preg_replace( '/<[^>]*>/', '', $line );
 
 		if ( ! is_string( $line ) ) {
 			return '';
 		}
 
-		// Entity decoding can reveal a tag that the first pass did not see.
-		$line = preg_replace( '/<[^>]*>/', '', $line );
-
-		if ( ! is_string( $line ) ) {
-			return '';
-		}
-
+		$line = wp_strip_all_tags( $line );
+		$line = self::strip_unclosed_markup( $line );
 		$line = preg_replace( '/\s+/', ' ', $line );
 
 		return is_string( $line ) ? trim( $line ) : '';
+	}
+
+	/**
+	 * Remove a '<' that starts a tag but never reaches a closing '>'.
+	 *
+	 * Called after wp_strip_all_tags(), which still leaves some of those fragments.
+	 *
+	 * @param string $text Text that may contain an unclosed tag.
+	 * @return string
+	 */
+	public static function strip_unclosed_markup( $text ) {
+		$text = preg_replace( '/<[A-Za-z\/!?][^>\r\n]*(?=\r|\n|$)/', '', (string) $text );
+
+		return is_string( $text ) ? $text : '';
+	}
+
+	/**
+	 * Sanitize transcript HTML before it is printed.
+	 *
+	 * Closed tags are left for wp_kses_post(). An unclosed '<' fragment is removed
+	 * first, because kses does not treat it as a tag.
+	 *
+	 * @param string $transcript Stored transcript.
+	 * @return string
+	 */
+	public static function escape_transcript( $transcript ) {
+		$transcript = self::strip_unclosed_markup( $transcript );
+
+		return wp_kses_post( $transcript );
 	}
 
 	/**
@@ -776,7 +795,7 @@ class YouTube {
 			<label for="cpl_transcript_caption"><strong><?php esc_html_e( 'Upload a .vtt or .srt caption file', 'cp-library' ); ?></strong></label><br />
 			<input type="file" name="cpl_transcript_caption" id="cpl_transcript_caption" accept=".vtt,.srt,text/vtt" />
 		</p>
-		<p class="description"><?php esc_html_e( 'Timestamps, cue numbers, and tags are removed. The remaining text is saved in the transcript. You can also paste the transcript into the field above.', 'cp-library' ); ?></p>
+		<p class="description"><?php esc_html_e( 'Timestamps, cue identifiers, and tags are removed. The file is saved when it finishes uploading. Clicking Update also saves a file that is still selected. You can paste the transcript into the field above.', 'cp-library' ); ?></p>
 		<div id="cpl-caption-upload-notice" class="notice inline" style="display:none;"><p></p></div>
 		<script>
 			jQuery($ => {
@@ -915,6 +934,25 @@ class YouTube {
 		}
 
 		update_post_meta( $post_id, 'transcript', $result );
+	}
+
+	/**
+	 * Add multipart encoding on the sermon edit form.
+	 *
+	 * CMB2 file fields use the media library, not a native file input, so this
+	 * does not change how those fields post. Limited to sermons so other edit
+	 * screens keep the default encoding.
+	 *
+	 * @return void
+	 */
+	public function add_caption_form_enctype() {
+		$screen = get_current_screen();
+
+		if ( ! $screen || CP_LIBRARY_UPREFIX . '_item' !== $screen->post_type ) {
+			return;
+		}
+
+		echo ' enctype="multipart/form-data"';
 	}
 
 	/**

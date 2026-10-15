@@ -209,6 +209,98 @@ VTT;
 		$this->assertSame( '3', YouTube::captions_to_text( $srt ) );
 	}
 
+	/**
+	 * VTT cue ids are not always numbers. `intro-2` sits on the line before the
+	 * timing line and was stored as spoken text, because only `^\d+$` labels
+	 * were skipped. A blank line still means the previous line is spoken text.
+	 */
+	public function test_a_named_cue_identifier_is_not_spoken_text() {
+		$vtt = <<<'VTT'
+WEBVTT
+
+intro-2
+00:00:01.000 --> 00:00:03.000
+Hello church
+
+00:00:04.000 --> 00:00:06.000
+See you Sunday
+VTT;
+
+		$this->assertSame( 'Hello church See you Sunday', YouTube::captions_to_text( $vtt ) );
+	}
+
+	/**
+	 * strip_tags() leaves a '<' that never finds a '>'. A caption line such as
+	 * `<img src=x onerror=alert(1)` has no closing bracket, so it was stored
+	 * and later printed as markup.
+	 */
+	public function test_unclosed_tag_fragment_is_removed_from_caption_text() {
+		$srt = "1\n00:00:01,000 --> 00:00:02,000\nHello <img src=x onerror=alert(1)\n";
+
+		$this->assertSame( 'Hello', YouTube::captions_to_text( $srt ) );
+	}
+
+	/**
+	 * A space after '<' is a comparison. `<3` has no closing '>' and
+	 * wp_strip_all_tags() treats it as an unclosed tag, so it does not remain.
+	 */
+	public function test_comparison_text_is_not_treated_as_a_tag() {
+		$srt = "1\n00:00:01,000 --> 00:00:02,000\na < b and <3\n";
+
+		$this->assertSame( 'a < b and', YouTube::captions_to_text( $srt ) );
+	}
+
+	/**
+	 * The public transcript runs through kses, which does not see an unclosed
+	 * '<'. That fragment has to be removed before kses runs. A closed tag is
+	 * left for kses.
+	 */
+	public function test_public_transcript_drops_an_unclosed_tag_before_kses() {
+		Functions\when( 'wp_kses_post' )->alias(
+			static function ( $text ) {
+				return $text;
+			}
+		);
+
+		$html = YouTube::escape_transcript( "Hello <img src=x onerror=alert(1)\n<p>Next</p>" );
+
+		$this->assertStringNotContainsString( 'onerror', $html );
+		$this->assertStringContainsString( 'Hello', $html );
+		$this->assertStringContainsString( '<p>Next</p>', $html );
+	}
+
+	/**
+	 * The classic sermon form is not multipart, so choosing a caption file and
+	 * clicking Update posted an empty $_FILES entry.
+	 */
+	public function test_sermon_edit_form_accepts_caption_files() {
+		if ( ! defined( 'CP_LIBRARY_UPREFIX' ) ) {
+			define( 'CP_LIBRARY_UPREFIX', 'cpl' );
+		}
+
+		Functions\when( 'get_current_screen' )->justReturn( (object) array( 'post_type' => 'cpl_item' ) );
+
+		$youtube = ( new \ReflectionClass( YouTube::class ) )->newInstanceWithoutConstructor();
+
+		ob_start();
+		$youtube->add_caption_form_enctype();
+		$this->assertSame( ' enctype="multipart/form-data"', ob_get_clean() );
+	}
+
+	public function test_other_post_types_do_not_get_the_caption_enctype() {
+		if ( ! defined( 'CP_LIBRARY_UPREFIX' ) ) {
+			define( 'CP_LIBRARY_UPREFIX', 'cpl' );
+		}
+
+		Functions\when( 'get_current_screen' )->justReturn( (object) array( 'post_type' => 'post' ) );
+
+		$youtube = ( new \ReflectionClass( YouTube::class ) )->newInstanceWithoutConstructor();
+
+		ob_start();
+		$youtube->add_caption_form_enctype();
+		$this->assertSame( '', ob_get_clean() );
+	}
+
 	public function test_caption_file_with_no_spoken_text_is_empty() {
 		$this->assertSame( '', YouTube::captions_to_text( "WEBVTT\n\nNOTE nothing here\n" ) );
 	}

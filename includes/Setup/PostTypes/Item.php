@@ -632,7 +632,7 @@ class Item extends PostType  {
 		// Custom cmb2 fields, rendered in includes/Integrations/YouTube.php.
 		$cmb->add_field( [
 			'name'         => __( 'Upload caption file', 'cp-library' ),
-			'desc'         => __( 'Upload a .vtt or .srt file. Timestamps, cue numbers, and tags are removed and the text is saved as the transcript.', 'cp-library' ),
+			'desc'         => __( 'Upload a .vtt or .srt file. Timestamps, cue identifiers, and tags are removed and the text is saved as the transcript.', 'cp-library' ),
 			'id'           => 'transcript_caption_upload',
 			'type'         => 'cpl_transcript_caption_upload',
 			'save_field'   => false,
