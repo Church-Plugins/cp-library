@@ -50,22 +50,105 @@ class YouTube {
 	}
 
 	/**
-	 * Handle transcript import request
+	 * Nonce action for a transcript import request.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string
+	 */
+	public function import_request_nonce_action( $post_id ) {
+		return 'cpl_import_transcript_' . absint( $post_id );
+	}
+
+	/**
+	 * Admin URL that starts a transcript import for one item.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string
+	 */
+	public function get_import_request_url( $post_id ) {
+		$post_id = absint( $post_id );
+
+		return add_query_arg(
+			array(
+				'cp_action' => 'cpl_import_transcript',
+				'post_id'   => $post_id,
+				'_wpnonce'  => wp_create_nonce( $this->import_request_nonce_action( $post_id ) ),
+			),
+			admin_url( 'admin-post.php' )
+		);
+	}
+
+	/**
+	 * Handle transcript import request.
+	 *
+	 * Confirms the request and that the user can edit the target item
+	 * before importing.
 	 */
 	public function handle_import_request() {
-		$post_id = absint( $_REQUEST['post_id'] ?? 0 );
+		$post_id = $this->requested_post_id();
 
 		if ( ! $post_id ) {
 			wp_send_json_error( 'No post ID provided' );
+			return;
+		}
+
+		if ( ! wp_verify_nonce( $this->requested_nonce(), $this->import_request_nonce_action( $post_id ) ) ) {
+			wp_send_json_error( 'The request could not be verified.' );
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			wp_send_json_error( 'You are not allowed to edit this item.' );
+			return;
+		}
+
+		$post = get_post( $post_id );
+
+		if ( ! is_object( $post ) || empty( $post->post_type ) || 'cpl_item' !== $post->post_type ) {
+			wp_send_json_error( 'Invalid item.' );
+			return;
 		}
 
 		$result = $this->import_transcript( $post_id );
 
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( $result->get_error_message() );
+			return;
 		}
 
 		wp_send_json_success( $result );
+	}
+
+	/**
+	 * Positive integer post ID from the import request.
+	 *
+	 * @return int
+	 */
+	protected function requested_post_id() {
+		if ( ! isset( $_REQUEST['post_id'] ) || is_array( $_REQUEST['post_id'] ) || is_object( $_REQUEST['post_id'] ) ) {
+			return 0;
+		}
+
+		$raw = trim( (string) wp_unslash( (string) $_REQUEST['post_id'] ) );
+
+		if ( '' === $raw || ! ctype_digit( $raw ) ) {
+			return 0;
+		}
+
+		return absint( $raw );
+	}
+
+	/**
+	 * Nonce value from the import request.
+	 *
+	 * @return string
+	 */
+	protected function requested_nonce() {
+		if ( ! isset( $_REQUEST['_wpnonce'] ) || is_array( $_REQUEST['_wpnonce'] ) || is_object( $_REQUEST['_wpnonce'] ) ) {
+			return '';
+		}
+
+		return sanitize_text_field( (string) wp_unslash( (string) $_REQUEST['_wpnonce'] ) );
 	}
 
 	/**
@@ -288,10 +371,7 @@ class YouTube {
 			})
 		</script>
 
-		<?php $import_url = add_query_arg( [
-			'cp_action'  => 'cpl_import_transcript',
-			'post_id' => $object_id,
-		], admin_url( 'admin-post.php' ) ); ?>
+		<?php $import_url = $this->get_import_request_url( $object_id ); ?>
 
 		<button type="button" id="cpl-import-transcript" data-url="<?php echo esc_url( $import_url ); ?>" class="button cpl-import-transcript-btn"><?php echo \ChurchPlugins\Helpers::get_icon( 'youtube' ) . esc_html__( 'Import from YouTube', 'cp-library' ); ?></button>
 
@@ -323,9 +403,24 @@ class YouTube {
 			return $redirect_to;
 		}
 
+		// The list screen requires edit_posts. Each target still needs edit_post.
+		if ( ! current_user_can( 'edit_posts' ) || ! is_array( $post_ids ) ) {
+			return $redirect_to;
+		}
+
 		$successful_transcripts = 0;
 
 		foreach ( $post_ids as $post_id ) {
+			if ( is_array( $post_id ) || is_object( $post_id ) ) {
+				continue;
+			}
+
+			$post_id = absint( $post_id );
+
+			if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
+				continue;
+			}
+
 			$success = $this->import_transcript( $post_id );
 
 			if ( true === $success ) {
