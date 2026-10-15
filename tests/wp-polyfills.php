@@ -49,3 +49,21 @@ if ( ! function_exists( 'maybe_serialize' ) ) {
 		return $data;
 	}
 }
+
+if ( ! function_exists( 'wp_parse_url' ) ) {
+	/**
+	 * Absolute-URL slice of wp_parse_url().
+	 *
+	 * WordPress adds placeholder-scheme handling for scheme-relative and
+	 * root-relative URLs. The units that call this pass absolute http(s) URLs
+	 * (or strings parse_url() already rejects), so parse_url() is the same
+	 * function.
+	 */
+	function wp_parse_url( $url, $component = -1 ) {
+		if ( -1 === $component ) {
+			return parse_url( (string) $url );
+		}
+
+		return parse_url( (string) $url, $component );
+	}
+}

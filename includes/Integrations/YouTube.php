@@ -13,11 +13,24 @@ use CP_Library\Controllers\Item;
  */
 class YouTube {
 	/**
+	 * InnerTube player endpoint. The ANDROID client context below is what
+	 * returns caption track URLs that a plain GET can still read.
+	 */
+	const PLAYER_ENDPOINT = 'https://www.youtube.com/youtubei/v1/player';
+
+	/**
 	 * Singleton instance.
 	 *
 	 * @var YouTube
 	 */
 	protected static $_instance;
+
+	/**
+	 * Caption-upload result code added to the post-save redirect.
+	 *
+	 * @var string
+	 */
+	protected $caption_upload_result = '';
 
 	/**
 	 * Get the instance.
@@ -45,6 +58,11 @@ class YouTube {
 	protected function actions() {
 		add_action( 'cpl_import_transcript', [ $this, 'handle_import_request' ], 10, 2 );
 		add_action( 'cmb2_render_cpl_import_transcript_button', [ $this, 'display_import_transcript_button' ], 10, 5 );
+		add_action( 'cmb2_render_cpl_transcript_caption_upload', [ $this, 'display_caption_upload' ], 10, 5 );
+		add_action( 'wp_ajax_cpl_upload_transcript_caption', [ $this, 'handle_caption_upload' ] );
+		add_action( 'save_post', [ $this, 'save_caption_upload' ], 100 );
+		add_filter( 'redirect_post_location', [ $this, 'filter_caption_upload_redirect' ] );
+		add_action( 'admin_notices', [ $this, 'render_admin_notices' ] );
 		add_filter( 'bulk_actions-edit-cpl_item', [ $this, 'add_bulk_actions' ] );
 		add_filter( 'handle_bulk_actions-edit-cpl_item', [ $this, 'handle_bulk_actions' ], 10, 3 );
 	}
@@ -65,7 +83,9 @@ class YouTube {
 			wp_send_json_error( $result->get_error_message() );
 		}
 
-		wp_send_json_success( $result );
+		wp_send_json_success( [
+			'transcript' => get_post_meta( $post_id, 'transcript', true ),
+		] );
 	}
 
 	/**
@@ -96,18 +116,13 @@ class YouTube {
 			return new \WP_Error( 'no_video_url', 'No video URL found for this post' );
 		}
 
-		// detect YouTube video
-		if ( strpos( $video_url, 'youtube.com' ) !== false ) {
-			$video_id = explode( '?v=', $video_url );
-			$video_id = $video_id[1] ?? '';
-		} elseif ( strpos( $video_url, 'youtu.be' ) !== false ) {
-			$video_id = explode( 'youtu.be/', $video_url );
-			$video_id = $video_id[1] ?? '';
-		} else {
-			return new \WP_Error( 'not_youtube_video', 'Video URL is not a YouTube video' );
-		}
+		$video_id = self::parse_video_id( $video_url );
 
 		if ( ! $video_id ) {
+			if ( false === strpos( $video_url, 'youtube.com' ) && false === strpos( $video_url, 'youtu.be' ) ) {
+				return new \WP_Error( 'not_youtube_video', 'Video URL is not a YouTube video' );
+			}
+
 			return new \WP_Error( 'no_video_id', 'Could not detect video ID from URL' );
 		}
 
@@ -154,99 +169,518 @@ class YouTube {
 	}
 
 	/**
-	 * Fetch a YouTube video transcript
+	 * Fetch a YouTube video transcript.
+	 *
+	 * Caption URLs scraped from the watch page now include exp=xpe and return
+	 * HTTP 200 with an empty body. The ANDROID InnerTube player response still
+	 * carries captionTracks whose baseUrl a plain GET can read. The client
+	 * context is filterable so clientVersion can change without a release.
 	 *
 	 * @param string $video_id YouTube video ID.
 	 * @return array|\WP_Error
 	 */
 	public function fetch_youtube_transcript( $video_id ) {
-		$USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36,gzip(gfe)';
-		$RE_XML_TRANSCRIPT = '/<text start="([^"]*)" dur="([^"]*)">([^<]*)<\/text>/';
+		if ( ! preg_match( '/^[A-Za-z0-9_-]{11}$/', (string) $video_id ) ) {
+			return new \WP_Error( 'no_video_id', 'Could not detect video ID from URL' );
+		}
 
-		$request = wp_remote_get(
-			"https://www.youtube.com/watch?v=$video_id",
+		$request = wp_remote_post(
+			self::player_endpoint(),
 			[
+				'timeout' => 15,
 				'headers' => [
-					'User-Agent' => $USER_AGENT,
-				]
+					'Content-Type'    => 'application/json',
+					'Accept-Language' => 'en-US',
+				],
+				'body'    => wp_json_encode( self::player_request_body( $video_id ) ),
 			]
 		);
 
-		$status_code = wp_remote_retrieve_response_code( $request );
-
-		if ( 200 !== $status_code ) {
-			return new \WP_Error( 'youtube_error', 'YouTube returned status code ' . $status_code );
+		if ( is_wp_error( $request ) ) {
+			return new \WP_Error( 'youtube_captions_empty', self::captions_unavailable_message() );
 		}
 
-		$raw_html = wp_remote_retrieve_body( $request );
+		$status_code = (int) wp_remote_retrieve_response_code( $request );
+		$body        = wp_remote_retrieve_body( $request );
 
-		$split_html = explode( '"captions":', $raw_html );
+		if ( 200 !== $status_code || ! is_string( $body ) || '' === trim( $body ) ) {
+			return new \WP_Error( 'youtube_captions_empty', self::captions_unavailable_message() );
+		}
 
-		if( count( $split_html ) < 2 ) {
-			if ( strpos( $raw_html, 'class="g-recaptcha"' ) !== false ) {
-				return new \WP_Error( 'youtube_error', 'YouTube is blocking requests with a CAPTCHA' );
+		$player = json_decode( $body, true );
+		$urls   = self::caption_track_urls( $player );
+
+		if ( ! $urls ) {
+			return new \WP_Error( 'youtube_captions_empty', self::captions_unavailable_message() );
+		}
+
+		foreach ( $urls as $transcript_url ) {
+			// srv3 XML is not the <text start dur> shape this parser reads.
+			// Dropping that parameter asks timedtext for the legacy caption XML.
+			$transcript_url = self::caption_fetch_url( $transcript_url );
+
+			if ( ! self::is_youtube_caption_url( $transcript_url ) ) {
+				continue;
 			}
 
-			if ( strpos( $raw_html, '"playabilityStatus":' ) !== false ) {
-				return new \WP_Error( 'youtube_error', 'YouTube video is not available' );
-			}
-
-			return new \WP_Error( 'youtube_error', 'Could not find captions in YouTube response' );
-		}
-
-		try {
-			$captions = explode( ',"videoDetails', $split_html[1] );
-			$captions = $captions[0];
-			$captions = str_replace( "\n", '', $captions );
-			$captions = json_decode( $captions, true );
-		} catch ( \Exception $e ) {
-			return new \WP_Error( 'youtube_error', 'Could not decode YouTube captions' );
-		}
-
-		$transcript_url = $captions['playerCaptionsTracklistRenderer']['captionTracks'][0]['baseUrl'];
-
-		// fetch transcript
-		$transcript_request = wp_remote_get(
-			$transcript_url,
-			[
-				'headers' => [
-					'User-Agent' => $USER_AGENT,
+			$transcript_request = wp_remote_get(
+				$transcript_url,
+				[
+					'timeout'            => 15,
+					'reject_unsafe_urls' => true,
 				]
-			]
-		);
+			);
 
-		$status_code = wp_remote_retrieve_response_code( $transcript_request );
+			if ( is_wp_error( $transcript_request ) ) {
+				continue;
+			}
 
-		if ( 200 !== $status_code ) {
-			return new \WP_Error( 'youtube_error', 'YouTube returned status code ' . $status_code );
+			$transcript_status = (int) wp_remote_retrieve_response_code( $transcript_request );
+			$transcript        = wp_remote_retrieve_body( $transcript_request );
+
+			if ( 200 !== $transcript_status || ! is_string( $transcript ) || '' === trim( $transcript ) ) {
+				continue;
+			}
+
+			$output = self::parse_caption_xml( $transcript );
+
+			if ( ! $output ) {
+				continue;
+			}
+
+			/**
+			 * Array of YouTube transcript data.
+			 *
+			 * @var array  $output   Array of YouTube transcript data.
+			 * @var string $video_id YouTube video ID.
+			 * @return array|\WP_Error
+			 */
+			$output = apply_filters( 'cpl_fetch_youtube_transcript', $output, $video_id );
+
+			if ( is_wp_error( $output ) ) {
+				return $output;
+			}
+
+			if ( ! is_array( $output ) || ! $output ) {
+				continue;
+			}
+
+			return $output;
 		}
 
-		$transcript = wp_remote_retrieve_body( $transcript_request );
+		return new \WP_Error( 'youtube_captions_empty', self::captions_unavailable_message() );
+	}
 
-		preg_match_all( $RE_XML_TRANSCRIPT, $transcript, $results );
+	/**
+	 * Player endpoint used to list caption tracks.
+	 *
+	 * @return string
+	 */
+	public static function player_endpoint() {
+		return self::PLAYER_ENDPOINT;
+	}
 
-		$count = count( $results[0] );
+	/**
+	 * JSON body posted to the InnerTube player endpoint.
+	 *
+	 * @param string $video_id YouTube video ID.
+	 * @return array
+	 */
+	public static function player_request_body( $video_id ) {
+		return [
+			'context' => [
+				'client' => self::innertube_client( $video_id ),
+			],
+			'videoId' => (string) $video_id,
+		];
+	}
 
+	/**
+	 * ANDROID client context sent with the player request.
+	 *
+	 * Filter `cpl_youtube_innertube_client` to change clientName or
+	 * clientVersion when YouTube rotates the client, without shipping a release.
+	 * Return an array with clientName and clientVersion. Anything else is ignored
+	 * and the built-in ANDROID client is used.
+	 *
+	 * @param string $video_id YouTube video ID.
+	 * @return array{clientName: string, clientVersion: string}
+	 */
+	public static function innertube_client( $video_id = '' ) {
+		$client = [
+			'clientName'    => 'ANDROID',
+			'clientVersion' => '20.10.38',
+		];
+
+		$filtered = apply_filters( 'cpl_youtube_innertube_client', $client, $video_id );
+
+		if ( is_array( $filtered ) && ! empty( $filtered['clientName'] ) && ! empty( $filtered['clientVersion'] ) ) {
+			$client = $filtered;
+			$client['clientName'] = (string) $filtered['clientName'];
+			$client['clientVersion'] = (string) $filtered['clientVersion'];
+		}
+
+		return $client;
+	}
+
+	/**
+	 * Caption track URLs from an InnerTube player response, in response order.
+	 *
+	 * Tracks whose baseUrl contains exp=xpe are kept. That parameter marks the
+	 * watch-page URLs that come back empty, but the player endpoint's URLs are
+	 * still worth fetching; an empty body is handled by the caller.
+	 *
+	 * @param mixed $player Decoded player response.
+	 * @return string[]
+	 */
+	public static function caption_track_urls( $player ) {
+		if ( ! is_array( $player ) ) {
+			return [];
+		}
+
+		$tracks = $player['captions']['playerCaptionsTracklistRenderer']['captionTracks'] ?? null;
+
+		if ( ! is_array( $tracks ) ) {
+			return [];
+		}
+
+		$urls = [];
+
+		foreach ( $tracks as $track ) {
+			if ( ! is_array( $track ) || empty( $track['baseUrl'] ) || ! is_string( $track['baseUrl'] ) ) {
+				continue;
+			}
+
+			$urls[] = $track['baseUrl'];
+		}
+
+		return $urls;
+	}
+
+	/**
+	 * Caption URL to GET.
+	 *
+	 * Timedtext URLs that ask for srv3 return a different XML shape than the
+	 * `<text start dur>` documents the importer already parses. Removing that
+	 * parameter keeps the existing parser.
+	 *
+	 * @param string $url Caption track baseUrl.
+	 * @return string
+	 */
+	public static function caption_fetch_url( $url ) {
+		return str_replace(
+			[ '?fmt=srv3&', '?fmt=srv3', '&fmt=srv3' ],
+			[ '?', '', '' ],
+			(string) $url
+		);
+	}
+
+	/**
+	 * Whether a caption track URL points at YouTube.
+	 *
+	 * @param string $url Caption track baseUrl.
+	 * @return bool
+	 */
+	public static function is_youtube_caption_url( $url ) {
+		$parts = wp_parse_url( $url );
+
+		if ( ! is_array( $parts ) || empty( $parts['host'] ) || empty( $parts['scheme'] ) ) {
+			return false;
+		}
+
+		if ( 'https' !== strtolower( $parts['scheme'] ) ) {
+			return false;
+		}
+
+		$host = strtolower( $parts['host'] );
+		$host = preg_replace( '/^www\./', '', $host );
+
+		return in_array( $host, [ 'youtube.com', 'm.youtube.com', 'youtube-nocookie.com' ], true );
+	}
+
+	/**
+	 * Parse a timedtext caption XML body into offset/duration/text rows.
+	 *
+	 * @param string $transcript Raw caption XML.
+	 * @return array<int, array{text: string, duration: string, offset: string}>
+	 */
+	public static function parse_caption_xml( $transcript ) {
+		$pattern = '/<text start="([^"]*)" dur="([^"]*)">([^<]*)<\/text>/';
+
+		preg_match_all( $pattern, (string) $transcript, $results );
+
+		$count  = count( $results[0] );
 		$output = [];
 
 		for ( $i = 0; $i < $count; $i++ ) {
+			$text = $results[3][ $i ];
+
+			if ( '' === trim( html_entity_decode( $text, ENT_QUOTES, 'UTF-8' ) ) ) {
+				continue;
+			}
+
 			$output[] = [
-				'text'     => $results[3][$i],
-				'duration' => $results[2][$i],
-				'offset'   => $results[1][$i],
+				'text'     => $text,
+				'duration' => $results[2][ $i ],
+				'offset'   => $results[1][ $i ],
 			];
 		}
 
-		/**
-		 * Array of YouTube transcript data
-		 *
-		 * @var array  $output   Array of YouTube transcript data.
-		 * @var string $video_id YouTube video ID.
-		 * @return array
-		 */
-		$output = apply_filters( 'cpl_fetch_youtube_transcript', $output, $video_id );
-
 		return $output;
+	}
+
+	/**
+	 * Message shown when YouTube does not return caption text.
+	 *
+	 * @return string
+	 */
+	public static function captions_unavailable_message() {
+		return __( 'YouTube did not return a caption file for this video. Upload a .vtt or .srt caption file, or paste the transcript into the Transcript field.', 'cp-library' );
+	}
+
+	/**
+	 * Read a YouTube video id from a watch, share, live, embed, or shorts URL.
+	 *
+	 * Also accepts an embed snippet whose src is one of those URLs. Extra query
+	 * arguments such as si and t are ignored.
+	 *
+	 * @param string $video_url Video URL or embed HTML.
+	 * @return string 11-character video id, or an empty string.
+	 */
+	public static function parse_video_id( $video_url ) {
+		$video_url = trim( html_entity_decode( (string) $video_url, ENT_QUOTES, 'UTF-8' ) );
+
+		if ( '' === $video_url ) {
+			return '';
+		}
+
+		$id = self::video_id_from_url( $video_url );
+
+		if ( '' !== $id ) {
+			return $id;
+		}
+
+		if ( preg_match_all( '#(?:https?:)?//[^\s"\'<>]+#i', $video_url, $matches ) ) {
+			foreach ( $matches[0] as $url ) {
+				$id = self::video_id_from_url( $url );
+
+				if ( '' !== $id ) {
+					return $id;
+				}
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Video id from a single URL.
+	 *
+	 * @param string $video_url URL.
+	 * @return string
+	 */
+	protected static function video_id_from_url( $video_url ) {
+		$video_url = self::ensure_url_scheme( $video_url );
+		$parts     = wp_parse_url( $video_url );
+
+		if ( ! is_array( $parts ) || empty( $parts['host'] ) ) {
+			return '';
+		}
+
+		$host = strtolower( $parts['host'] );
+		$host = preg_replace( '/^www\./', '', $host );
+		$path = isset( $parts['path'] ) ? $parts['path'] : '';
+
+		if ( 'youtu.be' === $host ) {
+			$segments = explode( '/', trim( $path, '/' ) );
+
+			return self::normalize_video_id( $segments[0] ?? '' );
+		}
+
+		$youtube_hosts = [
+			'youtube.com',
+			'm.youtube.com',
+			'music.youtube.com',
+			'youtube-nocookie.com',
+		];
+
+		if ( ! in_array( $host, $youtube_hosts, true ) ) {
+			return '';
+		}
+
+		if ( ! empty( $parts['query'] ) ) {
+			$query = [];
+			parse_str( $parts['query'], $query );
+
+			if ( isset( $query['v'] ) && is_string( $query['v'] ) ) {
+				return self::normalize_video_id( $query['v'] );
+			}
+		}
+
+		if ( preg_match( '~^/(?:embed|live|shorts)/([^/?#]+)~i', $path, $matches ) ) {
+			return self::normalize_video_id( rawurldecode( $matches[1] ) );
+		}
+
+		return '';
+	}
+
+	/**
+	 * Give a scheme to protocol-relative and bare YouTube URLs.
+	 *
+	 * @param string $video_url URL or URL-like string.
+	 * @return string
+	 */
+	protected static function ensure_url_scheme( $video_url ) {
+		if ( 0 === strpos( $video_url, '//' ) ) {
+			return 'https:' . $video_url;
+		}
+
+		if ( preg_match( '#^[a-z][a-z0-9+.-]*:#i', $video_url ) ) {
+			return $video_url;
+		}
+
+		if ( preg_match( '#^(?:www\.)?(?:youtube\.com|youtu\.be|m\.youtube\.com|music\.youtube\.com|youtube-nocookie\.com)/#i', $video_url ) ) {
+			return 'https://' . $video_url;
+		}
+
+		return $video_url;
+	}
+
+	/**
+	 * Keep an id only when it is a YouTube video id.
+	 *
+	 * @param string $id Candidate id.
+	 * @return string
+	 */
+	protected static function normalize_video_id( $id ) {
+		$id = trim( rawurldecode( (string) $id ) );
+		$pieces = preg_split( '/[?&#\s]/', $id );
+		$id = is_array( $pieces ) ? (string) $pieces[0] : '';
+
+		if ( preg_match( '/^[A-Za-z0-9_-]{11}$/', $id ) ) {
+			return $id;
+		}
+
+		return '';
+	}
+
+	/**
+	 * Convert a WebVTT or SubRip caption file to plain transcript text.
+	 *
+	 * Timestamps, standalone cue numbers, file headers, and cue tags are removed.
+	 *
+	 * @param string $raw Caption file contents.
+	 * @return string
+	 */
+	public static function captions_to_text( $raw ) {
+		$raw = (string) $raw;
+
+		if ( 0 === strncmp( $raw, "\xEF\xBB\xBF", 3 ) ) {
+			$raw = substr( $raw, 3 );
+		}
+
+		$raw   = str_replace( [ "\r\n", "\r" ], "\n", $raw );
+		$lines = explode( "\n", $raw );
+		$count = count( $lines );
+		$texts = [];
+		$skip  = false;
+
+		for ( $i = 0; $i < $count; $i++ ) {
+			$line = trim( $lines[ $i ] );
+
+			if ( '' === $line ) {
+				$skip = false;
+				continue;
+			}
+
+			if ( preg_match( '/^(NOTE|STYLE|REGION)\b/i', $line ) ) {
+				$skip = true;
+				continue;
+			}
+
+			if ( $skip ) {
+				continue;
+			}
+
+			if ( preg_match( '/^WEBVTT\b/i', $line ) || self::is_caption_metadata_line( $line ) || self::is_timestamp_line( $line ) ) {
+				continue;
+			}
+
+			if ( preg_match( '/^\d+$/', $line ) ) {
+				$next = '';
+
+				for ( $j = $i + 1; $j < $count; $j++ ) {
+					$candidate = trim( $lines[ $j ] );
+
+					if ( '' !== $candidate ) {
+						$next = $candidate;
+						break;
+					}
+				}
+
+				if ( self::is_timestamp_line( $next ) ) {
+					continue;
+				}
+			}
+
+			$text = self::strip_caption_markup( $line );
+
+			if ( '' !== $text ) {
+				$texts[] = $text;
+			}
+		}
+
+		return trim( implode( ' ', $texts ) );
+	}
+
+	/**
+	 * Whether a line is a WebVTT header field rather than spoken text.
+	 *
+	 * @param string $line Trimmed line.
+	 * @return bool
+	 */
+	protected static function is_caption_metadata_line( $line ) {
+		return (bool) preg_match( '/^(?:Kind|Language|X-TIMESTAMP-MAP)\s*:/i', $line );
+	}
+
+	/**
+	 * Whether a line is a VTT or SRT timing line.
+	 *
+	 * @param string $line Trimmed line.
+	 * @return bool
+	 */
+	protected static function is_timestamp_line( $line ) {
+		return (bool) preg_match(
+			'/(?:(?:\d{1,3}:)?\d{1,2}:\d{2}(?:[.,]\d{1,3})?)\s*-->\s*(?:(?:\d{1,3}:)?\d{1,2}:\d{2}(?:[.,]\d{1,3})?)/',
+			$line
+		);
+	}
+
+	/**
+	 * Remove cue tags and collapse whitespace.
+	 *
+	 * @param string $line Caption text line.
+	 * @return string
+	 */
+	protected static function strip_caption_markup( $line ) {
+		$line = html_entity_decode( $line, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$line = preg_replace( '/\{[^}]*\}/', '', $line );
+		$line = preg_replace( '/<[^>]*>/', '', $line );
+
+		if ( ! is_string( $line ) ) {
+			return '';
+		}
+
+		// Entity decoding can reveal a tag that the first pass did not see.
+		$line = preg_replace( '/<[^>]*>/', '', $line );
+
+		if ( ! is_string( $line ) ) {
+			return '';
+		}
+
+		$line = preg_replace( '/\s+/', ' ', $line );
+
+		return is_string( $line ) ? trim( $line ) : '';
 	}
 
 	/**
@@ -259,43 +693,338 @@ class YouTube {
 	 * @return void
 	 */
 	public function display_import_transcript_button( $field, $escaped_value, $object_id ) {
-		// check if post has youtube video
 		$video_url = get_post_meta( $object_id, 'video_url', true );
-		if ( ! $video_url || strpos( $video_url, 'youtube.com' ) === false ) {
+
+		if ( ! $video_url || '' === self::parse_video_id( $video_url ) ) {
 			return;
 		}
 
-		$button_args = $field->args( 'query_args' );
-		$button_args['cp_action'] = 'cpl_import_transcript';
-		$button_args['post_id']   = $object_id;
+		$unavailable = self::captions_unavailable_message();
 		?>
-		<script defer>
+		<script>
 			jQuery($ => {
-				$('#cpl-import-transcript').on('click', function() {
-					const url = $(this).data('url');
-					$.post(url, function(response) {
-						if (response.success) {
-							tinymce.get('transcript').setContent(response.data.map(item => item.text).join(' '));
-						} else {
-							alert(response.data);
-						}
-					}).catch(error => {
-						console.error(error);
-					});
+				const setTranscript = (text) => {
+					const editor = window.tinymce && tinymce.get('transcript');
 
-					$('#wp-transcript-wrap').find('.wp-editor-area').val('Loading...');
+					if (editor) {
+						editor.setContent(text);
+					}
+
+					$('#transcript, #wp-transcript-wrap .wp-editor-area').val(text);
+				};
+
+				const showImportError = (message) => {
+					const text = message || <?php echo wp_json_encode( $unavailable ); ?>;
+					let $notice = $('#cpl-transcript-import-notice');
+
+					if (!$notice.length) {
+						$notice = $('<div id="cpl-transcript-import-notice" class="notice notice-error inline"><p></p></div>');
+						$('#cpl-import-transcript').before($notice);
+					}
+
+					$notice.find('p').text(text);
+					window.alert(text);
+				};
+
+				$('#cpl-import-transcript').on('click', function() {
+					const $button = $(this);
+					const url = $button.data('url');
+
+					$button.prop('disabled', true);
+
+					$.post(url).done(function(response) {
+						if (response && response.success) {
+							$('#cpl-transcript-import-notice').remove();
+							setTranscript(response.data && response.data.transcript ? response.data.transcript : '');
+							return;
+						}
+
+						showImportError(response && response.data);
+					}).fail(function() {
+						showImportError(<?php echo wp_json_encode( $unavailable ); ?>);
+					}).always(function() {
+						$button.prop('disabled', false);
+					});
 				});
-			})
+			});
 		</script>
 
 		<?php $import_url = add_query_arg( [
-			'cp_action'  => 'cpl_import_transcript',
-			'post_id' => $object_id,
+			'cp_action' => 'cpl_import_transcript',
+			'post_id'   => $object_id,
 		], admin_url( 'admin-post.php' ) ); ?>
 
+		<p class="description"><?php esc_html_e( 'If YouTube does not return captions, upload a .vtt or .srt file or paste the transcript.', 'cp-library' ); ?></p>
 		<button type="button" id="cpl-import-transcript" data-url="<?php echo esc_url( $import_url ); ?>" class="button cpl-import-transcript-btn"><?php echo \ChurchPlugins\Helpers::get_icon( 'youtube' ) . esc_html__( 'Import from YouTube', 'cp-library' ); ?></button>
 
 		<?php
+	}
+
+	/**
+	 * File input for a .vtt or .srt caption file.
+	 *
+	 * @param object $field      CMB2 field.
+	 * @param mixed  $escaped_value Escaped value.
+	 * @param int    $object_id  Post ID.
+	 * @return void
+	 */
+	public function display_caption_upload( $field, $escaped_value, $object_id ) {
+		$object_id = absint( $object_id );
+		$nonce     = wp_create_nonce( 'cpl_upload_transcript_caption_' . $object_id );
+		?>
+		<p>
+			<label for="cpl_transcript_caption"><strong><?php esc_html_e( 'Upload a .vtt or .srt caption file', 'cp-library' ); ?></strong></label><br />
+			<input type="file" name="cpl_transcript_caption" id="cpl_transcript_caption" accept=".vtt,.srt,text/vtt" />
+		</p>
+		<p class="description"><?php esc_html_e( 'Timestamps, cue numbers, and tags are removed. The remaining text is saved in the transcript. You can also paste the transcript into the field above.', 'cp-library' ); ?></p>
+		<div id="cpl-caption-upload-notice" class="notice inline" style="display:none;"><p></p></div>
+		<script>
+			jQuery($ => {
+				const setTranscript = (text) => {
+					const editor = window.tinymce && tinymce.get('transcript');
+					const html = String(text).replace(/[&<>]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
+
+					if (editor) {
+						editor.setContent(html);
+					}
+
+					$('#transcript, #wp-transcript-wrap .wp-editor-area').val(text);
+				};
+
+				const showCaptionNotice = (message, isError) => {
+					const $notice = $('#cpl-caption-upload-notice');
+					$notice.removeClass('notice-error notice-success').addClass(isError ? 'notice-error' : 'notice-success');
+					$notice.find('p').text(message);
+					$notice.show();
+				};
+
+				$('#cpl_transcript_caption').on('change', function() {
+					const file = this.files && this.files[0];
+
+					if (!file) {
+						return;
+					}
+
+					const data = new FormData();
+					data.append('action', 'cpl_upload_transcript_caption');
+					data.append('post_id', <?php echo wp_json_encode( (string) $object_id ); ?>);
+					data.append('nonce', <?php echo wp_json_encode( $nonce ); ?>);
+					data.append('caption', file);
+
+					showCaptionNotice(<?php echo wp_json_encode( __( 'Reading caption file...', 'cp-library' ) ); ?>, false);
+
+					$.ajax({
+						url: window.ajaxurl,
+						method: 'POST',
+						data: data,
+						processData: false,
+						contentType: false
+					}).done(function(response) {
+						if (response && response.success && response.data && response.data.transcript) {
+							setTranscript(response.data.transcript);
+							$('#cpl_transcript_caption').val('');
+							showCaptionNotice(<?php echo wp_json_encode( __( 'Caption file added to the transcript.', 'cp-library' ) ); ?>, false);
+							return;
+						}
+
+						const message = response && response.data ? response.data : <?php echo wp_json_encode( __( 'That caption file could not be read. Upload a .vtt or .srt file, or paste the transcript into the Transcript field.', 'cp-library' ) ); ?>;
+						showCaptionNotice(message, true);
+					}).fail(function() {
+						showCaptionNotice(<?php echo wp_json_encode( __( 'That caption file could not be read. Upload a .vtt or .srt file, or paste the transcript into the Transcript field.', 'cp-library' ) ); ?>, true);
+					});
+				});
+			});
+		</script>
+		<?php
+	}
+
+	/**
+	 * AJAX handler for a caption file chosen on the sermon screen.
+	 *
+	 * @return void
+	 */
+	public function handle_caption_upload() {
+		$post_id = absint( $_POST['post_id'] ?? 0 );
+
+		check_ajax_referer( 'cpl_upload_transcript_caption_' . $post_id, 'nonce' );
+
+		if ( $post_id ) {
+			if ( ! current_user_can( 'edit_post', $post_id ) ) {
+				wp_send_json_error( __( 'You cannot edit this transcript.', 'cp-library' ) );
+			}
+		} elseif ( ! current_user_can( 'edit_posts' ) ) {
+			wp_send_json_error( __( 'You cannot edit this transcript.', 'cp-library' ) );
+		}
+
+		$result = self::caption_text_from_upload( $_FILES['caption'] ?? [] );
+
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message() );
+		}
+
+		if ( $post_id ) {
+			update_post_meta( $post_id, 'transcript', $result );
+		}
+
+		wp_send_json_success( [
+			'transcript' => $result,
+		] );
+	}
+
+	/**
+	 * Save a caption file submitted with the sermon form.
+	 *
+	 * Runs after CMB2 so the converted text replaces whatever the transcript
+	 * editor posted on this save.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return void
+	 */
+	public function save_caption_upload( $post_id ) {
+		if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+			return;
+		}
+
+		if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+			return;
+		}
+
+		if ( get_post_type( $post_id ) !== CP_LIBRARY_UPREFIX . '_item' ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			return;
+		}
+
+		if ( empty( $_FILES['cpl_transcript_caption'] ) || ! is_array( $_FILES['cpl_transcript_caption'] ) ) {
+			return;
+		}
+
+		$file = $_FILES['cpl_transcript_caption'];
+
+		if ( ! isset( $file['error'] ) || UPLOAD_ERR_NO_FILE === (int) $file['error'] ) {
+			return;
+		}
+
+		$result = self::caption_text_from_upload( $file );
+
+		if ( is_wp_error( $result ) ) {
+			$this->caption_upload_result = $result->get_error_code();
+			return;
+		}
+
+		update_post_meta( $post_id, 'transcript', $result );
+	}
+
+	/**
+	 * Carry a caption-upload error onto the sermon edit screen.
+	 *
+	 * @param string $location Redirect URL.
+	 * @return string
+	 */
+	public function filter_caption_upload_redirect( $location ) {
+		if ( $this->caption_upload_result ) {
+			$location = add_query_arg( 'cpl_caption_upload', $this->caption_upload_result, $location );
+		}
+
+		return $location;
+	}
+
+	/**
+	 * Turn an uploaded caption file into transcript text.
+	 *
+	 * @param array $file A $_FILES entry.
+	 * @return string|\WP_Error
+	 */
+	public static function caption_text_from_upload( $file ) {
+		if ( ! is_array( $file ) ) {
+			return new \WP_Error( 'failed', __( 'That caption file could not be read. Upload a .vtt or .srt file, or paste the transcript into the Transcript field.', 'cp-library' ) );
+		}
+
+		if ( isset( $file['error'] ) && UPLOAD_ERR_OK !== (int) $file['error'] ) {
+			return new \WP_Error( 'failed', __( 'That caption file could not be read. Upload a .vtt or .srt file, or paste the transcript into the Transcript field.', 'cp-library' ) );
+		}
+
+		$name = isset( $file['name'] ) ? (string) $file['name'] : '';
+		$ext  = strtolower( pathinfo( $name, PATHINFO_EXTENSION ) );
+
+		if ( ! in_array( $ext, [ 'vtt', 'srt' ], true ) ) {
+			return new \WP_Error( 'type', __( 'Upload a .vtt or .srt caption file, or paste the transcript into the Transcript field.', 'cp-library' ) );
+		}
+
+		$tmp = isset( $file['tmp_name'] ) ? (string) $file['tmp_name'] : '';
+
+		if ( '' === $tmp || ! is_uploaded_file( $tmp ) ) {
+			return new \WP_Error( 'failed', __( 'That caption file could not be read. Upload a .vtt or .srt file, or paste the transcript into the Transcript field.', 'cp-library' ) );
+		}
+
+		$size = isset( $file['size'] ) ? (int) $file['size'] : 0;
+
+		if ( $size < 1 || $size > 2 * 1024 * 1024 ) {
+			return new \WP_Error( 'failed', __( 'That caption file could not be read. Upload a .vtt or .srt file, or paste the transcript into the Transcript field.', 'cp-library' ) );
+		}
+
+		$raw = file_get_contents( $tmp );
+
+		if ( ! is_string( $raw ) || false !== strpos( $raw, "\0" ) ) {
+			return new \WP_Error( 'failed', __( 'That caption file could not be read. Upload a .vtt or .srt file, or paste the transcript into the Transcript field.', 'cp-library' ) );
+		}
+
+		$text = self::captions_to_text( $raw );
+
+		if ( '' === $text ) {
+			return new \WP_Error( 'empty', __( 'That caption file did not contain any text. Upload a different .vtt or .srt file, or paste the transcript into the Transcript field.', 'cp-library' ) );
+		}
+
+		return $text;
+	}
+
+	/**
+	 * Admin notices for a failed YouTube import or a rejected caption file.
+	 *
+	 * @return void
+	 */
+	public function render_admin_notices() {
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		if ( isset( $_GET['cpl_import_transcript'] ) ) {
+			$count = absint( wp_unslash( $_GET['cpl_import_transcript'] ) );
+
+			if ( $count ) {
+				echo '<div class="notice notice-success is-dismissible"><p>';
+				echo esc_html( sprintf(
+					/* translators: %d: number of sermons */
+					_n( 'Imported %d transcript from YouTube.', 'Imported %d transcripts from YouTube.', $count, 'cp-library' ),
+					$count
+				) );
+				echo '</p></div>';
+			}
+		}
+
+		if ( ! empty( $_GET['cpl_transcript_import_failed'] ) ) {
+			echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( self::captions_unavailable_message() ) . '</p></div>';
+		}
+
+		if ( empty( $_GET['cpl_caption_upload'] ) ) {
+			return;
+		}
+
+		$code = sanitize_key( wp_unslash( $_GET['cpl_caption_upload'] ) );
+
+		if ( 'type' === $code ) {
+			$message = __( 'Upload a .vtt or .srt caption file, or paste the transcript into the Transcript field.', 'cp-library' );
+		} elseif ( 'empty' === $code ) {
+			$message = __( 'That caption file did not contain any text. Upload a different .vtt or .srt file, or paste the transcript into the Transcript field.', 'cp-library' );
+		} elseif ( 'failed' === $code ) {
+			$message = __( 'That caption file could not be read. Upload a .vtt or .srt file, or paste the transcript into the Transcript field.', 'cp-library' );
+		} else {
+			return;
+		}
+
+		echo '<div class="notice notice-error is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
 	}
 
 	/**
@@ -324,18 +1053,24 @@ class YouTube {
 		}
 
 		$successful_transcripts = 0;
+		$failed_transcripts     = 0;
 
 		foreach ( $post_ids as $post_id ) {
 			$success = $this->import_transcript( $post_id );
 
 			if ( true === $success ) {
 				$successful_transcripts++;
+			} elseif ( is_wp_error( $success ) && 'youtube_captions_empty' === $success->get_error_code() ) {
+				$failed_transcripts++;
 			}
 		}
 
-		// add success message
 		if ( $successful_transcripts ) {
 			$redirect_to = add_query_arg( 'cpl_import_transcript', $successful_transcripts, $redirect_to );
+		}
+
+		if ( $failed_transcripts ) {
+			$redirect_to = add_query_arg( 'cpl_transcript_import_failed', $failed_transcripts, $redirect_to );
 		}
 
 		return $redirect_to;
