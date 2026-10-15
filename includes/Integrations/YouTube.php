@@ -45,8 +45,8 @@ class YouTube {
 	protected function actions() {
 		add_action( 'cpl_import_transcript', [ $this, 'handle_import_request' ], 10, 2 );
 		add_action( 'cmb2_render_cpl_import_transcript_button', [ $this, 'display_import_transcript_button' ], 10, 5 );
-		add_filter( 'bulk_actions-edit-cpl_item', [ $this, 'add_bulk_actions' ] );
-		add_filter( 'handle_bulk_actions-edit-cpl_item', [ $this, 'handle_bulk_actions' ], 10, 3 );
+		add_filter( 'bulk_actions-edit-' . CP_LIBRARY_UPREFIX . '_item', [ $this, 'add_bulk_actions' ] );
+		add_filter( 'handle_bulk_actions-edit-' . CP_LIBRARY_UPREFIX . '_item', [ $this, 'handle_bulk_actions' ], 10, 3 );
 	}
 
 	/**
@@ -102,9 +102,7 @@ class YouTube {
 			return;
 		}
 
-		$post = get_post( $post_id );
-
-		if ( ! is_object( $post ) || empty( $post->post_type ) || 'cpl_item' !== $post->post_type ) {
+		if ( ! $this->is_item_post( $post_id ) ) {
 			wp_send_json_error( 'Invalid item.' );
 			return;
 		}
@@ -117,6 +115,20 @@ class YouTube {
 		}
 
 		wp_send_json_success( $result );
+	}
+
+	/**
+	 * Whether the post is an item.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return bool
+	 */
+	protected function is_item_post( $post_id ) {
+		$post = get_post( $post_id );
+
+		return is_object( $post )
+			&& ! empty( $post->post_type )
+			&& CP_LIBRARY_UPREFIX . '_item' === $post->post_type;
 	}
 
 	/**
@@ -403,7 +415,7 @@ class YouTube {
 			return $redirect_to;
 		}
 
-		// The list screen requires edit_posts. Each target still needs edit_post.
+		// The list screen requires edit_posts. Each target must be an item the user can edit.
 		if ( ! current_user_can( 'edit_posts' ) || ! is_array( $post_ids ) ) {
 			return $redirect_to;
 		}
@@ -417,7 +429,7 @@ class YouTube {
 
 			$post_id = absint( $post_id );
 
-			if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
+			if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) || ! $this->is_item_post( $post_id ) ) {
 				continue;
 			}
 

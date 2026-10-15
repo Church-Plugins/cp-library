@@ -6,7 +6,7 @@
  * away. A request must now carry a matching nonce, the user must be able to
  * edit the target item, and the id must be a positive integer for an item.
  * A failed check stops before anything is imported. Bulk import from the list
- * screen requires edit_posts, and each target still requires edit_post.
+ * screen requires edit_posts, and each target still requires edit_post on an item.
  *
  * @package CP_Library
  */
@@ -54,9 +54,13 @@ class YouTubeImportRequestTest extends TestCase {
 		parent::setUp();
 		Monkey\setUp();
 
-		$_REQUEST     = array();
-		$this->errors = array();
+		$_REQUEST      = array();
+		$this->errors  = array();
 		$this->success = null;
+
+		if ( ! defined( 'CP_LIBRARY_UPREFIX' ) ) {
+			define( 'CP_LIBRARY_UPREFIX', 'cpl' );
+		}
 
 		$this->youtube = ( new ReflectionClass( ImportRequestYouTube::class ) )->newInstanceWithoutConstructor();
 
@@ -220,6 +224,13 @@ class YouTubeImportRequestTest extends TestCase {
 				return 'edit_post' === $cap && 5 === (int) $post_id;
 			}
 		);
+		Functions\when( 'get_post' )->alias(
+			static function ( $id ) {
+				return 5 === (int) $id
+					? (object) array( 'ID' => 5, 'post_type' => CP_LIBRARY_UPREFIX . '_item' )
+					: null;
+			}
+		);
 		Functions\when( 'add_query_arg' )->alias(
 			static function ( $key, $value, $url ) {
 				return $url . '?' . $key . '=' . $value;
@@ -230,6 +241,31 @@ class YouTubeImportRequestTest extends TestCase {
 			'https://example.test/edit.php',
 			'cpl_import_transcript',
 			array( '5', '9', 'nope', array( '3' ) )
+		);
+
+		$this->assertSame( array( 5 ), $this->youtube->imported );
+		$this->assertSame( 'https://example.test/edit.php?cpl_import_transcript=1', $redirect );
+	}
+
+	public function test_bulk_skips_posts_that_are_not_items() {
+		Functions\when( 'current_user_can' )->justReturn( true );
+		Functions\when( 'get_post' )->alias(
+			static function ( $id ) {
+				$type = 5 === (int) $id ? CP_LIBRARY_UPREFIX . '_item' : 'post';
+
+				return (object) array( 'ID' => (int) $id, 'post_type' => $type );
+			}
+		);
+		Functions\when( 'add_query_arg' )->alias(
+			static function ( $key, $value, $url ) {
+				return $url . '?' . $key . '=' . $value;
+			}
+		);
+
+		$redirect = $this->youtube->handle_bulk_actions(
+			'https://example.test/edit.php',
+			'cpl_import_transcript',
+			array( '5', '9' )
 		);
 
 		$this->assertSame( array( 5 ), $this->youtube->imported );
@@ -258,7 +294,7 @@ class YouTubeImportRequestTest extends TestCase {
 		Functions\when( 'get_post' )->alias(
 			static function ( $id ) use ( $post_id ) {
 				return (int) $id === (int) $post_id
-					? (object) array( 'ID' => (int) $post_id, 'post_type' => 'cpl_item' )
+					? (object) array( 'ID' => (int) $post_id, 'post_type' => CP_LIBRARY_UPREFIX . '_item' )
 					: null;
 			}
 		);
