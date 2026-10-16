@@ -1116,7 +1116,15 @@ abstract class AbstractFilterManager {
 			usort( $output, [ '\CP_Library\Filters', 'sort_scripture' ] );
 		}
 
-		return $output ?: [];
+		$output = $output ?: [];
+
+		foreach ( $output as $row ) {
+			if ( is_object( $row ) && isset( $row->title ) ) {
+				$row->title = AbstractFacet::decode_option_title( $row->title );
+			}
+		}
+
+		return $output;
 	}
 
 	/**

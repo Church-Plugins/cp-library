@@ -11,7 +11,9 @@
  * that field, so "&", apostrophes, and double quotes are stored as the
  * characters themselves and the options query returns them that way.
  *
- * Either form has to become the characters a text node would show.
+ * Term titles are decoded once before they are returned. Speaker titles are
+ * left as stored, including a raw ampersand, apostrophe, or double quote,
+ * and including the characters "&amp;" if that is what was stored.
  *
  * @package CP_Library
  */
@@ -19,6 +21,7 @@
 namespace CP_Library\Tests\Unit;
 
 use CP_Library\Filters\AbstractFacet;
+use CP_Library\Filters\Facets\SourceFacet;
 use CP_Library\Filters\Facets\TaxonomyFacet;
 use PHPUnit\Framework\TestCase;
 
@@ -26,6 +29,20 @@ use PHPUnit\Framework\TestCase;
  * Exposes formatted options without registering a taxonomy.
  */
 class ExposableFacet extends TaxonomyFacet {
+
+	public function __construct() {
+		// Deliberately does not call parent::__construct().
+	}
+
+	public function formatted( array $options ) {
+		return $this->decode_term_titles( $this->format_options( $options ) );
+	}
+}
+
+/**
+ * Exposes speaker options, which must not be decoded.
+ */
+class ExposableSourceFacet extends SourceFacet {
 
 	public function __construct() {
 		// Deliberately does not call parent::__construct().
@@ -49,7 +66,7 @@ class FilterOptionTitleTest extends TestCase {
 	 */
 	public function stored_titles() {
 		return array(
-			'term ampersand'          => array( 'Faith &amp; Works', 'Faith & Works' ),
+			'term ampersand'          => array( 'Anxiety &amp; Peace', 'Anxiety & Peace' ),
 			'term numeric ampersand'  => array( 'Faith &#038; Works', 'Faith & Works' ),
 			'plain apostrophe'        => array( "O'Brien", "O'Brien" ),
 			'encoded apostrophe'      => array( 'O&#039;Brien', "O'Brien" ),
@@ -92,6 +109,36 @@ class FilterOptionTitleTest extends TestCase {
 		$this->assertSame( $shown, $options[0]->title );
 		$this->assertSame( 'faith-works', $options[0]->value );
 		$this->assertSame( 2, $options[0]->count );
+	}
+
+	/**
+	 * Speaker names arrive as characters. Decoding them would change a name
+	 * that was stored with an entity written out.
+	 */
+	public function test_speaker_titles_are_not_decoded() {
+		$facet = new ExposableSourceFacet();
+		$stored = array(
+			'Anxiety & Peace',
+			"O'Brien",
+			'Say "Hello"',
+			'Anxiety &amp; Peace',
+		);
+
+		$options = array();
+		foreach ( $stored as $index => $title ) {
+			$options[] = (object) array(
+				'id'    => $index + 1,
+				'value' => (string) ( $index + 1 ),
+				'title' => $title,
+				'count' => 1,
+			);
+		}
+
+		$formatted = $facet->formatted( $options );
+
+		foreach ( $stored as $index => $title ) {
+			$this->assertSame( $title, $formatted[ $index ]->title );
+		}
 	}
 
 	/**

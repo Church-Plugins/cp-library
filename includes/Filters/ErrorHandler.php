@@ -196,6 +196,16 @@ class ErrorHandler {
         $error_data['code'] = $error_code;
         $error_data['message'] = $message;
 
+        // Class names stay out of the response unless WP_DEBUG is on.
+        // facet_id and required_param are left in place.
+        $debug = defined('WP_DEBUG') && WP_DEBUG;
+        if (!($exception instanceof FilterException) && $debug) {
+            $error_data['exception'] = get_class($exception);
+        }
+        if (!$debug) {
+            unset($error_data['exception']);
+        }
+
         // Send JSON response if requested
         if ($send_json) {
             wp_send_json_error($error_data);

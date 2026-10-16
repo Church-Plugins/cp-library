@@ -1236,26 +1236,28 @@ class CPLibraryFilter {
 			`Error loading page ${page}. Please try again.`
 		);
 
-		// Add error message to the content area
+		// Add error message to the content area. The message is text.
 		const errorElement = document.createElement('div');
 		errorElement.className = 'cpl-filter-pagination-error';
 		errorElement.setAttribute('role', 'alert');
-		errorElement.innerHTML = `
-      <p>${errorMessage}</p>
-      <button class="cpl-retry-button">Retry</button>
-    `;
+
+		const messageElement = document.createElement('p');
+		messageElement.textContent = errorMessage;
+
+		const retryButton = document.createElement('button');
+		retryButton.className = 'cpl-retry-button';
+		retryButton.textContent = 'Retry';
+
+		errorElement.appendChild(messageElement);
+		errorElement.appendChild(retryButton);
 
 		// Clear target and add error
 		targetElement.innerHTML = '';
 		targetElement.appendChild(errorElement);
 
-		// Add retry functionality
-		const retryButton = errorElement.querySelector('.cpl-retry-button');
-		if (retryButton) {
-			retryButton.addEventListener('click', () => {
-				this.loadPageViaAjax(page);
-			});
-		}
+		retryButton.addEventListener('click', () => {
+			this.loadPageViaAjax(page);
+		});
 
 		// Announce error to screen readers
 		this.announceToScreenReader(`Error loading page ${page}. ${errorMessage}`);

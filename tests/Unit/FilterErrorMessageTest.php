@@ -63,7 +63,11 @@ class FilterErrorMessageTest extends TestCase {
 			new FilterException(
 				$message,
 				ErrorCodes::FACET_NOT_FOUND,
-				array( 'facet_id' => 'speaker' )
+				array(
+					'facet_id'       => 'speaker',
+					'required_param' => 'filter_type',
+					'exception'      => 'RuntimeException',
+				)
 			),
 			false
 		);
@@ -73,6 +77,8 @@ class FilterErrorMessageTest extends TestCase {
 		$this->assertSame( ErrorCodes::FACET_NOT_FOUND, $result['code'] );
 		$this->assertSame( 404, $result['status'] );
 		$this->assertSame( 'speaker', $result['facet_id'] );
+		$this->assertSame( 'filter_type', $result['required_param'] );
+		$this->assertArrayNotHasKey( 'exception', $result );
 	}
 
 	public function test_unexpected_throwable_uses_format_user_error() {
@@ -87,7 +93,9 @@ class FilterErrorMessageTest extends TestCase {
 		$this->assertIsString( $result['message'] );
 		$this->assertSame( ErrorCodes::GENERAL_ERROR, $result['code'] );
 		$this->assertSame( 500, $result['status'] );
+		$this->assertArrayNotHasKey( 'exception', $result );
 		$this->assertStringNotContainsString( $detail, wp_json_encode( $result ) );
+		$this->assertStringNotContainsString( '"exception"', wp_json_encode( $result ) );
 		$this->assertFalse( $this->logContains( $detail ) );
 	}
 
@@ -125,6 +133,7 @@ class FilterErrorMessageTest extends TestCase {
 
 		$this->assertSame( 'An error occurred in the filter system. [general_error]', $result['message'] );
 		$this->assertStringNotContainsString( $detail, $result['message'] );
+		$this->assertSame( 'Exception', $result['exception'] );
 		$this->assertTrue( $this->logContains( $detail ) );
 	}
 
