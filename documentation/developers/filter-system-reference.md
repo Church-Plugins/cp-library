@@ -65,36 +65,15 @@ echo CP_Library\Filters\TemplateHelpers::render_current_filters([
 // Display filter notice
 cp_library()->templates->get_template_part('parts/filter-notice');
 
-// Display filter form
-cp_library()->templates->get_template_part('parts/filters/form', [
-    'post_type' => 'cpl_item'
-]);
-
-// Display selected filters
-cp_library()->templates->get_template_part('parts/filters/selected', [
-    'post_type' => 'cpl_item'
-]);
+// Display filter form and selected filters through the filter manager
+$manager = CP_Library\Filters\FilterManager::get_filter_manager('cpl_item');
+echo $manager->render_filter_form(['context' => 'archive']);
+echo $manager->render_selected_filters(['context' => 'archive']);
 ```
 
 ## JavaScript Initialization
 
-```javascript
-// Initialize sermon filters
-const sermonFilter = new CPLibraryFilter({
-    context: 'archive',
-    container: document.querySelector('.cpl-filter'),
-    postType: 'cpl_item',
-    autoSubmit: true
-});
-
-// Initialize series filters
-const seriesFilter = new CPLibraryFilter({
-    context: 'archive',
-    container: document.querySelector('.cpl-filter'),
-    postType: 'cpl_item_type',
-    autoSubmit: true
-});
-```
+Filters initialize automatically for every `.cpl-filter` container the plugin renders (sermons use `data-post-type="cpl_item"`, series use `data-post-type="cpl_item_type"`). The `CPLibraryFilter` class is not exposed as a global, so theme code cannot construct it. Instances are stored in `window.cpLibraryFilters`.
 
 ## Error Handling (PHP)
 
@@ -172,7 +151,7 @@ do_action("cpl_register_facets_{$post_type}", $filter_manager);
 
 // Before archive list
 do_action('cpl_before_archive_list');
-do_action('cpl_before_archive_{$type}_list');
+do_action("cpl_before_archive_{$type}_list"); // $type is 'item' or 'item-type'
 ```
 
 ### Filters
@@ -231,16 +210,18 @@ function get_filtered_items($filters = null) {
         $filters = cpl_get_active_filters('cpl_item');
     }
     
-    // Create query
-    $args = [
+    // Set up the query without running it
+    $query = new WP_Query();
+    $query->parse_query([
         'post_type' => 'cpl_item',
         'posts_per_page' => 10
-    ];
-    
-    $query = new WP_Query($args);
-    
-    // Apply filters
+    ]);
+
+    // Apply filters before the query runs
     cpl_add_filters_to_query($query, $filters, 'cpl_item');
+
+    // Run the query
+    $query->get_posts();
     
     return $query;
 }

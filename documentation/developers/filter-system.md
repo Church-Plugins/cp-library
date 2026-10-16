@@ -28,7 +28,7 @@ For information specific to the new filter system features:
 
 The filter system allows users to quickly narrow down sermon content by various criteria:
 
-- **Scripture References** - Find sermons by Bible book or passage
+- **Scripture References** - Find sermons by Bible book
 - **Topic Tags** - Filter by sermon topics
 - **Seasons** - Filter by church seasons or series themes
 - **Speakers** - Find sermons by specific speakers
@@ -76,7 +76,7 @@ The CP Sermon Library's flexible filter system is built with a context-aware app
 
 #### Key Components
 
-1. **PHP Filter API Class** (`CP_Library\Filters`)
+1. **PHP Filter API Class** (`CP_Library\Filters\Filters`, available as `cp_library()->filters`)
    - Manages filter registration
    - Renders filter forms and selected filters
    - Processes AJAX requests for filter options
@@ -152,13 +152,13 @@ add_action('cpl_register_facets_cpl_item', function($filter_manager) {
 To register a custom context:
 
 ```php
-// Register your custom context
-add_action('init', function() {
+// Register your custom context after the filter managers load
+add_action('cpl_register_filter_managers', function() {
     cp_library()->filters->register_context('my-custom-context', [
         'label' => 'My Custom Context',
-        'query_callback' => function($args) {
+        'query_callback' => function($query_args, $context_args) {
             // Prepare query arguments for this context
-            return $args;
+            return $query_args;
         }
     ]);
 });
@@ -195,18 +195,11 @@ add_filter('cpl_filter_query_args_cpl_item', function($query_args, $facet_id, $c
 
 ### JavaScript API
 
-The JavaScript filter component can be initialized programmatically:
+The JavaScript filter component is not exposed as a global. It initializes itself for every filter form the plugin renders (each `.cpl-filter` container output by `render_filter_form()`) and stores the instances in `window.cpLibraryFilters`.
 
 ```javascript
-// Initialize a custom filter
-const myFilter = new CPLibraryFilter({
-    context: 'my-custom-context',
-    container: document.querySelector('.my-filter-container'),
-    contextArgs: {
-        custom_param: 'value'
-    },
-    debug: false  // Set to true for debugging output
-});
+// Inspect the filter instances on the page
+console.log(window.cpLibraryFilters);
 
 // Access the filter query context (nested by post type)
 console.log(window.cplFilter.query_context['cpl_item']);
@@ -218,10 +211,10 @@ The filter system includes several performance optimizations:
 
 1. **Caching System**
    - Filter options are cached to reduce database queries
-   - Caches respect content updates (invalidated when content changes)
+   - Cached options expire after one hour
 
 2. **Lazy Loading**
-   - Filter options are loaded on demand via AJAX
+   - Filter options are loaded via AJAX after the page loads
    - Initial page load is not impacted by filter complexity
 
 3. **Query Optimization**
@@ -259,14 +252,13 @@ To extend the filter system with new functionality:
 1. **Add Facets** - Use `register_facet()` for new filter criteria
 2. **Create Contexts** - Use `register_context()` for new integration points
 3. **Custom Rendering** - Override the render methods using provided hooks
-4. **Custom Behaviors** - Extend the JavaScript class for specialized behaviors
 
 ## Troubleshooting Filters
 
 ### Common Issues and Solutions
 
 1. **Filters Not Appearing**
-   - Check if filters are disabled in Settings → Advanced
+   - Check **Disable Filters** on the **Messages** tab (sermons) or the **Series** tab (series) of the Settings page
    - Verify threshold setting isn't too high for your content volume
    - Ensure the context is properly registered
 
