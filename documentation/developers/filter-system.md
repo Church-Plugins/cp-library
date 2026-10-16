@@ -198,7 +198,7 @@ add_filter('cpl_filter_query_args_cpl_item', function($query_args, $facet_id, $c
 
 ### JavaScript API
 
-The JavaScript filter component is not exposed as a global. It initializes itself for every filter form the plugin renders (each `.cpl-filter` container output by `render_filter_form()`) and stores the instances in `window.cpLibraryFilters`.
+The JavaScript filter component is not exposed as a global. It initializes itself for every filter form the plugin renders (each `.cpl-filter` container output by `render_filter_form()`) and stores the instances in `window.cpLibraryFilters`. The filter script is enqueued as `build/src/filters.js`, so a check for `filters.js` matches that script's URL.
 
 ```javascript
 // Inspect the filter instances on the page

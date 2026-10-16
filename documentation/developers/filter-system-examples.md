@@ -24,7 +24,9 @@ echo CP_Library\Filters\TemplateHelpers::render_current_filters([
 // Get the sermon filter manager
 $manager = CP_Library\Filters\FilterManager::get_filter_manager('cpl_item');
 
-// Show only specific filters
+// Show only specific filters.
+// The topic facet id is cpl_topic. SeriesFilterManager and both archive
+// filter templates also use the name cpl_topics.
 $enabled_facets = ['cpl_topic', 'cpl_scripture', 'speaker'];
 $all_facets = array_keys($manager->get_facets());
 $disabled_filters = array_diff($all_facets, $enabled_facets);
@@ -316,6 +318,18 @@ class CustomPostTypeFilterManager extends \CP_Library\Filters\AbstractFilterMana
     }
 }
 ?>
+```
+
+### Matching errors from the filter script
+
+The filter script is enqueued as `build/src/filters.js`. A window `error` listener can match that file by checking `event.filename` for `filters.js`:
+
+```javascript
+window.addEventListener('error', function(event) {
+    if (event.filename && event.filename.includes('filters.js')) {
+        console.error('Filter error:', event);
+    }
+});
 ```
 
 ### AJAX Filter Loading with Custom Handling

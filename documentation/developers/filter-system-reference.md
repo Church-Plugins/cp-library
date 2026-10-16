@@ -73,7 +73,7 @@ echo $manager->render_selected_filters(['context' => 'archive']);
 
 ## JavaScript Initialization
 
-Filters initialize automatically for every `.cpl-filter` container the plugin renders (sermons use `data-post-type="cpl_item"`, series use `data-post-type="cpl_item_type"`). The `CPLibraryFilter` class is not exposed as a global, so theme code cannot construct it. Instances are stored in `window.cpLibraryFilters`.
+Filters initialize automatically for every `.cpl-filter` container the plugin renders (sermons use `data-post-type="cpl_item"`, series use `data-post-type="cpl_item_type"`). The `CPLibraryFilter` class is not exposed as a global, so theme code cannot construct it. Instances are stored in `window.cpLibraryFilters`. The filter script is enqueued as `build/src/filters.js`, so a check for `filters.js` matches that script's URL.
 
 ## Error Handling (PHP)
 
@@ -118,6 +118,8 @@ jQuery.ajax({
 ```
 
 ## Facet Registration
+
+The topic taxonomy registered for sermons is `cpl_topic`, and that string is the topic facet id. The name `cpl_topics` is also used: in `includes/Filters/Types/SeriesFilterManager.php` for the topic-context query, the topic-archive sort, and the series filter taxonomy list, and in the `taxonomies` list at line 21 of `templates/sermon-archive-filters.php` and `templates/series-archive-filters.php`.
 
 ```php
 // Register a taxonomy facet
