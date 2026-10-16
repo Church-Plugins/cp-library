@@ -86,6 +86,7 @@ The `ErrorHandler` class centralizes error handling operations:
 ```php
 // Example usage
 use CP_Library\Filters\ErrorHandler;
+use CP_Library\Filters\ErrorCodes;
 
 // Get the error handler instance
 $error_handler = ErrorHandler::get_instance();
@@ -236,8 +237,6 @@ In development environments (when `WP_DEBUG` is true):
 
 - PHP errors are logged to the error log
 - JavaScript errors are logged to the console
-- More detailed error messages are shown to users
-- Error codes are included in displayed messages
 
 ## Security Considerations
 
