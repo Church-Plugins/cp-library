@@ -32,7 +32,8 @@ The filter system allows users to quickly narrow down sermon content by various 
 - **Topic Tags** - Filter by sermon topics
 - **Seasons** - Filter by church seasons or series themes
 - **Speakers** - Find sermons by specific speakers
-- **Service Types** - Filter by service formats (Sunday morning, midweek, etc.)
+- **Service Types** - Filter by service formats (Sunday morning, midweek, etc.); shown when **Enable Service Types** is on
+- **Year** - Filter by the year a sermon was published
 - **Search** - Text search across sermon titles and content
 
 ### Using Filters on Sermon Archives
@@ -146,6 +147,8 @@ add_action('cpl_register_facets_cpl_item', function($filter_manager) {
     ]);
 });
 ```
+
+Custom facets appear in filter forms rendered with `render_filter_form()`. The built-in sermon archive filter shows only Scripture, Topic, Season, Speaker, Service Type and Year, so a custom facet does not appear there.
 
 ### Creating Custom Filter Contexts
 
