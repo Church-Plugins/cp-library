@@ -155,25 +155,31 @@ class ErrorHandler {
     /**
      * Handle an exception, optionally sending a JSON response
      *
-     * @param \Exception $exception The exception to handle
+     * @param \Throwable $exception The exception to handle
      * @param bool       $send_json Whether to send a JSON response
      * 
      * @return array|void Error data array if $send_json is false, void otherwise
      */
     public function handle_exception($exception, $send_json = true) {
-        // Default error data. The exception text is logged separately and is
-        // not copied into the response.
-        $error_data = [
-            'code'   => ErrorCodes::GENERAL_ERROR,
-            'status' => 500,
-        ];
-
-        // Get more specific data for our custom exception
         if ($exception instanceof FilterException) {
+            // Keep the message prepared by the filter exception.
             $error_data = $exception->get_error_response();
+            $error_code = !empty($error_data['code']) ? $error_data['code'] : ErrorCodes::GENERAL_ERROR;
+            $message = (isset($error_data['message']) && is_string($error_data['message']))
+                ? $error_data['message']
+                : '';
+        } else {
+            // Unexpected throwables get the generic user-facing message only.
+            $error_code = ErrorCodes::GENERAL_ERROR;
+            $error_data = [
+                'code'   => $error_code,
+                'status' => 500,
+            ];
+            $message = $this->format_user_error($error_code);
+            if (!is_string($message)) {
+                $message = ErrorCodes::get_message($error_code);
+            }
         }
-
-        $error_code = !empty($error_data['code']) ? $error_data['code'] : ErrorCodes::GENERAL_ERROR;
 
         // Full detail is written by log_error only when WP_DEBUG is on.
         $this->log_error(
@@ -188,7 +194,7 @@ class ErrorHandler {
         );
 
         $error_data['code'] = $error_code;
-        $error_data['message'] = $this->format_user_error($error_code);
+        $error_data['message'] = $message;
 
         // Send JSON response if requested
         if ($send_json) {

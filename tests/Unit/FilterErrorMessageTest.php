@@ -1,9 +1,8 @@
 <?php
 /**
- * AJAX responses from filter exception handling must use the generic
- * user-facing message. The exception text used to be copied into that
- * response. It now stays in the server log, and that log write still
- * happens only when WP_DEBUG is on.
+ * Filter exceptions keep the message from get_error_response(). Any other
+ * throwable gets the generic string from format_user_error(), and the
+ * exception text stays in the server log only when WP_DEBUG is on.
  *
  * @package CP_Library
  */
@@ -57,35 +56,39 @@ class FilterErrorMessageTest extends TestCase {
 		$this->assertFalse( $this->logContains( $detail ) );
 	}
 
-	public function test_filter_exception_keeps_status_and_extra_fields() {
-		$detail = 'Invalid facet ID: speaker<script>';
+	public function test_filter_exception_keeps_its_response_message() {
+		$message = 'Invalid facet ID: speaker';
 
 		$result = $this->handler->handle_exception(
 			new FilterException(
-				$detail,
+				$message,
 				ErrorCodes::FACET_NOT_FOUND,
 				array( 'facet_id' => 'speaker' )
 			),
 			false
 		);
 
-		$this->assertSame( 'Filter facet not found.', $result['message'] );
+		$this->assertSame( $message, $result['message'] );
+		$this->assertIsString( $result['message'] );
 		$this->assertSame( ErrorCodes::FACET_NOT_FOUND, $result['code'] );
 		$this->assertSame( 404, $result['status'] );
 		$this->assertSame( 'speaker', $result['facet_id'] );
-		$this->assertStringNotContainsString( $detail, $result['message'] );
 	}
 
-	public function test_query_errors_use_the_shorter_user_message() {
-		$detail = 'syntax error near users table';
+	public function test_unexpected_throwable_uses_format_user_error() {
+		$formatted = $this->handler->format_user_error( ErrorCodes::GENERAL_ERROR );
+		$detail    = 'type mismatch while reading options';
 
-		$result = $this->handler->handle_exception(
-			new FilterException( $detail, ErrorCodes::QUERY_ERROR ),
-			false
-		);
+		$this->assertIsString( $formatted );
 
-		$this->assertSame( 'An error occurred. Please try again later.', $result['message'] );
+		$result = $this->handler->handle_exception( new \Error( $detail ), false );
+
+		$this->assertSame( $formatted, $result['message'] );
+		$this->assertIsString( $result['message'] );
+		$this->assertSame( ErrorCodes::GENERAL_ERROR, $result['code'] );
+		$this->assertSame( 500, $result['status'] );
 		$this->assertStringNotContainsString( $detail, wp_json_encode( $result ) );
+		$this->assertFalse( $this->logContains( $detail ) );
 	}
 
 	public function test_json_response_carries_the_generic_message() {

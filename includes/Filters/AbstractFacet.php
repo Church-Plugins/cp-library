@@ -112,7 +112,7 @@ abstract class AbstractFacet implements FacetType {
             $formatted_option = [
                 'id'    => $option->id ?? $option->value ?? '',
                 'value' => $option->value ?? '',
-                'title' => $option->title ?? $option->name ?? '',
+                'title' => self::decode_option_title( $option->title ?? $option->name ?? '' ),
                 'count' => $option->count ?? 0,
             ];
 
@@ -120,6 +120,33 @@ abstract class AbstractFacet implements FacetType {
         }
 
         return $formatted;
+    }
+
+    /**
+     * Decode a stored filter title for text output.
+     *
+     * Term names are saved through WordPress's pre_term_name filter, which
+     * encodes "&" as "&amp;" and leaves apostrophes and double quotes as
+     * characters. Speaker titles are copied from the post title, which is
+     * only trimmed, so those characters are already stored as themselves.
+     * ENT_QUOTES decoding turns stored entities into characters and leaves
+     * plain titles unchanged.
+     *
+     * @param mixed $title Stored title.
+     * @return string
+     */
+    public static function decode_option_title( $title ) {
+        if ( ! is_scalar( $title ) ) {
+            return '';
+        }
+
+        $title = (string) $title;
+
+        if ( function_exists( 'wp_specialchars_decode' ) ) {
+            return wp_specialchars_decode( $title, ENT_QUOTES );
+        }
+
+        return html_entity_decode( $title, ENT_QUOTES, 'UTF-8' );
     }
     
     /**
