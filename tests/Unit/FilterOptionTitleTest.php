@@ -11,9 +11,11 @@
  * that field, so "&", apostrophes, and double quotes are stored as the
  * characters themselves and the options query returns them that way.
  *
- * Term titles are decoded once before they are returned. Speaker titles are
- * left as stored, including a raw ampersand, apostrophe, or double quote,
- * and including the characters "&amp;" if that is what was stored.
+ * Term titles are decoded once, and only when the JSON response for the
+ * filter script is built. get_options() returns the stored title. Speaker
+ * titles are left as stored, including a raw ampersand, apostrophe, or
+ * double quote, and including the characters "&amp;" if that is what was
+ * stored.
  *
  * @package CP_Library
  */
@@ -35,7 +37,7 @@ class ExposableFacet extends TaxonomyFacet {
 	}
 
 	public function formatted( array $options ) {
-		return $this->decode_term_titles( $this->format_options( $options ) );
+		return $this->format_options( $options );
 	}
 }
 
@@ -93,7 +95,9 @@ class FilterOptionTitleTest extends TestCase {
 	 * @param string $stored
 	 * @param string $shown
 	 */
-	public function test_formatted_options_decode_titles( $stored, $shown ) {
+	public function test_formatted_options_keep_stored_titles( $stored, $shown ) {
+		unset( $shown );
+
 		$facet   = new ExposableFacet();
 		$options = $facet->formatted(
 			array(
@@ -106,9 +110,32 @@ class FilterOptionTitleTest extends TestCase {
 			)
 		);
 
-		$this->assertSame( $shown, $options[0]->title );
+		$this->assertSame( $stored, $options[0]->title );
 		$this->assertSame( 'faith-works', $options[0]->value );
 		$this->assertSame( 2, $options[0]->count );
+	}
+
+	/**
+	 * The JSON response decodes a copy. The stored option is unchanged.
+	 *
+	 * @dataProvider stored_titles
+	 *
+	 * @param string $stored
+	 * @param string $shown
+	 */
+	public function test_json_option_titles_are_decoded( $stored, $shown ) {
+		$stored_option = (object) array(
+			'id'    => 4,
+			'value' => 'faith-works',
+			'title' => $stored,
+			'count' => 2,
+		);
+
+		$decoded = AbstractFacet::decode_option_titles( array( $stored_option ) );
+
+		$this->assertSame( $shown, $decoded[0]->title );
+		$this->assertSame( $stored, $stored_option->title );
+		$this->assertSame( 'faith-works', $decoded[0]->value );
 	}
 
 	/**

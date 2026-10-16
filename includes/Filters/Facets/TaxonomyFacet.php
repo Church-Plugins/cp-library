@@ -184,23 +184,7 @@ class TaxonomyFacet extends AbstractFacet {
             usort( $results, [ cp_library()->setup->taxonomies->scripture, 'sort_scripture' ] );
         }
 
-        return $this->decode_term_titles( $this->format_options( $results ?: [] ) );
-    }
-
-    /**
-     * Term titles are stored with "&" encoded. Decode them once for text output.
-     *
-     * @param array $options Formatted option objects.
-     * @return array
-     */
-    protected function decode_term_titles( $options ) {
-        foreach ( $options as $option ) {
-            if ( is_object( $option ) && isset( $option->title ) ) {
-                $option->title = self::decode_option_title( $option->title );
-            }
-        }
-
-        return $options;
+        return $this->format_options( $results ?: [] );
     }
 
     /**

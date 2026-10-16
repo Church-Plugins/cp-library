@@ -177,8 +177,26 @@ class AJAX {
 
 		$show_count = 'show' === Settings::get_advanced( 'show_filter_count', 'show' );
 
-		?>
-		<?php foreach ( $items as $item ) : ?>
+		echo $this->render_dropdown_options( $items, $facet_type, $selected, $show_count );
+		wp_die();
+	}
+
+	/**
+	 * HTML for a server-rendered filter dropdown.
+	 *
+	 * Titles are escaped here. A name that contains markup characters is shown
+	 * as text.
+	 *
+	 * @param array  $items      Option rows with title, value, and count.
+	 * @param string $facet_type Facet id used as the input name.
+	 * @param array  $selected   Selected values.
+	 * @param bool   $show_count Whether to print the count.
+	 * @return string
+	 */
+	public function render_dropdown_options( $items, $facet_type, $selected, $show_count ) {
+		ob_start();
+		foreach ( $items as $item ) :
+			?>
 			<label class="cp-has-checkmark">
 				<input type="checkbox" <?php checked( in_array( $item->value, $selected, true ) ); ?> name="<?php echo esc_attr( $facet_type ); ?>[]" value="<?php echo esc_attr( $item->value ); ?>"/>
 				<span class="cp-checkmark"></span>
@@ -188,9 +206,10 @@ class AJAX {
 					<?php endif; ?>
 				</span>
 			</label>
-		<?php endforeach; ?>
-		<?php
-		wp_die();
+			<?php
+		endforeach;
+
+		return ob_get_clean();
 	}
 
 	/**

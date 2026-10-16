@@ -423,6 +423,12 @@ abstract class AbstractFilterManager {
 				'query_vars'   => $query_vars
 			) );
 
+			// Term titles are stored with "&" encoded. Decode them only for this
+			// JSON response. Other callers keep the stored title.
+			if ( 'taxonomy' === ( $facet['type'] ?? '' ) ) {
+				$options = AbstractFacet::decode_option_titles( $options );
+			}
+
 			// Return JSON response with options and param name
 			wp_send_json_success( array(
 				'options'    => $options,
@@ -433,19 +439,10 @@ abstract class AbstractFilterManager {
 		} catch ( FilterException $e ) {
 			// Let the error handler process the exception
 			$this->error_handler->handle_exception( $e );
-		} catch ( \Exception $e ) {
-			// Create a FilterException from a generic exception
-			$filterException = new FilterException(
-				$e->getMessage(),
-				ErrorCodes::GENERAL_ERROR,
-				[
-					'facet'     => $facet_id ?? '',
-					'post_type' => $this->post_type,
-					'exception' => get_class( $e )
-				]
-			);
-
-			$this->error_handler->handle_exception( $filterException );
+		} catch ( \Throwable $e ) {
+			// Anything else keeps its own message off the response. The handler
+			// sends the generic message for throwables that are not filter exceptions.
+			$this->error_handler->handle_exception( $e );
 		}
 	}
 
@@ -1116,15 +1113,7 @@ abstract class AbstractFilterManager {
 			usort( $output, [ '\CP_Library\Filters', 'sort_scripture' ] );
 		}
 
-		$output = $output ?: [];
-
-		foreach ( $output as $row ) {
-			if ( is_object( $row ) && isset( $row->title ) ) {
-				$row->title = AbstractFacet::decode_option_title( $row->title );
-			}
-		}
-
-		return $output;
+		return $output ?: [];
 	}
 
 	/**

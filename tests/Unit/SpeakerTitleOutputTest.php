@@ -13,7 +13,7 @@ use CP_Library\Admin\Settings;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @runInSeparateProcess
+ * @runTestsInSeparateProcesses
  * @preserveGlobalState disabled
  */
 class SpeakerTitleOutputTest extends TestCase {
