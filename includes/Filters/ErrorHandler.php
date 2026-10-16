@@ -161,11 +161,11 @@ class ErrorHandler {
      * @return array|void Error data array if $send_json is false, void otherwise
      */
     public function handle_exception($exception, $send_json = true) {
-        // Default error data
+        // Default error data. The exception text is logged separately and is
+        // not copied into the response.
         $error_data = [
-            'code'    => ErrorCodes::GENERAL_ERROR,
-            'message' => $exception->getMessage(),
-            'status'  => 500,
+            'code'   => ErrorCodes::GENERAL_ERROR,
+            'status' => 500,
         ];
 
         // Get more specific data for our custom exception
@@ -173,10 +173,12 @@ class ErrorHandler {
             $error_data = $exception->get_error_response();
         }
 
-        // Log the error
+        $error_code = !empty($error_data['code']) ? $error_data['code'] : ErrorCodes::GENERAL_ERROR;
+
+        // Full detail is written by log_error only when WP_DEBUG is on.
         $this->log_error(
-            $error_data['message'],
-            $error_data['code'],
+            $exception->getMessage(),
+            $error_code,
             [
                 'exception' => get_class($exception),
                 'file'      => $exception->getFile(),
@@ -184,6 +186,9 @@ class ErrorHandler {
                 'trace'     => $exception->getTraceAsString(),
             ]
         );
+
+        $error_data['code'] = $error_code;
+        $error_data['message'] = $this->format_user_error($error_code);
 
         // Send JSON response if requested
         if ($send_json) {
