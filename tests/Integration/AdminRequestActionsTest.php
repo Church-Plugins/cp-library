@@ -70,18 +70,32 @@ class AdminRequestActionsTest extends TestCase {
 		$this->assert_export_skipped();
 	}
 
-	public function test_admin_export_with_nonce_writes_a_file() {
+	public function test_admin_export_with_nonce_prepares_the_csv() {
 		$this->make_item();
 		$this->set_role( 'administrator' );
 		$_REQUEST['_wpnonce'] = wp_create_nonce( 'cp_export_items' );
 
-		$this->call_quietly( function () {
+		$seen = null;
+		add_filter(
+			'cpl_export_items_output',
+			function ( $send, $file_path, $filename ) use ( &$seen ) {
+				$seen = array( $file_path, $filename );
+
+				return false;
+			},
+			9,
+			3
+		);
+
+		$finished = $this->call_quietly( function () {
 			Tools::get_instance()->export_data();
 		} );
 
-		$path = $this->export_path();
-		$this->assertFileExists( $path );
-		$this->assertGreaterThan( 0, filesize( $path ) );
+		$this->assertFalse( $finished );
+		$this->assertIsArray( $seen );
+		$this->assertSame( '', $seen[0] );
+		$this->assertNotSame( '', $seen[1] );
+		$this->assertFileDoesNotExist( $this->export_path() );
 	}
 
 	public function test_logged_out_import_deletes_nothing() {
