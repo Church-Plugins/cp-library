@@ -13,7 +13,7 @@ When you set a timestamp on a sermon, a marker labeled "Sermon" appears on the p
 ### Adding a Timestamp
 
 1. Edit the sermon
-2. In the sermon details, locate the timestamp field
+2. In **Message Details**, locate **Sermon Timestamp**
 3. Enter the timestamp in one of these formats:
    - `mm:ss` (e.g., `12:34`)
    - `hh:mm:ss` (e.g., `1:12:34`)
@@ -51,7 +51,7 @@ Transcripts make your sermon content searchable, accessible, and beneficial for 
 For sermons with YouTube videos, you can import auto-generated captions as transcripts:
 
 1. Add the YouTube video URL to the sermon's Video URL field
-2. In the sermon list, click the "Import from YouTube" button in the Transcript column
+2. In the sermon list, click **Import** in the Transcript column
 3. Review and edit the imported transcript for accuracy
 4. Save the sermon
 
@@ -77,9 +77,9 @@ Once configured, transcripts imported from YouTube are automatically sent to Ope
 
 Control whether transcripts appear on sermon pages:
 
-1. Navigate to Messages → Settings → Messages tab
-2. Find the "Show Transcript" option
-3. Toggle transcript visibility
+1. Navigate to Series → Settings → Messages tab
+2. Find **Transcript**
+3. Choose **Show** or **Hide**
 4. Save Changes
 
 ### Transcript Formatting Tips
@@ -121,6 +121,6 @@ Using timestamps and transcripts improves your content's accessibility:
 
 ### Transcript Not Displaying
 
-- Check that "Show Transcript" is enabled in Messages → Settings → Messages tab
+- Check that **Transcript** is set to **Show** in Series → Settings → Messages tab
 - Verify the sermon has transcript content entered
 - Test with a default WordPress theme to rule out theme conflicts

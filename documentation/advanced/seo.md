@@ -46,7 +46,7 @@ Well-organized series improve SEO:
 
 Plan your URL structure before adding significant content:
 
-- Choose meaningful slugs in Messages → Settings → Main
+- Choose meaningful slugs on the Messages and Series tabs in Series → Settings
 - Keep URLs short and descriptive
 - Avoid changing URLs after publishing (this impacts SEO)
 
