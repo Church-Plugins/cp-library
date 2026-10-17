@@ -73,7 +73,7 @@ if ( empty( $item['variations'] ) ) {
 
 									<?php if ( ! empty( $variation['speakers'] ) ) : ?>
 										<div class="cpl-single-item--variant--speakers">
-											Speaker: <?php echo implode( ', ', wp_list_pluck( $variation['speakers'], 'title' ) ); ?>
+											Speaker: <?php echo esc_html( implode( ', ', wp_list_pluck( $variation['speakers'], 'title' ) ) ); ?>
 										</div>
 									<?php endif; ?>
 								</div>

@@ -121,6 +121,65 @@ abstract class AbstractFacet implements FacetType {
 
         return $formatted;
     }
+
+    /**
+     * Decode a stored term title for the filter JSON response.
+     *
+     * Term names are saved through WordPress's pre_term_name filter, which
+     * encodes "&" as "&amp;" and leaves apostrophes and double quotes as
+     * characters. Call this only for those term titles, and only when building
+     * the JSON sent to the filter script. Speaker titles are copied from the
+     * post title and are already characters, so decoding them would change a
+     * name that contains an entity as written text.
+     *
+     * @param mixed $title Stored title.
+     * @return string
+     */
+    public static function decode_option_title( $title ) {
+        if ( ! is_scalar( $title ) ) {
+            return '';
+        }
+
+        $title = (string) $title;
+
+        if ( function_exists( 'wp_specialchars_decode' ) ) {
+            return wp_specialchars_decode( $title, ENT_QUOTES );
+        }
+
+        return html_entity_decode( $title, ENT_QUOTES, 'UTF-8' );
+    }
+
+    /**
+     * Decode term titles for the filter JSON response.
+     *
+     * Returns new option objects so a cached list of stored titles is left
+     * unchanged.
+     *
+     * @param array $options Option rows from a taxonomy facet.
+     * @return array
+     */
+    public static function decode_option_titles( $options ) {
+        $decoded = [];
+
+        foreach ( $options as $option ) {
+            if ( is_object( $option ) ) {
+                $copy = clone $option;
+                if ( isset( $copy->title ) ) {
+                    $copy->title = self::decode_option_title( $copy->title );
+                }
+                $decoded[] = $copy;
+            } elseif ( is_array( $option ) ) {
+                if ( isset( $option['title'] ) ) {
+                    $option['title'] = self::decode_option_title( $option['title'] );
+                }
+                $decoded[] = $option;
+            } else {
+                $decoded[] = $option;
+            }
+        }
+
+        return $decoded;
+    }
     
     /**
      * Render a selected filter item
