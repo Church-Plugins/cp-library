@@ -1124,12 +1124,8 @@ class Settings {
 	 * @return void
 	 */
 	public function custom_button_form_field( $field, $escaped_value, $object_id, $object_type, $field_type_object ) {
-		$query_args = isset( $field->args['query_args'] ) ? $field->args['query_args'] : array();
+		$query_args = Request::with_nonce( isset( $field->args['query_args'] ) ? $field->args['query_args'] : array() );
 		$url        = add_query_arg( $query_args, admin_url( 'admin-post.php' ) );
-
-		if ( ! empty( $query_args['cp_action'] ) ) {
-			$url = wp_nonce_url( $url, $query_args['cp_action'] );
-		}
 
 		// if ( ! empty( $field->args['name'] ) ) {
 		// 	echo sprintf( '<h5 class="cmb2-metabox-title">%s</h5>', $field->args['name'] );

@@ -96,6 +96,10 @@ class RequestGuardTest extends TestCase {
 		parent::setUp();
 		Monkey\setUp();
 		unset( $_REQUEST['cp_action'] );
+		Functions\when( 'doing_action' )->justReturn( false );
+		Functions\when( 'wp_unslash' )->returnArg();
+		Functions\when( 'sanitize_text_field' )->returnArg();
+		Functions\when( 'sanitize_key' )->returnArg();
 	}
 
 	protected function tearDown(): void {
@@ -274,6 +278,11 @@ class RequestGuardTest extends TestCase {
 		$updated = array();
 
 		Functions\when( 'wp_doing_cron' )->justReturn( true );
+		Functions\when( 'doing_action' )->alias(
+			static function ( $hook ) {
+				return 'cpl_adapter_cron_probe' === $hook;
+			}
+		);
 		Functions\when( 'current_user_can' )->justReturn( false );
 		Functions\when( 'get_option' )->justReturn( array() );
 		Functions\when( 'apply_filters' )->alias(
@@ -287,8 +296,9 @@ class RequestGuardTest extends TestCase {
 			}
 		);
 
-		$adapter       = $this->adapter();
-		$adapter->type = 'probe';
+		$adapter             = $this->adapter();
+		$adapter->type       = 'probe';
+		$adapter->_cron_hook = 'cpl_adapter_cron_probe';
 		$adapter->update_check();
 		$adapter->fetch_complete();
 
@@ -298,10 +308,17 @@ class RequestGuardTest extends TestCase {
 	}
 
 	public function test_adapter_work_runs_for_a_manager_outside_cron() {
+		$_REQUEST['_wpnonce'] = 'pull-nonce';
+
 		Functions\when( 'wp_doing_cron' )->justReturn( false );
 		Functions\when( 'current_user_can' )->alias(
 			static function ( $cap ) {
 				return 'manage_options' === $cap;
+			}
+		);
+		Functions\when( 'wp_verify_nonce' )->alias(
+			static function ( $nonce, $action ) {
+				return 'pull-nonce' === $nonce && 'cpl_adapter_pull_probe' === $action;
 			}
 		);
 		Functions\when( 'get_option' )->justReturn( array() );
@@ -378,6 +395,18 @@ class RequestGuardTest extends TestCase {
 			}
 		};
 
+		$_REQUEST['_wpnonce'] = 'import-nonce';
+
+		Functions\when( 'current_user_can' )->alias(
+			static function ( $cap ) {
+				return 'manage_options' === $cap;
+			}
+		);
+		Functions\when( 'wp_verify_nonce' )->alias(
+			static function ( $nonce, $action ) {
+				return 'import-nonce' === $nonce && 'cpl_adapter_import_probe' === $action;
+			}
+		);
 		Functions\when( 'update_option' )->alias(
 			static function ( $key, $value ) {
 				$GLOBALS['cpl_test_import_events'][] = array( 'option', $key, $value );

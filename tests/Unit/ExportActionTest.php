@@ -37,7 +37,7 @@ class ExportStreamProbe extends Tools {
 
 /**
  * @covers \CP_Library\Admin\Tools::export_data
- * @covers \CP_Library\Admin\ActionGuard::allows
+ * @covers \CP_Library\Admin\Request::allowed
  */
 class ExportActionTest extends TestCase {
 
@@ -45,6 +45,8 @@ class ExportActionTest extends TestCase {
 		parent::setUp();
 		Monkey\setUp();
 		$_REQUEST['_wpnonce'] = 'export-nonce';
+		Functions\when( 'wp_unslash' )->returnArg();
+		Functions\when( 'sanitize_text_field' )->returnArg();
 	}
 
 	protected function tearDown(): void {

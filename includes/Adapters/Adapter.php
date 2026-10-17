@@ -10,7 +10,6 @@
 namespace CP_Library\Adapters;
 
 use ChurchPlugins\Exception;
-use CP_Library\Admin\ActionGuard;
 use CP_Library\Admin\Settings;
 use CP_Library\Models\Table;
 use CP_Library\Models\Item;
@@ -86,8 +85,8 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	public function actions() {
 		add_action( $this->_cron_hook, array( $this, 'update_check' ) );
 		add_action( 'init', array( $this, 'schedule_cron' ) );
-		add_action( "cpl_adapter_pull_{$this->type}", array( $this, 'handle_pull_action' ) );
-		add_action( "cpl_adapter_import_{$this->type}", array( $this, 'handle_import_action' ) );
+		add_action( "cpl_adapter_pull_{$this->type}", array( $this, 'update_check' ) );
+		add_action( "cpl_adapter_import_{$this->type}", array( $this, 'do_full_import' ) );
 		add_filter( "cpl_dispatcher_{$this->type}_make_request", [ $this, 'fetch_batch' ], 10, 2 );
 		add_action( "cpl_dispatcher_{$this->type}_done", [ $this, 'fetch_complete' ], 10, 2 );
 	}
@@ -142,40 +141,39 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	abstract public function process_cpl_data( $item, $cpl_data, $post_type );
 
 	/**
-	 * Run a pull requested from the settings screen.
+	 * Whether this call is the adapter's scheduled event.
 	 *
-	 * Scheduled pulls call update_check() directly.
+	 * WP-Cron runs due events after WordPress has loaded, and `wp cron event run`
+	 * fires the hook from the command. Neither of those is inside `init`. The
+	 * request dispatcher runs on `init`, and a request can name this cron hook
+	 * as its action. Those calls are not scheduled runs.
 	 *
-	 * @return void
+	 * @since 1.8.0
+	 *
+	 * @return bool
 	 */
-	public function handle_pull_action() {
-		if ( ! ActionGuard::allows( 'manage_options', 'cpl_adapter_pull_' . $this->type ) ) {
-			wp_send_json_error( array( 'error' => 'Could not update sermons' ) );
+	protected function is_scheduled_run() {
+		if ( ! doing_action( $this->_cron_hook ) || doing_action( 'init' ) ) {
+			return false;
 		}
 
-		$this->update_check();
+		$request_action = '';
+		if ( isset( $_REQUEST['cp_action'] ) && is_string( $_REQUEST['cp_action'] ) ) {
+			$request_action = sanitize_key( wp_unslash( $_REQUEST['cp_action'] ) );
+		}
+
+		return $this->_cron_hook !== $request_action;
 	}
 
 	/**
-	 * Run a full import requested from the settings screen.
+	 * Updates when the cron runs.
 	 *
-	 * @return void
-	 */
-	public function handle_import_action() {
-		if ( ! ActionGuard::allows( 'manage_options', 'cpl_adapter_import_' . $this->type ) ) {
-			wp_send_json_error( array( 'error' => 'Could not start the import' ) );
-		}
-
-		$this->do_full_import();
-	}
-
-	/**
-	 * Updates when the cron runs
+	 * The settings button sends a nonce. The scheduled event does not.
 	 *
 	 * @return void
 	 */
 	public function update_check() {
-		if ( ! $this->running_in_cron_or_as_manager() ) {
+		if ( ! $this->is_scheduled_run() && ! \CP_Library\Admin\Request::allowed( 'manage_options', 'cpl_adapter_pull_' . $this->type ) ) {
 			return;
 		}
 
@@ -203,6 +201,10 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * @return void
 	 */
 	public function do_full_import() {
+		if ( ! \CP_Library\Admin\Request::allowed( 'manage_options', 'cpl_adapter_import_' . $this->type ) ) {
+			return;
+		}
+
 		$this->delete_all(); // delete any queued items
 
 		// delete store data and mark the import before dispatch, so a fast
@@ -335,7 +337,7 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 		unset( $item['external_id'] );
 		unset( $item['cpl_data'] );
 
-		$post_id = wp_insert_post( $item, true );
+		$post_id = $this->insert_imported_post( $item );
 
 		if ( is_wp_error( $post_id ) ) {
 			throw new Exception( esc_html( $post_id->get_error_message() ) );
@@ -360,6 +362,77 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 		$this->process_cpl_data( $item_model, $cpl_data, $item['post_type'] );
 
 		return $item_model;
+	}
+
+	/**
+	 * Insert or update the WordPress post for an imported item.
+	 *
+	 * On update, the post keeps the status it already has, including trash,
+	 * draft, pending, private, and future. format_item() always sends publish.
+	 * A new sermon still uses the status in $item, which is publish.
+	 *
+	 * 1.7.0 wrote the SermonAudio date over an existing sermon's post_date.
+	 * That stays, except when the post is scheduled: wp_insert_post() turns
+	 * future into publish when the date is not still in the future, so a
+	 * past preach date would unschedule it. A future post keeps the
+	 * post_date and post_date_gmt it already has.
+	 *
+	 * A missing or empty post_name is filled with the permalink the post
+	 * already has. wp_insert_post keeps a slug that was left out, but an empty
+	 * post_name is rebuilt from post_title. Filling only that gap keeps a
+	 * retitle from changing the URL. A pending post that has no slug is left
+	 * that way; WordPress assigns a unique slug when it is published. There
+	 * is no wp_insert_post_data callback: a nested insert is not given this slug.
+	 *
+	 * Speakers and series come through here too. They do not send a post_name,
+	 * so an update still keeps the slug WordPress was already keeping, and a
+	 * new speaker or series still gets one generated from its title. An update
+	 * keeps any status they already have.
+	 *
+	 * New sermons omit post_name, so WordPress still generates the slug.
+	 *
+	 * @param array $item Post fields for wp_insert_post(), without external_id.
+	 * @return int|\WP_Error
+	 */
+	protected function insert_imported_post( $item ) {
+		if ( ! empty( $item['ID'] ) ) {
+			$existing = get_post( $item['ID'] );
+
+			if ( $existing instanceof \WP_Post ) {
+				$item['post_status'] = $existing->post_status;
+
+				if ( 'future' === $existing->post_status ) {
+					$item['post_date']     = $existing->post_date;
+					$item['post_date_gmt'] = $existing->post_date_gmt;
+				}
+
+				if ( ! isset( $item['post_name'] ) || '' === $item['post_name'] ) {
+					$slug = $this->existing_permalink_slug( $item['ID'] );
+
+					if ( null !== $slug ) {
+						$item['post_name'] = $slug;
+					}
+				}
+			}
+		}
+
+		return wp_insert_post( $item, true );
+	}
+
+	/**
+	 * Permalink slug already stored for a post, when it has one.
+	 *
+	 * @param int $post_id Post being updated.
+	 * @return string|null Raw post_name, or null when the post has none.
+	 */
+	protected function existing_permalink_slug( $post_id ) {
+		$post = get_post( $post_id );
+
+		if ( ! $post instanceof \WP_Post || ! is_string( $post->post_name ) || '' === $post->post_name ) {
+			return null;
+		}
+
+		return $post->post_name;
 	}
 
 	/**

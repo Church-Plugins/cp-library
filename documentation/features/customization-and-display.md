@@ -19,9 +19,9 @@ These archives are accessible at URLs like:
 - /messages/ (or your custom slug)
 - /series/
 - /speakers/
-- /topic/faith/
+- /topics/faith/
 - /scripture/john-3/
-- /season/summer-2023/
+- /seasons/summer-2023/
 
 ### Layout Options
 
@@ -47,8 +47,8 @@ The plugin includes multiple layout options for displaying sermons:
 Templates can be customized in several ways:
 
 1. **Settings**
-   - Navigate to Messages → Settings → Messages tab
-   - Choose Single Page Template (default or vertical)
+   - Navigate to Series → Settings → Messages tab
+   - Choose **Single Page Template** (**Default (2 column)** or **Vertical (1 column)**)
    - Set Image Aspect Ratio for thumbnails
    - Configure Info Items and Meta Items display
 
@@ -67,12 +67,12 @@ CP Sermon Library includes Gutenberg blocks for displaying sermon content:
 
 ### Core Blocks
 
-- **Sermon Query** - Display sermons with configurable filters, layout, and pagination
+- **CP Sermons Sermons/Series** - Display sermons with configurable filters, layout, and pagination
 - **Sermon Template** - Display a sermon using a custom template
-- **Shortcode Template** - Embed shortcode-based sermon displays within block layouts
+- **CP Sermons Template** - Embed shortcode-based sermon displays within block layouts
 
 Individual sermon detail blocks are also available for use within templates:
-- **Sermon Actions** (play buttons), **Sermon Graphic** (thumbnail), **Sermon Title**, **Sermon Date**, **Sermon Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**
+- **Sermon Actions** (play buttons), **Item Graphic** (thumbnail), **Item Title**, **Item Date**, **Item Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**, **Sermon Season**
 
 ### Block Customization
 
@@ -113,9 +113,9 @@ CP Sermon Library includes a **Templates** post type that lets you build custom 
 
 ### Creating a Template
 
-1. Navigate to Messages → Templates in the admin
+1. Navigate to Series → Templates in the admin
 2. Click "Add New"
-3. Build your layout using CP Sermon Library blocks (Sermon Query, Sermon Actions, Sermon Graphic, Sermon Title, etc.)
+3. Build your layout using CP Sermon Library blocks (CP Sermons Sermons/Series, Sermon Actions, Item Graphic, Item Title, Item Date, Item Description, Sermon Season, etc.)
 4. Publish the template
 
 When editing a template, only CP Library blocks are available in the block inserter, ensuring your layout uses the correct sermon components.
@@ -126,7 +126,7 @@ Once you've created a template, you can use it in several ways:
 
 - **Shortcode** — Each template displays a `[cpl_template id="123"]` shortcode in a sidebar metabox. Copy this shortcode and paste it into any page or post.
 - **Page Builders** — The Beaver Builder, Divi, and Elementor modules each provide a "CP Sermons Template" module that lets you select and embed any template you've created (see [Page Builder Integration](../advanced/integrations.md#page-builder-integration)).
-- **Shortcode Template Block** — Use the "Shortcode Template" Gutenberg block to embed a template within other block layouts.
+- **CP Sermons Template** — Use the "CP Sermons Template" Gutenberg block to embed a template within other block layouts.
 
 ## Using Shortcodes for Custom Displays
 
@@ -201,7 +201,7 @@ You can control which sermons appear in the main sermon list:
 3. Check the **Exclude from Main List** box to remove this sermon from the main list (leave unchecked to keep it visible)
 4. Sermons hidden from the main list are still accessible via their direct URL, taxonomy archives, and search
 
-> **Changed in 1.6.2:** This checkbox was previously labeled "Show in Main List" and defaulted to checked. The default is now "visible" without an explicit setting, so imports and other programmatic saves no longer hide sermons by accident. If you upgraded from an earlier 1.6.x release, run **Messages → Tools → Migrate Visibility Settings** to carry forward any sermons you previously hid by hand.
+> **Changed in 1.6.2:** This checkbox was previously labeled "Show in Main List" and defaulted to checked. The default is now "visible" without an explicit setting, so imports and other programmatic saves no longer hide sermons by accident. If you upgraded from an earlier 1.6.x release, run **Series → Tools → Migrate Visibility Settings** to carry forward any sermons you previously hid by hand.
 
 ### Series Visibility Control
 
@@ -234,19 +234,14 @@ Control how filters appear on your sermon pages:
 
 ### Filter Settings
 
-Navigate to Messages → Settings → Advanced to adjust:
-- Filter sorting (by count or alphabetically)
-- Minimum count threshold for filters
-- Show/hide count numbers
-- Disable specific filters
-- Control filter display on mobile
+Navigate to Series → Settings → Advanced to adjust:
+- **Sort Topics**, **Sort Scripture**, **Sort Seasons**, and **Sort Speakers**: **By Message Count** or **Alphabetically** (Scripture uses **By Scripture Order**)
+- **Count Threshold** (default 3)
+- **Show Counts**: **Show** or **Hide**
 
-### Customizing Filter Labels
+### Filter button labels
 
-Customize the labels used in filters:
-1. Navigate to Messages → Settings (Speaker tab, or Advanced tab for other post types)
-2. Adjust the Singular and Plural Labels
-3. These changes will be reflected in the filter UI
+Sermon archive: **Topic**, **Scripture**, **Season**, **Speaker**, **Service Type**, **Year**. Series archive: **Season**, **Year**, **Number of Sermons**. **Singular Label** and **Plural Label** do not change that text.
 
 ### Filter Contexts
 

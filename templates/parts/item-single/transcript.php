@@ -2,6 +2,7 @@
 
 use CP_Library\Admin\Settings;
 use CP_Library\Controllers\Item;
+use CP_Library\Integrations\YouTube;
 
 if ( ! Settings::get_item( 'show_transcript', false ) ) {
 	return;
@@ -18,7 +19,7 @@ if ( ! $transcript ) {
 	<h4 class="cpl-transcript--heading"><?php _e( 'Transcript', 'cp-library' ); ?></h4>
 
 	<div class="cpl-transcript--content">
-		<?php echo apply_filters( 'the_content', wp_kses_post( $transcript ) ); ?>
+		<?php echo apply_filters( 'the_content', YouTube::escape_transcript( $transcript ) ); ?>
 	</div>
 
 	<button class="cpl-transcript--toggle cp-button"><?php _e( 'Show Transcript', 'cp-library' ); ?></button>

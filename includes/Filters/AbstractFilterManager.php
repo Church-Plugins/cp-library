@@ -423,6 +423,12 @@ abstract class AbstractFilterManager {
 				'query_vars'   => $query_vars
 			) );
 
+			// Term titles are stored with "&" encoded. Decode them only for this
+			// JSON response. Other callers keep the stored title.
+			if ( 'taxonomy' === ( $facet['type'] ?? '' ) ) {
+				$options = AbstractFacet::decode_option_titles( $options );
+			}
+
 			// Return JSON response with options and param name
 			wp_send_json_success( array(
 				'options'    => $options,
@@ -433,19 +439,10 @@ abstract class AbstractFilterManager {
 		} catch ( FilterException $e ) {
 			// Let the error handler process the exception
 			$this->error_handler->handle_exception( $e );
-		} catch ( \Exception $e ) {
-			// Create a FilterException from a generic exception
-			$filterException = new FilterException(
-				$e->getMessage(),
-				ErrorCodes::GENERAL_ERROR,
-				[
-					'facet'     => $facet_id ?? '',
-					'post_type' => $this->post_type,
-					'exception' => get_class( $e )
-				]
-			);
-
-			$this->error_handler->handle_exception( $filterException );
+		} catch ( \Throwable $e ) {
+			// Anything else keeps its own message off the response. The handler
+			// sends the generic message for throwables that are not filter exceptions.
+			$this->error_handler->handle_exception( $e );
 		}
 	}
 
@@ -700,8 +697,12 @@ abstract class AbstractFilterManager {
 			'post_type'    => $this->post_type,
 		] );
 
-		// Get request parameters
+		// On a Page or other singular, drop a public post_type arg so "remove
+		// filter" links do not 404. Taxonomy and CPT archives keep it.
 		$get = $_GET;
+		if ( is_array( $get ) && ! TemplateHelpers::should_submit_post_type_query_arg() ) {
+			unset( $get['post_type'] );
+		}
 		$uri = explode( '?', $_SERVER['REQUEST_URI'] ?? '?' )[0];
 
 		// Pass the facet instances to the template

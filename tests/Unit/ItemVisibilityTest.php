@@ -15,38 +15,6 @@ namespace {
 	if ( ! class_exists( 'WP_REST_Controller' ) ) {
 		class WP_REST_Controller {}
 	}
-
-	if ( ! function_exists( 'cp_library' ) ) {
-		/**
-		 * Minimal stand-in so the shortcode can build its not-found message.
-		 */
-		function cp_library() {
-			$item = (object) [
-				'post_type'    => 'cpl_item',
-				'plural_label' => 'Messages',
-			];
-
-			return (object) [
-				'setup' => (object) [
-					'post_types' => (object) [
-						'item'         => $item,
-						'service_type' => (object) [
-							'post_type' => 'cpl_service_type',
-						],
-					],
-					'variations' => new class() {
-						public function get_source() {
-							return isset( $GLOBALS['cpl_test_variation_source'] ) ? $GLOBALS['cpl_test_variation_source'] : '';
-						}
-
-						public function is_enabled() {
-							return true;
-						}
-					},
-				],
-			];
-		}
-	}
 }
 
 namespace CP_Library\Tests\Unit {
@@ -188,6 +156,35 @@ namespace CP_Library\Tests\Unit {
 					$id = (int) $post_id;
 
 					return isset( $test->parents()[ $id ] ) ? (int) $test->parents()[ $id ] : 0;
+				}
+			);
+
+			Functions\when( 'cp_library' )->alias(
+				static function () {
+					$item = (object) [
+						'post_type'    => 'cpl_item',
+						'plural_label' => 'Messages',
+					];
+
+					return (object) [
+						'setup' => (object) [
+							'post_types' => (object) [
+								'item'         => $item,
+								'service_type' => (object) [
+									'post_type' => 'cpl_service_type',
+								],
+							],
+							'variations' => new class() {
+								public function get_source() {
+									return isset( $GLOBALS['cpl_test_variation_source'] ) ? $GLOBALS['cpl_test_variation_source'] : '';
+								}
+
+								public function is_enabled() {
+									return true;
+								}
+							},
+						],
+					];
 				}
 			);
 
