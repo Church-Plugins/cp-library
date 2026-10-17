@@ -267,9 +267,28 @@ class RequestGuardTest extends TestCase {
 		$adapter       = $this->adapter();
 		$adapter->type = 'probe';
 
-		$this->assertFalse( $adapter->running_in_cron_or_as_manager() );
 		$adapter->update_check();
 		$adapter->fetch_complete();
+
+		$this->assertFalse( $adapter->ran );
+	}
+
+	/**
+	 * The generic cp_action handler fires any hook by name with one argument,
+	 * the request vars. A manager who followed a crafted
+	 * ?cp_action=cpl_dispatcher_probe_done link used to mark the import complete
+	 * with no nonce, through a manage_options fallback.
+	 */
+	public function test_cp_action_cannot_mark_an_import_complete() {
+		$_REQUEST['cp_action'] = 'cpl_dispatcher_probe_done';
+
+		Functions\when( 'wp_doing_cron' )->justReturn( true );
+		Functions\when( 'current_user_can' )->justReturn( true );
+		Functions\expect( 'update_option' )->never();
+
+		$adapter       = $this->adapter();
+		$adapter->type = 'probe';
+		$adapter->fetch_complete( array( 'cp_action' => 'cpl_dispatcher_probe_done' ) );
 
 		$this->assertFalse( $adapter->ran );
 	}
@@ -300,11 +319,8 @@ class RequestGuardTest extends TestCase {
 		$adapter->type       = 'probe';
 		$adapter->_cron_hook = 'cpl_adapter_cron_probe';
 		$adapter->update_check();
-		$adapter->fetch_complete();
 
 		$this->assertTrue( $adapter->ran );
-		$this->assertTrue( $updated['cpl_probe_adapter_import_complete'] );
-		$this->assertFalse( $updated['cpl_probe_adapter_import_in_progress'] );
 	}
 
 	public function test_adapter_work_runs_for_a_manager_outside_cron() {
@@ -363,7 +379,6 @@ class RequestGuardTest extends TestCase {
 		$dispatcher = new DispatcherHandleProbe();
 		$dispatcher->run();
 
-		$this->assertFalse( $adapter->running_in_cron_or_as_manager() );
 		$this->assertFalse( $dispatcher->dispatched );
 		$this->assertTrue( $updated['cpl_probe_adapter_import_complete'] );
 		$this->assertFalse( $updated['cpl_probe_adapter_import_in_progress'] );

@@ -224,38 +224,21 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * Runs when fetching with the dispatcher is complete.
 	 *
 	 * The dispatcher calls this after its nonce check and passes true as the
-	 * second argument. That call clears the in-progress option. Any other
-	 * caller still has to be cron or a user who can manage options.
+	 * second argument. That call clears the in-progress option. The generic
+	 * cp_action handler can fire this hook by name but passes only one
+	 * argument, so anything without the dispatcher flag is ignored.
 	 *
 	 * @param mixed $batch           Batch number, or request vars from another caller.
 	 * @param bool  $from_dispatcher True when the dispatcher finished its chain.
 	 * @return void
 	 */
 	public function fetch_complete( $batch = null, $from_dispatcher = false ) {
-		if ( ! $from_dispatcher && ! $this->running_in_cron_or_as_manager() ) {
+		if ( true !== $from_dispatcher ) {
 			return;
 		}
 
 		update_option( "cpl_{$this->type}_adapter_import_complete", true );
 		update_option( "cpl_{$this->type}_adapter_import_in_progress", false );
-	}
-
-	/**
-	 * Whether adapter work may run for this request.
-	 *
-	 * Cron counts only when WordPress is running cron and the request has no
-	 * cp_action parameter. Every other call requires manage_options.
-	 *
-	 * @return bool
-	 */
-	public function running_in_cron_or_as_manager() {
-		$is_cron = function_exists( 'wp_doing_cron' ) && wp_doing_cron() && empty( $_REQUEST['cp_action'] );
-
-		if ( $is_cron ) {
-			return true;
-		}
-
-		return (bool) current_user_can( 'manage_options' );
 	}
 
 	/**
