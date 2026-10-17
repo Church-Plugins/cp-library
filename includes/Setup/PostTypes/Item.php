@@ -10,6 +10,7 @@ use CP_Library\Admin\Settings;
 use CP_Library\Exception;
 use CP_Library\Setup\Tables\ItemMeta;
 use CP_Library\Controllers\Item as ItemController;
+use CP_Library\Integrations\YouTube;
 use CP_Library\Models\Speaker as Speaker_Model;
 use CP_Library\Models\Item as Model;
 use CP_Library\Util\Convenience as _C;
@@ -324,13 +325,7 @@ class Item extends PostType  {
 				} else if ( $video_url && \CP_Library\Integrations\YouTube::parse_video_id( $video_url ) ) {
 					$output = sprintf(
 						'<button type="button" class="button cpl-import-transcript-btn" data-url="%s">%s</button>',
-						add_query_arg(
-							[
-								'cp_action' => 'cpl_import_transcript',
-								'post_id'   => $post_id,
-							],
-							admin_url( 'admin-post.php' )
-						),
+						esc_url( YouTube::get_instance()->get_import_request_url( $post_id ) ),
 						\ChurchPlugins\Helpers::get_icon( 'youtube' ) . esc_html__( 'Import', 'cp-library' )
 					);
 				} else {

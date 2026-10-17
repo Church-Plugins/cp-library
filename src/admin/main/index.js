@@ -694,7 +694,7 @@ jQuery($ => {
 jQuery($ => {
 	$('td.column-transcript .cpl-import-transcript-btn').on('click', function(e) {
 		const url    = $(this).data('url')
-		const postId = url.split('post_id=')[1]
+		const postId = new URL(url, location.origin).searchParams.get('post_id')
 
 		$(this).addClass('loading');
 
