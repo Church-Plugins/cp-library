@@ -199,7 +199,7 @@ class YouTube {
 		}
 
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
-			return new \WP_Error( 'cannot_edit_item', 'Could not import the transcript' );
+			return new \WP_Error( 'forbidden', __( 'You cannot edit this item.', 'cp-library' ) );
 		}
 
 		try {
