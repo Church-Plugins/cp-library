@@ -11,6 +11,10 @@
  * action `cp_action_{name}`). A ChurchPlugins copy that does not read the
  * field leaves it unused, and the forms still post as before.
  *
+ * Export ends with status 403 when the user cannot manage options, or when
+ * that request-action nonce is missing or does not match. An existing dated
+ * CSV is left in place on that refusal.
+ *
  * @package CP_Library
  */
 
@@ -23,6 +27,25 @@ use CP_Library\Integrations\YouTube;
  * Marks the end of a streamed export so the test process can continue.
  */
 class ExportFinished extends \RuntimeException {}
+
+/**
+ * Marks a refused export, with the HTTP status from wp_die().
+ */
+class ExportDenied extends \RuntimeException {
+
+	/**
+	 * @var int
+	 */
+	public $status;
+
+	/**
+	 * @param int $status HTTP status.
+	 */
+	public function __construct( $status ) {
+		$this->status = (int) $status;
+		parent::__construct( 'export denied' );
+	}
+}
 
 /**
  * Marks a JSON response that ended the request.
@@ -62,6 +85,7 @@ class QuietExport extends Tools {
 
 /**
  * @covers \CP_Library\Admin\Tools::export_data
+ * @covers \CP_Library\Admin\Tools::export_request_is_allowed
  * @covers \CP_Library\Admin\Tools::request_action_nonce_field
  * @covers \CP_Library\Integrations\YouTube::handle_import_request
  * @covers \CP_Library\Integrations\YouTube::import_transcript
@@ -148,14 +172,41 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 		$this->assertStringContainsString( 'cp_action=cp_export_items', $html );
 		$this->assertStringContainsString( 'action=cpl_import_file_sermons', $html );
 		$this->assertStringContainsString( 'name="cp_ajax_import_file"', $html );
-		$this->assert_nonce_present( $html, 'cp_action_cp_export_items' );
+		$this->assertSame( 1, preg_match( '/<form id="cpl_export_data"[\s\S]*?<\/form>/', $html, $export_form ) );
+		$this->assert_nonce_field( $export_form[0], '_wpnonce', 'cp_export_items' );
+		$this->assert_nonce_field( $export_form[0], 'cp_action_nonce', 'cp_action_cp_export_items' );
 		$this->assert_nonce_present( $html, 'cp_action_cp_upload_import_file' );
+	}
+
+	public function test_export_is_refused_without_the_tools_capability() {
+		$this->make_item();
+		$this->set_role( 'subscriber' );
+		$_REQUEST['cp_action_nonce'] = wp_create_nonce( 'cp_action_cp_export_items' );
+		$_REQUEST['_wpnonce']        = wp_create_nonce( 'cp_export_items' );
+
+		$this->assert_export_refused();
+	}
+
+	public function test_export_is_refused_when_the_request_nonce_is_missing() {
+		$this->set_role( 'administrator' );
+		unset( $_REQUEST['cp_action_nonce'] );
+		$_REQUEST['_wpnonce'] = wp_create_nonce( 'cp_export_items' );
+
+		$this->assert_export_refused();
+	}
+
+	public function test_export_is_refused_when_the_request_nonce_is_wrong() {
+		$this->set_role( 'administrator' );
+		$_REQUEST['cp_action_nonce'] = wp_create_nonce( 'cp_export_items' );
+		$_REQUEST['_wpnonce']        = wp_create_nonce( 'cp_export_items' );
+
+		$this->assert_export_refused();
 	}
 
 	public function test_transcript_import_is_refused_when_the_user_cannot_edit_the_post() {
 		$post_id = $this->sermon_with_video();
 		$this->set_role( 'subscriber' );
-		$_REQUEST['post_id'] = $post_id;
+		$this->sign_import_request( $post_id );
 
 		$response = $this->call_json(
 			function () {
@@ -185,7 +236,7 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 
 	public function test_transcript_import_is_refused_for_an_unknown_post() {
 		$this->set_role( 'administrator' );
-		$_REQUEST['post_id'] = 999999;
+		$this->sign_import_request( 999999 );
 
 		$response = $this->call_json(
 			function () {
@@ -229,7 +280,7 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 	public function test_transcript_import_runs_when_the_user_can_edit_the_post() {
 		$post_id = $this->sermon_with_video();
 		$this->set_role( 'administrator' );
-		$_REQUEST['post_id'] = $post_id;
+		$this->sign_import_request( $post_id );
 
 		$response = $this->call_json(
 			function () {
@@ -253,7 +304,77 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 	 * @param QuietExport $tools Export runner.
 	 * @return string CSV body.
 	 */
+	/**
+	 * A refused export ends with status 403 and leaves any existing file alone.
+	 */
+	private function assert_export_refused() {
+		$tools    = new QuietExport();
+		$filename = $tools->filename();
+		$upload   = wp_upload_dir();
+		wp_mkdir_p( $upload['path'] );
+		$path = trailingslashit( $upload['path'] ) . $filename;
+		file_put_contents( $path, "keep,me\n" );
+
+		add_filter( 'wp_die_handler', array( $this, 'die_handler' ), 20 );
+		add_filter( 'wp_die_ajax_handler', array( $this, 'die_handler' ), 20 );
+
+		$status = null;
+		ob_start();
+
+		try {
+			$tools->export_data();
+			ob_end_clean();
+			$this->fail( 'Export was not refused.' );
+		} catch ( ExportDenied $denied ) {
+			ob_end_clean();
+			$status = $denied->status;
+		} finally {
+			remove_filter( 'wp_die_handler', array( $this, 'die_handler' ), 20 );
+			remove_filter( 'wp_die_ajax_handler', array( $this, 'die_handler' ), 20 );
+		}
+
+		$this->assertSame( 403, $status );
+		$this->assertSame( "keep,me\n", (string) file_get_contents( $path ) );
+		unlink( $path );
+	}
+
+	/**
+	 * @param callable $handler Current handler.
+	 * @return callable
+	 */
+	public function die_handler( $handler ) {
+		return array( $this, 'deny_export' );
+	}
+
+	/**
+	 * @param mixed $message Message.
+	 * @param mixed $title   Title.
+	 * @param mixed $args    Arguments.
+	 */
+	public function deny_export( $message = '', $title = '', $args = array() ) {
+		$status = 500;
+
+		if ( is_int( $args ) ) {
+			$status = $args;
+		} elseif ( is_array( $args ) && isset( $args['response'] ) ) {
+			$status = (int) $args['response'];
+		}
+
+		throw new ExportDenied( $status );
+	}
+
+	/**
+	 * @param int $post_id Post ID.
+	 */
+	private function sign_import_request( $post_id ) {
+		$_REQUEST['post_id']  = $post_id;
+		$_REQUEST['_wpnonce'] = wp_create_nonce( YouTube::get_instance()->import_request_nonce_action( $post_id ) );
+	}
+
 	private function capture_export( QuietExport $tools ) {
+		$_REQUEST['cp_action_nonce'] = wp_create_nonce( 'cp_action_cp_export_items' );
+		$_REQUEST['_wpnonce']        = wp_create_nonce( 'cp_export_items' );
+
 		ob_start();
 
 		try {
@@ -280,6 +401,25 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 	 * @param string $html   Rendered tools markup.
 	 * @param string $action Nonce action.
 	 */
+	/**
+	 * @param string $html  Markup that contains the field.
+	 * @param string $name  Input name.
+	 * @param string $action Nonce action.
+	 */
+	private function assert_nonce_field( $html, $name, $action ) {
+		$pattern = '/name="' . preg_quote( $name, '/' ) . '" value="([^"]+)"/';
+		preg_match_all( $pattern, $html, $matches );
+
+		foreach ( $matches[1] as $value ) {
+			if ( wp_verify_nonce( $value, $action ) ) {
+				$this->assertTrue( true );
+				return;
+			}
+		}
+
+		$this->fail( 'Missing nonce for ' . $action );
+	}
+
 	private function assert_nonce_present( $html, $action ) {
 		preg_match_all( '/name="cp_action_nonce" value="([^"]+)"/', $html, $matches );
 
@@ -298,7 +438,7 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 	 */
 	private function sermon_with_video() {
 		$item = $this->make_item( 'Transcript Sermon' );
-		$item->update_meta_value( 'video_url', 'https://www.youtube.com/watch?v=abc' );
+		$item->update_meta_value( 'video_url', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' );
 
 		return (int) $item->origin_id;
 	}
@@ -354,21 +494,23 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 	public function http_response( $pre, $args, $url ) {
 		$this->http_called = true;
 
-		if ( is_string( $url ) && false !== strpos( $url, 'youtube.com/watch' ) ) {
-			$captions = wp_json_encode(
-				array(
-					'playerCaptionsTracklistRenderer' => array(
-						'captionTracks' => array(
-							array( 'baseUrl' => 'https://example.test/transcript' ),
+		if ( is_string( $url ) && false !== strpos( $url, 'youtube.com/youtubei/v1/player' ) ) {
+			return $this->http_ok(
+				wp_json_encode(
+					array(
+						'captions' => array(
+							'playerCaptionsTracklistRenderer' => array(
+								'captionTracks' => array(
+									array( 'baseUrl' => 'https://www.youtube.com/api/timedtext?v=dQw4w9WgXcQ&lang=en' ),
+								),
+							),
 						),
-					),
+					)
 				)
 			);
-
-			return $this->http_ok( '"captions":' . $captions . ',"videoDetails":{}' );
 		}
 
-		if ( is_string( $url ) && false !== strpos( $url, 'example.test/transcript' ) ) {
+		if ( is_string( $url ) && false !== strpos( $url, 'youtube.com/api/timedtext' ) ) {
 			return $this->http_ok( '<text start="1" dur="2">Hello there</text>' );
 		}
 

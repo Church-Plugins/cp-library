@@ -469,6 +469,7 @@ class Tools
 			<div class="inside">
 				<?php $action_url = esc_url(add_query_arg('cp_action', 'cp_export_items', admin_url())); ?>
 				<form id="cpl_export_data" action="<?php echo $action_url ?>" method="POST" enctype="multipart/form-data">
+					<?php wp_nonce_field( 'cp_export_items' ); ?>
 					<?php $this->request_action_nonce_field( 'cp_export_items' ); ?>
 					<button class="button button-primary"><?php echo sprintf(esc_html__('Export all %s as CSV', 'cp-library'), cp_library()->setup->post_types->item->plural_label); ?></button>
 				</form>
@@ -737,6 +738,18 @@ class Tools
 	 * @since 1.0.4
 	 */
 	public function export_data() {
+		if ( ! $this->export_request_is_allowed() ) {
+			wp_die(
+				esc_html__( 'You do not have permission to export.', 'cp-library' ),
+				'',
+				array( 'response' => 403 )
+			);
+		}
+
+		if ( ! Request::allowed( 'manage_options', 'cp_export_items' ) ) {
+			return;
+		}
+
 		$filename = $this->export_filename();
 		$this->remove_public_export_files( $filename );
 
@@ -748,9 +761,12 @@ class Tools
 
 		$posts = new \WP_Query( $args );
 
-		$this->send_export_headers( $filename );
+		$file_handle = fopen( 'php://temp', 'w+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 
-		$file_handle  = fopen( 'php://output', 'w' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+		if ( false === $file_handle ) {
+			return;
+		}
+
 		$header_added = false;
 
 		foreach ( $posts->posts as $post ) {
@@ -771,9 +787,49 @@ class Tools
 			}
 		}
 
-		fclose( $file_handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		rewind( $file_handle );
 
+		/**
+		 * Whether to send the CSV response.
+		 *
+		 * Return false to skip sending. The CSV is not written to the uploads directory.
+		 *
+		 * @since 1.8.0
+		 *
+		 * @param bool   $send      Whether to send the file.
+		 * @param string $file_path Empty. The CSV is not stored as a file.
+		 * @param string $filename  Download name.
+		 */
+		if ( ! apply_filters( 'cpl_export_items_output', true, '', $filename ) ) {
+			fclose( $file_handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+			return;
+		}
+
+		$this->send_export_headers( $filename );
+		fpassthru( $file_handle );
+		fclose( $file_handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 		$this->end_export();
+	}
+
+	/**
+	 * Whether this request may export sermons.
+	 *
+	 * Requires the tools capability and the request-action nonce printed on the export form.
+	 *
+	 * @return bool
+	 */
+	protected function export_request_is_allowed() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return false;
+		}
+
+		$nonce = '';
+
+		if ( isset( $_REQUEST['cp_action_nonce'] ) && is_string( $_REQUEST['cp_action_nonce'] ) ) {
+			$nonce = sanitize_text_field( wp_unslash( $_REQUEST['cp_action_nonce'] ) );
+		}
+
+		return (bool) wp_verify_nonce( $nonce, 'cp_action_cp_export_items' );
 	}
 
 	/**
@@ -971,9 +1027,10 @@ class Tools
 		$sql = $wpdb->prepare(
 			"SELECT post_title, COUNT({$wpdb->posts}.ID) AS speaker_count
 			FROM {$wpdb->posts}
-			WHERE post_type='cpl_speaker'
+			WHERE post_type = %s
 			GROUP BY post_title
-			HAVING speaker_count > 1"
+			HAVING speaker_count > 1",
+			'cpl_speaker'
 		);
 
 		$speakers = $wpdb->get_results($sql);
