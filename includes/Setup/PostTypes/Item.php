@@ -321,7 +321,7 @@ class Item extends PostType  {
 
 				if ( ! empty( $transcript ) ) {
 					$output = '<button type="button" class="button cpl-transcript-btn" data-post-id="' . $post_id .  '">View</button>';
-				} else if ( $video_url && ( strpos( $video_url, 'youtube.com' ) !== false || strpos( $video_url, 'youtu.be' ) !== false ) ) {
+				} else if ( $video_url && \CP_Library\Integrations\YouTube::parse_video_id( $video_url ) ) {
 					$output = sprintf(
 						'<button type="button" class="button cpl-import-transcript-btn" data-url="%s">%s</button>',
 						add_query_arg(
@@ -629,13 +629,23 @@ class Item extends PostType  {
 			'type' => 'wysiwyg',
 		] );
 
-		// This is a custom cmb2 field, it is managed in includes/Integrations/YouTube.php
+		// Custom cmb2 fields, rendered in includes/Integrations/YouTube.php.
+		$cmb->add_field( [
+			'name'         => __( 'Upload caption file', 'cp-library' ),
+			'desc'         => __( 'Upload a .vtt or .srt file. Timestamps, cue identifiers, and tags are removed and the text is saved as the transcript.', 'cp-library' ),
+			'id'           => 'transcript_caption_upload',
+			'type'         => 'cpl_transcript_caption_upload',
+			'save_field'   => false,
+			'show_in_rest' => false,
+		] );
+
 		$cmb->add_field( [
 			'name'         => __( 'Import from YouTube', 'cp-library' ),
 			'desc'         => __( 'Import transcript', 'cp-library' ),
 			'id'           => 'transcript_import',
 			'type'         => 'cpl_import_transcript_button',
-			'show_in_rest' => false
+			'save_field'   => false,
+			'show_in_rest' => false,
 		] );
 	}
 
