@@ -205,26 +205,32 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	public function do_full_import() {
 		$this->delete_all(); // delete any queued items
 
-		$this->dispatcher->set_batch( 1 )->dispatch(); // start the fetching process
-
-		// delete store data
+		// delete store data and mark the import before dispatch, so a fast
+		// completion cannot finish before the in-progress option is stored.
 		global $wpdb;
 		$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE 'cpl_{$this->type}_adapter_store_%'" );
 
 		update_option( "cpl_{$this->type}_adapter_import_complete", false );
 		update_option( "cpl_{$this->type}_adapter_import_in_progress", true );
 
+		$this->dispatcher->set_batch( 1 )->dispatch();
+
 		wp_send_json_success( array( 'message' => 'Import started' ) );
 	}
 
 	/**
-	 * Runs when all fetching with dispatcher is complete.
+	 * Runs when fetching with the dispatcher is complete.
 	 *
-	 * @param int $batch The batch number.
+	 * The dispatcher calls this after its nonce check and passes true as the
+	 * second argument. That call clears the in-progress option. Any other
+	 * caller still has to be cron or a user who can manage options.
+	 *
+	 * @param mixed $batch           Batch number, or request vars from another caller.
+	 * @param bool  $from_dispatcher True when the dispatcher finished its chain.
 	 * @return void
 	 */
-	public function fetch_complete() {
-		if ( ! $this->running_in_cron_or_as_manager() ) {
+	public function fetch_complete( $batch = null, $from_dispatcher = false ) {
+		if ( ! $from_dispatcher && ! $this->running_in_cron_or_as_manager() ) {
 			return;
 		}
 

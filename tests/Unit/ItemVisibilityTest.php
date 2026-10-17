@@ -696,6 +696,33 @@ namespace CP_Library\Tests\Unit {
 			$this->assertNotFound( $this->api->get_item( $this->request( [ 'item_id' => 'draft-sermon' ] ) ) );
 		}
 
+		public function test_collection_records_leave_transcripts_empty() {
+			$item = new class() {
+				/** @var array */
+				public $args = array();
+
+				public function get_api_data( $include_variations = false, $include_transcript = false ) {
+					$this->args = array( $include_variations, $include_transcript );
+
+					return array(
+						'transcript' => $include_transcript ? 'sermon text' : '',
+					);
+				}
+			};
+
+			$request = $this->request(
+				array(
+					'include_transcript' => 'true',
+					'include_variations' => 'true',
+				)
+			);
+
+			$data = $this->api->collection_item_data( $item, $request );
+
+			$this->assertSame( array( true, false ), $item->args );
+			$this->assertSame( '', $data['transcript'] );
+		}
+
 		public function test_collection_and_log_routes_stay_open() {
 			$collection = $this->request( [] );
 			$collection->route = '/cpl/v1/items';

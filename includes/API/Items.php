@@ -485,10 +485,7 @@ class Items extends WP_REST_Controller {
 			try {
 				$item = new Item( $post->ID );
 
-				// Check if include_variations parameter is set
-				$include_variations = $request->get_param( 'include_variations' ) === 'true';
-				$include_transcript = $request->get_param( 'include_transcript' ) === 'true';
-				$data = $item->get_api_data( $include_variations, $include_transcript );
+				$data = $this->collection_item_data( $item, $request );
 
 				$return_value['items'][] = $data;
 			} catch ( Exception $e ) {
@@ -499,6 +496,21 @@ class Items extends WP_REST_Controller {
 		}
 
 		return $return_value;
+	}
+
+	/**
+	 * Item record for a collection response.
+	 *
+	 * Transcript text stays on the single-item response.
+	 *
+	 * @param object $item    Item controller.
+	 * @param mixed  $request Request with get_param().
+	 * @return array
+	 */
+	public function collection_item_data( $item, $request ) {
+		$include_variations = is_object( $request ) && method_exists( $request, 'get_param' ) && 'true' === $request->get_param( 'include_variations' );
+
+		return $item->get_api_data( $include_variations, false );
 	}
 
 	/**

@@ -15,6 +15,7 @@ namespace CP_Library\Tests\Unit;
 use Brain\Monkey;
 use Brain\Monkey\Functions;
 use CP_Library\Adapters\Adapter;
+use CP_Library\Adapters\Dispatcher;
 use CP_Library\Admin\Analytics\Init as Analytics;
 use CP_Library\Setup\PostTypes\Template;
 use PHPUnit\Framework\TestCase;
@@ -52,6 +53,34 @@ class AdapterWorkProbe extends Adapter {
 
 	public function process_cpl_data( $item, $cpl_data, $post_type ) {
 	}
+
+	public function delete_all() {
+	}
+}
+
+/**
+ * Dispatcher stand-in that runs handle() without registering AJAX hooks.
+ */
+class DispatcherHandleProbe extends Dispatcher {
+
+	/** @var bool */
+	public $dispatched = false;
+
+	public function __construct() {
+		$this->prefix = 'cpl_dispatcher_probe';
+		$this->action = 'pull';
+		$this->limit  = 2;
+	}
+
+	public function run() {
+		$this->handle();
+	}
+
+	public function dispatch() {
+		$this->dispatched = true;
+
+		return array();
+	}
 }
 
 /**
@@ -70,7 +99,8 @@ class RequestGuardTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
-		unset( $_REQUEST['cp_action'] );
+		unset( $_REQUEST['cp_action'], $_REQUEST['batch'] );
+		unset( $GLOBALS['cpl_test_import_events'], $GLOBALS['wpdb'] );
 		Monkey\tearDown();
 		parent::tearDown();
 	}
@@ -286,6 +316,101 @@ class RequestGuardTest extends TestCase {
 		$adapter->update_check();
 
 		$this->assertTrue( $adapter->ran );
+	}
+
+	public function test_dispatcher_completion_clears_the_in_progress_option() {
+		$updated = array();
+
+		Functions\when( 'wp_doing_cron' )->justReturn( false );
+		Functions\when( 'current_user_can' )->justReturn( false );
+		Functions\when( 'apply_filters' )->justReturn( true );
+		Functions\when( 'update_option' )->alias(
+			static function ( $key, $value ) use ( &$updated ) {
+				$updated[ $key ] = $value;
+			}
+		);
+
+		$adapter       = $this->adapter();
+		$adapter->type = 'probe';
+
+		Functions\when( 'do_action' )->alias(
+			static function ( $hook, $batch, $from_dispatcher = false ) use ( $adapter ) {
+				if ( 'cpl_dispatcher_probe_done' === $hook ) {
+					$adapter->fetch_complete( $batch, $from_dispatcher );
+				}
+			}
+		);
+
+		$_REQUEST['batch'] = '3';
+
+		$dispatcher = new DispatcherHandleProbe();
+		$dispatcher->run();
+
+		$this->assertFalse( $adapter->running_in_cron_or_as_manager() );
+		$this->assertFalse( $dispatcher->dispatched );
+		$this->assertTrue( $updated['cpl_probe_adapter_import_complete'] );
+		$this->assertFalse( $updated['cpl_probe_adapter_import_in_progress'] );
+	}
+
+	public function test_unfinished_dispatcher_batch_leaves_the_in_progress_option() {
+		Functions\when( 'wp_doing_cron' )->justReturn( false );
+		Functions\when( 'current_user_can' )->justReturn( false );
+		Functions\when( 'apply_filters' )->justReturn( false );
+		Functions\expect( 'update_option' )->never();
+		Functions\expect( 'do_action' )->never();
+
+		$_REQUEST['batch'] = '1';
+
+		$dispatcher = new DispatcherHandleProbe();
+		$dispatcher->run();
+
+		$this->assertTrue( $dispatcher->dispatched );
+	}
+
+	public function test_full_import_stores_the_in_progress_option_before_dispatch() {
+		$GLOBALS['cpl_test_import_events'] = array();
+		$GLOBALS['wpdb']                   = new class() {
+			/** @var string */
+			public $options = 'wp_options';
+
+			public function query( $sql ) {
+				return 0;
+			}
+		};
+
+		Functions\when( 'update_option' )->alias(
+			static function ( $key, $value ) {
+				$GLOBALS['cpl_test_import_events'][] = array( 'option', $key, $value );
+			}
+		);
+		Functions\when( 'wp_send_json_success' )->justReturn( null );
+
+		$adapter       = ( new ReflectionClass( AdapterWorkProbe::class ) )->newInstanceWithoutConstructor();
+		$adapter->type = 'probe';
+		$dispatcher    = new class() {
+			public function set_batch( $batch ) {
+				return $this;
+			}
+
+			public function dispatch() {
+				$GLOBALS['cpl_test_import_events'][] = array( 'dispatch' );
+			}
+		};
+
+		$property = ( new ReflectionClass( Adapter::class ) )->getProperty( 'dispatcher' );
+		$property->setAccessible( true );
+		$property->setValue( $adapter, $dispatcher );
+
+		$adapter->do_full_import();
+
+		$this->assertSame(
+			array(
+				array( 'option', 'cpl_probe_adapter_import_complete', false ),
+				array( 'option', 'cpl_probe_adapter_import_in_progress', true ),
+				array( 'dispatch' ),
+			),
+			$GLOBALS['cpl_test_import_events']
+		);
 	}
 
 	/**
