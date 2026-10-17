@@ -174,7 +174,7 @@ class Items extends WP_REST_Controller {
 	/**
 	 * Item id from the route, ignoring any value sent in the body.
 	 *
-	 * @since 1.7.1
+	 * @since 1.8.0
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return int
@@ -189,7 +189,7 @@ class Items extends WP_REST_Controller {
 	/**
 	 * Whole-number item id from the log route, or 0 when the value is not one.
 	 *
-	 * @since 1.7.1
+	 * @since 1.8.0
 	 *
 	 * @param mixed $raw Route parameter.
 	 * @return int
@@ -212,7 +212,7 @@ class Items extends WP_REST_Controller {
 	 * Only `view_duration` includes a structured payload. The others are sent
 	 * with no payload. `cpl_log_actions` can add an action a site already sends.
 	 *
-	 * @since 1.7.1
+	 * @since 1.8.0
 	 *
 	 * @return array
 	 */
@@ -241,7 +241,7 @@ class Items extends WP_REST_Controller {
 	 *
 	 * Always `REMOTE_ADDR`, checked with `FILTER_VALIDATE_IP`.
 	 *
-	 * @since 1.7.1
+	 * @since 1.8.0
 	 *
 	 * @return string|false
 	 */
@@ -262,7 +262,7 @@ class Items extends WP_REST_Controller {
 	 *
 	 * Filter `cpl_log_viewer_ip` to replace the address.
 	 *
-	 * @since 1.7.1
+	 * @since 1.8.0
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @return string|false
@@ -298,7 +298,7 @@ class Items extends WP_REST_Controller {
 	 * Filter `cpl_log_rate_limit` to change the per-minute maximum. Filter
 	 * `cpl_log_rate_limit_key` to change the bucket key.
 	 *
-	 * @since 1.7.1
+	 * @since 1.8.0
 	 *
 	 * @param int      $item_id Item id.
 	 * @param int|null $now     Unix time, or null for the current time.
@@ -348,7 +348,7 @@ class Items extends WP_REST_Controller {
 	/**
 	 * Bucket key for one address, item, and minute.
 	 *
-	 * @since 1.7.1
+	 * @since 1.8.0
 	 *
 	 * @param string $ip      Validated `REMOTE_ADDR`.
 	 * @param int    $item_id Item id.
@@ -778,7 +778,7 @@ class Items extends WP_REST_Controller {
 	/**
 	 * Watched seconds limited by the client total and the server cap.
 	 *
-	 * @since 1.7.1
+	 * @since 1.8.0
 	 *
 	 * @param int   $item_id Item id.
 	 * @param array $payload `watchedSeconds` and `maxDuration`.
@@ -797,7 +797,7 @@ class Items extends WP_REST_Controller {
 	 * Uses the item's audio length when that length is known. Otherwise uses
 	 * six hours, filterable with `cpl_log_max_watch_seconds`.
 	 *
-	 * @since 1.7.1
+	 * @since 1.8.0
 	 *
 	 * @param int $item_id Item id.
 	 * @return int
@@ -816,7 +816,7 @@ class Items extends WP_REST_Controller {
 	/**
 	 * Audio length in seconds, or 0 when the item has no known length.
 	 *
-	 * @since 1.7.1
+	 * @since 1.8.0
 	 *
 	 * @param int $item_id Item id.
 	 * @return int

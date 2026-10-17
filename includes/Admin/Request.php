@@ -10,7 +10,7 @@ namespace CP_Library\Admin;
 /**
  * Capability and nonce check for one admin request.
  *
- * @since 1.7.1
+ * @since 1.8.0
  */
 class Request {
 
@@ -20,7 +20,7 @@ class Request {
 	 * The capability is the one used by the related admin screen. The nonce
 	 * action is the request name.
 	 *
-	 * @since 1.7.1
+	 * @since 1.8.0
 	 *
 	 * @param string $capability Capability name.
 	 * @param string $action     Nonce action.
@@ -42,7 +42,7 @@ class Request {
 	/**
 	 * Add the nonce for a cp_action query argument.
 	 *
-	 * @since 1.7.1
+	 * @since 1.8.0
 	 *
 	 * @param array $args Query arguments.
 	 * @return array

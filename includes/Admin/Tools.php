@@ -755,7 +755,7 @@ class Tools
 		 *
 		 * Return false to leave the file in place without sending it.
 		 *
-		 * @since 1.7.1
+		 * @since 1.8.0
 		 *
 		 * @param bool   $send      Whether to send the file.
 		 * @param string $file_path Absolute path of the CSV.

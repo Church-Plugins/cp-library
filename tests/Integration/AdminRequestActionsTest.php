@@ -202,7 +202,7 @@ class AdminRequestActionsTest extends TestCase {
 		$post_id = $this->sermon_with_video();
 		$this->set_role( 'administrator' );
 		$_REQUEST['post_id']  = $post_id;
-		$_REQUEST['_wpnonce'] = wp_create_nonce( 'cpl_import_transcript' );
+		$_REQUEST['_wpnonce'] = wp_create_nonce( YouTube::get_instance()->import_request_nonce_action( $post_id ) );
 
 		$finished = $this->call_quietly( function () {
 			YouTube::get_instance()->handle_import_request();
@@ -321,11 +321,11 @@ class AdminRequestActionsTest extends TestCase {
 		$post_id = $this->sermon_with_video();
 		$_REQUEST['post_id'] = $post_id;
 
-		$finished = $this->call_quietly( function () {
+		// A refused request ends with a JSON error, so it finishes, but nothing is imported.
+		$this->call_quietly( function () {
 			YouTube::get_instance()->handle_import_request();
 		} );
 
-		$this->assertFalse( $finished );
 		$this->assertSame( '', (string) get_post_meta( $post_id, 'transcript', true ) );
 	}
 
@@ -334,7 +334,7 @@ class AdminRequestActionsTest extends TestCase {
 	 */
 	private function sermon_with_video() {
 		$item = $this->make_item();
-		$item->update_meta_value( 'video_url', 'https://www.youtube.com/watch?v=abc' );
+		$item->update_meta_value( 'video_url', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' );
 
 		return (int) $item->origin_id;
 	}
@@ -433,21 +433,23 @@ class AdminRequestActionsTest extends TestCase {
 	 * @return array|\WP_Error
 	 */
 	public function http_response( $pre, $args, $url ) {
-		if ( is_string( $url ) && false !== strpos( $url, 'youtube.com/watch' ) ) {
-			$captions = wp_json_encode(
-				[
-					'playerCaptionsTracklistRenderer' => [
-						'captionTracks' => [
-							[ 'baseUrl' => 'https://example.test/transcript' ],
+		if ( is_string( $url ) && false !== strpos( $url, 'youtube.com/youtubei/v1/player' ) ) {
+			return $this->http_ok(
+				wp_json_encode(
+					[
+						'captions' => [
+							'playerCaptionsTracklistRenderer' => [
+								'captionTracks' => [
+									[ 'baseUrl' => 'https://www.youtube.com/api/timedtext?v=dQw4w9WgXcQ&lang=en' ],
+								],
+							],
 						],
-					],
-				]
+					]
+				)
 			);
-
-			return $this->http_ok( '"captions":' . $captions . ',"videoDetails":{}' );
 		}
 
-		if ( is_string( $url ) && false !== strpos( $url, 'example.test/transcript' ) ) {
+		if ( is_string( $url ) && false !== strpos( $url, 'youtube.com/api/timedtext' ) ) {
 			return $this->http_ok( '<text start="1" dur="2">Hello there</text>' );
 		}
 

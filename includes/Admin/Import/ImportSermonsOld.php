@@ -155,7 +155,7 @@ class ImportSermonsOld extends BatchImport {
 				$speakers     = array_filter( array_map( 'trim', explode( ',', $this->get_field_value( 'speaker' ) ) ) );
 				$topics       = array_filter( array_map( 'trim', explode( ',', $this->get_field_value( 'topics' ) ) ) );
 				$season       = array_filter( array_map( 'trim', explode( ',', $this->get_field_value( 'season' ) ) ) );
-				$scripture    = array_filter( array_map( 'trim', explode( ',', $this->get_field_value( 'scripture' ) ) ) );
+				$scripture    = ImportSermons::scripture_passages( $this->get_field_value( 'scripture' ) );
 				$thumb        = trim( $this->get_field_value( 'thumbnail' ) );
 				$video        = trim( $this->get_field_value( 'video' ) );
 				$audio        = trim( $this->get_field_value( 'audio' ) );
