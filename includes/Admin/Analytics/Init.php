@@ -106,6 +106,10 @@ class Init {
    * Sends sermon analytics data as JSON
    */
   public function load_items() {
+    if ( ! $this->analytics_request_is_allowed() ) {
+      wp_send_json_error( array( 'message' => 'Could not load analytics' ), 403 );
+      return;
+    }
 
     $timeframe = 28;
 
@@ -129,6 +133,11 @@ class Init {
    * Sends a top level overview as JSON
    */
   public function get_overview() {
+    if ( ! $this->analytics_request_is_allowed() ) {
+      wp_send_json_error( array( 'message' => 'Could not load analytics' ), 403 );
+      return;
+    }
+
     $timeframe = 28;
 
     if( isset( $_POST['timeframe'] ) ) {
@@ -144,6 +153,17 @@ class Init {
       'average_duration' => $this->get_average_watch_time_since( $date ),
       'pages'            => $this->get_num_pages( $date )
     ), 200);
+  }
+
+  /**
+   * Whether this analytics request may continue.
+   *
+   * The analytics screen is registered with manage_options.
+   *
+   * @return bool
+   */
+  public function analytics_request_is_allowed() {
+    return current_user_can( 'manage_options' ) && (bool) check_ajax_referer( 'cpl-analytics', 'nonce', false );
   }
 
   /**

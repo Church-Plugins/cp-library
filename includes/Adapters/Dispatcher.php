@@ -86,12 +86,16 @@ class Dispatcher extends WP_Async_Request {
 
 		if ( $done ) {
 			/**
-			 * Fires when all requests are done
+			 * Fires when all requests are done.
 			 *
-			 * @param int $batch The current batch number.
+			 * The second argument tells the import to clear its in-progress
+			 * option. Completion already passed the dispatcher check.
+			 *
+			 * @param int  $batch           The current batch number.
+			 * @param bool $from_dispatcher True when this dispatcher finished.
 			 * @since 1.4.12
 			 */
-			do_action( $this->prefix . '_done', $batch );
+			do_action( $this->prefix . '_done', $batch, true );
 		} else {
 			// continue making requests
 			$this->data( [ 'batch' => $batch ] )->dispatch();

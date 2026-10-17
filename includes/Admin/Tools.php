@@ -467,8 +467,8 @@ class Tools
 		<div class="postbox cp-import-payment-history">
 			<h3><span><?php esc_html_e('Export data', 'cp-library') ?></span></h3>
 			<div class="inside">
-				<?php $action_url = esc_url(add_query_arg('cp_action', 'cp_export_items', admin_url())); ?>
-				<form id="cpl_export_data" action="<?php echo $action_url ?>" method="POST" enctype="multipart/form-data">
+				<?php $action_url = add_query_arg( 'cp_action', 'cp_export_items', admin_url() ); ?>
+				<form id="cpl_export_data" action="<?php echo esc_url( $action_url ); ?>" method="POST" enctype="multipart/form-data">
 					<?php wp_nonce_field( 'cp_export_items' ); ?>
 					<?php $this->request_action_nonce_field( 'cp_export_items' ); ?>
 					<button class="button button-primary"><?php echo sprintf(esc_html__('Export all %s as CSV', 'cp-library'), cp_library()->setup->post_types->item->plural_label); ?></button>
@@ -753,6 +753,12 @@ class Tools
 		$filename = $this->export_filename();
 		$this->remove_public_export_files( $filename );
 
+		$file_handle = $this->open_export_stream();
+
+		if ( ! is_resource( $file_handle ) ) {
+			return;
+		}
+
 		$args = [
 			'post_type'      => CP_LIBRARY_UPREFIX . '_item',
 			'post_status'    => array( 'publish', 'private', 'draft', 'future' ),
@@ -761,19 +767,13 @@ class Tools
 
 		$posts = new \WP_Query( $args );
 
-		$file_handle = fopen( 'php://temp', 'w+' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
-
-		if ( false === $file_handle ) {
-			return;
-		}
-
 		$header_added = false;
 
 		foreach ( $posts->posts as $post ) {
 			try {
 				$item = new Item( $post->ID );
 
-				$data           = $item->get_api_data();
+				$data           = $item->get_api_data( false, true );
 				$formatted_data = $this->get_formatted_item( $data );
 
 				if ( ! $header_added ) {
@@ -792,12 +792,12 @@ class Tools
 		/**
 		 * Whether to send the CSV response.
 		 *
-		 * Return false to skip sending. The CSV is not written to the uploads directory.
+		 * Return false to skip sending. The CSV stays on the temporary stream.
 		 *
 		 * @since 1.8.0
 		 *
 		 * @param bool   $send      Whether to send the file.
-		 * @param string $file_path Empty. The CSV is not stored as a file.
+		 * @param string $file_path Empty. The CSV is not written to the uploads directory.
 		 * @param string $filename  Download name.
 		 */
 		if ( ! apply_filters( 'cpl_export_items_output', true, '', $filename ) ) {
@@ -926,6 +926,15 @@ class Tools
 				}
 			}
 		}
+	}
+
+	/**
+	 * Open a temporary stream for the CSV export.
+	 *
+	 * @return resource|false
+	 */
+	protected function open_export_stream() {
+		return fopen( 'php://temp', 'w+' );
 	}
 
 	/**

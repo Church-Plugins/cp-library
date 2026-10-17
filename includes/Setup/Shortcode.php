@@ -89,10 +89,35 @@ class Shortcode
 		<script>
 			var cplParams = cplParams || {};
 		';
-		// Push shortcode parameters to the frontend so that JS has access to the data
+		// Push shortcode parameters to the frontend so that JS has access to the data.
+		// Only identifier keys are emitted, and each value is encoded so the script
+		// text stays a single assignment.
 		if( !empty( $args) && is_array( $args ) ) {
+			$flags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+
 			foreach( $args as $key => $value ) {
-				$output .= "cplParams." . $key . " = '" . $value . "';\n";
+				$key = (string) $key;
+
+				if ( ! preg_match( '/^[A-Za-z_][A-Za-z0-9_-]*\z/', $key ) ) {
+					continue;
+				}
+
+				if ( is_bool( $value ) ) {
+					$value = $value ? '1' : '';
+				} elseif ( is_scalar( $value ) || null === $value ) {
+					$value = (string) $value;
+				} else {
+					continue;
+				}
+
+				$encoded_key   = wp_json_encode( $key, $flags );
+				$encoded_value = wp_json_encode( $value, $flags );
+
+				if ( ! is_string( $encoded_key ) || ! is_string( $encoded_value ) ) {
+					continue;
+				}
+
+				$output .= 'cplParams[' . $encoded_key . '] = ' . $encoded_value . ";\n";
 			}
 		}
 		$output .= '
@@ -125,6 +150,7 @@ class Shortcode
 				'post_type' => cp_library()->setup->post_types->item->post_type,
 				'posts_per_page' => 1,
 				'post_status' => 'publish',
+				'has_password' => false,
 			];
 
 			if ( ! empty( $atts['location'] ) ) {
@@ -143,7 +169,7 @@ class Shortcode
 			$items = get_posts( $args );
 
 			if ( empty( $items ) ) {
-				return 'No ' . cp_library()->setup->post_types->item->plural_label . ' found.';
+				return $this->item_not_found_message();
 			}
 
 			$id = $items[0]->ID;
@@ -151,11 +177,14 @@ class Shortcode
 			$id = $atts['id'];
 		}
 
+		if ( ! Item::item_is_viewable_or_editable( $id ) ) {
+			return $this->item_not_found_message();
+		}
 
 		try {
 			$item = new Item( $id );
 		} catch( Exception $e ) {
-			return 'No ' . cp_library()->setup->post_types->item->plural_label . ' found.';
+			return $this->item_not_found_message();
 		}
 
 		$atts['item'] = $item->get_api_data( true );
@@ -169,6 +198,19 @@ class Shortcode
 
 		return ob_get_clean();
 
+	}
+
+	/**
+	 * Message shown when a shortcode item cannot be displayed.
+	 *
+	 * @return string
+	 */
+	protected function item_not_found_message() {
+		return sprintf(
+			/* translators: %s: plural item label */
+			__( 'No %s found.', 'cp-library' ),
+			cp_library()->setup->post_types->item->plural_label
+		);
 	}
 
 	public function render_source_list( $args ) {

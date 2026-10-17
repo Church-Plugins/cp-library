@@ -1,0 +1,480 @@
+<?php
+/**
+ * Tests for analytics, template preview, and adapter cron entry points.
+ *
+ * Analytics requests require manage_options and a valid nonce, matching the
+ * analytics screen. Template preview requires edit_posts and a valid nonce.
+ * Adapter cron and dispatcher completion run during cron, or for a user who
+ * can manage options.
+ *
+ * @package CP_Library
+ */
+
+namespace CP_Library\Tests\Unit;
+
+use Brain\Monkey;
+use Brain\Monkey\Functions;
+use CP_Library\Adapters\Adapter;
+use CP_Library\Adapters\Dispatcher;
+use CP_Library\Admin\Analytics\Init as Analytics;
+use CP_Library\Setup\PostTypes\Template;
+use PHPUnit\Framework\TestCase;
+use ReflectionClass;
+
+/**
+ * Adapter stand-in that records whether a pull looked up recent items.
+ */
+class AdapterWorkProbe extends Adapter {
+
+	/** @var bool */
+	public $ran = false;
+
+	public function __construct() {
+	}
+
+	public function format_and_process( $items ) {
+	}
+
+	public function get_next_batch( $batch ) {
+		return false;
+	}
+
+	public function get_recent_items( $amount ) {
+		$this->ran = true;
+
+		return array();
+	}
+
+	public function get_model_from_key( $key ) {
+	}
+
+	public function add_attachment( $item, $attachment, $attachment_key ) {
+	}
+
+	public function process_cpl_data( $item, $cpl_data, $post_type ) {
+	}
+
+	public function delete_all() {
+	}
+}
+
+/**
+ * Dispatcher stand-in that runs handle() without registering AJAX hooks.
+ */
+class DispatcherHandleProbe extends Dispatcher {
+
+	/** @var bool */
+	public $dispatched = false;
+
+	public function __construct() {
+		$this->prefix = 'cpl_dispatcher_probe';
+		$this->action = 'pull';
+		$this->limit  = 2;
+	}
+
+	public function run() {
+		$this->handle();
+	}
+
+	public function dispatch() {
+		$this->dispatched = true;
+
+		return array();
+	}
+}
+
+/**
+ * @covers \CP_Library\Admin\Analytics\Init::load_items
+ * @covers \CP_Library\Admin\Analytics\Init::get_overview
+ * @covers \CP_Library\Setup\PostTypes\Template::render_ajax_content
+ * @covers \CP_Library\Adapters\Adapter::update_check
+ * @covers \CP_Library\Adapters\Adapter::fetch_complete
+ */
+class RequestGuardTest extends TestCase {
+
+	protected function setUp(): void {
+		parent::setUp();
+		Monkey\setUp();
+		unset( $_REQUEST['cp_action'] );
+		Functions\when( 'doing_action' )->justReturn( false );
+		Functions\when( 'wp_unslash' )->returnArg();
+		Functions\when( 'sanitize_text_field' )->returnArg();
+		Functions\when( 'sanitize_key' )->returnArg();
+	}
+
+	protected function tearDown(): void {
+		unset( $_REQUEST['cp_action'], $_REQUEST['batch'] );
+		unset( $GLOBALS['cpl_test_import_events'], $GLOBALS['wpdb'] );
+		Monkey\tearDown();
+		parent::tearDown();
+	}
+
+	public function test_analytics_does_not_run_without_manage_options() {
+		$sent = 0;
+
+		Functions\when( 'current_user_can' )->justReturn( false );
+		Functions\when( 'check_ajax_referer' )->justReturn( true );
+		Functions\when( 'wp_send_json_error' )->justReturn( null );
+		Functions\when( 'wp_send_json' )->alias(
+			static function () use ( &$sent ) {
+				$sent++;
+			}
+		);
+
+		$analytics = $this->analytics();
+		$analytics->load_items();
+		$analytics->get_overview();
+
+		$this->assertSame( 0, $sent );
+		$this->assertFalse( $analytics->analytics_request_is_allowed() );
+	}
+
+	public function test_analytics_does_not_run_with_a_bad_nonce() {
+		$sent   = 0;
+		$action = null;
+
+		Functions\when( 'current_user_can' )->alias(
+			static function ( $cap ) {
+				return 'manage_options' === $cap;
+			}
+		);
+		Functions\when( 'check_ajax_referer' )->alias(
+			static function ( $nonce_action, $arg, $stop ) use ( &$action ) {
+				$action = array( $nonce_action, $arg, $stop );
+
+				return false;
+			}
+		);
+		Functions\when( 'wp_send_json_error' )->justReturn( null );
+		Functions\when( 'wp_send_json' )->alias(
+			static function () use ( &$sent ) {
+				$sent++;
+			}
+		);
+
+		$this->analytics()->load_items();
+
+		$this->assertSame( 0, $sent );
+		$this->assertSame( array( 'cpl-analytics', 'nonce', false ), $action );
+	}
+
+	public function test_analytics_allows_a_manager_with_a_valid_nonce() {
+		Functions\when( 'current_user_can' )->alias(
+			static function ( $cap ) {
+				return 'manage_options' === $cap;
+			}
+		);
+		Functions\when( 'check_ajax_referer' )->alias(
+			static function ( $nonce_action, $arg, $stop ) {
+				return 'cpl-analytics' === $nonce_action && 'nonce' === $arg && false === $stop;
+			}
+		);
+
+		$this->assertTrue( $this->analytics()->analytics_request_is_allowed() );
+	}
+
+	public function test_template_preview_does_not_render_without_edit_posts() {
+		$lookups = 0;
+		$died    = 0;
+
+		Functions\when( 'current_user_can' )->justReturn( false );
+		Functions\when( 'check_ajax_referer' )->justReturn( true );
+		Functions\when( 'get_post' )->alias(
+			static function () use ( &$lookups ) {
+				$lookups++;
+
+				return null;
+			}
+		);
+		Functions\when( 'wp_die' )->alias(
+			static function () use ( &$died ) {
+				$died++;
+			}
+		);
+
+		$this->template()->render_ajax_content();
+
+		$this->assertSame( 0, $lookups );
+		$this->assertSame( 1, $died );
+	}
+
+	public function test_template_preview_does_not_render_with_a_bad_nonce() {
+		$lookups = 0;
+		$action  = null;
+
+		Functions\when( 'current_user_can' )->alias(
+			static function ( $cap ) {
+				return 'edit_posts' === $cap;
+			}
+		);
+		Functions\when( 'check_ajax_referer' )->alias(
+			static function ( $nonce_action, $arg, $stop ) use ( &$action ) {
+				$action = array( $nonce_action, $arg, $stop );
+
+				return false;
+			}
+		);
+		Functions\when( 'get_post' )->alias(
+			static function () use ( &$lookups ) {
+				$lookups++;
+
+				return null;
+			}
+		);
+		Functions\when( 'wp_die' )->justReturn( null );
+
+		$this->template()->render_ajax_content();
+
+		$this->assertSame( 0, $lookups );
+		$this->assertSame( array( 'cpl_render_template', 'nonce', false ), $action );
+	}
+
+	public function test_template_preview_allows_an_editor_with_a_valid_nonce() {
+		Functions\when( 'current_user_can' )->alias(
+			static function ( $cap ) {
+				return 'edit_posts' === $cap;
+			}
+		);
+		Functions\when( 'check_ajax_referer' )->alias(
+			static function ( $nonce_action, $arg, $stop ) {
+				return 'cpl_render_template' === $nonce_action && 'nonce' === $arg && false === $stop;
+			}
+		);
+
+		$this->assertTrue( $this->template()->template_ajax_is_allowed() );
+	}
+
+	public function test_adapter_work_does_not_run_outside_cron_without_manage_options() {
+		Functions\when( 'wp_doing_cron' )->justReturn( false );
+		Functions\when( 'current_user_can' )->justReturn( false );
+		Functions\expect( 'update_option' )->never();
+
+		$adapter       = $this->adapter();
+		$adapter->type = 'probe';
+		$adapter->update_check();
+		$adapter->fetch_complete();
+
+		$this->assertFalse( $adapter->ran );
+	}
+
+	public function test_cron_allowance_does_not_apply_when_cp_action_is_set() {
+		$_REQUEST['cp_action'] = 'cpl_adapter_cron_probe';
+
+		Functions\when( 'wp_doing_cron' )->justReturn( true );
+		Functions\when( 'current_user_can' )->justReturn( false );
+		Functions\expect( 'update_option' )->never();
+
+		$adapter       = $this->adapter();
+		$adapter->type = 'probe';
+
+		$adapter->update_check();
+		$adapter->fetch_complete();
+
+		$this->assertFalse( $adapter->ran );
+	}
+
+	/**
+	 * The generic cp_action handler fires any hook by name with one argument,
+	 * the request vars. A manager who followed a crafted
+	 * ?cp_action=cpl_dispatcher_probe_done link used to mark the import complete
+	 * with no nonce, through a manage_options fallback.
+	 */
+	public function test_cp_action_cannot_mark_an_import_complete() {
+		$_REQUEST['cp_action'] = 'cpl_dispatcher_probe_done';
+
+		Functions\when( 'wp_doing_cron' )->justReturn( true );
+		Functions\when( 'current_user_can' )->justReturn( true );
+		Functions\expect( 'update_option' )->never();
+
+		$adapter       = $this->adapter();
+		$adapter->type = 'probe';
+		$adapter->fetch_complete( array( 'cp_action' => 'cpl_dispatcher_probe_done' ) );
+
+		$this->assertFalse( $adapter->ran );
+	}
+
+	public function test_adapter_work_runs_during_cron() {
+		$updated = array();
+
+		Functions\when( 'wp_doing_cron' )->justReturn( true );
+		Functions\when( 'doing_action' )->alias(
+			static function ( $hook ) {
+				return 'cpl_adapter_cron_probe' === $hook;
+			}
+		);
+		Functions\when( 'current_user_can' )->justReturn( false );
+		Functions\when( 'get_option' )->justReturn( array() );
+		Functions\when( 'apply_filters' )->alias(
+			static function ( $tag, $value ) {
+				return $value;
+			}
+		);
+		Functions\when( 'update_option' )->alias(
+			static function ( $key, $value ) use ( &$updated ) {
+				$updated[ $key ] = $value;
+			}
+		);
+
+		$adapter             = $this->adapter();
+		$adapter->type       = 'probe';
+		$adapter->_cron_hook = 'cpl_adapter_cron_probe';
+		$adapter->update_check();
+
+		$this->assertTrue( $adapter->ran );
+	}
+
+	public function test_adapter_work_runs_for_a_manager_outside_cron() {
+		$_REQUEST['_wpnonce'] = 'pull-nonce';
+
+		Functions\when( 'wp_doing_cron' )->justReturn( false );
+		Functions\when( 'current_user_can' )->alias(
+			static function ( $cap ) {
+				return 'manage_options' === $cap;
+			}
+		);
+		Functions\when( 'wp_verify_nonce' )->alias(
+			static function ( $nonce, $action ) {
+				return 'pull-nonce' === $nonce && 'cpl_adapter_pull_probe' === $action;
+			}
+		);
+		Functions\when( 'get_option' )->justReturn( array() );
+		Functions\when( 'apply_filters' )->alias(
+			static function ( $tag, $value ) {
+				return $value;
+			}
+		);
+
+		$adapter       = $this->adapter();
+		$adapter->type = 'probe';
+		$adapter->update_check();
+
+		$this->assertTrue( $adapter->ran );
+	}
+
+	public function test_dispatcher_completion_clears_the_in_progress_option() {
+		$updated = array();
+
+		Functions\when( 'wp_doing_cron' )->justReturn( false );
+		Functions\when( 'current_user_can' )->justReturn( false );
+		Functions\when( 'apply_filters' )->justReturn( true );
+		Functions\when( 'update_option' )->alias(
+			static function ( $key, $value ) use ( &$updated ) {
+				$updated[ $key ] = $value;
+			}
+		);
+
+		$adapter       = $this->adapter();
+		$adapter->type = 'probe';
+
+		Functions\when( 'do_action' )->alias(
+			static function ( $hook, $batch, $from_dispatcher = false ) use ( $adapter ) {
+				if ( 'cpl_dispatcher_probe_done' === $hook ) {
+					$adapter->fetch_complete( $batch, $from_dispatcher );
+				}
+			}
+		);
+
+		$_REQUEST['batch'] = '3';
+
+		$dispatcher = new DispatcherHandleProbe();
+		$dispatcher->run();
+
+		$this->assertFalse( $dispatcher->dispatched );
+		$this->assertTrue( $updated['cpl_probe_adapter_import_complete'] );
+		$this->assertFalse( $updated['cpl_probe_adapter_import_in_progress'] );
+	}
+
+	public function test_unfinished_dispatcher_batch_leaves_the_in_progress_option() {
+		Functions\when( 'wp_doing_cron' )->justReturn( false );
+		Functions\when( 'current_user_can' )->justReturn( false );
+		Functions\when( 'apply_filters' )->justReturn( false );
+		Functions\expect( 'update_option' )->never();
+		Functions\expect( 'do_action' )->never();
+
+		$_REQUEST['batch'] = '1';
+
+		$dispatcher = new DispatcherHandleProbe();
+		$dispatcher->run();
+
+		$this->assertTrue( $dispatcher->dispatched );
+	}
+
+	public function test_full_import_stores_the_in_progress_option_before_dispatch() {
+		$GLOBALS['cpl_test_import_events'] = array();
+		$GLOBALS['wpdb']                   = new class() {
+			/** @var string */
+			public $options = 'wp_options';
+
+			public function query( $sql ) {
+				return 0;
+			}
+		};
+
+		$_REQUEST['_wpnonce'] = 'import-nonce';
+
+		Functions\when( 'current_user_can' )->alias(
+			static function ( $cap ) {
+				return 'manage_options' === $cap;
+			}
+		);
+		Functions\when( 'wp_verify_nonce' )->alias(
+			static function ( $nonce, $action ) {
+				return 'import-nonce' === $nonce && 'cpl_adapter_import_probe' === $action;
+			}
+		);
+		Functions\when( 'update_option' )->alias(
+			static function ( $key, $value ) {
+				$GLOBALS['cpl_test_import_events'][] = array( 'option', $key, $value );
+			}
+		);
+		Functions\when( 'wp_send_json_success' )->justReturn( null );
+
+		$adapter       = ( new ReflectionClass( AdapterWorkProbe::class ) )->newInstanceWithoutConstructor();
+		$adapter->type = 'probe';
+		$dispatcher    = new class() {
+			public function set_batch( $batch ) {
+				return $this;
+			}
+
+			public function dispatch() {
+				$GLOBALS['cpl_test_import_events'][] = array( 'dispatch' );
+			}
+		};
+
+		$property = ( new ReflectionClass( Adapter::class ) )->getProperty( 'dispatcher' );
+		$property->setAccessible( true );
+		$property->setValue( $adapter, $dispatcher );
+
+		$adapter->do_full_import();
+
+		$this->assertSame(
+			array(
+				array( 'option', 'cpl_probe_adapter_import_complete', false ),
+				array( 'option', 'cpl_probe_adapter_import_in_progress', true ),
+				array( 'dispatch' ),
+			),
+			$GLOBALS['cpl_test_import_events']
+		);
+	}
+
+	/**
+	 * @return Analytics
+	 */
+	private function analytics() {
+		return ( new ReflectionClass( Analytics::class ) )->newInstanceWithoutConstructor();
+	}
+
+	/**
+	 * @return Template
+	 */
+	private function template() {
+		return ( new ReflectionClass( Template::class ) )->newInstanceWithoutConstructor();
+	}
+
+	/**
+	 * @return AdapterWorkProbe
+	 */
+	private function adapter() {
+		return ( new ReflectionClass( AdapterWorkProbe::class ) )->newInstanceWithoutConstructor();
+	}
+}

@@ -192,6 +192,8 @@ class YouTube {
 	 * @return true|\WP_Error
 	 */
 	public function import_transcript( $post_id ) {
+		$post_id = absint( $post_id );
+
 		if ( ! $post_id ) {
 			return new \WP_Error( 'no_post_id', 'No post ID provided' );
 		}
