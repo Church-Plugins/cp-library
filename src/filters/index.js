@@ -7,6 +7,62 @@
 
 import * as ErrorHandler from './errorHandler';
 
+/**
+ * Build one filter option control.
+ *
+ * Titles (term and speaker names) are set as text so they render the same
+ * for ordinary names and are not parsed as markup.
+ *
+ * @param {Object} option Option fields
+ * @returns {HTMLLabelElement}
+ */
+export function buildFilterOption ({
+	checkboxId,
+	isChecked,
+	paramName,
+	optionValueStr,
+	title,
+	count,
+	showCount
+}) {
+	const label = document.createElement('label');
+	label.className = 'cp-has-checkmark';
+	label.setAttribute('role', 'menuitem');
+	label.setAttribute('tabindex', '-1');
+	label.setAttribute('for', checkboxId);
+
+	const input = document.createElement('input');
+	input.type = 'checkbox';
+	input.id = checkboxId;
+	input.name = `${paramName}[]`;
+	input.value = optionValueStr;
+	input.checked = !!isChecked;
+	input.setAttribute('aria-checked', isChecked ? 'true' : 'false');
+
+	const checkmark = document.createElement('span');
+	checkmark.className = 'cp-checkmark';
+	checkmark.setAttribute('aria-hidden', 'true');
+
+	const titleLabel = document.createElement('span');
+	titleLabel.className = 'cp-filter-label';
+	titleLabel.appendChild(document.createTextNode(`${title}`));
+
+	if (showCount) {
+		// A space matches the collapsed whitespace between the name and the count.
+		titleLabel.appendChild(document.createTextNode(' '));
+		const countElement = document.createElement('sup');
+		countElement.className = 'cp-filter-count';
+		countElement.setAttribute('aria-label', `(${count} items)`);
+		countElement.textContent = `(${count})`;
+		titleLabel.appendChild(countElement);
+	}
+
+	label.appendChild(input);
+	label.appendChild(checkmark);
+	label.appendChild(titleLabel);
+	return label;
+}
+
 class CPLibraryFilter {
 	/**
 	 * Filter constructor
@@ -556,8 +612,8 @@ class CPLibraryFilter {
 					dropdown.parentElement.classList.remove('loading');
 
 					if (response.success && response.data.options && response.data.options.length) {
-						// Build options HTML
-						let html = '';
+						// Build options as DOM nodes so titles stay text.
+						const fragment = document.createDocumentFragment();
 						response.data.options.forEach(option => {
 							// Ensure both values are strings for comparison
 							// Make sure selectedArray is treated as an array
@@ -572,26 +628,19 @@ class CPLibraryFilter {
 							const checkboxId = `cpl-filter-${facetType}-${option.value}-${Math.random().toString(36).substring(2,
 								6)}`;
 
-							html += `
-                <label class="cp-has-checkmark" role="menuitem" tabindex="-1" for="${checkboxId}">
-                  <input
-                    type="checkbox"
-                    id="${checkboxId}"
-                    ${isChecked ? 'checked' : ''}
-                    name="${paramName}[]"
-                    value="${option.value}"
-                    aria-checked="${isChecked ? 'true' : 'false'}"
-                  />
-                  <span class="cp-checkmark" aria-hidden="true"></span>
-                  <span class="cp-filter-label">${option.title}
-                    ${showCount ? `<sup class="cp-filter-count" aria-label="(${option.count} items)">(${option.count})</sup>` : ''}
-                  </span>
-                </label>
-              `;
+							fragment.appendChild(buildFilterOption({
+								checkboxId,
+								isChecked,
+								paramName,
+								optionValueStr,
+								title: option.title,
+								count: option.count,
+								showCount
+							}));
 						});
 
 						// Update the dropdown content
-						dropdown.innerHTML = html;
+						dropdown.replaceChildren(fragment);
 						dropdown.parentElement.classList.remove('disabled');
 						dropdown.parentElement.classList.add('initialized');
 
@@ -1187,26 +1236,28 @@ class CPLibraryFilter {
 			`Error loading page ${page}. Please try again.`
 		);
 
-		// Add error message to the content area
+		// Add error message to the content area. The message is text.
 		const errorElement = document.createElement('div');
 		errorElement.className = 'cpl-filter-pagination-error';
 		errorElement.setAttribute('role', 'alert');
-		errorElement.innerHTML = `
-      <p>${errorMessage}</p>
-      <button class="cpl-retry-button">Retry</button>
-    `;
+
+		const messageElement = document.createElement('p');
+		messageElement.textContent = errorMessage;
+
+		const retryButton = document.createElement('button');
+		retryButton.className = 'cpl-retry-button';
+		retryButton.textContent = 'Retry';
+
+		errorElement.appendChild(messageElement);
+		errorElement.appendChild(retryButton);
 
 		// Clear target and add error
 		targetElement.innerHTML = '';
 		targetElement.appendChild(errorElement);
 
-		// Add retry functionality
-		const retryButton = errorElement.querySelector('.cpl-retry-button');
-		if (retryButton) {
-			retryButton.addEventListener('click', () => {
-				this.loadPageViaAjax(page);
-			});
-		}
+		retryButton.addEventListener('click', () => {
+			this.loadPageViaAjax(page);
+		});
 
 		// Announce error to screen readers
 		this.announceToScreenReader(`Error loading page ${page}. ${errorMessage}`);

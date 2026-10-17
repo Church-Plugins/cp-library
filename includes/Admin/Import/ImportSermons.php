@@ -13,6 +13,7 @@
 namespace CP_Library\Admin\Import;
 
 use ChurchPlugins\Exception;
+use CP_Library\Adapters\SermonAudio;
 use CP_Library\Models\Item;
 use CP_Library\Models\ItemType;
 use CP_Library\Models\ServiceType;
@@ -101,6 +102,36 @@ class ImportSermons extends BackgroundProcessImport {
 	public function init() {}
 
 	/**
+	 * Passages from one CSV scripture cell.
+	 *
+	 * The scripture column is a comma-separated list of references. Each piece
+	 * is rewritten the same way as a SermonAudio reference, so "Psalm 23" and
+	 * "Ps 23, Jn 3:16" are kept. The shared rewriter does not itself split on
+	 * commas: "Psalm 23:1, 4" is one reference with a verse list, and splitting
+	 * that would drop the verses after the comma.
+	 *
+	 * @param mixed $field Raw scripture cell.
+	 * @return string[] Normalized passages, with empty pieces removed.
+	 */
+	public static function scripture_passages( $field ) {
+		if ( ! is_string( $field ) ) {
+			$field = is_scalar( $field ) ? (string) $field : '';
+		}
+
+		$passages = array();
+
+		foreach ( explode( ',', $field ) as $passage ) {
+			$passage = SermonAudio::normalize_scripture_passage( $passage );
+
+			if ( '' !== $passage ) {
+				$passages[] = $passage;
+			}
+		}
+
+		return $passages;
+	}
+
+	/**
 	 * Import a single item
 	 *
 	 * @since 1.4.10
@@ -137,7 +168,7 @@ class ImportSermons extends BackgroundProcessImport {
 		$speakers     = array_filter( array_map( 'trim', explode( ',', $item['speaker'] ) ) );
 		$topics       = array_filter( array_map( 'trim', explode( ',', $item['topics'] ) ) );
 		$season       = array_filter( array_map( 'trim', explode( ',', $item['season'] ) ) );
-		$scripture    = array_filter( array_map( 'trim', explode( ',', $item['scripture'] ) ) );
+		$scripture    = self::scripture_passages( isset( $item['scripture'] ) ? $item['scripture'] : '' );
 		$thumb        = trim( $item['thumbnail'] );
 		$video        = trim( $item['video'] );
 		$audio        = trim( $item['audio'] );
