@@ -503,10 +503,35 @@ jQuery($ => {
 	const content  = modal.find('.cpl-modal-content')
 	const search   = modal.find('.cpl-search input')
 	
+	const escapeHtml = (value) => String(value)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;')
+
 	const decodeHTMLEntities = (text) => {
-		const textArea = document.createElement('textarea')
-		textArea.innerHTML = text
-		return textArea.value
+		const named = {
+			amp: '&',
+			lt: '<',
+			gt: '>',
+			quot: '"',
+			apos: "'",
+			nbsp: '\u00a0'
+		}
+
+		return String(text).replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (entity, body) => {
+			if (body[0] === '#') {
+				const hex = body[1] === 'x' || body[1] === 'X'
+				const code = parseInt(body.slice(hex ? 2 : 1), hex ? 16 : 10)
+
+				return Number.isFinite(code) ? String.fromCodePoint(code) : entity
+			}
+
+			const key = body.toLowerCase()
+
+			return Object.prototype.hasOwnProperty.call(named, key) ? named[key] : entity
+		})
 	}
 	
 	const closeModal = () => {
@@ -527,26 +552,39 @@ jQuery($ => {
 	}
 
 	const parseTranscript = (videoURL, queryVar, transcript) => {
-		const url = new URL(videoURL)
+		let url
 
-		const lines = transcript.split('\n')
+		try {
+			url = new URL(videoURL)
+		} catch (e) {
+			return escapeHtml(transcript).replace(/\n/g, '<br>')
+		}
+
+		const timestampLink = (seconds) => {
+			const numeric = Number(seconds)
+
+			if (!Number.isFinite(numeric)) {
+				return ''
+			}
+
+			// subtract 1 second from timestamp just for some padding
+			url.searchParams.set(queryVar, Math.max(numeric - 1, 0))
+
+			return `<a class="cpl-timestamp-tag" href="${escapeHtml(url.toString())}" target="_blank" rel="noopener noreferrer">${escapeHtml(formatTimestamp(numeric))}</a>`
+		}
+
+		const lines = String(transcript).split('\n')
 
 		if(lines.length === 1) {
 			// if we don't have paragraphs, display timestamps inline
-			return transcript.replace(/\(t:(\d+)\)/g, (match, timestamp) => {
-				// subtract 1 second from timestamp just for some padding
-				url.searchParams.set(queryVar, Math.max(Number(timestamp) - 1, 0))
-				return `<a class="cpl-timestamp-tag" href="${url.toString()}" target="_blank" rel="noopener noreferrer">${formatTimestamp(timestamp)}</a>`
-			}	)
+			return escapeHtml(transcript).replace(/\(t:(\d+)\)/g, (match, timestamp) => timestampLink(timestamp))
 		} else {
 			// display as paragraphs with timestamps at the beginning of each
-			return transcript.split('\n').map((line, i) => {
+			return lines.map((line) => {
 				const timestamp = line.match(/\(t:(\d+)\)/) // gets the first timestamp in the line
-				const content = line.replace(/\(t:\d+\)/g, '')
+				const content = escapeHtml(line.replace(/\(t:\d+\)/g, ''))
 				if(timestamp) {
-					// subtract 1 second from timestamp just to make sure we begin at the start of the paragraph
-					url.searchParams.set(queryVar, Math.max(Number(timestamp[1]) - 1, 0))
-					return `<p><a class="cpl-timestamp-tag" href="${url.toString()}" target="_blank" rel="noopener noreferrer">${formatTimestamp(timestamp[1])}</a>${content}</p>`
+					return `<p>${timestampLink(timestamp[1])}${content}</p>`
 				}
 				return `<p>${content}</p>`
 			}).join('')
@@ -625,11 +663,15 @@ jQuery($ => {
 
 				// if video has a URL, parse the transcript with links to timestamps
 				if (
+					data.cmb2 &&
+					data.cmb2.item_meta &&
 					data.cmb2.item_meta.video_url &&
 					( data.cmb2.item_meta.video_url.includes('youtube.com') ||
 					data.cmb2.item_meta.video_url.includes('youtu.be') )
 				) {
 					transcript = parseTranscript(data.cmb2.item_meta.video_url, 't', transcript)
+				} else {
+					transcript = escapeHtml(transcript).replace(/\n/g, '<br>')
 				}
 				
 				transcriptCache.set(postId, transcript) // save to cache

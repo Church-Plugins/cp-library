@@ -157,11 +157,12 @@ class YouTubeImportRequestTest extends TestCase {
 
 	public function test_verified_editor_import_runs() {
 		$this->allow_item( 42 );
+		Functions\when( 'get_post_meta' )->justReturn( 'Imported text' );
 
 		$this->youtube->handle_import_request();
 
 		$this->assertSame( array( 42 ), $this->youtube->imported );
-		$this->assertTrue( $this->success );
+		$this->assertSame( array( 'transcript' => 'Imported text' ), $this->success );
 		$this->assertSame( array(), $this->errors );
 	}
 
