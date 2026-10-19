@@ -237,9 +237,23 @@ class Template extends PostType {
 	 * Handles an ajax request
 	 */
 	public function render_ajax_content() {
+		if ( ! $this->template_ajax_is_allowed() ) {
+			wp_die( '', '', array( 'response' => 403 ) );
+			return;
+		}
+
 		$template_id = isset( $_GET['templateId'] ) ? absint( $_GET['templateId'] ) : 0;
 		echo self::render_content( $template_id ); // phpcs:ignore WordPress.Security.EscapeOutput
 		wp_die();
+	}
+
+	/**
+	 * Whether the template preview request may continue.
+	 *
+	 * @return bool
+	 */
+	public function template_ajax_is_allowed() {
+		return current_user_can( 'edit_posts' ) && (bool) check_ajax_referer( 'cpl_render_template', 'nonce', false );
 	}
 
 	/**

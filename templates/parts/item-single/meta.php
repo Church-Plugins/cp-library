@@ -51,7 +51,7 @@ $fields = \CP_Library\Admin\Settings::get_item( 'meta_items', [ 'date', 'topics'
 			<?php if ( ! empty( $item['speakers'] ) ) : ?>
 				<div class="cpl-meta--speakers">
 					<?php echo Helpers::get_icon( 'speaker' ); ?>
-					<span><?php echo implode( ', ', wp_list_pluck( $item['speakers'], 'title' ) ); ?></span>
+					<span><?php echo esc_html( implode( ', ', wp_list_pluck( $item['speakers'], 'title' ) ) ); ?></span>
 				</div>
 			<?php endif; ?>
 		<?php elseif ( 'locations' == $field ) : ?>

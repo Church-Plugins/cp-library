@@ -52,10 +52,10 @@ $fields = \CP_Library\Admin\Settings::get_item( 'info_items', [ 'speakers', 'loc
 					<?php
 					$speakers = array_map( function( $item ) {
 						if( Settings::get_speaker( 'enable_permalinks', false ) === false ) {
-							return $item['title'];
+							return esc_html( $item['title'] );
 						}
 						$url = get_permalink( $item['origin_id'] );
-						return sprintf( '<a href="%s">%s</a>', esc_url( $url ), $item['title'] );
+						return sprintf( '<a href="%s">%s</a>', esc_url( $url ), esc_html( $item['title'] ) );
 					}, $item['speakers'] );
 					?>
 					<?php echo Helpers::get_icon( 'speaker' ); ?>

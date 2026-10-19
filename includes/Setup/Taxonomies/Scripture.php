@@ -2,6 +2,7 @@
 namespace CP_Library\Setup\Taxonomies;
 
 use ChurchPlugins\Exception;
+use CP_Library\Adapters\SermonAudio;
 use CP_Library\Models\Item;
 use CP_Library\Templates;
 use ChurchPlugins\Setup\Taxonomies\Taxonomy;
@@ -237,6 +238,12 @@ class Scripture extends Taxonomy  {
 		$passages = array_map( 'sanitize_text_field', $passages );
 
 		foreach( $passages as $key => $passage ) {
+			// Same book rewrite the SermonAudio import uses. CSV rows and the
+			// sermon edit screen both land here, and get_book() drops a passage
+			// whose book is not spelled the way our list spells it.
+			$passage           = SermonAudio::normalize_scripture_passage( $passage );
+			$passages[ $key ]  = $passage;
+
 			if ( ! $book = $this->get_book( $passage ) ) {
 				unset( $passages[ $key ] );
 				continue;
