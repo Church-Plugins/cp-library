@@ -142,6 +142,23 @@ CP Sermon Library provides several shortcodes for displaying sermon content:
 - `[cpl_player]` - Display the sermon player
 - `[cpl_template id="123"]` - Display a sermon template (see Sermon Templates above)
 
+### Page builder shortcodes: `[cp-template]` and `[cpl_template]`
+
+**`[cp-template]`** renders the default CP Sermons view inside a page-builder or theme template. Use it when a page builder takes over the sermon or series archive, or a single sermon or series, and you still want the standard CP Sermons layout inside that template.
+
+- It takes no attributes. Anything you add, such as `id` or `type`, is ignored.
+- It only outputs content on CP Sermons pages (archives, single items, and taxonomy pages). On a normal page it outputs nothing.
+- Make sure you type it with a hyphen. `[cp_template]` with an underscore isn't a shortcode.
+
+**To show sermons on a normal page**, use one of these instead:
+
+| Goal | Shortcode |
+|---|---|
+| The default sermons archive | `[cp-sermons]` |
+| A specific saved template | `[cpl_template id=ID]`, where ID is the template's ID. The template's meta box shows the snippet. `id` is required. |
+
+> **Note:** before version 1.8.0, some filter links on a normal page that uses `[cp-sermons]` could return a "Page not found" error. Version 1.8.0 fixes this. If you can't update yet, use `[cpl_template id=ID]` instead.
+
 ### Shortcode Parameters
 
 Common parameters for `[cpl_item_list]`:
