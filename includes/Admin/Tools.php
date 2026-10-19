@@ -166,7 +166,7 @@ class Tools
 						enctype="multipart/form-data">
 						<div class="notice-wrap"></div>
 						<?php wp_nonce_field( 'cp_ajax_import_file', 'cp_ajax_import_file' ); ?>
-						<p>
+							<p>
 							<input name="file" id="cp-payments-import-file" type="file" />
 						</p>
 						<input type="submit" value="<?php _e('Import CSV', 'cp-library'); ?>" class="button-secondary" />
@@ -692,16 +692,36 @@ class Tools
 	}
 
 	/**
-	 * Exports all Sermons when form is submitted
+	 * Download name for the sermon CSV.
+	 *
+	 * @return string
+	 */
+	protected function export_filename() {
+		return sanitize_file_name(
+			sprintf(
+				'%s_%s.csv',
+				cp_library()->setup->post_types->item->plural_label,
+				date( 'Y-m-d' )
+			)
+		);
+	}
+
+	/**
+	 * Exports all sermons when the tools form is submitted.
+	 *
+	 * The CSV is streamed to the browser. Nothing is written under the uploads
+	 * directory. A dated file left by an earlier export is removed.
+	 *
 	 * @return void
 	 * @since 1.0.4
-	 * @author Jonathan Roley
 	 */
-	public function export_data()
-	{
+	public function export_data() {
 		if ( ! Request::allowed( 'manage_options', 'cp_export_items' ) ) {
 			return;
 		}
+
+		$filename = $this->export_filename();
+		$this->remove_public_export_files( $filename );
 
 		$file_handle = $this->open_export_stream();
 
@@ -709,38 +729,31 @@ class Tools
 			return;
 		}
 
-		$return_value = [];
-
 		$args = [
-			'post_type'      =>  CP_LIBRARY_UPREFIX . "_item",
-			'post_status'    => array('publish', 'private', 'draft', 'future'),
+			'post_type'      => CP_LIBRARY_UPREFIX . '_item',
+			'post_status'    => array( 'publish', 'private', 'draft', 'future' ),
 			'posts_per_page' => -1,
 		];
 
-		$posts = new \WP_Query($args);
-
-		$filename = sanitize_file_name(sprintf("%s_" . date('Y-m-d') . ".csv", cp_library()->setup->post_types->item->plural_label));
+		$posts = new \WP_Query( $args );
 
 		$header_added = false;
 
-		foreach ($posts->posts as $post) {
-
+		foreach ( $posts->posts as $post ) {
 			try {
-				$item = new Item($post->ID);
+				$item = new Item( $post->ID );
 
-				$data = $item->get_api_data( false, true );
+				$data           = $item->get_api_data( false, true );
+				$formatted_data = $this->get_formatted_item( $data );
 
-				$formatted_data = $this->get_formatted_item($data);
-
-				if (! $header_added) {
-					fputcsv($file_handle, array_keys($formatted_data));
+				if ( ! $header_added ) {
+					fputcsv( $file_handle, array_keys( $formatted_data ) );
 					$header_added = true;
 				}
 
-				fputcsv($file_handle, $formatted_data);
-			} catch (\Exception $e) {
-				$return_value['error'] = $e->getMessage();
-				error_log($e->getMessage());
+				fputcsv( $file_handle, $formatted_data );
+			} catch ( \Exception $e ) {
+				error_log( $e->getMessage() );
 			}
 		}
 
@@ -758,18 +771,110 @@ class Tools
 		 * @param string $filename  Download name.
 		 */
 		if ( ! apply_filters( 'cpl_export_items_output', true, '', $filename ) ) {
-			fclose( $file_handle );
+			fclose( $file_handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 			return;
 		}
 
-		header("Content-Type: text/csv; charset=utf-8");
-		header("Content-disposition: attachment; filename=\"" . $filename . "\"");
-
-		session_write_close();
+		$this->send_export_headers( $filename );
 		fpassthru( $file_handle );
-		fclose( $file_handle );
+		fclose( $file_handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		$this->end_export();
+	}
 
-		exit();
+	/**
+	 * Send the download headers for the sermon CSV.
+	 *
+	 * @param string $filename Download filename.
+	 * @return void
+	 */
+	protected function send_export_headers( $filename ) {
+		if ( PHP_SESSION_ACTIVE === session_status() ) {
+			session_write_close();
+		}
+
+		nocache_headers();
+
+		foreach ( $this->export_download_headers( $filename ) as $line ) {
+			header( $line );
+		}
+	}
+
+	/**
+	 * Download headers for the sermon CSV.
+	 *
+	 * @param string $filename Download filename.
+	 * @return string[]
+	 */
+	protected function export_download_headers( $filename ) {
+		return array(
+			'Content-Type: text/csv; charset=utf-8',
+			'Content-Disposition: attachment; filename="' . $filename . '"',
+		);
+	}
+
+	/**
+	 * End the request after the CSV has been sent.
+	 *
+	 * @return void
+	 */
+	protected function end_export() {
+		exit;
+	}
+
+	/**
+	 * Remove dated export files from the public paths an earlier export used.
+	 *
+	 * Earlier exports wrote `{label}_{date}.csv` into the current uploads
+	 * folder, or next to this file when that folder was unavailable.
+	 *
+	 * @param string $filename Download name for this export.
+	 * @return void
+	 */
+	protected function remove_public_export_files( $filename ) {
+		$filename = sanitize_file_name( $filename );
+
+		if ( '' === $filename ) {
+			return;
+		}
+
+		$stem = preg_replace( '/\d{4}-\d{2}-\d{2}\.csv$/', '', $filename );
+		if ( ! is_string( $stem ) || '' === $stem ) {
+			$stem = $filename;
+		}
+
+		$directories = array( dirname( __FILE__ ) );
+		$upload_dir  = wp_upload_dir();
+
+		if ( empty( $upload_dir['error'] ) ) {
+			if ( ! empty( $upload_dir['path'] ) ) {
+				$directories[] = $upload_dir['path'];
+			}
+
+			if ( ! empty( $upload_dir['basedir'] ) ) {
+				$directories[] = $upload_dir['basedir'];
+				$months        = glob( trailingslashit( $upload_dir['basedir'] ) . '[0-9][0-9][0-9][0-9]/[0-9][0-9]', GLOB_ONLYDIR );
+
+				if ( is_array( $months ) ) {
+					$directories = array_merge( $directories, $months );
+				}
+			}
+		}
+
+		$pattern = '/^' . preg_quote( $stem, '/' ) . '\d{4}-\d{2}-\d{2}\.csv$/';
+
+		foreach ( array_unique( $directories ) as $directory ) {
+			$matches = glob( trailingslashit( $directory ) . '*.csv' );
+
+			if ( ! is_array( $matches ) ) {
+				continue;
+			}
+
+			foreach ( $matches as $path ) {
+				if ( is_file( $path ) && preg_match( $pattern, basename( $path ) ) ) {
+					wp_delete_file( $path );
+				}
+			}
+		}
 	}
 
 	/**
