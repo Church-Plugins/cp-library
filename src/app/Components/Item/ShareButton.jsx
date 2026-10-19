@@ -45,12 +45,19 @@ export default function ShareButton({ item, variant = "outlined" }) {
 
 		const link = document.createElement('a');
 
-		const downloadName = (item.title || 'download').replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3';
+		// Original audio filename: last path segment, query string removed, percent-decoded.
+		let downloadName = 'download.mp3';
+		try {
+			downloadName = decodeURIComponent( item.audio.split('/').pop().split('?')[0] ) || 'download.mp3';
+		} catch ( e ) {
+			downloadName = 'download.mp3';
+		}
+		const encodedName = encodeURIComponent( downloadName );
 
 		if ( item.audio.includes('soundcloud') ) {
 	    link.href = item.audio;
 		} else {
-	    link.href = cplVar( 'url', 'site' ) + '?item_id=' + item.originID + '&key=audio&name=' + downloadName;
+	    link.href = cplVar( 'url', 'site' ) + '?item_id=' + item.originID + '&key=audio&name=' + encodedName;
 		}
 
 		link.setAttribute(
@@ -61,7 +68,7 @@ export default function ShareButton({ item, variant = "outlined" }) {
 		// force download
 		link.setAttribute(
 			'download',
-			downloadName,
+			encodedName,
 		);
 
     // Append to html link element page
