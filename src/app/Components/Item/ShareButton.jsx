@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { getAudioDownloadName } from "../../utils/downloadFilename";
 import { cplLog, cplVar } from "../../utils/helpers";
 import Box from '@mui/material/Box';
 import MenuItem from '@mui/material/MenuItem';
@@ -45,19 +46,12 @@ export default function ShareButton({ item, variant = "outlined" }) {
 
 		const link = document.createElement('a');
 
-		// Original audio filename: last path segment, query string removed, percent-decoded.
-		let downloadName = 'download.mp3';
-		try {
-			downloadName = decodeURIComponent( item.audio.split('/').pop().split('?')[0] ) || 'download.mp3';
-		} catch ( e ) {
-			downloadName = 'download.mp3';
-		}
-		const encodedName = encodeURIComponent( downloadName );
+		const downloadName = getAudioDownloadName( item.audio );
 
 		if ( item.audio.includes('soundcloud') ) {
 	    link.href = item.audio;
 		} else {
-	    link.href = cplVar( 'url', 'site' ) + '?item_id=' + item.originID + '&key=audio&name=' + encodedName;
+	    link.href = cplVar( 'url', 'site' ) + '?item_id=' + item.originID + '&key=audio&name=' + encodeURIComponent( downloadName );
 		}
 
 		link.setAttribute(
@@ -68,7 +62,7 @@ export default function ShareButton({ item, variant = "outlined" }) {
 		// force download
 		link.setAttribute(
 			'download',
-			encodedName,
+			downloadName,
 		);
 
     // Append to html link element page
