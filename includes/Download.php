@@ -208,7 +208,7 @@ class Download {
 		header( "Robots: none" );
 		header( "Content-Type: " . $ctype . "" );
 		header( "Content-Description: File Transfer" );
-		header( "Content-Disposition: attachment; filename=\"" . apply_filters( 'cp_requested_file_name', $args['file_name'], $args ) . "\"" );
+		header( "Content-Disposition: attachment; filename=\"" . $this->requested_filename( $args['file_name'], $args ) . "\"" );
 		header( "Content-Transfer-Encoding: binary" );
 
 		// If the file isn't locally hosted, process the redirect
@@ -300,6 +300,27 @@ class Download {
 		endswitch;
 
 		wp_die();
+	}
+
+	/**
+	 * Filename for the Content-Disposition header.
+	 *
+	 * The requested name — the `name` query argument, or the file basename when
+	 * that is empty — is passed through `cp_requested_file_name` and then
+	 * `sanitize_file_name()`. Cleaning the filter result covers both the
+	 * default and a filtered name. The extension stays with the name;
+	 * `sanitize_file_name()` keeps it.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $file_name Requested download name.
+	 * @param array  $args      Download arguments.
+	 * @return string
+	 */
+	function requested_filename( $file_name, $args ) {
+		$file_name = apply_filters( 'cp_requested_file_name', $file_name, $args );
+
+		return sanitize_file_name( $file_name );
 	}
 
 	/**
