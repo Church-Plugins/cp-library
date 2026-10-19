@@ -4,7 +4,7 @@
 import Providers from "./Contexts/Providers";
 import PersistentPlayer from "./Templates/PersistentPlayer";
 import { createRoot } from "@wordpress/element";
-import { cplLog, cplVar } from "./utils/helpers";
+import { cplItemLogId, cplLog, cplVar } from "./utils/helpers";
 import screenfull from "screenfull";
 
 class CP_Library {
@@ -129,11 +129,11 @@ class CP_Library {
 			this.triggerEvent('CPL_HANDOVER_TO_PERSISTENT', params);
 		}, 10);
 
-		cplLog(item.id, 'persistent');
+		cplLog(cplItemLogId(item), 'persistent');
 
 		// also log a play action if we are not currently playing
 		if (!(playedSeconds > 0)) {
-			cplLog(item.id, 'play');
+			cplLog(cplItemLogId(item), 'play');
 		}
 	}
 

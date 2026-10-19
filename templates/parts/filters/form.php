@@ -100,9 +100,17 @@ extract($args);
         <?php endif; ?>
 
         <?php
+        // `post_type` is a public query var. Submitting it on a Page or other
+        // singular 404s the main query under pretty permalinks. Taxonomy
+        // archives and the sermon/series archives still submit it.
+        $submit_post_type = \CP_Library\Filters\TemplateHelpers::should_submit_post_type_query_arg();
+
         // Add hidden fields for context-specific parameters
         if ( is_array($context_args_data) ) {
         foreach ( $context_args_data as $key => $value ):
+            if ( 'post_type' === $key && ! $submit_post_type ) {
+                continue;
+            }
             if ( is_array( $value ) ) {
                 foreach ( $value as $val ) {
                     echo '<input type="hidden" name="' . esc_attr( $key ) . '[]" value="' . esc_attr( $val ) . '">';
@@ -113,8 +121,9 @@ extract($args);
         endforeach;
         }
 
-        // Add hidden field for post type
-        echo '<input type="hidden" name="post_type" value="' . esc_attr( $post_type ) . '">';
+        if ( $submit_post_type ) {
+            echo '<input type="hidden" name="post_type" value="' . esc_attr( $post_type ) . '">';
+        }
         ?>
     </form>
 </div>

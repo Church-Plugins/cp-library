@@ -185,6 +185,34 @@ export function getUserMessage(error, fallback = 'An error occurred. Please try 
 }
 
 /**
+ * Announce an error without assuming a global announcer exists.
+ *
+ * @param {Element} container Container the error was added to
+ * @param {string} message User-facing error message
+ */
+function announceError(container, message) {
+  const announcement = `Error: ${message}`;
+
+  if (typeof window.announcementToScreenReader === 'function') {
+    window.announcementToScreenReader(announcement);
+    return;
+  }
+
+  if (!container || typeof container.closest !== 'function') {
+    return;
+  }
+
+  const root = container.closest('.cpl-filter') || container;
+  const liveRegion = root.querySelector
+    ? root.querySelector('.cpl-filter--sr-live-region')
+    : null;
+
+  if (liveRegion) {
+    liveRegion.textContent = announcement;
+  }
+}
+
+/**
  * Display an error message to the user
  * 
  * @param {Element} container Container element to display the error in
@@ -200,18 +228,22 @@ export function displayError(container, error, isAnnouncement = true) {
   // Get user-friendly message
   const message = getUserMessage(error);
   
-  // Create error element
+  // Create error element. The message is text, so markup in it stays visible as text.
   const errorElement = document.createElement('div');
   errorElement.className = 'cpl-filter-error';
   errorElement.setAttribute('role', 'alert');
-  errorElement.innerHTML = `<p>${message}</p>`;
+  const messageElement = document.createElement('p');
+  messageElement.textContent = message;
+  errorElement.appendChild(messageElement);
   
   // Add to container
   container.appendChild(errorElement);
   
-  // Announce to screen readers if requested
-  if (isAnnouncement && typeof window.announcementToScreenReader === 'function') {
-    window.announcementToScreenReader(`Error: ${message}`);
+  // Announce to screen readers if requested. window.announcementToScreenReader
+  // is not defined in this bundle, so only call it when present and otherwise
+  // reuse the filter live region when one is already on the page.
+  if (isAnnouncement) {
+    announceError(container, message);
   }
   
   // Auto-remove after 5 seconds

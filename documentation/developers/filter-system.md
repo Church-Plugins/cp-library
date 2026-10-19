@@ -59,14 +59,13 @@ When viewing sermons within a specific service type:
 
 To customize how filters appear and function:
 
-1. Navigate to Messages → Settings → Advanced
-2. Find the "Filter Settings" section
+1. Navigate to Series → Settings → Advanced
+2. Find the **Filters** section
 3. Options include:
    - **Filter Sorting** - Sort filters by sermon count or alphabetically
    - **Count Threshold** - Minimum number of sermons for a filter to display
    - **Show/Hide Count Numbers** - Toggle display of sermon counts
    - **Disable Specific Filters** - Prevent certain filters from appearing
-   - **Mobile Filter Display** - Control how filters appear on small screens
 
 ## Developer Documentation
 

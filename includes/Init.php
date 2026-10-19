@@ -224,8 +224,18 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 	 * Enqueue scripts for analytics dashboard
 	 */
 	public function enqueue_analytics_scripts() {
-		$this->enqueue_asset( 'admin-analytics', [ 'jquery' ], false, false, true );
+		$script = $this->enqueue_asset( 'admin-analytics', [ 'jquery' ], false, false, true );
 		$this->enqueue_asset( 'admin-analytics', [], false, true, true );
+
+		if ( is_array( $script ) && ! empty( $script['handle'] ) ) {
+			wp_localize_script(
+				$script['handle'],
+				'cplAnalytics',
+				array(
+					'nonce' => wp_create_nonce( 'cpl-analytics' ),
+				)
+			);
+		}
 	}
 
 	/**

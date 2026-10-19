@@ -54,10 +54,10 @@ To help us resolve your issue faster, please gather this information:
 
 For technical issues, enable debug mode before contacting support:
 
-1. Navigate to Messages → Settings → Advanced
+1. Navigate to Series → Settings → Advanced
 2. Set **Enable Debug** to **Enable**
 3. Reproduce the issue
-4. Check the debug log at **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item) > **Log**
+4. Check the debug log at Series → Tools → Log
 5. Include relevant log entries with your support request
 
 ## Community Resources

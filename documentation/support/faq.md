@@ -4,7 +4,7 @@
 
 ### How do I add a new sermon?
 
-Navigate to Messages → Add New. Enter the sermon title, add audio/video media, select a speaker and series, then click Publish. See [Managing Sermons](../features/managing-sermons.md) for detailed instructions.
+Navigate to Series → Messages and click **Add New**. Enter the sermon title, add audio/video media, select a speaker and series, then click Publish. See [Managing Sermons](../features/managing-sermons.md) for detailed instructions.
 
 ### How do I display sermons on my website?
 
@@ -18,11 +18,11 @@ See [Customization & Display](../features/customization-and-display.md) for deta
 
 ### How do I create a sermon series?
 
-Navigate to Messages → Series → Add New. Enter the series title, description, and upload artwork. When adding sermons, assign them to the series using the Series dropdown.
+Navigate to Series → Add New. Enter the series title, description, and upload artwork. When adding sermons, assign them to the series using the Series dropdown.
 
 ### Can I rename "Sermons" to "Messages" or another term?
 
-Yes. Navigate to Messages → Settings and select the tab for the content type you want to rename (Messages, Series, or Speaker). Change the Singular and Plural Labels there. This updates the terminology throughout the plugin and your site, including the admin menu name.
+Yes. Navigate to Series → Settings and select the tab for the content type you want to rename (Messages, Series, or Speaker). Change the Singular and Plural Labels there. This updates the terminology throughout the plugin and your site, including the admin menu name.
 
 ## Media & Playback
 
@@ -76,7 +76,7 @@ All three are optional taxonomies you can use to organize your sermons.
 
 ### How do Service Types work?
 
-Service Types categorize sermons by the service they were delivered in (Sunday Morning, Youth, etc.). Enable them in Messages → Settings → Advanced. See [Service Types](../features/service-types.md).
+Service Types categorize sermons by the service they were delivered in (Sunday Morning, Youth, etc.). Enable them in Series → Settings → Advanced. See [Service Types](../features/service-types.md).
 
 ### What are Sermon Variations?
 
@@ -90,7 +90,7 @@ Yes. Edit the sermon and check **Exclude from Main List** in the Visibility Sett
 
 ### How do I change the sermon layout?
 
-Navigate to Messages → Settings → Messages tab and choose the Single Page Template option. To change the layout of one sermon list, use the **CP Sermons Sermons/Series** block: choose **List view** or **Grid view** in the block toolbar (Grid adds **Columns**), and choose which detail blocks appear inside the **Sermon Template**. For a single sermon, the `[cpl_item id="123" template="alt"]` shortcode shows the alternate layout; `player="false"` or `details="false"` hide the player or the sermon details.
+Navigate to Series → Settings → Messages tab and choose the Single Page Template option. To change the layout of one sermon list, use the **CP Sermons Sermons/Series** block: choose **List view** or **Grid view** in the block toolbar (Grid adds a **Columns** setting in the block sidebar), and choose which detail blocks appear inside the **Sermon Template**. For a single sermon, the `[cpl_item id="123" template="alt"]` shortcode shows the alternate layout; `player="false"` or `details="false"` hide the player or the sermon details.
 
 ### Can I customize sermon templates in my theme?
 
@@ -116,7 +116,7 @@ Updates appear in your WordPress dashboard. Create a backup before updating. See
 
 ### Where can I find debug information?
 
-Enable debug mode in Messages → Settings → Advanced. This enables detailed logging accessible at **Tools** (under **Series** by default, or **Messages** if you changed Set default menu item) > **Log**.
+Enable debug mode in Series → Settings → Advanced. This enables detailed logging accessible at Series → Tools → Log.
 
 ## Still Need Help?
 

@@ -36,4 +36,4 @@ Group sermons with the content types the plugin registers:
 
 ## Exporting sermons
 
-**Tools** (under **Series** by default, or **Messages** if you changed Set default menu item) > **Import/Export** can export every sermon as CSV. With the default plural label, the button reads **Export all Messages as CSV**.
+**Series > Tools > Import/Export** (under **Messages** instead if you changed **Set default menu item**) can export every sermon as CSV. With the default plural label, the button reads **Export all Messages as CSV**.

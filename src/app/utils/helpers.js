@@ -22,6 +22,22 @@ export function cplLog( itemID, action, payload = null ) {
 }
 
 /**
+ * Item id used when recording player events.
+ *
+ * Variations expose `logId` (the variation's own item id). Other items use `id`.
+ *
+ * @param {object|null|undefined} item
+ * @returns {number|string|null}
+ */
+export function cplItemLogId( item ) {
+	if ( ! item ) {
+		return null;
+	}
+
+	return item.logId ?? item.id ?? null;
+}
+
+/**
  * Calculate the important information about an item's scrubber marker
  *
  * @param Object item

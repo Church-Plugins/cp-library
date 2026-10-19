@@ -17,23 +17,23 @@ Your feed is `/messages/feed/podcast/` (or your slug) and works as soon as the p
 
 To set the title and artwork:
 
-1. Navigate to Messages → Settings → Advanced
+1. Navigate to Series → Settings → Advanced
 2. Set **Enable Podcast Feed** to **Enable**
 3. Click "Save Changes"
 
-A **Podcast** tab then appears in Messages → Settings, where you fill in the feed details (at least Title and Image). Until a Title is saved, the feed is named after the newest sermon.
+A **Podcast** tab then appears in Series → Settings, where you fill in the feed details (at least Title and Image). Until a Title is saved, the feed is named after the newest sermon.
 
 ## Configuring Podcast Settings
 
 All podcast settings are on the Podcast tab:
 
-1. Navigate to Messages → Settings → Podcast tab
+1. Navigate to Series → Settings → Podcast tab
 2. Configure the fields below
 3. Click "Save Changes"
 
 ### Essential Fields
 
-- **Podcast Image** — Upload square artwork (1400×1400px minimum, max 3000×3000px, JPG or PNG)
+- **Image** — Upload square artwork (the field description asks for 1400×1400 to 3000×3000, JPG or PNG)
 - **Title** — Your podcast name (typically your church name + "Sermons" or "Messages")
 - **Subtitle** — A brief description (1-2 sentences)
 - **Description** — A complete description of your podcast content
@@ -67,7 +67,7 @@ You can access podcast feeds scoped to specific series, speakers, or service typ
 
 - Series feed: `https://yoursite.com/series/series-slug/feed/podcast/`
 - Speaker feed: `https://yoursite.com/speakers/speaker-slug/feed/podcast/`
-- Service type feed: `https://yoursite.com/service-type/service-type-slug/feed/podcast/`
+- Service type feed: `https://yoursite.com/service-types/service-type-slug/feed/podcast/`
 
 ## Excluding Sermons from the Podcast
 
