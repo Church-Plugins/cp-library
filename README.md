@@ -24,6 +24,40 @@ npm run build
 
 ### Change Log
 
+#### Unreleased
+* Bug Fix: Scripture references that use "Psalm", a common abbreviation ("Ps", "1 Cor", "1Cor", "2Co", "1Jn"), or a spelled-out number ("First Corinthians", "3rd John") are rewritten to the book name CP Sermons stores, so those references are kept. This applies to SermonAudio import, CSV import, and saving a sermon in wp-admin. "Psalm 23" is stored as "Psalms 23". "2 Corinthians" is left as 2 Corinthians. SermonAudio and the sermon edit screen do not split on commas, so "Psalm 23:1, 4" stays one passage there. A CSV scripture cell still splits on every comma, as it did before, so "Psalm 23:1, 4" in a CSV cell loses the ", 4". "Ps 23, Jn 3:16" in a CSV cell is two references and both are kept.
+* Bug Fix: SermonAudio imports use the sermon's full title when SermonAudio provides one (`fullTitle`), and fall back to the abbreviated title when it is missing or blank. Surrounding whitespace on the title is trimmed. Backslashes in sermon titles are kept as sent. "Untitled sermon" applies to new sermons, or to an existing sermon that has no usable title. An already-imported sermon with a usable title keeps that title when SermonAudio sends no usable title. Already-imported sermons are retitled when fetched again: the most recent ones (Check Count, default 50) on the next scheduled sync or Check Now, and older ones on a full import. A published sermon keeps its permalink. A pending sermon may get a new permalink when it is published, because WordPress clears the slug of a pending post when no user who can publish is logged in (for example WP-Cron). An existing sermon keeps its status, so trash, draft, pending, private, and scheduled sermons stay that way, and a scheduled sermon keeps its date. Speakers and series keep any status on update, same as sermons. A future sermon whose stored date is already in the past flips to publish on update (unchanged WordPress behaviour). `wp cp sermonaudio import` and `wp cp sermonaudio import --recent` bypass the sync hash. The default command retitles every existing sermon that has a usable API title; `--recent` retitles each sermon in the batch it fetches.
+* Security: Hardened the public item log endpoint (validated item IDs and actions, published items only, prepared queries) and added capability and nonce checks to admin export, import and adapter requests.
+* Bug Fix: The analytics average view time now averages each separate listen instead of summing each visitor's listens, so repeat listeners can lower the number.
+* Security: The sermon CSV export (Tools → Import/Export) now downloads directly instead of saving a copy in the uploads folder, where it was publicly reachable and included draft and private sermons. Running an export also deletes any `{Sermons}_YYYY-MM-DD.csv` files earlier exports left in the uploads folders.
+* Security: Template output (the `[cpl_template]` shortcode, the template block and the Beaver Builder, Divi and Elementor template modules) now only renders published templates. Before, any post ID would render, so a contributor could display private, draft or password-protected posts and pages. Draft templates still render for users who can edit them.
+
+#### 1.7.0
+* **Major Feature**: Full-site Import/Export (Tools → Import/Export → Full Migration) — exports sermons (with variations, timestamps, transcripts and downloads), series, speakers, service types, templates, taxonomy terms and optionally plugin settings. Imports run in resumable batches; re-importing the same file updates instead of duplicating.
+* **Major Feature**: WP-CLI commands for full-site migration (`wp cpl export` / `wp cpl import`) with `--dry-run`, `--download-media`, `--include-settings`, `--match-by-slug` and `--batch-size` options
+* Enhancement: `SermonSync::upsert()` can set a sermon's service type and supply `thumbnail_id` artwork for series and service types — a hand-picked image is never overwritten
+* Enhancement: PHPUnit harness — WP-free unit suite (Brain Monkey) plus a WordPress integration suite; `vendor/` removed from version control, run `composer install` after pulling
+* Bug Fix: Sermons with emoji in the title no longer fail to save on sites whose `cpl_*` tables predate 4-byte character support (ChurchPlugins 1.1.18)
+* Bug Fix: Series/Speaker/Service Type podcast feeds serve the full-size featured image for channel art (previously 600×600, below Apple's 1400×1400 minimum)
+* Bug Fix: Series/Speaker assignment saves reliably when the stored value already matches (duplicated sermons); clearing the field removes the assignment
+* Bug Fix: One-time upgrade cleanup removes orphaned Speaker/Series/Service Type associations (the stray comma in speaker lists) and collapses duplicated ones (double-listed sermons in feeds)
+* Bug Fix: Re-saving a sermon with duplicate Speaker/Series rows removes only the surplus row, never the one being kept
+* Bug Fix: When Service Types drive variations, saving the parent sermon no longer overwrites the service type that identifies each variation
+* Bug Fix: A save that doesn't include the Speaker/Series/Service Type field (e.g. programmatic CMB2 saves) no longer clears those assignments
+* Bug Fix: WP All Import — a blank or unmatched Speaker/Series column no longer clears existing assignments; comma-separated names are matched individually
+* Bug Fix: Permanently deleting a Series removes it from every sermon it contained
+* Bug Fix: Listen starts playback on the first click (including Safari/iOS); video stays in the feature area after audio has played; embed audio renders in the feature area again
+
+#### 1.6.2
+* Bug Fix: Imported sermons (CSV import and SermonAudio adapter) were silently flagged as hidden and excluded from the main sermon list; imports now default to visible
+* Change: The per-sermon visibility checkbox is now "Exclude from Main List" (default unchecked), matching the Series and Service Type metaboxes
+* Feature: Tools → Migrate Visibility Settings, and Reset All Sermons to Visible for affected sites
+* Feature: WP-CLI command for SermonAudio imports (`wp cp sermonaudio import`) with `--dry-run`, `--recent[=count]` and `--max-batches`
+* Enhancement: Minimum audio duration filter for the SermonAudio adapter
+* Bug Fix: Vimeo videos reliably unmute on iOS
+* Bug Fix: All scripture references display on sermon detail views
+* Bug Fix: Sermon sort order corrected on speaker pages and taxonomy archives
+
 #### 1.6.1
 * Bug Fix: Fix speaker single page not displaying sermons
 * Enhancement: Change default SearchWP engine to "sermons" so the default engine can be used for the main site search

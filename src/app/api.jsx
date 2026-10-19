@@ -4,7 +4,7 @@
 import Providers from "./Contexts/Providers";
 import PersistentPlayer from "./Templates/PersistentPlayer";
 import { createRoot } from "@wordpress/element";
-import { cplLog, cplVar } from "./utils/helpers";
+import { cplItemLogId, cplLog, cplVar } from "./utils/helpers";
 import screenfull from "screenfull";
 
 class CP_Library {
@@ -29,22 +29,68 @@ class CP_Library {
 	constructor() {
 		if( ! this.isIframe ) {
 			this.listen('CPL_OPEN_PERSISTENT_PLAYER', this.__createRoot.bind(this));
+
+			// Mount up front rather than waiting for the first play. Safari grants a
+			// media element permission to play only for a play() call made inside a
+			// user gesture, and tracks it per element — so an <audio> element created
+			// in response to the click is already too late and the first click does
+			// nothing. Mounting here lets PersistentPlayer unlock the element on the
+			// first interaction, well before any play button is pressed.
+			this.__mountWhenReady();
 		}
 	}
 
 	/**
+	 * Mount the player as soon as its container exists.
+	 *
+	 * The container is appended by the plugin's own inline jQuery ready handler, so
+	 * it is not guaranteed to be in the document when this module runs. Retry across
+	 * a few frames, then fall back to window load. The CPL_OPEN_PERSISTENT_PLAYER
+	 * listener still mounts on demand, so the worst case is the old behaviour rather
+	 * than no player.
+	 */
+	__mountWhenReady( attempt = 0 ) {
+		if ( CP_Library.__root ) {
+			return;
+		}
+
+		this.__createRoot();
+
+		if ( CP_Library.__root ) {
+			return;
+		}
+
+		if ( attempt < 20 ) {
+			requestAnimationFrame( () => this.__mountWhenReady( attempt + 1 ) );
+			return;
+		}
+
+		window.addEventListener( 'load', () => this.__createRoot(), { once: true } );
+	}
+
+	/**
 	 * Create the root element for the persistent player.
+	 *
+	 * Note this deliberately does not mark the player as active. `cpl-persistent-player`
+	 * on the body is what tells the rest of the plugin a sermon is loaded — it drives
+	 * playerIsActive() and the SPA-style iframe navigation — and mounting an idle,
+	 * silent player is not that. PersistentPlayer adds the class once an item is
+	 * actually handed over.
 	 */
 	__createRoot() {
 		if (!CP_Library.__root) {
 			CP_Library.__domNode = window.top.document.getElementById('cpl_persistent_player');
-			CP_Library.__root    = createRoot(CP_Library.__domNode)
+
+			if (!CP_Library.__domNode) {
+				return;
+			}
+
+			CP_Library.__root = createRoot(CP_Library.__domNode)
 			CP_Library.__root.render(
 				<Providers>
 					<PersistentPlayer />
 				</Providers>
 			)
-			window.top.document.body.classList.add('cpl-persistent-player');
 		}
 	}
 
@@ -83,27 +129,29 @@ class CP_Library {
 			this.triggerEvent('CPL_HANDOVER_TO_PERSISTENT', params);
 		}, 10);
 
-		cplLog(item.id, 'persistent');
+		cplLog(cplItemLogId(item), 'persistent');
 
 		// also log a play action if we are not currently playing
 		if (!(playedSeconds > 0)) {
-			cplLog(item.id, 'play');
+			cplLog(cplItemLogId(item), 'play');
 		}
 	}
 
 	/**
 	 * Close the persistent player.
 	 *
+	 * Resets it to idle in place rather than unmounting it. The audio element it
+	 * holds is the one Safari granted playback permission on the first
+	 * interaction (see __mountWhenReady); a new element created for the next
+	 * Listen would arrive without it. An arrow, so it can be passed unbound —
+	 * straight into an onClick, say.
+	 *
 	 * @returns {void}
 	 */
-	closePersistentPlayer() {
-		CP_Library.__root.unmount()
-		CP_Library.__root = null
-		CP_Library.__domNode = null
+	closePersistentPlayer = () => {
 		window.top.document.body.classList.remove('cpl-persistent-player');
-		window.top.postMessage({
-			action: "CPL_PERSISTENT_PLAYER_CLOSED",
-		});
+		this.triggerEvent('CPL_CLOSE_PERSISTENT_PLAYER');
+		this.triggerEvent('CPL_PERSISTENT_PLAYER_CLOSED');
 	}
 
 	/**

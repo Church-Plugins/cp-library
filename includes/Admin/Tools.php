@@ -166,7 +166,7 @@ class Tools
 						enctype="multipart/form-data">
 						<div class="notice-wrap"></div>
 						<?php wp_nonce_field( 'cp_ajax_import_file', 'cp_ajax_import_file' ); ?>
-						<p>
+							<p>
 							<input name="file" id="cp-payments-import-file" type="file" />
 						</p>
 						<input type="submit" value="<?php _e('Import CSV', 'cp-library'); ?>" class="button-secondary" />
@@ -466,8 +466,9 @@ class Tools
 		<div class="postbox cp-import-payment-history">
 			<h3><span><?php esc_html_e('Export data', 'cp-library') ?></span></h3>
 			<div class="inside">
-				<?php $action_url = esc_url(add_query_arg('cp_action', 'cp_export_items', admin_url())); ?>
-				<form id="cpl_export_data" action="<?php echo $action_url ?>" method="POST" enctype="multipart/form-data">
+				<?php $action_url = add_query_arg( 'cp_action', 'cp_export_items', admin_url() ); ?>
+				<form id="cpl_export_data" action="<?php echo esc_url( $action_url ); ?>" method="POST" enctype="multipart/form-data">
+					<?php wp_nonce_field( 'cp_export_items' ); ?>
 					<button class="button button-primary"><?php echo sprintf(esc_html__('Export all %s as CSV', 'cp-library'), cp_library()->setup->post_types->item->plural_label); ?></button>
 				</form>
 			</div>
@@ -485,8 +486,122 @@ class Tools
 			</div>
 		</div>
 
+		<?php $this->visibility_tools_display(); ?>
+
 	<?php
+		// Register the tool-button JS only on this tab, after the postboxes render.
+		add_action( 'admin_print_footer_scripts', [ $this, 'visibility_tools_script' ] );
+
 		do_action('cp_library_tools_import_export_after');
+	}
+
+	/**
+	 * Render the visibility recovery tools added in 1.6.2.
+	 *
+	 * @since 1.6.2
+	 */
+	public function visibility_tools_display() {
+		$migrate_count = \CP_Library\Admin\Migrate\VisibilityMetaMigration::get_instance()->get_item_count();
+
+		if ( $migrate_count > 0 ) :
+			?>
+			<div class="postbox">
+				<h3><span><?php esc_html_e( 'Migrate Visibility Settings', 'cp-library' ); ?></span></h3>
+				<div class="inside">
+					<p><?php esc_html_e( 'In version 1.6.2 the per-sermon visibility checkbox was renamed from "Show in Main List" to "Exclude from Main List" so that imported sermons default to visible. Run this once to convert legacy meta and preserve any sermons you previously hid by hand.', 'cp-library' ); ?></p>
+					<p>
+						<?php
+						echo esc_html(
+							sprintf(
+								_n( '%d sermon still has legacy visibility meta.', '%d sermons still have legacy visibility meta.', $migrate_count, 'cp-library' ),
+								$migrate_count
+							)
+						);
+						?>
+					</p>
+					<div class="cpl-visibility-tool" data-tool="visibility_meta" data-confirm="<?php echo esc_attr__( 'Run the visibility meta migration now?', 'cp-library' ); ?>">
+						<button type="button" class="button button-primary cpl-visibility-tool__start"><?php esc_html_e( 'Migrate Visibility Settings', 'cp-library' ); ?></button>
+						<span class="cpl-visibility-tool__status" style="margin-left:10px;"></span>
+					</div>
+				</div>
+			</div>
+			<?php
+		endif;
+		?>
+
+		<div class="postbox">
+			<h3><span><?php esc_html_e( 'Reset All Sermons to Visible', 'cp-library' ); ?></span></h3>
+			<div class="inside">
+				<p><?php esc_html_e( 'If imported sermons are missing from the main list, run this tool to clear the hidden flag from every sermon. Sermons whose Series or Service Type is excluded will remain hidden — that inheritance is re-applied automatically.', 'cp-library' ); ?></p>
+				<div class="cpl-visibility-tool" data-tool="visibility_reset" data-confirm="<?php echo esc_attr__( 'This will reset visibility on every sermon. Continue?', 'cp-library' ); ?>">
+					<button type="button" class="button button-primary cpl-visibility-tool__start"><?php esc_html_e( 'Reset Sermon Visibility', 'cp-library' ); ?></button>
+					<span class="cpl-visibility-tool__status" style="margin-left:10px;"></span>
+				</div>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Inline JS that drives the visibility tool buttons against the
+	 * existing cpl_start_migration_{type} / cpl_poll_migration_{type}
+	 * endpoints registered by the Migration base class.
+	 *
+	 * @since 1.6.2
+	 */
+	public function visibility_tools_script() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+		$nonce = wp_create_nonce( 'cpl_visibility_tools' );
+		?>
+		<script>
+		(function($){
+			var nonce = <?php echo wp_json_encode( $nonce ); ?>;
+
+			$(document).on('click', '.cpl-visibility-tool__start', function(e){
+				e.preventDefault();
+				var $btn = $(this);
+				var $wrap = $btn.closest('.cpl-visibility-tool');
+				var $status = $wrap.find('.cpl-visibility-tool__status');
+				var type = $wrap.data('tool');
+				var confirmMsg = $wrap.data('confirm');
+
+				if ( confirmMsg && ! window.confirm( confirmMsg ) ) {
+					return;
+				}
+
+				$btn.prop('disabled', true);
+				$status.text('<?php echo esc_js( __( 'Starting…', 'cp-library' ) ); ?>');
+
+				$.post(ajaxurl, { action: 'cpl_start_migration_' + type, nonce: nonce })
+					.done(function(){
+						poll();
+					})
+					.fail(function(xhr){
+						$status.text('<?php echo esc_js( __( 'Could not start migration.', 'cp-library' ) ); ?>');
+						$btn.prop('disabled', false);
+					});
+
+				function poll(){
+					$.post(ajaxurl, { action: 'cpl_poll_migration_' + type, nonce: nonce })
+						.done(function(resp){
+							if ( ! resp || ! resp.success ) { return; }
+							var d = resp.data || {};
+							var pct = Math.round(d.progress || 0);
+							$status.text(pct + '% (' + (d.item_count || 0) + ' items)');
+							if ( d.status === 'complete' ) {
+								$status.text('<?php echo esc_js( __( 'Done.', 'cp-library' ) ); ?>');
+								return;
+							}
+							setTimeout(poll, 1500);
+						})
+						.fail(function(){ setTimeout(poll, 3000); });
+				}
+			});
+		})(jQuery);
+		</script>
+		<?php
 	}
 
 	public function get_tools_tabs()
@@ -577,71 +692,198 @@ class Tools
 	}
 
 	/**
-	 * Exports all Sermons when form is submitted
+	 * Download name for the sermon CSV.
+	 *
+	 * @return string
+	 */
+	protected function export_filename() {
+		return sanitize_file_name(
+			sprintf(
+				'%s_%s.csv',
+				cp_library()->setup->post_types->item->plural_label,
+				date( 'Y-m-d' )
+			)
+		);
+	}
+
+	/**
+	 * Exports all sermons when the tools form is submitted.
+	 *
+	 * The CSV is streamed to the browser. Nothing is written under the uploads
+	 * directory. A dated file left by an earlier export is removed.
+	 *
 	 * @return void
 	 * @since 1.0.4
-	 * @author Jonathan Roley
 	 */
-	public function export_data()
-	{
-		$return_value = [];
+	public function export_data() {
+		if ( ! Request::allowed( 'manage_options', 'cp_export_items' ) ) {
+			return;
+		}
+
+		$filename = $this->export_filename();
+		$this->remove_public_export_files( $filename );
+
+		$file_handle = $this->open_export_stream();
+
+		if ( ! is_resource( $file_handle ) ) {
+			return;
+		}
 
 		$args = [
-			'post_type'      =>  CP_LIBRARY_UPREFIX . "_item",
-			'post_status'    => array('publish', 'private', 'draft', 'future'),
+			'post_type'      => CP_LIBRARY_UPREFIX . '_item',
+			'post_status'    => array( 'publish', 'private', 'draft', 'future' ),
 			'posts_per_page' => -1,
 		];
 
-		$posts = new \WP_Query($args);
-
-		$upload_dir = wp_upload_dir();
-		// WP-CLI may need to find a fallback directory
-		if (empty($upload_dir) || empty($upload_dir['path'])) {
-			$upload_dir['path'] = dirname(__FILE__);
-		} else {
-			wp_mkdir_p($upload_dir['path']);
-		}
-
-		$filename = sanitize_file_name(sprintf("%s_" . date('Y-m-d') . ".csv", cp_library()->setup->post_types->item->plural_label));
-		$file_path = trailingslashit($upload_dir['path']) . $filename;
-		$file_handle = fopen($file_path, 'w');
+		$posts = new \WP_Query( $args );
 
 		$header_added = false;
 
-		foreach ($posts->posts as $post) {
-
+		foreach ( $posts->posts as $post ) {
 			try {
-				$item = new Item($post->ID);
+				$item = new Item( $post->ID );
 
-				$data = $item->get_api_data();
+				$data           = $item->get_api_data( false, true );
+				$formatted_data = $this->get_formatted_item( $data );
 
-				$formatted_data = $this->get_formatted_item($data);
-
-				if (! $header_added) {
-					fputcsv($file_handle, array_keys($formatted_data));
+				if ( ! $header_added ) {
+					fputcsv( $file_handle, array_keys( $formatted_data ) );
 					$header_added = true;
 				}
 
-				fputcsv($file_handle, $formatted_data);
-			} catch (\Exception $e) {
-				$return_value['error'] = $e->getMessage();
-				error_log($e->getMessage());
+				fputcsv( $file_handle, $formatted_data );
+			} catch ( \Exception $e ) {
+				error_log( $e->getMessage() );
 			}
 		}
 
-		fclose($file_handle);
+		rewind( $file_handle );
 
-		header("Content-Type: text/csv; charset=utf-8");
-		header("Content-disposition: attachment; filename=\"" . $filename . "\"");
-
-		if (isset($headers['content-length'])) {
-			header("Content-Length: " . $headers['content-length']);
+		/**
+		 * Whether to send the CSV response.
+		 *
+		 * Return false to skip sending. The CSV stays on the temporary stream.
+		 *
+		 * @since 1.8.0
+		 *
+		 * @param bool   $send      Whether to send the file.
+		 * @param string $file_path Empty. The CSV is not written to the uploads directory.
+		 * @param string $filename  Download name.
+		 */
+		if ( ! apply_filters( 'cpl_export_items_output', true, '', $filename ) ) {
+			fclose( $file_handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+			return;
 		}
 
-		session_write_close();
-		readfile(rawurldecode($file_path));
+		$this->send_export_headers( $filename );
+		fpassthru( $file_handle );
+		fclose( $file_handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		$this->end_export();
+	}
 
-		exit();
+	/**
+	 * Send the download headers for the sermon CSV.
+	 *
+	 * @param string $filename Download filename.
+	 * @return void
+	 */
+	protected function send_export_headers( $filename ) {
+		if ( PHP_SESSION_ACTIVE === session_status() ) {
+			session_write_close();
+		}
+
+		nocache_headers();
+
+		foreach ( $this->export_download_headers( $filename ) as $line ) {
+			header( $line );
+		}
+	}
+
+	/**
+	 * Download headers for the sermon CSV.
+	 *
+	 * @param string $filename Download filename.
+	 * @return string[]
+	 */
+	protected function export_download_headers( $filename ) {
+		return array(
+			'Content-Type: text/csv; charset=utf-8',
+			'Content-Disposition: attachment; filename="' . $filename . '"',
+		);
+	}
+
+	/**
+	 * End the request after the CSV has been sent.
+	 *
+	 * @return void
+	 */
+	protected function end_export() {
+		exit;
+	}
+
+	/**
+	 * Remove dated export files from the public paths an earlier export used.
+	 *
+	 * Earlier exports wrote `{label}_{date}.csv` into the current uploads
+	 * folder, or next to this file when that folder was unavailable.
+	 *
+	 * @param string $filename Download name for this export.
+	 * @return void
+	 */
+	protected function remove_public_export_files( $filename ) {
+		$filename = sanitize_file_name( $filename );
+
+		if ( '' === $filename ) {
+			return;
+		}
+
+		$stem = preg_replace( '/\d{4}-\d{2}-\d{2}\.csv$/', '', $filename );
+		if ( ! is_string( $stem ) || '' === $stem ) {
+			$stem = $filename;
+		}
+
+		$directories = array( dirname( __FILE__ ) );
+		$upload_dir  = wp_upload_dir();
+
+		if ( empty( $upload_dir['error'] ) ) {
+			if ( ! empty( $upload_dir['path'] ) ) {
+				$directories[] = $upload_dir['path'];
+			}
+
+			if ( ! empty( $upload_dir['basedir'] ) ) {
+				$directories[] = $upload_dir['basedir'];
+				$months        = glob( trailingslashit( $upload_dir['basedir'] ) . '[0-9][0-9][0-9][0-9]/[0-9][0-9]', GLOB_ONLYDIR );
+
+				if ( is_array( $months ) ) {
+					$directories = array_merge( $directories, $months );
+				}
+			}
+		}
+
+		$pattern = '/^' . preg_quote( $stem, '/' ) . '\d{4}-\d{2}-\d{2}\.csv$/';
+
+		foreach ( array_unique( $directories ) as $directory ) {
+			$matches = glob( trailingslashit( $directory ) . '*.csv' );
+
+			if ( ! is_array( $matches ) ) {
+				continue;
+			}
+
+			foreach ( $matches as $path ) {
+				if ( is_file( $path ) && preg_match( $pattern, basename( $path ) ) ) {
+					wp_delete_file( $path );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Open a temporary stream for the CSV export.
+	 *
+	 * @return resource|false
+	 */
+	protected function open_export_stream() {
+		return fopen( 'php://temp', 'w+' );
 	}
 
 	/**
@@ -743,9 +985,10 @@ class Tools
 		$sql = $wpdb->prepare(
 			"SELECT post_title, COUNT({$wpdb->posts}.ID) AS speaker_count
 			FROM {$wpdb->posts}
-			WHERE post_type='cpl_speaker'
+			WHERE post_type = %s
 			GROUP BY post_title
-			HAVING speaker_count > 1"
+			HAVING speaker_count > 1",
+			'cpl_speaker'
 		);
 
 		$speakers = $wpdb->get_results($sql);

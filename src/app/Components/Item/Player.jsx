@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import Box from '@mui/material/Box';
-import { cplVar, cplLog, cplMarker, isURL } from '../../utils/helpers';
+import { cplVar, cplLog, cplItemLogId, cplMarker, isURL, forceUnmuteVimeoPlayer } from '../../utils/helpers';
 import PlayerWrapper from '../PlayerWrapper';
 import useBreakpoints from '../../Hooks/useBreakpoints';
 import { usePersistentPlayer } from '../../Contexts/PersistentPlayerContext';
@@ -63,14 +63,29 @@ export default function Player({ item }) {
 	const playingClass   = isPlaying ? ' is_playing' : '';
 	const hasVariations = Boolean(item.variations?.length)
 	const [currentItem, setCurrentItem] = useState(hasVariations ? item.variations[0] : item)
+	// Audio always plays through the persistent player now, so the local player is
+	// only ever responsible for video. Anything audio-only has no local media at all,
+	// which is what keeps the play control and the loading spinner off the feature
+	// image for those sermons.
+	const hasVideo = Boolean(currentItem.video?.value);
 	const [currentMedia, setCurrentMedia] = useState(() => {
-		const media = currentItem.video?.value || currentItem.audio;
-		if( isURL( media ) ) {
+		const video = currentItem.video?.value;
+		// Hosted video is left unloaded until the play control is used. Embeds are
+		// markup rather than a stream, so they render straight away as before.
+		if( isURL( video ) ) {
 			return ''
 		}
-		return media || ''
+		if( video ) {
+			return video
+		}
+		// Hosted audio goes to the persistent player, but an audio *embed*
+		// (SoundCloud, Spotify, ...) is markup with its own controls and the
+		// persistent player has nothing to play it with — it renders here, as it
+		// always has.
+		const audio = currentItem.audio;
+		return audio && ! isURL( audio ) ? audio : ''
 	});
-	// Video, audio or embed
+	// Video or embed
 	const [mode, setMode] = useState(currentMedia && (isURL(currentMedia) ? false : 'embed'));
 
 	const isSoundcloud = isURL( currentMedia ) && currentMedia.indexOf('https://soundcloud.com') === 0;
@@ -117,7 +132,7 @@ export default function Player({ item }) {
 			e.stopPropagation();
 		}
 
-		cplLog(item.id, 'fullscreen');
+		cplLog(cplItemLogId(currentItem), 'fullscreen');
 
 		try {
 			// Try screenfull for all video types (works for YouTube iframes, HTML5 video, etc.)
@@ -235,6 +250,10 @@ export default function Player({ item }) {
 							// Silently continue
 						}
 					}
+					// For Vimeo
+					else if (typeof internalPlayer.setMuted === 'function') {
+						forceUnmuteVimeoPlayer(internalPlayer);
+					}
 					// For HTML5 video/audio
 					else if (internalPlayer.muted !== undefined) {
 						try {
@@ -314,6 +333,16 @@ export default function Player({ item }) {
 	};
 
 	const updateItemState = ({ url, ...data }) => {
+		// Audio is handed to the persistent player by whoever raised it; all the local
+		// player has to do is stand down. It must NOT run updateMode() for this —
+		// that reinitialises the local player, which is what put a loading spinner
+		// over the feature image every time Listen was pressed.
+		if ('stop' === data.mode) {
+			clearTimeout(playbackDetectionTimeout.current);
+			setIsPlaying(false);
+			return;
+		}
+
 		// If it's audio, always use persistent player
 		if (data.mode === 'audio') {
 			api.passToPersistentPlayer({
@@ -323,17 +352,33 @@ export default function Player({ item }) {
 			return;
 		}
 
-		if(persistentPlayerIsActive) {
-			if(isURL( url )) {
-				api.passToPersistentPlayer( data )
-			}
-			else {
+		// An embed is markup, not a stream. Render it in place; the hosted-video
+		// initialisation in updateMode() (spinner, playback detection) has nothing
+		// to detect and would end by covering the embed with the thumbnail.
+		if ('embed' === data.mode) {
+			if (persistentPlayerIsActive) {
 				api.closePersistentPlayer()
-				updateMode( data.mode, url )
 			}
-		} else {
-			updateMode( data.mode, url )
+
+			clearTimeout(playbackDetectionTimeout.current);
+			window._playbackDetectionId = null;
+			setLoadingState('initial');
+			setIsPlaying(false);
+			setMode('embed');
+			setCurrentMedia(url);
+			return;
 		}
+
+		// Video plays here, in the feature area — the persistent player only ever gets
+		// it from the picture-in-picture control. Hosted video used to be handed over
+		// automatically whenever the persistent player happened to be open, which now
+		// that audio always opens it meant Watch and the play icon stopped playing
+		// video in place at all.
+		if (persistentPlayerIsActive) {
+			api.closePersistentPlayer()
+		}
+
+		updateMode( data.mode, url )
 	}
 
 	const updateMode = (mode, url = null) => {
@@ -427,6 +472,14 @@ export default function Player({ item }) {
 				setShowMutedNotice(false);
 				setAudioUnlocked(true);
 			}
+			// For Vimeo players
+			else if (typeof internalPlayer.setMuted === 'function') {
+				forceUnmuteVimeoPlayer(internalPlayer);
+
+				setIsMuted(false);
+				setShowMutedNotice(false);
+				setAudioUnlocked(true);
+			}
 			// For HTML5 video/audio players
 			else if (internalPlayer.muted !== undefined) {
 				internalPlayer.muted = false;
@@ -447,7 +500,7 @@ export default function Player({ item }) {
 			return;
 		}
 
-		cplLog(item.id, 'play');
+		cplLog(cplItemLogId(currentItem), 'play');
 		setHasPlayed(true);
 	}, [isPlaying])
 
@@ -488,6 +541,17 @@ export default function Player({ item }) {
             // Audio is working
             setAudioUnlocked(true);
           }
+        }
+        // Check if audio is muted on Vimeo (getMuted returns a Promise)
+        else if (internalPlayer && typeof internalPlayer.getMuted === 'function') {
+          internalPlayer.getMuted().then(muted => {
+            if (muted) {
+              setShowMutedNotice(true);
+              setIsMuted(true);
+            } else {
+              setAudioUnlocked(true);
+            }
+          }).catch(() => {});
         }
         // For HTML5 video
         else if (internalPlayer && internalPlayer.muted !== undefined) {
@@ -581,8 +645,9 @@ export default function Player({ item }) {
 										height="100%"
 										onMouseMove={onMouseMove}
 								>
-									{/* Add loading indicator when in loading state */}
-										{loadingState === 'loading' && (
+									{/* Loading indicator, video only — audio plays in the persistent
+									    player and must never spin the feature image. */}
+										{hasVideo && loadingState === 'loading' && (
 											<Box
 												sx={{
 													position: 'absolute',
@@ -828,15 +893,15 @@ export default function Player({ item }) {
 													<>
 														{currentItem.video?.value ? (
 															<PlayCircleOutline onClick={(e) => {
-																// Only allow video playback with this control
+																// This control plays video here, in the feature area — never in
+																// the persistent player. Only the picture-in-picture button
+																// hands video over. Audio playing in the persistent player is
+																// closed first so the two don't play over each other.
 																if (persistentPlayerIsActive) {
-																	api.passToPersistentPlayer({
-																		item         : mediaState.current.item,
-																		mode         : 'video',
-																		isPlaying    : true,
-																		playedSeconds: 0.0,
-																	});
-																} else if (loadingState === 'ready') {
+																	api.closePersistentPlayer();
+																}
+
+																if (loadingState === 'ready') {
 																	// If player is initialized but not playing, just set playing state
 																	setIsPlaying(true);
 																	setLoadingState('playing');

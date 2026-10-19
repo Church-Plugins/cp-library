@@ -457,16 +457,10 @@ class SermonFilterManager extends AbstractFilterManager {
 			return;
 		}
 
-		// Apply custom sorting for specific taxonomies
-		if ( 'cpl_scripture' === $taxonomy ) {
-			// For scripture archives, we might want to sort by book order
-			// This would require additional logic to map books to a sortable order
-		} elseif ( 'cpl_season' === $taxonomy ) {
-			// For season archives, sort by date descending as default
-			if ( ! $query->get( 'orderby' ) ) {
-				$query->set( 'orderby', 'date' );
-				$query->set( 'order', 'DESC' );
-			}
+		// Sort all CP Library taxonomy archives by date descending
+		if ( ! $query->get( 'orderby' ) ) {
+			$query->set( 'orderby', 'date' );
+			$query->set( 'order', 'DESC' );
 		}
 	}
 

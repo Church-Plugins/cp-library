@@ -56,7 +56,7 @@ foreach ( $settings as $setting => $default ) {
 // Default image is post thumbnail, otherwise specified image.
 if ( is_singular() ) {
 	$fallback_image = $image;
-	$image          = get_the_post_thumbnail_url( get_the_ID(), array( 600, 600 ) );
+	$image          = get_the_post_thumbnail_url( get_the_ID(), 'full' );
 	$image          = $image ? $image : $fallback_image;
 }
 

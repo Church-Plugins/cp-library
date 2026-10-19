@@ -24,7 +24,9 @@ echo CP_Library\Filters\TemplateHelpers::render_current_filters([
 // Get the sermon filter manager
 $manager = CP_Library\Filters\FilterManager::get_filter_manager('cpl_item');
 
-// Show only specific filters
+// Show only specific filters.
+// The topic facet id is cpl_topic. SeriesFilterManager and both archive
+// filter templates also use the name cpl_topics.
 $enabled_facets = ['cpl_topic', 'cpl_scripture', 'speaker'];
 $all_facets = array_keys($manager->get_facets());
 $disabled_filters = array_diff($all_facets, $enabled_facets);
@@ -50,17 +52,16 @@ echo $manager->render_selected_filters([
 // Get active filters
 $active_filters = cpl_get_active_filters('cpl_item');
 
-// Set up query
-$args = [
+// Set up the query without running it
+$query = new WP_Query();
+$query->parse_query([
     'post_type' => 'cpl_item',
     'posts_per_page' => 10
-];
+]);
 
-// Create query
-$query = new WP_Query($args);
-
-// Apply filters to query (modifies $query in place)
+// Apply filters, then run the query
 cpl_add_filters_to_query($query, $active_filters, 'cpl_item');
+$query->get_posts();
 
 // The Loop
 if ($query->have_posts()) :
@@ -210,8 +211,12 @@ add_action('cpl_register_filter_managers', function() {
         MyTheme\Filters\CustomPostTypeFilterManager::class
     );
 });
+```
 
-// Custom Filter Manager
+Put the manager class in its own file and load it before `cpl_register_filter_managers` runs:
+
+```php
+<?php
 namespace MyTheme\Filters;
 
 class CustomPostTypeFilterManager extends \CP_Library\Filters\AbstractFilterManager {
@@ -315,43 +320,15 @@ class CustomPostTypeFilterManager extends \CP_Library\Filters\AbstractFilterMana
 ?>
 ```
 
-### JavaScript Filter Initialization with Event Handling
+### Matching errors from the filter script
+
+The filter script is enqueued as `build/src/filters.js`. A window `error` listener can match that file by checking `event.filename` for `filters.js`:
 
 ```javascript
-// Initialize filters with custom event handling
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize sermon filters
-    const sermonFilter = new CPLibraryFilter({
-        context: 'archive',
-        container: document.querySelector('.cpl-sermon-filters'),
-        postType: 'cpl_item',
-        autoSubmit: true,
-        debug: true
-    });
-    
-    // Initialize series filters
-    const seriesFilter = new CPLibraryFilter({
-        context: 'archive',
-        container: document.querySelector('.cpl-series-filters'),
-        postType: 'cpl_item_type',
-        autoSubmit: true,
-        debug: true
-    });
-    
-    // Add custom error handling
-    window.addEventListener('error', function(event) {
-        // Check if error is related to filters
-        if (event.filename && event.filename.includes('filters.js')) {
-            console.error('Filter error:', event);
-            
-            // Show user-friendly error message
-            const errorContainer = document.querySelector('.filter-error-container');
-            if (errorContainer) {
-                errorContainer.textContent = 'An error occurred with filters. Please try again.';
-                errorContainer.style.display = 'block';
-            }
-        }
-    });
+window.addEventListener('error', function(event) {
+    if (event.filename && event.filename.includes('filters.js')) {
+        console.error('Filter error:', event);
+    }
 });
 ```
 
@@ -371,8 +348,7 @@ function loadCustomFilterOptions(filterType, selected) {
         filter_type: filterType,
         selected: selected || [],
         post_type: 'cpl_item',
-        context: 'custom',
-        nonce: cplVars.nonce
+        context: 'archive' // must be a registered context
     };
     
     // Make AJAX request
@@ -448,16 +424,7 @@ function mytheme_add_robots_meta() {
 }
 add_action('wp_head', 'mytheme_add_robots_meta', 10);
 
-// Add structured data to posts
-function mytheme_add_structured_data() {
-    if (function_exists('cpl_has_active_filters') && cpl_has_active_filters() && is_main_query() && in_the_loop()) {
-        global $wp_query;
-        if (function_exists('cpl_item_structured_data')) {
-            echo cpl_item_structured_data(get_post(), $wp_query->current_post + 1);
-        }
-    }
-}
-add_action('cpl_before_item_content', 'mytheme_add_structured_data', 10);
+// Structured data: the sermon list template already outputs it for each sermon on filtered pages
 ?>
 ```
 
@@ -498,7 +465,8 @@ function my_related_posts_shortcode($atts) {
     ];
     
     // Create query
-    $query = new WP_Query($args);
+    $query = new WP_Query();
+    $query->parse_query($args);
     
     // Apply filters to query
     if (function_exists('cpl_add_filters_to_query')) {
@@ -513,6 +481,8 @@ function my_related_posts_shortcode($atts) {
         ];
         $query->set('tax_query', $tax_query);
     }
+
+    $query->get_posts();
     
     // Start output buffer
     ob_start();
@@ -552,9 +522,7 @@ function my_related_posts_shortcode($atts) {
                 $archive_url = get_post_type_archive_link('cpl_item');
                 $filter_params = [];
 
-                foreach ($term_slugs as $slug) {
-                    $filter_params["facet-{$atts['taxonomy']}[]"] = $slug;
-                }
+                $filter_params['facet-' . $atts['taxonomy']] = $term_slugs;
 
                 $filtered_url = add_query_arg(
                     $filter_params,
@@ -666,7 +634,7 @@ function my_filter_test_shortcode($atts) {
     $atts = shortcode_atts([
         'post_type' => 'cpl_item',
         'context' => 'archive',
-        'test_filters' => 'topics,scripture,speaker'
+        'test_filters' => 'cpl_topic,cpl_scripture,speaker'
     ], $atts);
     
     // Start output buffer

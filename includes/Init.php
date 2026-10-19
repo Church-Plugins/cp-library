@@ -118,6 +118,16 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 			return;
 		}
 
+		// MySQL 5.5 compatibility: FULLTEXT on InnoDB and DATETIME DEFAULT require 5.6+
+		global $wpdb;
+		if ( version_compare( $wpdb->db_version(), '5.6', '<' ) ) {
+			add_filter( 'cp_create_table_sql', function( $sql ) {
+				$sql = preg_replace( '/FULLTEXT\s+INDEX/i', 'KEY', $sql );
+				$sql = preg_replace( '/datetime\s+DEFAULT\s+CURRENT_TIMESTAMP/i', 'datetime NOT NULL', $sql );
+				return $sql;
+			} );
+		}
+
 		$cp = \ChurchPlugins\Setup\Init::get_instance();
 
 		Setup\Tables\Init::get_instance();
@@ -150,6 +160,7 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 		$this->filters = Filters\Filters::get_instance(); // Compatibility layer
 
 		include_once( CP_LIBRARY_INCLUDES . '/CLI/CP_Migrate.php' );
+		CLI\Init::get_instance();
 	}
 
 	/**
@@ -182,6 +193,14 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 			add_rewrite_tag( '%type-item%', '([^&]+)' );
 			add_rewrite_rule( "^$type/([^/]*)/(?!feed)([^/]+)?", 'index.php?cpl_item_type=$matches[1]&type-item=$matches[2]', 'top' );
 		}
+
+		// A settings import can change the post type and taxonomy slugs, but only after
+		// the CPTs for that request have already registered. It flags the flush for the
+		// next request — this one — where the rules regenerate from the new slugs.
+		if ( get_option( 'cpl_flush_rewrite_rules' ) ) {
+			delete_option( 'cpl_flush_rewrite_rules' );
+			flush_rewrite_rules();
+		}
 	}
 
 	/**
@@ -205,8 +224,18 @@ class Init extends \ChurchPlugins\Setup\Plugin {
 	 * Enqueue scripts for analytics dashboard
 	 */
 	public function enqueue_analytics_scripts() {
-		$this->enqueue_asset( 'admin-analytics', [ 'jquery' ], false, false, true );
+		$script = $this->enqueue_asset( 'admin-analytics', [ 'jquery' ], false, false, true );
 		$this->enqueue_asset( 'admin-analytics', [], false, true, true );
+
+		if ( is_array( $script ) && ! empty( $script['handle'] ) ) {
+			wp_localize_script(
+				$script['handle'],
+				'cplAnalytics',
+				array(
+					'nonce' => wp_create_nonce( 'cpl-analytics' ),
+				)
+			);
+		}
 	}
 
 	/**

@@ -141,11 +141,42 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	abstract public function process_cpl_data( $item, $cpl_data, $post_type );
 
 	/**
-	 * Updates when the cron runs
+	 * Whether this call is the adapter's scheduled event.
+	 *
+	 * WP-Cron runs due events after WordPress has loaded, and `wp cron event run`
+	 * fires the hook from the command. Neither of those is inside `init`. The
+	 * request dispatcher runs on `init`, and a request can name this cron hook
+	 * as its action. Those calls are not scheduled runs.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @return bool
+	 */
+	protected function is_scheduled_run() {
+		if ( ! doing_action( $this->_cron_hook ) || doing_action( 'init' ) ) {
+			return false;
+		}
+
+		$request_action = '';
+		if ( isset( $_REQUEST['cp_action'] ) && is_string( $_REQUEST['cp_action'] ) ) {
+			$request_action = sanitize_key( wp_unslash( $_REQUEST['cp_action'] ) );
+		}
+
+		return $this->_cron_hook !== $request_action;
+	}
+
+	/**
+	 * Updates when the cron runs.
+	 *
+	 * The settings button sends a nonce. The scheduled event does not.
 	 *
 	 * @return void
 	 */
 	public function update_check() {
+		if ( ! $this->is_scheduled_run() && ! \CP_Library\Admin\Request::allowed( 'manage_options', 'cpl_adapter_pull_' . $this->type ) ) {
+			return;
+		}
+
 		$is_json_request = isset( $_SERVER['CONTENT_TYPE'] ) && strpos( $_SERVER['CONTENT_TYPE'], 'application/json' ) === 0; // phpcs:ignore
 
 		$amount = absint( $this->get_setting( 'check_count', 50 ) );
@@ -170,27 +201,42 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 	 * @return void
 	 */
 	public function do_full_import() {
+		if ( ! \CP_Library\Admin\Request::allowed( 'manage_options', 'cpl_adapter_import_' . $this->type ) ) {
+			return;
+		}
+
 		$this->delete_all(); // delete any queued items
 
-		$this->dispatcher->set_batch( 1 )->dispatch(); // start the fetching process
-
-		// delete store data
+		// delete store data and mark the import before dispatch, so a fast
+		// completion cannot finish before the in-progress option is stored.
 		global $wpdb;
 		$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE 'cpl_{$this->type}_adapter_store_%'" );
 
 		update_option( "cpl_{$this->type}_adapter_import_complete", false );
 		update_option( "cpl_{$this->type}_adapter_import_in_progress", true );
 
+		$this->dispatcher->set_batch( 1 )->dispatch();
+
 		wp_send_json_success( array( 'message' => 'Import started' ) );
 	}
 
 	/**
-	 * Runs when all fetching with dispatcher is complete.
+	 * Runs when fetching with the dispatcher is complete.
 	 *
-	 * @param int $batch The batch number.
+	 * The dispatcher calls this after its nonce check and passes true as the
+	 * second argument. That call clears the in-progress option. The generic
+	 * cp_action handler can fire this hook by name but passes only one
+	 * argument, so anything without the dispatcher flag is ignored.
+	 *
+	 * @param mixed $batch           Batch number, or request vars from another caller.
+	 * @param bool  $from_dispatcher True when the dispatcher finished its chain.
 	 * @return void
 	 */
-	public function fetch_complete() {
+	public function fetch_complete( $batch = null, $from_dispatcher = false ) {
+		if ( true !== $from_dispatcher ) {
+			return;
+		}
+
 		update_option( "cpl_{$this->type}_adapter_import_complete", true );
 		update_option( "cpl_{$this->type}_adapter_import_in_progress", false );
 	}
@@ -274,7 +320,7 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 		unset( $item['external_id'] );
 		unset( $item['cpl_data'] );
 
-		$post_id = wp_insert_post( $item, true );
+		$post_id = $this->insert_imported_post( $item );
 
 		if ( is_wp_error( $post_id ) ) {
 			throw new Exception( esc_html( $post_id->get_error_message() ) );
@@ -299,6 +345,77 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 		$this->process_cpl_data( $item_model, $cpl_data, $item['post_type'] );
 
 		return $item_model;
+	}
+
+	/**
+	 * Insert or update the WordPress post for an imported item.
+	 *
+	 * On update, the post keeps the status it already has, including trash,
+	 * draft, pending, private, and future. format_item() always sends publish.
+	 * A new sermon still uses the status in $item, which is publish.
+	 *
+	 * 1.7.0 wrote the SermonAudio date over an existing sermon's post_date.
+	 * That stays, except when the post is scheduled: wp_insert_post() turns
+	 * future into publish when the date is not still in the future, so a
+	 * past preach date would unschedule it. A future post keeps the
+	 * post_date and post_date_gmt it already has.
+	 *
+	 * A missing or empty post_name is filled with the permalink the post
+	 * already has. wp_insert_post keeps a slug that was left out, but an empty
+	 * post_name is rebuilt from post_title. Filling only that gap keeps a
+	 * retitle from changing the URL. A pending post that has no slug is left
+	 * that way; WordPress assigns a unique slug when it is published. There
+	 * is no wp_insert_post_data callback: a nested insert is not given this slug.
+	 *
+	 * Speakers and series come through here too. They do not send a post_name,
+	 * so an update still keeps the slug WordPress was already keeping, and a
+	 * new speaker or series still gets one generated from its title. An update
+	 * keeps any status they already have.
+	 *
+	 * New sermons omit post_name, so WordPress still generates the slug.
+	 *
+	 * @param array $item Post fields for wp_insert_post(), without external_id.
+	 * @return int|\WP_Error
+	 */
+	protected function insert_imported_post( $item ) {
+		if ( ! empty( $item['ID'] ) ) {
+			$existing = get_post( $item['ID'] );
+
+			if ( $existing instanceof \WP_Post ) {
+				$item['post_status'] = $existing->post_status;
+
+				if ( 'future' === $existing->post_status ) {
+					$item['post_date']     = $existing->post_date;
+					$item['post_date_gmt'] = $existing->post_date_gmt;
+				}
+
+				if ( ! isset( $item['post_name'] ) || '' === $item['post_name'] ) {
+					$slug = $this->existing_permalink_slug( $item['ID'] );
+
+					if ( null !== $slug ) {
+						$item['post_name'] = $slug;
+					}
+				}
+			}
+		}
+
+		return wp_insert_post( $item, true );
+	}
+
+	/**
+	 * Permalink slug already stored for a post, when it has one.
+	 *
+	 * @param int $post_id Post being updated.
+	 * @return string|null Raw post_name, or null when the post has none.
+	 */
+	protected function existing_permalink_slug( $post_id ) {
+		$post = get_post( $post_id );
+
+		if ( ! $post instanceof \WP_Post || ! is_string( $post->post_name ) || '' === $post->post_name ) {
+			return null;
+		}
+
+		return $post->post_name;
 	}
 
 	/**
@@ -571,6 +688,20 @@ abstract class Adapter extends \ChurchPlugins\Utils\WP_Background_Process {
 				'id'   => 'ignore_before',
 				'type' => 'text_date',
 				'desc' => sprintf( __( 'Ignore all %s before specified date.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+			)
+		);
+
+		$cmb->add_field(
+			array(
+				'name'       => __( 'Minimum Audio Duration', 'cp-library' ),
+				'id'         => 'audio_min_duration',
+				'type'       => 'text_small',
+				'desc'       => sprintf( __( 'Skip %s with audio shorter than this many seconds. Leave blank to import all.', 'cp-library' ), cp_library()->setup->post_types->item->plural_label ),
+				'attributes' => array(
+					'min'  => 0,
+					'step' => 1,
+					'type' => 'number',
+				),
 			)
 		);
 
