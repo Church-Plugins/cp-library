@@ -942,6 +942,17 @@ class Item extends Controller{
 	}
 
 	/**
+	 * Load the controller for one variation sermon.
+	 *
+	 * @param int $id Variation item id.
+	 * @return Item
+	 * @throws \ChurchPlugins\Exception
+	 */
+	protected function variation_item( $id ) {
+		return new Item( $id );
+	}
+
+	/**
 	 * Return the variations for this item, if they exist
 	 *
 	 * @since 1.1.0
@@ -958,7 +969,7 @@ class Item extends Controller{
 		$variations = $this->get_variations();
 
 		$variations = array_map( function( $id ) {
-			$item = new Item( $id );
+			$item = $this->variation_item( $id );
 
 			if( ! $item->get_variation_source_id() ) {
 				return false;
@@ -976,6 +987,7 @@ class Item extends Controller{
 					'full'  => get_the_post_thumbnail_url( $item->get_variation_source_origin_id(), 'full' )
 				],
 				'id'             => $item->get_variation_source_origin_id(),
+				'originID'       => $item->post->ID,
 				'logId'          => $item->model->id,
 				'audio'          => $item->get_audio(),
 				'video'          => $item->get_video(),
