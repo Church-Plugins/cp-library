@@ -10,8 +10,8 @@ The persistent player is always active -- it is automatically included on every 
 
 Audio and video are handled differently to provide the best experience for each media type:
 
-- **Audio ("Listen")** -- Clicking "Listen" on any sermon always opens the audio in the persistent player. This ensures uninterrupted playback as visitors browse your site.
-- **Video ("Watch")** -- Clicking "Watch" on a sermon detail page plays the video in the inline player on that page. Visitors can then send the video to the persistent player using the picture-in-picture button in the player controls. When "Watch" is clicked from a sermon list (not the detail page), the video opens directly in the persistent player.
+- **Audio ("Listen")** -- A direct audio file or URL opens in the persistent player. Embed HTML (not a URL) plays inline on the sermon page. From a list, that embed links to the sermon instead of opening the bar.
+- **Video ("Watch")** -- On the sermon page, a video URL plays in the inline player. Use **Open in persistent player** in the player controls to move it to the bar. From a list, a video URL opens in the persistent player. Embed HTML links to the sermon.
 
 When a video is playing in the persistent player, a video panel appears above the control bar at the bottom of the screen. Visitors can click the video area to toggle play/pause.
 
@@ -28,7 +28,7 @@ When a video is playing in the persistent player, a video panel appears above th
 
 ### Starting Playback
 
-Visitors start playback by clicking "Listen" or "Watch" on any sermon. Audio always opens in the persistent player bar at the bottom of the page. Video plays inline on the sermon detail page by default, with the option to send it to the persistent player.
+Visitors start playback by clicking **Listen** or **Watch**. A direct audio URL opens in the bar. A video URL plays inline on the sermon page, and **Open in persistent player** sends it to the bar. From a list, a video URL opens in the bar.
 
 ### Navigating While Listening
 
