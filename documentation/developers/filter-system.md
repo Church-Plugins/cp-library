@@ -32,7 +32,7 @@ The filter system allows users to quickly narrow down sermon content by various 
 - **Topic Tags** - Filter by sermon topics
 - **Seasons** - Filter by church seasons or series themes
 - **Speakers** - Find sermons by specific speakers
-- **Service Types** - Filter by service formats (Sunday morning, midweek, etc.); shown when **Enable Service Types** is on
+- **Service Types** - Filter by service formats (Sunday morning, midweek, etc.); shown only when sermons are assigned to service types
 - **Year** - Filter by the year a sermon was published
 - **Search** - Text search across sermon titles and content
 

@@ -153,7 +153,7 @@ do_action("cpl_register_facets_{$post_type}", $filter_manager);
 
 // Before archive list
 do_action('cpl_before_archive_list');
-do_action("cpl_before_archive_{$type}_list"); // $type is 'item' or 'item-type'
+do_action("cpl_before_archive_{$type}_list"); // $type is the post type without the cpl_ prefix: 'item' (sermons), 'item-type' (series), 'speaker', 'service-type'
 ```
 
 ### Filters
