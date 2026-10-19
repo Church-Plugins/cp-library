@@ -36,7 +36,7 @@ CP Sermon Library can import sermon data from SermonAudio.
 
 ### Enabling SermonAudio
 
-1. Navigate to Messages → Settings → Advanced
+1. Navigate to Series → Settings → Advanced
 2. Find "Enable Sermon Audio Integration" and select **Enable**
 3. Click "Save Changes"
 4. A Sermon Audio settings tab will appear where you can configure your broadcaster ID
@@ -45,7 +45,7 @@ CP Sermon Library can import sermon data from SermonAudio.
 
 Once enabled, a "Sermon Audio" settings tab appears:
 
-1. Navigate to Messages → Settings → Sermon Audio tab
+1. Navigate to Series → Settings → Sermon Audio tab
 2. Enter your API Key (found at sermonaudio.com/members)
 3. Enter your Broadcaster ID
 4. Optionally set an **Ignore Messages Before** date to skip older sermons. The label follows your plural label.
@@ -91,7 +91,7 @@ Paste any YouTube URL into a sermon's **Message Video** field for automatic embe
 
 ### Transcript Import
 
-Videos with captions, either uploaded or auto-generated, can have their transcripts imported. The first caption track YouTube lists is used, in any language. Use a youtube.com/watch?v= or youtu.be link:
+Videos with captions, either uploaded or auto-generated, can have their transcripts imported. The first caption track YouTube lists is used, in any language. Watch (youtube.com/watch?v=), youtu.be, Shorts, live, and embed links all work:
 
 1. Add the YouTube video URL to the sermon's **Message Video** field
 2. In the sermon list, an "Import" button appears in the Transcript column for sermons with YouTube videos
@@ -144,14 +144,14 @@ CP Sermon Library includes compatibility with The Events Calendar. If both plugi
 
 ## Page Builder Integration
 
-CP Sermon Library provides a **CP Sermons Template** module for each supported page builder. This module lets you embed any sermon template you've created in Messages → Templates.
+CP Sermon Library provides a **CP Sermons Template** module for each supported page builder. This module lets you embed any sermon template you've created in Series → Templates.
 
-> **Important:** You must first create a template in Messages → Templates using the block editor before the page builder module will have content to display.
+> **Important:** You must first create a template in Series → Templates using the block editor before the page builder module will have content to display.
 
 ### Beaver Builder
 
 1. Install and activate both CP Sermon Library and Beaver Builder
-2. Create a sermon template in Messages → Templates
+2. Create a sermon template in Series → Templates
 3. Edit a page with Beaver Builder
 4. Look for the "CP Sermons Template" module in the module panel (under the "CP Sermons" group)
 5. Select your template from the dropdown
@@ -159,7 +159,7 @@ CP Sermon Library provides a **CP Sermons Template** module for each supported p
 ### Divi
 
 1. Install and activate both plugins
-2. Create a sermon template in Messages → Templates
+2. Create a sermon template in Series → Templates
 3. Edit a page with Divi Builder
 4. Add the "CP Sermons Template" module
 5. Select your template from the dropdown
@@ -167,7 +167,7 @@ CP Sermon Library provides a **CP Sermons Template** module for each supported p
 ### Elementor
 
 1. Install and activate both plugins
-2. Create a sermon template in Messages → Templates
+2. Create a sermon template in Series → Templates
 3. Edit a page with Elementor
 4. Find the "CP Sermons Template" widget in the widget panel (under the **CP Sermons** category)
 5. Select your template from the dropdown

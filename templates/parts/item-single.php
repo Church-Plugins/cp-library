@@ -4,7 +4,7 @@ use ChurchPlugins\Helpers;
 try {
 	$item = new \CP_Library\Controllers\Item( get_the_ID() );
 	$player_data = $item->get_player_data( true );
-	$item = $item->get_api_data( true );
+	$item = $item->get_api_data( true, true );
 } catch ( \CP_Library\Exception $e ) {
 	error_log( $e );
 	return;
