@@ -216,7 +216,7 @@ class Template extends PostType {
 
 		$template = get_post( $template_id );
 
-		if ( ! $template ) {
+		if ( ! $template || ! self::template_is_renderable( $template ) ) {
 			return esc_html__( 'Template not found', 'cp-library' );
 		}
 
@@ -231,6 +231,30 @@ class Template extends PostType {
 		$content = str_replace( ']]>', ']]&gt;', $content );
 
 		return '<div class="wp-site-blocks">' . $content . '</div>';
+	}
+
+	/**
+	 * Whether a post may be rendered as a template for the current user.
+	 *
+	 * Only template posts render. A published template without a password
+	 * renders for everyone; any other template renders only for a user who
+	 * can edit it, so drafts still preview in the editor.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param WP_Post|object $template The post to render.
+	 * @return bool
+	 */
+	public static function template_is_renderable( $template ) {
+		if ( empty( $template->ID ) || CP_LIBRARY_UPREFIX . '_template' !== $template->post_type ) {
+			return false;
+		}
+
+		if ( 'publish' === $template->post_status && ! post_password_required( $template ) ) {
+			return true;
+		}
+
+		return current_user_can( 'edit_post', $template->ID );
 	}
 
 	/**
