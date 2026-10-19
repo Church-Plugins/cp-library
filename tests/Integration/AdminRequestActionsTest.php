@@ -73,8 +73,7 @@ class AdminRequestActionsTest extends TestCase {
 	public function test_admin_export_with_nonce_prepares_the_csv() {
 		$this->make_item();
 		$this->set_role( 'administrator' );
-		$_REQUEST['_wpnonce']        = wp_create_nonce( 'cp_export_items' );
-		$_REQUEST['cp_action_nonce'] = wp_create_nonce( 'cp_action_cp_export_items' );
+		$_REQUEST['_wpnonce'] = wp_create_nonce( 'cp_export_items' );
 
 		$seen = null;
 		add_filter(
@@ -245,7 +244,7 @@ class AdminRequestActionsTest extends TestCase {
 			Tools::get_instance()->export_data();
 		} );
 
-		$this->assertTrue( $finished );
+		$this->assertFalse( $finished );
 		$this->assertFileDoesNotExist( $path );
 	}
 

@@ -166,8 +166,7 @@ class Tools
 						enctype="multipart/form-data">
 						<div class="notice-wrap"></div>
 						<?php wp_nonce_field( 'cp_ajax_import_file', 'cp_ajax_import_file' ); ?>
-						<?php $this->request_action_nonce_field( 'cp_upload_import_file' ); ?>
-						<p>
+							<p>
 							<input name="file" id="cp-payments-import-file" type="file" />
 						</p>
 						<input type="submit" value="<?php _e('Import CSV', 'cp-library'); ?>" class="button-secondary" />
@@ -470,7 +469,6 @@ class Tools
 				<?php $action_url = add_query_arg( 'cp_action', 'cp_export_items', admin_url() ); ?>
 				<form id="cpl_export_data" action="<?php echo esc_url( $action_url ); ?>" method="POST" enctype="multipart/form-data">
 					<?php wp_nonce_field( 'cp_export_items' ); ?>
-					<?php $this->request_action_nonce_field( 'cp_export_items' ); ?>
 					<button class="button button-primary"><?php echo sprintf(esc_html__('Export all %s as CSV', 'cp-library'), cp_library()->setup->post_types->item->plural_label); ?></button>
 				</form>
 			</div>
@@ -694,26 +692,6 @@ class Tools
 	}
 
 	/**
-	 * Hidden field for a ChurchPlugins request action.
-	 *
-	 * Uses the helper on this site's ChurchPlugins copy when it provides one.
-	 * Otherwise prints the same field that helper prints: nonce action
-	 * `cp_action_{$action}` and input name `cp_action_nonce`. A copy that does
-	 * not read the field leaves it unused, and the form still posts as before.
-	 *
-	 * @param string $action Request action name.
-	 * @return void
-	 */
-	protected function request_action_nonce_field( $action ) {
-		if ( method_exists( \ChurchPlugins\Admin\_Init::class, 'request_action_nonce_field' ) ) {
-			echo \ChurchPlugins\Admin\_Init::request_action_nonce_field( $action ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Helper returns wp_nonce_field() markup.
-			return;
-		}
-
-		wp_nonce_field( 'cp_action_' . sanitize_key( $action ), 'cp_action_nonce' );
-	}
-
-	/**
 	 * Download name for the sermon CSV.
 	 *
 	 * @return string
@@ -738,14 +716,6 @@ class Tools
 	 * @since 1.0.4
 	 */
 	public function export_data() {
-		if ( ! $this->export_request_is_allowed() ) {
-			wp_die(
-				esc_html__( 'You do not have permission to export.', 'cp-library' ),
-				'',
-				array( 'response' => 403 )
-			);
-		}
-
 		if ( ! Request::allowed( 'manage_options', 'cp_export_items' ) ) {
 			return;
 		}
@@ -809,27 +779,6 @@ class Tools
 		fpassthru( $file_handle );
 		fclose( $file_handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 		$this->end_export();
-	}
-
-	/**
-	 * Whether this request may export sermons.
-	 *
-	 * Requires the tools capability and the request-action nonce printed on the export form.
-	 *
-	 * @return bool
-	 */
-	protected function export_request_is_allowed() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return false;
-		}
-
-		$nonce = '';
-
-		if ( isset( $_REQUEST['cp_action_nonce'] ) && is_string( $_REQUEST['cp_action_nonce'] ) ) {
-			$nonce = sanitize_text_field( wp_unslash( $_REQUEST['cp_action_nonce'] ) );
-		}
-
-		return (bool) wp_verify_nonce( $nonce, 'cp_action_cp_export_items' );
 	}
 
 	/**

@@ -7,13 +7,8 @@
  * there. Transcript import ran for whatever post id it was given, including
  * the list-table bulk action, which calls import_transcript() directly.
  *
- * The tools forms include the request-action nonce field (`cp_action_nonce`,
- * action `cp_action_{name}`). A ChurchPlugins copy that does not read the
- * field leaves it unused, and the forms still post as before.
- *
- * Export ends with status 403 when the user cannot manage options, or when
- * that request-action nonce is missing or does not match. An existing dated
- * CSV is left in place on that refusal.
+ * A refused export (no tools capability, or no valid tools-form nonce)
+ * sends nothing and leaves an existing dated CSV in place.
  *
  * @package CP_Library
  */
@@ -27,25 +22,6 @@ use CP_Library\Integrations\YouTube;
  * Marks the end of a streamed export so the test process can continue.
  */
 class ExportFinished extends \RuntimeException {}
-
-/**
- * Marks a refused export, with the HTTP status from wp_die().
- */
-class ExportDenied extends \RuntimeException {
-
-	/**
-	 * @var int
-	 */
-	public $status;
-
-	/**
-	 * @param int $status HTTP status.
-	 */
-	public function __construct( $status ) {
-		$this->status = (int) $status;
-		parent::__construct( 'export denied' );
-	}
-}
 
 /**
  * Marks a JSON response that ended the request.
@@ -85,8 +61,6 @@ class QuietExport extends Tools {
 
 /**
  * @covers \CP_Library\Admin\Tools::export_data
- * @covers \CP_Library\Admin\Tools::export_request_is_allowed
- * @covers \CP_Library\Admin\Tools::request_action_nonce_field
  * @covers \CP_Library\Integrations\YouTube::handle_import_request
  * @covers \CP_Library\Integrations\YouTube::import_transcript
  */
@@ -162,7 +136,7 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 		$this->assertStringContainsString( 'Content-Disposition: attachment; filename="' . $filename . '"', $headers );
 	}
 
-	public function test_tools_forms_include_the_request_action_nonce() {
+	public function test_export_form_includes_the_tools_nonce() {
 		$this->set_role( 'administrator' );
 
 		ob_start();
@@ -174,31 +148,26 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 		$this->assertStringContainsString( 'name="cp_ajax_import_file"', $html );
 		$this->assertSame( 1, preg_match( '/<form id="cpl_export_data"[\s\S]*?<\/form>/', $html, $export_form ) );
 		$this->assert_nonce_field( $export_form[0], '_wpnonce', 'cp_export_items' );
-		$this->assert_nonce_field( $export_form[0], 'cp_action_nonce', 'cp_action_cp_export_items' );
-		$this->assert_nonce_present( $html, 'cp_action_cp_upload_import_file' );
 	}
 
 	public function test_export_is_refused_without_the_tools_capability() {
 		$this->make_item();
 		$this->set_role( 'subscriber' );
-		$_REQUEST['cp_action_nonce'] = wp_create_nonce( 'cp_action_cp_export_items' );
-		$_REQUEST['_wpnonce']        = wp_create_nonce( 'cp_export_items' );
-
-		$this->assert_export_refused();
-	}
-
-	public function test_export_is_refused_when_the_request_nonce_is_missing() {
-		$this->set_role( 'administrator' );
-		unset( $_REQUEST['cp_action_nonce'] );
 		$_REQUEST['_wpnonce'] = wp_create_nonce( 'cp_export_items' );
 
 		$this->assert_export_refused();
 	}
 
-	public function test_export_is_refused_when_the_request_nonce_is_wrong() {
+	public function test_export_is_refused_when_the_nonce_is_missing() {
 		$this->set_role( 'administrator' );
-		$_REQUEST['cp_action_nonce'] = wp_create_nonce( 'cp_export_items' );
-		$_REQUEST['_wpnonce']        = wp_create_nonce( 'cp_export_items' );
+		unset( $_REQUEST['_wpnonce'] );
+
+		$this->assert_export_refused();
+	}
+
+	public function test_export_is_refused_when_the_nonce_is_wrong() {
+		$this->set_role( 'administrator' );
+		$_REQUEST['_wpnonce'] = wp_create_nonce( 'cp_action_cp_export_items' );
 
 		$this->assert_export_refused();
 	}
@@ -301,11 +270,7 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 	}
 
 	/**
-	 * @param QuietExport $tools Export runner.
-	 * @return string CSV body.
-	 */
-	/**
-	 * A refused export ends with status 403 and leaves any existing file alone.
+	 * A refused export sends nothing and leaves any existing file alone.
 	 */
 	private function assert_export_refused() {
 		$tools    = new QuietExport();
@@ -315,52 +280,22 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 		$path = trailingslashit( $upload['path'] ) . $filename;
 		file_put_contents( $path, "keep,me\n" );
 
-		add_filter( 'wp_die_handler', array( $this, 'die_handler' ), 20 );
-		add_filter( 'wp_die_ajax_handler', array( $this, 'die_handler' ), 20 );
-
-		$status = null;
 		ob_start();
 
 		try {
 			$tools->export_data();
+		} catch ( ExportFinished $finished ) {
 			ob_end_clean();
+			unlink( $path );
 			$this->fail( 'Export was not refused.' );
-		} catch ( ExportDenied $denied ) {
-			ob_end_clean();
-			$status = $denied->status;
-		} finally {
-			remove_filter( 'wp_die_handler', array( $this, 'die_handler' ), 20 );
-			remove_filter( 'wp_die_ajax_handler', array( $this, 'die_handler' ), 20 );
 		}
 
-		$this->assertSame( 403, $status );
+		$body = ob_get_clean();
+
+		$this->assertSame( '', $body );
+		$this->assertSame( array(), $tools->download_headers );
 		$this->assertSame( "keep,me\n", (string) file_get_contents( $path ) );
 		unlink( $path );
-	}
-
-	/**
-	 * @param callable $handler Current handler.
-	 * @return callable
-	 */
-	public function die_handler( $handler ) {
-		return array( $this, 'deny_export' );
-	}
-
-	/**
-	 * @param mixed $message Message.
-	 * @param mixed $title   Title.
-	 * @param mixed $args    Arguments.
-	 */
-	public function deny_export( $message = '', $title = '', $args = array() ) {
-		$status = 500;
-
-		if ( is_int( $args ) ) {
-			$status = $args;
-		} elseif ( is_array( $args ) && isset( $args['response'] ) ) {
-			$status = (int) $args['response'];
-		}
-
-		throw new ExportDenied( $status );
 	}
 
 	/**
@@ -371,9 +306,12 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 		$_REQUEST['_wpnonce'] = wp_create_nonce( YouTube::get_instance()->import_request_nonce_action( $post_id ) );
 	}
 
+	/**
+	 * @param QuietExport $tools Export runner.
+	 * @return string CSV body.
+	 */
 	private function capture_export( QuietExport $tools ) {
-		$_REQUEST['cp_action_nonce'] = wp_create_nonce( 'cp_action_cp_export_items' );
-		$_REQUEST['_wpnonce']        = wp_create_nonce( 'cp_export_items' );
+		$_REQUEST['_wpnonce'] = wp_create_nonce( 'cp_export_items' );
 
 		ob_start();
 
@@ -398,10 +336,6 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 	}
 
 	/**
-	 * @param string $html   Rendered tools markup.
-	 * @param string $action Nonce action.
-	 */
-	/**
 	 * @param string $html  Markup that contains the field.
 	 * @param string $name  Input name.
 	 * @param string $action Nonce action.
@@ -409,19 +343,6 @@ class ExportDeliveryAndTranscriptPermissionTest extends TestCase {
 	private function assert_nonce_field( $html, $name, $action ) {
 		$pattern = '/name="' . preg_quote( $name, '/' ) . '" value="([^"]+)"/';
 		preg_match_all( $pattern, $html, $matches );
-
-		foreach ( $matches[1] as $value ) {
-			if ( wp_verify_nonce( $value, $action ) ) {
-				$this->assertTrue( true );
-				return;
-			}
-		}
-
-		$this->fail( 'Missing nonce for ' . $action );
-	}
-
-	private function assert_nonce_present( $html, $action ) {
-		preg_match_all( '/name="cp_action_nonce" value="([^"]+)"/', $html, $matches );
 
 		foreach ( $matches[1] as $value ) {
 			if ( wp_verify_nonce( $value, $action ) ) {
