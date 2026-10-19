@@ -13,11 +13,15 @@ A sermon podcast is an audio feed of your church's messages that people can subs
 
 ## Enabling the Podcast Feed
 
+Your feed is `/messages/feed/podcast/` (or your slug) and works as soon as the plugin is active. Don't use `/feed/podcast/`, which gives an empty feed.
+
+To set the title and artwork:
+
 1. Navigate to Series → Settings → Advanced
-2. Find "Enable Podcast Feed" and select **Enable**
+2. Set **Enable Podcast Feed** to **Enable**
 3. Click "Save Changes"
 
-Once enabled, a **Podcast** tab appears in Series → Settings where you can configure your feed.
+A **Podcast** tab then appears in Series → Settings, where you fill in the feed details (at least Title and Image). Until a Title is saved, the feed is named after the newest sermon.
 
 ## Configuring Podcast Settings
 

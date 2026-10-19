@@ -62,7 +62,7 @@ CP Sermon Library includes Gutenberg blocks for displaying sermon content:
 
 Blocks you place inside a template:
 
-- **Sermon Actions**, **Item Graphic**, **Item Title**, **Item Date**, **Item Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**, **Sermon Season**
+- **Sermon Actions**, **Item Graphic**, **Item Title**, **Item Date**, **Item Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**
 
 ### Block Customization
 
@@ -101,7 +101,7 @@ CP Sermon Library includes a **Templates** post type that lets you build custom 
 
 1. Navigate to Series → Templates in the admin
 2. Click "Add New"
-3. Build your layout with **CP Sermons Sermons/Series**, **Sermon Template**, **Sermon Actions**, **Item Graphic**, **Item Title**, **Item Date**, **Item Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**, **Sermon Season**, and **Item Pagination**
+3. Build your layout with **CP Sermons Sermons/Series**, **Sermon Template**, **Sermon Actions**, **Item Graphic**, **Item Title**, **Item Date**, **Item Description**, **Sermon Speaker**, **Sermon Series**, **Sermon Topics**, **Sermon Scripture**, and **Item Pagination**
 4. Publish the template
 
 When editing a template, the inserter allows CP Sermons blocks plus core blocks such as **Paragraph**, **Heading**, **Group**, **Columns**, and **Spacer**.
@@ -125,6 +125,8 @@ CP Sermon Library provides several shortcodes for displaying sermon content:
 - `[cpl_video_widget]` - Display a video widget
 - `[cp-sermons]` - Display the sermons archive
 - `[cpl_template id="123"]` - Display a sermon template (see Sermon Templates above)
+
+For a sermon list, use the **CP Sermons Sermons/Series** block, or `[cp-sermons]` for the sermon archive.
 
 ### Page builder shortcodes: `[cp-template]` and `[cpl_template]`
 
