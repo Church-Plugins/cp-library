@@ -4,7 +4,7 @@ The Tools page provides utilities for importing and exporting sermon data in bul
 
 > **Note:** The default top-level admin menu is **Series** (**Set default menu item**). If you set that to Messages, or you rename a label, the menu name changes to match.
 
-The Tools page has two tabs: **Import/Export** and **Log**.
+The Tools page has two tabs: **Import/Export** and **Log**. You need a user who can manage site options (typically an Administrator).
 
 On the Import/Export tab you will also find **Full Migration** export and import (CP Sermons 1.7.0 and later). Full Migration moves an entire sermon library between WordPress sites. See [Full Migration: Export & Import](full-migration.md) for details. CSV import and export remain available for spreadsheet-style bulk edits.
 
