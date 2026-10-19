@@ -157,7 +157,7 @@ CP Sermon Library provides several shortcodes for displaying sermon content:
 | The default sermons archive | `[cp-sermons]` |
 | A specific saved template | `[cpl_template id=ID]`, where ID is the template's ID. The template's meta box shows the snippet. `id` is required. |
 
-> **Known issue:** on a normal page that uses `[cp-sermons]`, some filter links can return a "Page not found" error. If that happens, use `[cpl_template id=ID]` instead.
+> **Note:** before version 1.8.0, some filter links on a normal page that uses `[cp-sermons]` could return a "Page not found" error. Version 1.8.0 fixes this. If you can't update yet, use `[cpl_template id=ID]` instead.
 
 ### Shortcode Parameters
 
