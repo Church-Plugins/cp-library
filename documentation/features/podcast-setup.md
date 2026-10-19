@@ -67,7 +67,7 @@ You can access podcast feeds scoped to specific series, speakers, or service typ
 
 ## Excluding Sermons from the Podcast
 
-**Exclude from Podcast** is on the sermon edit screen only after **Enable Podcast Feed** is set to **Enable**.
+**Exclude from Podcast** is on the sermon edit screen only after **Enable Podcast Feed** is set to **Enable** (Advanced tab). It is not shown on a sermon that has **Add Variations** checked.
 
 1. Edit the sermon
 2. In **Message Details**, check **Exclude from Podcast**
