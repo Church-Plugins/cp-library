@@ -33,6 +33,28 @@ class Download {
 	}
 
 	/**
+	 * Whether the current user may download a sermon's audio.
+	 *
+	 * Uses the same check as reading a single sermon over the REST API, so a
+	 * draft, private, scheduled or password-protected sermon (or a variation
+	 * under one) is only downloadable by a user who could read it there.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $item_id Sermon post ID.
+	 * @return bool
+	 */
+	public static function item_is_downloadable( $item_id ) {
+		$item_id = absint( $item_id );
+
+		if ( ! $item_id || CP_LIBRARY_UPREFIX . '_item' !== get_post_type( $item_id ) ) {
+			return false;
+		}
+
+		return Item::item_is_readable( $item_id );
+	}
+
+	/**
 	 * Process Download
 	 *
 	 * Handles the file download process.
@@ -47,10 +69,12 @@ class Download {
 			return;
 		}
 
+		$item_id = absint( $_GET['item_id'] );
+
 		$args = apply_filters( 'cp_process_download_args', array(
-			'item_id'    => ( isset( $_GET['item_id'] ) ) ? (int) $_GET['item_id'] : '',
+			'item_id'    => $item_id,
 			'key'        => ( isset( $_GET['key'] ) ) ? $_GET['key'] : '',
-			'has_access' => true,
+			'has_access' => self::item_is_downloadable( $item_id ),
 			'file_name'  => ( isset( $_GET['name'] ) ) ? $_GET['name'] : '',
 		) );
 
