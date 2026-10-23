@@ -22,7 +22,6 @@ If you've built custom themes that integrate with CP Library's filter system, yo
 
 1. **Update Filter Calls**: Use the new post-type-aware filter functions
 2. **Update Templates**: Use the new template helper functions
-3. **Update JavaScript Initialization**: Use the post-type-aware initialization
 
 ### For Plugin Developers
 
@@ -30,7 +29,7 @@ If you've created extensions or plugins that integrate with the filter system, y
 
 1. **Register Filter Managers**: For any custom post types you want to support
 2. **Implement Custom Managers**: For specialized filter behavior
-3. **Update AJAX Handlers**: Use the new centralized router
+3. **Update AJAX Requests**: Send `post_type` with each `cpl_filter_options` request so the matching filter manager answers it
 
 ## Migration Examples
 
@@ -115,8 +114,7 @@ cpl_add_filters_to_query($query, cpl_get_active_filters(), 'cpl_item');
 
 // Manually specifying filters
 $filters = [
-    'cpl_topic' => ['faith', 'love'],
-    'speaker' => ['john-doe']
+    'cpl_topic' => ['faith', 'love']
 ];
 cpl_add_filters_to_query($query, $filters, 'cpl_item');
 ```
@@ -197,24 +195,7 @@ cpl_add_filters_to_query($query, $filters, 'cpl_item');
 
 #### Initializing Filters
 
-**Legacy Code:**
-```javascript
-// Initialize filter directly
-var filter = new CPLibraryFilter({
-    context: 'archive',
-    container: document.querySelector('.cpl-filter')
-});
-```
-
-**New Code:**
-```javascript
-// Initialize filter with post type
-var filter = new CPLibraryFilter({
-    context: 'archive',
-    container: document.querySelector('.cpl-filter'),
-    postType: 'cpl_item' // 'cpl_item' for sermons, 'cpl_item_type' for series
-});
-```
+Filters initialize automatically for every `.cpl-filter` container the plugin renders (sermons use `data-post-type="cpl_item"`, series use `data-post-type="cpl_item_type"`). The `CPLibraryFilter` class is not exposed as a global, so theme code cannot construct it. Instances are stored in `window.cpLibraryFilters`.
 
 #### AJAX Requests
 
@@ -245,15 +226,10 @@ jQuery.ajax({
         action: 'cpl_filter_options',
         filter_type: facetType,
         selected: selected,
-        post_type: 'cpl_item', // Specify post type
-        nonce: cplVars.nonce
+        post_type: 'cpl_item' // Specify post type
     },
     success: function(response) {
         // Handle response
-    },
-    error: function(jqXHR, textStatus, errorThrown) {
-        // Use error handler
-        ErrorHandler.handleAjaxError(jqXHR, textStatus, errorThrown, container);
     }
 });
 ```
@@ -358,7 +334,7 @@ To create a custom facet type:
 // Register a custom facet
 $filter_manager->register_facet('release_year', [
     'label' => __('Release Year', 'your-plugin'),
-    'param' => 'facet-year',
+    'param' => 'facet-release_year',
     'type' => 'custom',
     'query_callback' => function($query, $values, $config) {
         // Extract years and build a meta query
@@ -423,27 +399,7 @@ try {
 
 ### Using Error Handler in JavaScript
 
-```javascript
-import * as ErrorHandler from './errorHandler';
-
-try {
-    // Operation that might fail
-    if (!container) {
-        throw new Error('Container element not found');
-    }
-} catch (error) {
-    // Handle the error
-    ErrorHandler.handleCaughtError(error, container);
-}
-
-// For AJAX errors
-jQuery.ajax({
-    // ...
-    error: function(jqXHR, textStatus, errorThrown) {
-        ErrorHandler.handleAjaxError(jqXHR, textStatus, errorThrown, container);
-    }
-});
-```
+The JavaScript error handler is bundled inside the plugin's filter script and is not exposed as a global, so theme or plugin code cannot import or call it.
 
 ## SEO Enhancements
 
