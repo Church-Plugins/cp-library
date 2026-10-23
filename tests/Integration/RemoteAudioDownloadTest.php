@@ -100,4 +100,39 @@ class RemoteAudioDownloadTest extends TestCase {
 			$this->assertTrue( $delivered->redirect, 'Remote audio was streamed through the site instead of redirected to.' );
 		}
 	}
+
+	/**
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_remote_redirect_location_uses_the_raw_query_string() {
+		$item    = $this->make_item();
+		$post_id = (int) $item->origin_id;
+		$audio   = 'https://media.sermonaudio.com/audio/sermon.mp3?sermonID=123&download=true';
+
+		$item->update_meta_value( 'audio_url', $audio );
+		wp_update_post( array( 'ID' => $post_id, 'post_status' => 'publish' ) );
+		clean_post_cache( $post_id );
+
+		$shown = ( new \CP_Library\Controllers\Item( $post_id ) )->get_audio();
+		$this->assertStringContainsString( '&amp;download=true', $shown, 'HTML output should keep the encoded query string.' );
+		$this->assertStringNotContainsString( '&download=true', $shown );
+
+		$_GET = array(
+			'item_id' => (string) $post_id,
+			'key'     => 'audio',
+			'name'    => 'sermon.mp3',
+		);
+
+		$download = ( new ReflectionClass( RecordingDownload::class ) )->newInstanceWithoutConstructor();
+
+		try {
+			$download->process_download();
+			$this->fail( 'The download was not delivered.' );
+		} catch ( DownloadDelivered $delivered ) {
+			$this->assertSame( $audio, $delivered->requested );
+			$this->assertStringNotContainsString( '&amp;', $delivered->requested );
+			$this->assertTrue( $delivered->redirect );
+		}
+	}
 }
