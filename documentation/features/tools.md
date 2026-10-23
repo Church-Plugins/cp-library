@@ -1,6 +1,6 @@
 # Tools: Import, Export & Maintenance
 
-The Tools page provides utilities for importing and exporting sermon data in bulk, merging duplicate speakers, and viewing debug logs. Access it by navigating to **Series > Tools** in your WordPress admin.
+The Tools page provides utilities for importing and exporting sermon data in bulk, merging duplicate speakers, and viewing debug logs. Access it by navigating to **Series > Tools** (or under Messages if Series is turned off) in your WordPress admin.
 
 On a new install the top-level admin menu is **Series**. To change it, go to Series > Settings > Advanced > **Set default menu item** (this option only appears when Series is enabled). If you choose Messages, turn Series off, or rename a label, the menu name changes to match.
 

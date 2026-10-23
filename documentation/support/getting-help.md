@@ -51,7 +51,7 @@ For technical issues, enable debug mode before contacting support:
 1. Navigate to Series → Settings → Advanced, or under Messages if Series is turned off
 2. Set **Enable Debug** to **Enable**
 3. Reproduce the issue
-4. Check the debug log at Series → Tools → Log
+4. Check the debug log at Series → Tools → Log (or under Messages if Series is turned off)
 5. Include relevant log entries with your support request
 
 ## Community Resources

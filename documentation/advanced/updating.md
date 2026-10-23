@@ -23,7 +23,7 @@ On a new install the top-level admin menu is **Series**. To change it, go to Ser
 
 When the version stored in WordPress does not match the installed plugin version, the plugin saves the new version and runs its upgrade routines.
 
-The routine that ships with this release deletes CSV files that earlier sermon exports left in the uploads folders, whatever the sermon label was when they were made. It does not delete sermon posts. Earlier routines still run when the stored version is older than the version that added them. The 1.7.0 notes say a one-time cleanup runs on upgrade. It removes orphaned Speaker, Series, and Service Type associations and collapses duplicated ones. An earlier routine, for upgrades from before 1.5.0, sets **Set default menu item** to Series when that setting has no saved value.
+The routine that ships with this release deletes CSV files that earlier sermon exports left in the uploads folders, whatever the sermon label was when they were made. It does not delete sermon posts. Earlier routines still run when the stored version is older than the version that added them. An earlier routine, for upgrades from before 1.5.0, sets **Set default menu item** to Series when that setting has no saved value.
 
 ## Theme overrides
 

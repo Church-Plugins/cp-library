@@ -126,7 +126,7 @@ Enable or disable content types and features:
 
 ### Settings
 
-- **Set default menu item** — On a new install the top-level admin menu is **Series**. To change it, go to Series > Settings > Advanced > **Set default menu item** (this option only appears when Series is enabled). If you choose Messages, turn Series off, or rename a label, the menu name changes to match.
+- **Set default menu item** — Choose whether the admin menu uses **Messages** or **Series** (defaults to **Series**; only appears when Series is enabled)
 
 ### Built-in Terms
 

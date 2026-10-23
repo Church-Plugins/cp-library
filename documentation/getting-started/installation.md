@@ -53,7 +53,7 @@ You can customize the terminology used throughout the plugin:
 1. Navigate to Series → Settings, or under Messages if Series is turned off
 2. Select the tab for the content type you want to rename (Messages, Series, or Speaker)
 3. Change **Singular Label** and **Plural Label**. On the Messages and Series tabs, also change **Slug**. The Speaker tab has no **Slug** field.
-4. Save changes. On a new install the top-level admin menu is **Series**. To change it, go to Series > Settings > Advanced > **Set default menu item** (this option only appears when Series is enabled). If you choose Messages, turn Series off, or rename a label, the menu name changes to match.
+4. Save changes. If you rename a label, the menu name changes to match.
 
 ### Sermon Settings
 

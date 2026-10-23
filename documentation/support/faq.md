@@ -22,7 +22,7 @@ Navigate to Series → Add New. Enter the series title, description, and upload 
 
 ### Can I rename "Sermons" to "Messages" or another term?
 
-Yes. Navigate to Series → Settings, or under Messages if Series is turned off, and select the tab for the content type you want to rename (Messages, Series, or Speaker). Change the Singular and Plural Labels there. This updates the terminology throughout the plugin and your site, including the admin menu name. On a new install the top-level admin menu is **Series**. To change it, go to Series > Settings > Advanced > **Set default menu item** (this option only appears when Series is enabled). If you choose Messages, turn Series off, or rename a label, the menu name changes to match.
+Yes. Navigate to Series → Settings, or under Messages if Series is turned off, and select the tab for the content type you want to rename (Messages, Series, or Speaker). Change the Singular and Plural Labels there. This updates the terminology throughout the plugin and your site, including the admin menu name. If you rename a label, the menu name changes to match.
 
 ## Media & Playback
 
@@ -116,7 +116,7 @@ Updates appear in your WordPress dashboard. Create a backup before updating. See
 
 ### Where can I find debug information?
 
-Enable debug mode in Series → Settings → Advanced, or under Messages if Series is turned off. This enables detailed logging accessible at Series → Tools → Log.
+Enable debug mode in Series → Settings → Advanced, or under Messages if Series is turned off. This enables detailed logging accessible at Series → Tools → Log (or under Messages if Series is turned off).
 
 ## Still Need Help?
 

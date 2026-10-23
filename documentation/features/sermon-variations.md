@@ -119,4 +119,4 @@ For troubleshooting variation issues:
 
 1. Navigate to Series → Settings → Advanced, or under Messages if Series is turned off
 2. Set **Enable Debug** to **Enable**
-3. Check the log at Series → Tools → Log for variation-related errors
+3. Check the log at Series → Tools → Log (or under Messages if Series is turned off) for variation-related errors
