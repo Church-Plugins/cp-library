@@ -33,6 +33,28 @@ class Download {
 	}
 
 	/**
+	 * Whether the current user may download a sermon's audio.
+	 *
+	 * Uses the same check as reading a single sermon over the REST API, so a
+	 * draft, private, scheduled or password-protected sermon (or a variation
+	 * under one) is only downloadable by a user who could read it there.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $item_id Sermon post ID.
+	 * @return bool
+	 */
+	public static function item_is_downloadable( $item_id ) {
+		$item_id = absint( $item_id );
+
+		if ( ! $item_id || CP_LIBRARY_UPREFIX . '_item' !== get_post_type( $item_id ) ) {
+			return false;
+		}
+
+		return Item::item_is_readable( $item_id );
+	}
+
+	/**
 	 * Process Download
 	 *
 	 * Handles the file download process.
@@ -47,10 +69,12 @@ class Download {
 			return;
 		}
 
+		$item_id = absint( $_GET['item_id'] );
+
 		$args = apply_filters( 'cp_process_download_args', array(
-			'item_id'    => ( isset( $_GET['item_id'] ) ) ? (int) $_GET['item_id'] : '',
+			'item_id'    => $item_id,
 			'key'        => ( isset( $_GET['key'] ) ) ? $_GET['key'] : '',
-			'has_access' => true,
+			'has_access' => self::item_is_downloadable( $item_id ),
 			'file_name'  => ( isset( $_GET['name'] ) ) ? $_GET['name'] : '',
 		) );
 
@@ -208,7 +232,7 @@ class Download {
 		header( "Robots: none" );
 		header( "Content-Type: " . $ctype . "" );
 		header( "Content-Description: File Transfer" );
-		header( "Content-Disposition: attachment; filename=\"" . apply_filters( 'cp_requested_file_name', $args['file_name'], $args ) . "\"" );
+		header( "Content-Disposition: attachment; filename=\"" . $this->requested_filename( $args['file_name'], $args ) . "\"" );
 		header( "Content-Transfer-Encoding: binary" );
 
 		// If the file isn't locally hosted, process the redirect
@@ -300,6 +324,27 @@ class Download {
 		endswitch;
 
 		wp_die();
+	}
+
+	/**
+	 * Filename for the Content-Disposition header.
+	 *
+	 * The requested name — the `name` query argument, or the file basename when
+	 * that is empty — is passed through `cp_requested_file_name` and then
+	 * `sanitize_file_name()`. Cleaning the filter result covers both the
+	 * default and a filtered name. The extension stays with the name;
+	 * `sanitize_file_name()` keeps it.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $file_name Requested download name.
+	 * @param array  $args      Download arguments.
+	 * @return string
+	 */
+	function requested_filename( $file_name, $args ) {
+		$file_name = apply_filters( 'cp_requested_file_name', $file_name, $args );
+
+		return sanitize_file_name( $file_name );
 	}
 
 	/**

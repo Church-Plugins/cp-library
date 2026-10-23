@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { getAudioDownloadName } from "../../utils/downloadFilename";
 import { cplLog, cplVar } from "../../utils/helpers";
 import { audioDownloadUrl } from "../../utils/audioDownloadUrl";
 import Box from '@mui/material/Box';
@@ -46,9 +47,9 @@ export default function ShareButton({ item, variant = "outlined" }) {
 
 		const link = document.createElement('a');
 
-		const downloadName = (item.title || 'download').replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3';
+		const downloadName = getAudioDownloadName( item.audio );
 
-		link.href = audioDownloadUrl( item, cplVar( 'url', 'site' ), downloadName );
+		link.href = audioDownloadUrl( item, cplVar( 'url', 'site' ), encodeURIComponent( downloadName ) );
 
 		link.setAttribute(
 			'target',

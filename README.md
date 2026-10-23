@@ -31,6 +31,7 @@ npm run build
 * Bug Fix: The analytics average view time now averages each separate listen instead of summing each visitor's listens, so repeat listeners can lower the number.
 * Security: The sermon CSV export (Tools → Import/Export) now downloads directly instead of saving a copy in the uploads folder, where it was publicly reachable and included draft and private sermons. Running an export also deletes any `{Sermons}_YYYY-MM-DD.csv` files earlier exports left in the uploads folders.
 * Security: Template output (the `[cpl_template]` shortcode, the template block and the Beaver Builder, Divi and Elementor template modules) now only renders published templates. Before, any post ID would render, so a contributor could display private, draft or password-protected posts and pages. Draft templates still render for users who can edit them.
+* Security: Sermon audio downloads now only work for sermons the visitor can view. Before, the audio of a draft, private, scheduled or password-protected sermon could be downloaded by its ID.
 
 #### 1.7.0
 * **Major Feature**: Full-site Import/Export (Tools → Import/Export → Full Migration) — exports sermons (with variations, timestamps, transcripts and downloads), series, speakers, service types, templates, taxonomy terms and optionally plugin settings. Imports run in resumable batches; re-importing the same file updates instead of duplicating.
