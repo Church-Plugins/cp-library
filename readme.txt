@@ -123,12 +123,18 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 * Note: A YouTube transcript is imported only when YouTube returns a caption file for that video. If it does not, nothing is imported.
 * Fix: SermonAudio import includes sermons that are not part of a series.
 * Fix: Filtering or searching sermons on a page that uses the `[cp-sermons]` shortcode no longer leads to a "page not found" error.
-* Fix: Download in the share menu now downloads audio hosted on your site instead of opening it in a browser tab. SoundCloud audio still links to SoundCloud.
-* Fix: Audio hosted somewhere else, such as SermonAudio or another file host, is sent to that host. The host chooses the file name, and the browser may play the file in a new tab instead of saving it.
+* Fix: Download in the share menu now downloads audio hosted on your site instead of opening it in a browser tab. Audio hosted elsewhere opens from its host as before, and SoundCloud audio still links to SoundCloud.
+* Note: The host chooses the file name, and the browser may play the file in a tab.
 * Fix: Downloading the audio for a sermon variation no longer opens a "File download error" page.
-* Security: Security hardening across sermon downloads, exports, templates, the REST API and admin requests. Updated the ChurchPlugins framework to 1.1.19.
-* Note: Updating to 1.8.0 deletes sermon CSV export files that earlier versions saved in the uploads folder. Exports now download directly.
-* Known issue: themes or plugins that call cpl_get_canonical_url(), and pages with active filters, can show a fatal error.
+* Security: Hardened the public item log endpoint (validated item IDs and actions, published items only, prepared queries) and added capability and nonce checks to admin export, import and adapter requests.
+* Security: The sermon CSV export (Tools → Import/Export) now downloads directly instead of saving a copy in the uploads folder, where it was publicly reachable and included draft and private sermons. Updating to 1.8.0 deletes the CSV files earlier exports left in the uploads folders, whatever the sermon label was when they were made.
+* Security: Template output (the `[cpl_template]` shortcode, the template block and the Beaver Builder, Divi and Elementor template modules) now only renders published templates. Before, any post ID would render, so a contributor could display private, draft or password-protected posts and pages. Draft templates still render for users who can edit them.
+* Security: Sermon audio downloads now only work for sermons the visitor can view. Before, the audio of a draft, private, scheduled or password-protected sermon could be downloaded by its ID.
+* Security: Draft, private, scheduled and password-protected sermons, and their variations, are only shown to visitors who can view them, in the REST API, shortcodes and templates. Transcripts are left out of REST API sermon lists and still included for a single sermon. When the Transcript setting is Hide (the default), the API returns an empty transcript to anyone who can't edit the sermon. Shortcode parameters are escaped, and admin actions and AJAX requests check the user's permissions.
+* Security: YouTube transcript import, for one sermon or in bulk, now checks that the user can edit each sermon.
+* Security: Filter error messages, filter option names and speaker names are shown as plain text.
+* Security: Updated the ChurchPlugins framework to 1.1.19. Its request actions now only run for a logged-in user with the required permission.
+* Known issue (developers): calling `cpl_get_canonical_url()` or `cpl_output_canonical()` from custom code causes a fatal error.
 
 = 1.7.0 =
 * New: **Tools → Import/Export → Full Migration** — move an entire sermon library between sites in one step. Exports sermons (with variations, timestamps, transcripts and downloads), series, speakers, service types, templates and taxonomy terms, and optionally your plugin settings. Imports run in small batches and can be resumed, so libraries with tens of thousands of sermons don't hit a PHP timeout. Re-importing the same file updates the existing content instead of duplicating it.
@@ -194,7 +200,7 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 == Upgrade Notice ==
 
 = 1.8.0 =
-Security release, and updating is recommended. Also fixes YouTube transcript import, SermonAudio import of sermons without a series, and filters on pages that use the `[cp-sermons]` shortcode.
+Security release, and updating is recommended. Draft, private and password-protected content is no longer exposed through sermon downloads, templates, the REST API or shortcodes. Also fixes YouTube transcript import, SermonAudio import of sermons without a series, and filters on pages that use the `[cp-sermons]` shortcode.
 
 = 1.7.0 =
 Adds a full-site migration tool for moving a sermon library between sites, and fixes several Speaker/Series assignment bugs. A one-time cleanup runs on upgrade to remove orphaned and duplicate Speaker/Series associations. If you use WP All Import, note that a blank or unmatched Speaker/Series column no longer clears existing assignments.

@@ -25,21 +25,28 @@ npm run build
 ### Change Log
 
 #### 1.8.0
-* New: Audio hosted on your site is saved under the audio file's own name instead of a name built from the sermon title. The name is cleaned up so it is safe to save on any computer.
-* New: The sermon Transcript box accepts a `.vtt` or `.srt` caption file. Timestamps and caption markup are removed, leaving the text.
+* Enhancement: Share-menu downloads of audio hosted on this site use the audio file's own name (`getAudioDownloadName()`), cleaned on the server with `sanitize_file_name()` after the `cp_requested_file_name` filter. Audio hosted elsewhere does not use that name.
+* Enhancement: The Transcript box accepts `.vtt` / `.srt` uploads
+* Enhancement: YouTube transcript import uses the InnerTube player API; the client context is filterable with `cpl_youtube_innertube_client`
 * Fix: Common abbreviations and spelled-out numbers (e.g. 'Ps 23', '1 Cor', 'First Corinthians') are now recognized in SermonAudio import, CSV import and the sermon editor.
 * Fix: SermonAudio imports use the sermon's full title when available. Existing sermons are retitled the next time they sync, and keep their status and permalink.
-* Fix: The analytics average view time now averages each separate listen instead of summing each visitor's listens, so repeat listeners can lower the number.
-* Fix: YouTube transcript import works again after YouTube changed how it serves caption files. When a transcript still can't be fetched, the sermon edit screen says so and suggests uploading a `.vtt` or `.srt` file or pasting the transcript. YouTube links with extra parameters, and `youtu.be`, live, embed and Shorts links, are recognized.
+* Bug Fix: The analytics average view time now averages each separate listen instead of summing each visitor's listens, so repeat listeners can lower the number.
+* Bug Fix: YouTube transcript import works again after caption URLs started returning empty bodies; the edit screen offers `.vtt` / `.srt` upload or paste when a fetch fails
 * Note: A YouTube transcript is imported only when YouTube returns a caption file for that video. If it does not, nothing is imported.
-* Fix: SermonAudio import includes sermons that are not part of a series.
-* Fix: Filtering or searching sermons on a page that uses the `[cp-sermons]` shortcode no longer leads to a "page not found" error.
-* Fix: Download in the share menu now downloads audio hosted on your site instead of opening it in a browser tab. SoundCloud audio still links to SoundCloud.
-* Fix: Audio hosted somewhere else, such as SermonAudio or another file host, is sent to that host. The host chooses the file name, and the browser may play the file in a new tab instead of saving it.
-* Fix: Downloading the audio for a sermon variation no longer opens a "File download error" page.
-* Security: Security hardening across sermon downloads, exports, templates, the REST API and admin requests. Updated the ChurchPlugins framework to 1.1.19.
-* Note: Updating to 1.8.0 deletes sermon CSV export files that earlier versions saved in the uploads folder. Exports now download directly.
-* Known issue: themes or plugins that call cpl_get_canonical_url(), and pages with active filters, can show a fatal error.
+* Bug Fix: SermonAudio import includes sermons that are not in a series
+* Bug Fix: No more PHP warnings about undefined `email`, `download` and `payment` keys on every audio download
+* Bug Fix: Filter and search on a Page using `[cp-sermons]` no longer 404 (the `post_type` query arg is no longer submitted on Pages and singulars)
+* Bug Fix: SoundCloud detection in the share-menu download was inverted, so non-SoundCloud audio skipped the site download endpoint. Variation rows now carry `originID` so they work with the endpoint, and remote audio is redirected to rather than streamed through PHP
+* Note: The host chooses the file name, and the browser may play the file in a tab.
+* Security: Hardened the public item log endpoint (validated item IDs and actions, published items only, prepared queries) and added capability and nonce checks to admin export, import and adapter requests.
+* Security: The sermon CSV export (Tools → Import/Export) now downloads directly instead of saving a copy in the uploads folder, where it was publicly reachable and included draft and private sermons. The 1.8.0 upgrade migration deletes the export CSVs earlier versions left in the uploads folders, under any label; running an export also removes those with the current label.
+* Security: Template output (the `[cpl_template]` shortcode, the template block and the Beaver Builder, Divi and Elementor template modules) now only renders published templates. Before, any post ID would render, so a contributor could display private, draft or password-protected posts and pages. Draft templates still render for users who can edit them.
+* Security: Sermon audio downloads now only work for sermons the visitor can view. Before, the audio of a draft, private, scheduled or password-protected sermon could be downloaded by its ID.
+* Security: Visibility checks for non-public and password-protected items (and their variations) in REST, shortcodes and templates; transcripts omitted from REST collection responses, and from all API responses for non-editors when the Transcript setting is Hide (the default); shortcode parameters escaped; capability and nonce checks on admin actions and AJAX handlers
+* Security: YouTube transcript import (single and bulk) checks a nonce and `edit_post` on each item
+* Security: Filter error messages, filter option titles and speaker names are escaped on output
+* Security: ChurchPlugins framework 1.1.19 — `cp_action` requests require a logged-in user with the needed capability and a valid nonce or same-site POST
+* Known issue (developers): calling `cpl_get_canonical_url()` or `cpl_output_canonical()` from custom code causes a fatal error.
 
 #### 1.7.0
 * **Major Feature**: Full-site Import/Export (Tools → Import/Export → Full Migration) — exports sermons (with variations, timestamps, transcripts and downloads), series, speakers, service types, templates, taxonomy terms and optionally plugin settings. Imports run in resumable batches; re-importing the same file updates instead of duplicating.
