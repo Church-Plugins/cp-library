@@ -242,9 +242,10 @@ class Download {
 		header( "Content-Disposition: attachment; filename=\"" . $this->requested_filename( $args['file_name'], $args ) . "\"" );
 		header( "Content-Transfer-Encoding: binary" );
 
-		// If the file isn't locally hosted, redirect to it rather than streaming it through this site
+		// If the file isn't locally hosted, redirect to it rather than streaming it through this site.
+		// get_audio() encodes "&" for HTML; the Location value has to be the raw URL.
 		if ( filter_var( $requested_file, FILTER_VALIDATE_URL ) && ! $this->is_local_file( $requested_file ) ) {
-			$this->deliver_download( $requested_file, true );
+			$this->deliver_download( $this->redirect_location( $requested_file ), true );
 			exit;
 		}
 
@@ -355,6 +356,39 @@ class Download {
 	}
 
 	/**
+	 * Location value for a file redirect.
+	 *
+	 * Item::get_audio() runs the stored URL through sanitize_embed(), which
+	 * encodes "&" as "&amp;". A Location header needs the raw URL. Paths that
+	 * are not URLs are returned unchanged. esc_url_raw() keeps the allowed
+	 * protocols already used for downloads and does not entity-encode "&".
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $file File path or URL.
+	 * @return string
+	 */
+	function redirect_location( $file ) {
+		if ( ! is_string( $file ) || '' === $file ) {
+			return $file;
+		}
+
+		$decoded = html_entity_decode( $file, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+		if ( ! filter_var( $decoded, FILTER_VALIDATE_URL ) && ! filter_var( $file, FILTER_VALIDATE_URL ) ) {
+			return $file;
+		}
+
+		$raw = esc_url_raw( $decoded );
+
+		if ( is_string( $raw ) && '' !== $raw ) {
+			return $raw;
+		}
+
+		return $decoded;
+	}
+
+	/**
 	 * Deliver the download file
 	 *
 	 * If enabled, the file is symlinked to better support large file downloads
@@ -368,7 +402,7 @@ class Download {
 
 		if ( $redirect ) {
 
-			header( 'Location: ' . $file );
+			header( 'Location: ' . $this->redirect_location( $file ) );
 
 		} else {
 
