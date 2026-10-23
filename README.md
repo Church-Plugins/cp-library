@@ -25,7 +25,7 @@ npm run build
 ### Change Log
 
 #### 1.8.0
-* Enhancement: Share-menu audio downloads use the audio file's own name (`getAudioDownloadName()`), cleaned on the server with `sanitize_file_name()` after the `cp_requested_file_name` filter
+* Enhancement: Share-menu downloads of audio hosted on this site use the audio file's own name (`getAudioDownloadName()`), cleaned on the server with `sanitize_file_name()` after the `cp_requested_file_name` filter. Audio hosted elsewhere does not use that name.
 * Enhancement: The Transcript box accepts `.vtt` / `.srt` uploads
 * Enhancement: YouTube transcript import uses the InnerTube player API; the client context is filterable with `cpl_youtube_innertube_client`
 * Bug Fix: Scripture references that use "Psalm", a common abbreviation ("Ps", "1 Cor", "1Cor", "2Co", "1Jn"), or a spelled-out number ("First Corinthians", "3rd John") are rewritten to the book name CP Sermons stores, so those references are kept. This applies to SermonAudio import, CSV import, and saving a sermon in wp-admin. "Psalm 23" is stored as "Psalms 23". "2 Corinthians" is left as 2 Corinthians. SermonAudio and the sermon edit screen do not split on commas, so "Psalm 23:1, 4" stays one passage there. A CSV scripture cell still splits on every comma, as it did before, so "Psalm 23:1, 4" in a CSV cell loses the ", 4". "Ps 23, Jn 3:16" in a CSV cell is two references and both are kept.
@@ -36,6 +36,7 @@ npm run build
 * Bug Fix: No more PHP warnings about undefined `email`, `download` and `payment` keys on every audio download
 * Bug Fix: Filter and search on a Page using `[cp-sermons]` no longer 404 (the `post_type` query arg is no longer submitted on Pages and singulars)
 * Bug Fix: SoundCloud detection in the share-menu download was inverted, so non-SoundCloud audio skipped the site download endpoint. Variation rows now carry `originID` so they work with the endpoint, and remote audio is redirected to rather than streamed through PHP
+* Bug Fix: SermonAudio audio now downloads instead of playing in a tab; SermonAudio chooses the file name. Audio on other hosts still opens from its host, and that host chooses the file name.
 * Security: Hardened the public item log endpoint (validated item IDs and actions, published items only, prepared queries) and added capability and nonce checks to admin export, import and adapter requests.
 * Security: The sermon CSV export (Tools → Import/Export) now downloads directly instead of saving a copy in the uploads folder, where it was publicly reachable and included draft and private sermons. The 1.8.0 upgrade migration deletes the export CSVs earlier versions left in the uploads folders, under any label; running an export also removes those with the current label.
 * Security: Template output (the `[cpl_template]` shortcode, the template block and the Beaver Builder, Divi and Elementor template modules) now only renders published templates. Before, any post ID would render, so a contributor could display private, draft or password-protected posts and pages. Draft templates still render for users who can edit them.
@@ -44,6 +45,7 @@ npm run build
 * Security: YouTube transcript import (single and bulk) checks a nonce and `edit_post` on each item
 * Security: Filter error messages, filter option titles and speaker names are escaped on output
 * Security: ChurchPlugins framework 1.1.19 — `cp_action` requests require a logged-in user with the needed capability and a valid nonce or same-site POST
+* Known issue (developers): calling `cpl_get_canonical_url()` or `cpl_output_canonical()` from custom code causes a fatal error.
 
 #### 1.7.0
 * **Major Feature**: Full-site Import/Export (Tools → Import/Export → Full Migration) — exports sermons (with variations, timestamps, transcripts and downloads), series, speakers, service types, templates, taxonomy terms and optionally plugin settings. Imports run in resumable batches; re-importing the same file updates instead of duplicating.
