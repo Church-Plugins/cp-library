@@ -18,19 +18,13 @@ Check the [frequently asked questions](faq.md) for quick answers to common quest
 
 ## Contacting Support
 
-### Contact form
-
-For issues not covered in the documentation, use the [Contact form on churchplugins.com](https://churchplugins.com/contact/). If this is a support request, include the name of the plugin and a link to the site, along with:
+Support requests go to [https://docs.churchplugins.com/contact-support/](https://docs.churchplugins.com/contact-support/). Include the name of the plugin and a link to the site, along with:
 
 - A clear description of the issue
 - Steps to reproduce the problem
 - Your WordPress version and PHP version
 - Any error messages you're seeing
 - Screenshots if helpful
-
-### Email
-
-You can also reach the support team at **support@churchplugins.com**.
 
 ## Before Contacting Support
 
@@ -72,4 +66,4 @@ Visit [churchplugins.com](https://churchplugins.com) for:
 
 ## Feature Requests
 
-Have an idea for improving CP Sermon Library? Send it through the [Contact form on churchplugins.com](https://churchplugins.com/contact/), or email **support@churchplugins.com**. Describe the feature and how it would help your church.
+Have an idea for improving CP Sermon Library? Send it through [https://docs.churchplugins.com/contact-support/](https://docs.churchplugins.com/contact-support/). Describe the feature and how it would help your church.

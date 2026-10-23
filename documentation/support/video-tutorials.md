@@ -180,4 +180,4 @@ Visual learners can benefit from our collection of video tutorials that demonstr
 
 ## Request a Tutorial
 
-Can't find what you're looking for? [Request a tutorial](https://churchplugins.com/tutorial-request/) on a specific topic and our team will consider adding it to our library.
+Can't find what you're looking for? [Request a tutorial](https://docs.churchplugins.com/contact-support/) on a specific topic and our team will consider adding it to our library.
