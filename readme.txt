@@ -2,7 +2,7 @@
 Contributors: churchplugins, tannermoushey
 Tags: sermons, church, podcast, speakers, series
 Requires at least: 6.0
-Tested up to: 6.9
+Tested up to: 7.1
 Requires PHP: 7.4
 Stable tag: 1.8.1
 License: GPLv2 or later
