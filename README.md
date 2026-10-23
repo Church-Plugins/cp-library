@@ -24,7 +24,7 @@ npm run build
 
 ### Change Log
 
-#### 1.8.1
+#### 1.9.0
 * Bug Fix: YouTube transcript import decodes HTML entities in caption text before saving. An apostrophe that arrived as `&amp;#39;` is stored as an apostrophe. Timestamp markers such as `(t:6)` are unchanged. A transcript that was already imported is left as-is; delete it and import again to store the decoded text.
 
 #### 1.8.0
