@@ -113,6 +113,9 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 
 == Changelog ==
 
+= 1.9.0 =
+* Fix: YouTube transcript import decodes HTML entities in caption text before saving. An apostrophe that arrived as `&amp;#39;` is stored as an apostrophe. Timestamp markers such as `(t:6)` are unchanged. A transcript that was already imported is left as-is; delete it and import again to store the decoded text.
+
 = 1.8.0 =
 * New: Audio hosted on your site is saved under the audio file's own name instead of a name built from the sermon title. The name is cleaned up so it is safe to save on any computer.
 * New: The sermon Transcript box accepts a `.vtt` or `.srt` caption file. Timestamps and caption markup are removed, leaving the text.

@@ -24,6 +24,9 @@ npm run build
 
 ### Change Log
 
+#### 1.9.0
+* Bug Fix: YouTube transcript import decodes HTML entities in caption text before saving. An apostrophe that arrived as `&amp;#39;` is stored as an apostrophe. Timestamp markers such as `(t:6)` are unchanged. A transcript that was already imported is left as-is; delete it and import again to store the decoded text.
+
 #### 1.8.0
 * Enhancement: Share-menu downloads of audio hosted on this site use the audio file's own name (`getAudioDownloadName()`), cleaned on the server with `sanitize_file_name()` after the `cp_requested_file_name` filter. Audio hosted elsewhere does not use that name.
 * Enhancement: The Transcript box accepts `.vtt` / `.srt` uploads
