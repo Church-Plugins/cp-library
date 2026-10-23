@@ -123,6 +123,7 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 * Fix: SermonAudio import includes sermons that are not part of a series.
 * Fix: Filtering or searching sermons on a page that uses the `[cp-sermons]` shortcode no longer leads to a "page not found" error.
 * Fix: Download in the share menu now downloads audio hosted on your site instead of opening it in a browser tab. SoundCloud audio still links to SoundCloud.
+* Local audio downloads now keep the original file name instead of the sermon title.
 * Fix: SermonAudio audio now downloads instead of playing in a tab; SermonAudio chooses the file name. Audio on other hosts still opens from its host, and that host chooses the file name.
 * Security: Hardened the public item log endpoint (validated item IDs and actions, published items only, prepared queries) and added capability and nonce checks to admin export, import and adapter requests.
 * Security: The sermon CSV export (Tools → Import/Export) now downloads directly instead of saving a copy in the uploads folder, where it was publicly reachable and included draft and private sermons. Updating to 1.8.0 deletes the CSV files earlier exports left in the uploads folders, whatever the sermon label was when they were made.
