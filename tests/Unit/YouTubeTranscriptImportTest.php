@@ -32,6 +32,9 @@ use PHPUnit\Framework\TestCase;
  * @covers \CP_Library\Integrations\YouTube::innertube_client
  * @covers \CP_Library\Integrations\YouTube::caption_track_urls
  * @covers \CP_Library\Integrations\YouTube::parse_caption_xml
+ * @covers \CP_Library\Integrations\YouTube::decode_caption_entities
+ * @covers \CP_Library\Integrations\YouTube::normalize_caption_text
+ * @covers \CP_Library\Integrations\YouTube::format_imported_transcript
  * @covers \CP_Library\Integrations\YouTube::captions_to_text
  */
 class YouTubeTranscriptImportTest extends TestCase {
@@ -148,7 +151,7 @@ class YouTubeTranscriptImportTest extends TestCase {
 		$this->assertSame(
 			[
 				[
-					'text'     => 'Hello &amp; welcome',
+					'text'     => 'Hello & welcome',
 					'duration' => '2.0',
 					'offset'   => '1.5',
 				],
@@ -324,5 +327,71 @@ VTT;
 		$this->assertTrue( YouTube::is_youtube_caption_url( 'https://www.youtube.com/api/timedtext?v=jNQXAC9IVRw' ) );
 		$this->assertFalse( YouTube::is_youtube_caption_url( 'http://www.youtube.com/api/timedtext?v=jNQXAC9IVRw' ) );
 		$this->assertFalse( YouTube::is_youtube_caption_url( 'https://example.com/api/timedtext?v=jNQXAC9IVRw' ) );
+	}
+
+	/**
+	 * YouTube timedtext is already entity-encoded. An apostrophe often arrives
+	 * as &#39;, and the ampersand in that character reference is often escaped
+	 * again, so the XML text is &amp;#39;. parse_caption_xml stored that raw
+	 * capture, and import_transcript wrote it to post meta with no decode, so
+	 * the saved transcript contained how&amp;#39;s. Decode until the string
+	 * stops changing, at most twice, then strip tags once. Do not run
+	 * htmlspecialchars on the way in. (t:N) markers are added from the cue
+	 * offset and must stay literal.
+	 *
+	 * @dataProvider caption_entity_texts
+	 */
+	public function test_caption_entities_are_decoded_and_not_encoded_again( $raw, $expected ) {
+		$this->assertSame( $expected, YouTube::normalize_caption_text( $raw ) );
+		$this->assertSame( $expected, YouTube::normalize_caption_text( $expected ) );
+	}
+
+	public function caption_entity_texts() {
+		return [
+			'numeric apostrophe'        => [ 'how&#39;s', "how's" ],
+			'double-encoded apostrophe' => [ 'how&amp;#39;s', "how's" ],
+			'ampersand'                  => [ 'Faith &amp; works', 'Faith & works' ],
+			'double quote'               => [ 'say &quot;hello&quot;', 'say "hello"' ],
+			'plain apostrophe'           => [ "how's", "how's" ],
+		];
+	}
+
+	/**
+	 * The saved transcript is "(t:N) " plus the decoded cue. Fractional offsets
+	 * are floored, and a second pass over decoded text must not turn "'" or
+	 * "&" back into entities. A "(t:N)" that is spoken text stays spoken text.
+	 */
+	public function test_imported_transcript_decodes_entities_and_keeps_timestamp_markers() {
+		$xml = '<transcript>'
+			. '<text start="6.4" dur="2.0">how&amp;#39;s everyone doing</text>'
+			. '<text start="8" dur="1.0">good</text>'
+			. '<text start="11.9" dur="2.0">awesome it&#39;s &quot;good&quot; &amp; fine (t:3)</text>'
+			. '<text start="14" dur="1.0">   </text>'
+			. '</transcript>';
+
+		$saved = YouTube::format_imported_transcript( YouTube::parse_caption_xml( $xml ) );
+
+		$this->assertSame(
+			'(t:6) how\'s everyone doing (t:8) good (t:11) awesome it\'s "good" & fine (t:3)',
+			$saved
+		);
+		$this->assertStringNotContainsString( '&amp;', $saved );
+		$this->assertStringNotContainsString( '&#39;', $saved );
+		$this->assertStringNotContainsString( '&quot;', $saved );
+		$this->assertStringNotContainsString( '(t:6.4)', $saved );
+		$this->assertStringNotContainsString( '(t:11.9)', $saved );
+
+		$again = YouTube::format_imported_transcript( [
+			[
+				'offset' => '6',
+				'text'   => "how's everyone doing",
+			],
+			[
+				'offset' => '8',
+				'text'   => 'good',
+			],
+		] );
+
+		$this->assertSame( "(t:6) how's everyone doing (t:8) good", $again );
 	}
 }
