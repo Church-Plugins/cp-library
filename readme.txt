@@ -123,8 +123,8 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 * Note: A YouTube transcript is imported only when YouTube returns a caption file for that video. If it does not, nothing is imported.
 * Fix: SermonAudio import includes sermons that are not part of a series.
 * Fix: Filtering or searching sermons on a page that uses the `[cp-sermons]` shortcode no longer leads to a "page not found" error.
-* Fix: Download in the share menu now downloads audio hosted on your site instead of opening it in a browser tab. Audio hosted elsewhere opens from its host as before, and SoundCloud audio still links to SoundCloud.
-* Note: SermonAudio downloads save under the sermon title. For audio on another host, that host chooses the file name, and the browser may play the file in a tab.
+* Fix: Download in the share menu now downloads audio hosted on your site instead of opening it in a browser tab. SoundCloud audio still links to SoundCloud.
+* Note: Audio hosted elsewhere still downloads from its host. SermonAudio files now save under the sermon title; for other hosts, the host chooses the file name and the browser may play the file in a tab.
 * Fix: Downloading the audio for a sermon variation no longer opens a "File download error" page.
 * Security: Hardened the public item log endpoint (validated item IDs and actions, published items only, prepared queries) and added capability and nonce checks to admin export, import and adapter requests.
 * Security: The sermon CSV export (Tools → Import/Export) now downloads directly instead of saving a copy in the uploads folder, where it was publicly reachable and included draft and private sermons. Updating to 1.8.0 deletes the CSV files earlier exports left in the uploads folders, whatever the sermon label was when they were made.
