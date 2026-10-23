@@ -78,6 +78,13 @@ class Download {
 			'file_name'  => ( isset( $_GET['name'] ) ) ? $_GET['name'] : '',
 		) );
 
+		// The download log and header hooks read these keys; nothing in this plugin sets them.
+		$args = wp_parse_args( $args, array(
+			'email'    => '',
+			'download' => '',
+			'payment'  => '',
+		) );
+
 		if ( ! $args['has_access'] ) {
 			$error_message = __( 'You do not have permission to download this file', 'cp-library' );
 			wp_die( apply_filters( 'cp_deny_download_message', $error_message, __( 'Download Verification Failed', 'cp-library' ) ), __( 'Error', 'cp-library' ), array( 'response' => 403 ) );
@@ -235,9 +242,9 @@ class Download {
 		header( "Content-Disposition: attachment; filename=\"" . $this->requested_filename( $args['file_name'], $args ) . "\"" );
 		header( "Content-Transfer-Encoding: binary" );
 
-		// If the file isn't locally hosted, process the redirect
+		// If the file isn't locally hosted, redirect to it rather than streaming it through this site
 		if ( filter_var( $requested_file, FILTER_VALIDATE_URL ) && ! $this->is_local_file( $requested_file ) ) {
-			$this->deliver_download( $requested_file );
+			$this->deliver_download( $requested_file, true );
 			exit;
 		}
 
