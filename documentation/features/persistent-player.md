@@ -60,7 +60,7 @@ On iOS devices (iPhone, iPad), browser autoplay restrictions may cause video or 
 
 ## Player Color
 
-The persistent player uses the **Primary Color** set in Series → Settings → Main. This color applies to the progress bar.
+The persistent player uses the **Primary Color** set in Series → Settings → Main, or under Messages if Series is turned off. This color applies to the progress bar.
 
 ## Theme Compatibility
 

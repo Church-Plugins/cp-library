@@ -6,7 +6,7 @@ Service Types allow you to categorize sermons by the type of service they were d
 
 Service Types are disabled by default. To enable them:
 
-1. Navigate to Series → Settings → Advanced
+1. Navigate to Series → Settings → Advanced, or under Messages if Series is turned off
 2. Find the "Modules" section
 3. Enable "Service Types"
 4. Save changes

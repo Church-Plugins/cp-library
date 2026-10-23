@@ -36,7 +36,7 @@ CP Sermon Library can import sermon data from SermonAudio.
 
 ### Enabling SermonAudio
 
-1. Navigate to Series → Settings → Advanced
+1. Navigate to Series → Settings → Advanced, or under Messages if Series is turned off
 2. Find "Enable Sermon Audio Integration" and select **Enable**
 3. Click "Save Changes"
 4. A Sermon Audio settings tab will appear where you can configure your broadcaster ID
@@ -45,7 +45,7 @@ CP Sermon Library can import sermon data from SermonAudio.
 
 Once enabled, a "Sermon Audio" settings tab appears:
 
-1. Navigate to Series → Settings → Sermon Audio tab
+1. Navigate to Series → Settings → Sermon Audio tab, or under Messages if Series is turned off
 2. Enter your API Key (found at sermonaudio.com/members)
 3. Enter your Broadcaster ID
 4. Optionally set an **Ignore Messages Before** date to skip older sermons. The label follows your plural label.

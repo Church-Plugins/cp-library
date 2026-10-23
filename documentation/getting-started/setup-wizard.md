@@ -35,14 +35,14 @@ Once migration is complete:
 
 1. Review your imported sermons under Series → Messages
 2. Check that series, speakers, and media transferred correctly
-3. Navigate to Series → Settings to configure your preferences
+3. Navigate to Series → Settings, or under Messages if Series is turned off, to configure your preferences
 4. Go to Settings → Permalinks and click "Save Changes" to update URL structure
 
 ## Manual Setup (No Migration)
 
 If you're starting fresh without existing sermon data, proceed directly to configuration:
 
-1. **Configure Labels** — Navigate to Series → Settings to customize content labels (rename "Messages" to "Sermons," etc.)
+1. **Configure Labels** — Navigate to Series → Settings, or under Messages if Series is turned off, to customize content labels (rename "Messages" to "Sermons," etc.)
 2. **Set Up Post Types** — Enable Series, Speakers, and optionally Service Types in the Advanced settings tab
 3. **Configure Display** — On the Messages tab, set **Single Page Template**, **Image Aspect Ratio**, **Info Items**, and **Meta Items**
 4. **Set Up Podcast** — On the Advanced tab, set **Enable Podcast Feed** to **Enable**, save, then fill in the Podcast tab
@@ -52,7 +52,7 @@ See the [Installation Guide](installation.md) for detailed first-steps instructi
 
 ## Configuring Essential Settings
 
-After migration or fresh setup, review these key settings areas:
+After migration or fresh setup, review these key settings areas. These settings are under Series → Settings, or under Messages if Series is turned off:
 
 ### Series → Settings → Main Tab
 - Primary color for the media player

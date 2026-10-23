@@ -2,7 +2,7 @@
 
 The Tools page provides utilities for importing and exporting sermon data in bulk, merging duplicate speakers, and viewing debug logs. Access it by navigating to **Series > Tools** in your WordPress admin.
 
-> **Note:** The default top-level admin menu is **Series** (**Set default menu item**). If you set that to Messages, or you rename a label, the menu name changes to match.
+On a new install the top-level admin menu is **Series**. To change it, go to Series > Settings > Advanced > **Set default menu item** (this option only appears when Series is enabled). If you choose Messages, turn Series off, or rename a label, the menu name changes to match.
 
 The Tools page has two tabs: **Import/Export** and **Log**. You need a user who can manage site options (typically an Administrator).
 
@@ -136,5 +136,5 @@ To run the merge:
 
 The Log tab displays debug log output from the plugin. This is useful for troubleshooting import issues or other plugin behavior.
 
-- Turn on **Enable Debug** under Series → Settings → Advanced for log entries to appear.
+- Turn on **Enable Debug** under Series → Settings → Advanced, or under Messages if Series is turned off, for log entries to appear.
 - Click **Clear Log** to remove all existing log entries.

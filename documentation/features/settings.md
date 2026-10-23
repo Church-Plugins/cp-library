@@ -1,8 +1,8 @@
 # Settings & Configuration
 
-This guide provides an overview of CP Sermon Library settings. Access settings at Series → Settings in your WordPress dashboard.
+This guide provides an overview of CP Sermon Library settings. Access settings at Series → Settings, or under Messages if Series is turned off, in your WordPress dashboard.
 
-> **Note:** The settings menu appears under the post type chosen by **Set default menu item**. The default top-level menu is **Series**.
+On a new install the top-level admin menu is **Series**. To change it, go to Series > Settings > Advanced > **Set default menu item** (this option only appears when Series is enabled). If you choose Messages, turn Series off, or rename a label, the menu name changes to match.
 
 ## Main Tab (`cpl_main_options`)
 
@@ -32,7 +32,7 @@ Upload a fallback thumbnail image used when a sermon or series doesn't have a fe
 Customize the terminology used for sermons:
 
 - **Singular Label** — What to call a single sermon (default: "Message")
-- **Plural Label** — What to call the collection (default: "Messages") — this sets the Messages menu label. The top-level menu follows **Set default menu item**, which defaults to Series.
+- **Plural Label** — What to call the collection (default: "Messages") — this sets the Messages menu label. On a new install the top-level admin menu is **Series**. To change it, go to Series > Settings > Advanced > **Set default menu item** (this option only appears when Series is enabled). If you choose Messages, turn Series off, or rename a label, the menu name changes to match.
 - **Slug** — URL base for sermon archives (default: derived from the plural label)
 
 ### Template Options
@@ -126,7 +126,7 @@ Enable or disable content types and features:
 
 ### Settings
 
-- **Set default menu item** — Choose whether the admin menu uses **Messages** or **Series** (defaults to **Series**; only appears when Series is enabled)
+- **Set default menu item** — On a new install the top-level admin menu is **Series**. To change it, go to Series > Settings > Advanced > **Set default menu item** (this option only appears when Series is enabled). If you choose Messages, turn Series off, or rename a label, the menu name changes to match.
 
 ### Built-in Terms
 

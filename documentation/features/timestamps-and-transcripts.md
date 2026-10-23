@@ -79,7 +79,7 @@ Once configured, transcripts imported from YouTube are automatically sent to Ope
 
 Control whether transcripts appear on sermon pages:
 
-1. Navigate to Series → Settings → Messages tab
+1. Navigate to Series → Settings → Messages tab, or under Messages if Series is turned off
 2. Find **Transcript**
 3. Choose **Show** or **Hide**
 4. Save Changes
@@ -123,6 +123,6 @@ Using timestamps and transcripts improves your content's accessibility:
 
 ### Transcript Not Displaying
 
-- Check that **Transcript** is set to **Show** in Series → Settings → Messages tab
+- Check that **Transcript** is set to **Show** in Series → Settings → Messages tab, or under Messages if Series is turned off
 - Verify the sermon has transcript content entered
 - Test with a default WordPress theme to rule out theme conflicts
