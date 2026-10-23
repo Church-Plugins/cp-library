@@ -102,6 +102,136 @@ function cp_library_migrate_1_6_3( $old_version, $new_version ) {
 add_action( 'cpl_migrate', 'cp_library_migrate_1_6_3', 10, 2 );
 
 /**
+ * Remove sermon CSV exports that earlier versions left in public folders.
+ *
+ * Before 1.8.0 every export was written to `{label}_{date}.csv` in the
+ * uploads folder (or next to Tools.php when uploads was unavailable) and never
+ * removed, so it stayed reachable at a guessable URL. 1.8.0 streams exports,
+ * and an export only cleans up files named with the current sermon label.
+ * This removes the rest on upgrade, whatever label they were exported under.
+ *
+ * @since 1.8.0
+ */
+function cp_library_migrate_1_8_0( $old_version, $new_version ) {
+	$migration = '1.8.0';
+
+	if ( ! version_compare( $old_version, $migration, '<' ) ) {
+		return;
+	}
+
+	if ( cp_library_did_migration( $migration ) ) {
+		return;
+	}
+
+	cp_library_remove_legacy_export_files();
+
+	cp_library_complete_migration( $migration );
+}
+add_action( 'cpl_migrate', 'cp_library_migrate_1_8_0', 10, 2 );
+
+/**
+ * Delete sermon CSV exports written by versions before 1.8.0.
+ *
+ * A file is removed only when its name is `{label}_YYYY-MM-DD.csv` (the name
+ * earlier exports used, for example `Messages_2019-03-17.csv`) and its entire
+ * header row equals a header the export wrote in a released version.
+ *
+ * @since 1.8.0
+ *
+ * @param array|null $directories Folders to check. Defaults to the folders earlier exports wrote to.
+ * @return string[] Paths that were deleted.
+ */
+function cp_library_remove_legacy_export_files( $directories = null ) {
+	if ( null === $directories ) {
+		$directories = array( CP_LIBRARY_PLUGIN_DIR . 'includes/Admin' );
+		$upload_dir  = wp_upload_dir( null, false );
+
+		if ( empty( $upload_dir['error'] ) && ! empty( $upload_dir['basedir'] ) ) {
+			$directories[] = $upload_dir['basedir'];
+			$months        = glob( trailingslashit( $upload_dir['basedir'] ) . '[0-9][0-9][0-9][0-9]/[0-9][0-9]', GLOB_ONLYDIR );
+
+			if ( is_array( $months ) ) {
+				$directories = array_merge( $directories, $months );
+			}
+		}
+	}
+
+	$deleted = array();
+
+	foreach ( array_unique( $directories ) as $directory ) {
+		$matches = glob( trailingslashit( $directory ) . '*_[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].csv' );
+
+		if ( ! is_array( $matches ) ) {
+			continue;
+		}
+
+		foreach ( $matches as $path ) {
+			if ( ! is_file( $path ) || ! cp_library_is_sermon_export( $path ) ) {
+				continue;
+			}
+
+			wp_delete_file( $path );
+
+			if ( ! file_exists( $path ) ) {
+				$deleted[] = $path;
+			}
+		}
+	}
+
+	return $deleted;
+}
+
+/**
+ * Header rows the sermon CSV export wrote in released versions.
+ *
+ * Taken from Tools::get_formatted_item() on each tag that wrote this export:
+ * 1.2.1–1.3.2, 1.4.0–1.4.10, and 1.5.0–1.7.0. Tags before 1.2.1 did not write it.
+ * The whole row has to match. A shared prefix does not.
+ *
+ * @since 1.8.0
+ *
+ * @return array<int, string[]>
+ */
+function cp_library_legacy_export_headers() {
+	return array(
+		array( 'Title', 'Description', 'Series', 'Date', 'Passage', 'Location', 'Service Type', 'Speaker', 'Topics', 'Season', 'Scripture', 'Thumbnail', 'Video', 'Audio' ),
+		array( 'Title', 'Description', 'Series', 'Date', 'Passage', 'Location', 'Service Type', 'Speaker', 'Topics', 'Season', 'Scripture', 'Thumbnail', 'Video', 'Audio', 'Downloads' ),
+		array( 'Title', 'Description', 'Transcript', 'Series', 'Date', 'Passage', 'Location', 'Service Type', 'Speaker', 'Topics', 'Season', 'Scripture', 'Thumbnail', 'Video', 'Audio', 'Downloads' ),
+	);
+}
+
+/**
+ * Whether a CSV file's header row is one the sermon export wrote.
+ *
+ * @since 1.8.0
+ *
+ * @param string $path File path.
+ * @return bool
+ */
+function cp_library_is_sermon_export( $path ) {
+	$handle = @fopen( $path, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+
+	if ( false === $handle ) {
+		return false;
+	}
+
+	$header = fgetcsv( $handle, 0, ',', '"', '\\' );
+	fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+
+	if ( ! is_array( $header ) ) {
+		return false;
+	}
+
+	foreach ( cp_library_legacy_export_headers() as $expected ) {
+		if ( $header === $expected ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
  * Drop the cached Item models and item meta for the given item ids.
  *
  * Scoped deliberately: a bare wp_cache_flush() would evict the whole object cache on

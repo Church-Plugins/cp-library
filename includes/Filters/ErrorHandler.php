@@ -155,28 +155,36 @@ class ErrorHandler {
     /**
      * Handle an exception, optionally sending a JSON response
      *
-     * @param \Exception $exception The exception to handle
+     * @param \Throwable $exception The exception to handle
      * @param bool       $send_json Whether to send a JSON response
      * 
      * @return array|void Error data array if $send_json is false, void otherwise
      */
     public function handle_exception($exception, $send_json = true) {
-        // Default error data
-        $error_data = [
-            'code'    => ErrorCodes::GENERAL_ERROR,
-            'message' => $exception->getMessage(),
-            'status'  => 500,
-        ];
-
-        // Get more specific data for our custom exception
         if ($exception instanceof FilterException) {
+            // Keep the message prepared by the filter exception.
             $error_data = $exception->get_error_response();
+            $error_code = !empty($error_data['code']) ? $error_data['code'] : ErrorCodes::GENERAL_ERROR;
+            $message = (isset($error_data['message']) && is_string($error_data['message']))
+                ? $error_data['message']
+                : '';
+        } else {
+            // Unexpected throwables get the generic user-facing message only.
+            $error_code = ErrorCodes::GENERAL_ERROR;
+            $error_data = [
+                'code'   => $error_code,
+                'status' => 500,
+            ];
+            $message = $this->format_user_error($error_code);
+            if (!is_string($message)) {
+                $message = ErrorCodes::get_message($error_code);
+            }
         }
 
-        // Log the error
+        // Full detail is written by log_error only when WP_DEBUG is on.
         $this->log_error(
-            $error_data['message'],
-            $error_data['code'],
+            $exception->getMessage(),
+            $error_code,
             [
                 'exception' => get_class($exception),
                 'file'      => $exception->getFile(),
@@ -184,6 +192,19 @@ class ErrorHandler {
                 'trace'     => $exception->getTraceAsString(),
             ]
         );
+
+        $error_data['code'] = $error_code;
+        $error_data['message'] = $message;
+
+        // Class names stay out of the response unless WP_DEBUG is on.
+        // facet_id and required_param are left in place.
+        $debug = defined('WP_DEBUG') && WP_DEBUG;
+        if (!($exception instanceof FilterException) && $debug) {
+            $error_data['exception'] = get_class($exception);
+        }
+        if (!$debug) {
+            unset($error_data['exception']);
+        }
 
         // Send JSON response if requested
         if ($send_json) {

@@ -1,10 +1,10 @@
 # Tools: Import, Export & Maintenance
 
-The Tools page provides utilities for importing and exporting sermon data in bulk, merging duplicate speakers, and viewing debug logs. Access it by navigating to **Messages > Tools** in your WordPress admin.
+The Tools page provides utilities for importing and exporting sermon data in bulk, merging duplicate speakers, and viewing debug logs. Access it by navigating to **Series > Tools** in your WordPress admin.
 
-> **Note:** The default admin menu label is **Messages**. If you've renamed your content label (e.g., to "Sermons"), your menu will reflect that name instead.
+> **Note:** The default top-level admin menu is **Series** (**Set default menu item**). If you set that to Messages, or you rename a label, the menu name changes to match.
 
-The Tools page has two tabs: **Import/Export** and **Log**.
+The Tools page has two tabs: **Import/Export** and **Log**. You need a user who can manage site options (typically an Administrator).
 
 On the Import/Export tab you will also find **Full Migration** export and import (CP Sermons 1.7.0 and later). Full Migration moves an entire sermon library between WordPress sites. See [Full Migration: Export & Import](full-migration.md) for details. CSV import and export remain available for spreadsheet-style bulk edits.
 
@@ -28,11 +28,11 @@ Key formatting rules:
 
 ### Running an Import
 
-1. Navigate to **Messages > Tools**. The Import/Export tab is selected by default.
-2. Click **Choose File** and select your CSV file.
+1. Navigate to **Series > Tools**. The Import/Export tab is selected by default.
+2. Select your CSV file in the file input.
 3. Click **Import CSV** to upload the file.
 4. A column mapping table appears. For each sermon field, select the corresponding CSV column from the dropdown. A data preview shows the first row of data for each mapped column.
-5. Any field you do not need can be left set to "Ignore this field."
+5. Any field you do not need can be left set to **- Ignore this field -**.
 6. Configure the additional options below the mapping table:
    - **Attempt to import mp3 files to the Media Library** -- When checked, audio file URLs are downloaded and added to your WordPress Media Library. Checked by default.
    - **Attempt to import downloadable files to the Media Library** -- When checked, downloadable file URLs are downloaded and added to your WordPress Media Library. Checked by default.
@@ -74,7 +74,7 @@ The importer checks for existing sermons before creating new ones. A sermon is c
 
 The export feature downloads all of your sermon data as a single CSV file.
 
-1. Navigate to **Messages > Tools**.
+1. Navigate to **Series > Tools**.
 2. Under the **Export data** section, click **Export all Messages as CSV**.
 3. A CSV file is generated and downloaded to your computer.
 
@@ -94,8 +94,8 @@ Two one-click tools help you recover from the visibility-related issues addresse
 
 Sites that used the "Show in Main List" checkbox under version 1.6.0 or 1.6.1 should run this once after upgrading. It converts the legacy meta key into the new format so any sermons you previously hid by hand stay hidden under the new "Exclude from Main List" convention.
 
-1. Navigate to **Messages > Tools**.
-2. Under **Migrate Visibility Settings**, the page reports how many sermons still hold legacy meta. If the count is zero, no action is needed.
+1. Navigate to **Series > Tools**.
+2. **Migrate Visibility Settings** is shown only when at least one sermon still holds legacy meta. The box reports that count.
 3. Click **Migrate Visibility Settings** to start. A status indicator shows progress.
 4. Sermons that were previously hidden continue to be hidden. Sermons that were previously visible carry no extra meta — they simply default to visible.
 
@@ -105,7 +105,7 @@ The taxonomy term that controls visibility is left untouched by this tool — on
 
 Use this tool if imported sermons are missing from the main sermon list. It clears the hidden flag from every sermon at once.
 
-1. Navigate to **Messages > Tools**.
+1. Navigate to **Series > Tools**.
 2. Under **Reset All Sermons to Visible**, click **Reset Sermon Visibility**.
 3. Confirm the prompt. A status indicator shows progress.
 4. Sermons whose Series or Service Type is excluded from the main list remain hidden — that inheritance is re-applied automatically.
@@ -128,7 +128,7 @@ When you merge duplicate speakers, the tool:
 
 To run the merge:
 
-1. Navigate to **Messages > Tools**.
+1. Navigate to **Series > Tools**.
 2. Under **Merge Duplicate Speakers**, click **Merge Speakers**.
 3. A confirmation message appears when the merge is complete.
 
@@ -136,5 +136,5 @@ To run the merge:
 
 The Log tab displays debug log output from the plugin. This is useful for troubleshooting import issues or other plugin behavior.
 
-- Debug logging must be enabled in **Settings > Advanced** for log entries to appear.
+- Turn on **Enable Debug** under Series → Settings → Advanced for log entries to appear.
 - Click **Clear Log** to remove all existing log entries.

@@ -33,6 +33,28 @@ class Download {
 	}
 
 	/**
+	 * Whether the current user may download a sermon's audio.
+	 *
+	 * Uses the same check as reading a single sermon over the REST API, so a
+	 * draft, private, scheduled or password-protected sermon (or a variation
+	 * under one) is only downloadable by a user who could read it there.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param int $item_id Sermon post ID.
+	 * @return bool
+	 */
+	public static function item_is_downloadable( $item_id ) {
+		$item_id = absint( $item_id );
+
+		if ( ! $item_id || CP_LIBRARY_UPREFIX . '_item' !== get_post_type( $item_id ) ) {
+			return false;
+		}
+
+		return Item::item_is_readable( $item_id );
+	}
+
+	/**
 	 * Process Download
 	 *
 	 * Handles the file download process.
@@ -47,11 +69,20 @@ class Download {
 			return;
 		}
 
+		$item_id = absint( $_GET['item_id'] );
+
 		$args = apply_filters( 'cp_process_download_args', array(
-			'item_id'    => ( isset( $_GET['item_id'] ) ) ? (int) $_GET['item_id'] : '',
+			'item_id'    => $item_id,
 			'key'        => ( isset( $_GET['key'] ) ) ? $_GET['key'] : '',
-			'has_access' => true,
+			'has_access' => self::item_is_downloadable( $item_id ),
 			'file_name'  => ( isset( $_GET['name'] ) ) ? $_GET['name'] : '',
+		) );
+
+		// The download log and header hooks read these keys; nothing in this plugin sets them.
+		$args = wp_parse_args( $args, array(
+			'email'    => '',
+			'download' => '',
+			'payment'  => '',
 		) );
 
 		if ( ! $args['has_access'] ) {
@@ -208,12 +239,13 @@ class Download {
 		header( "Robots: none" );
 		header( "Content-Type: " . $ctype . "" );
 		header( "Content-Description: File Transfer" );
-		header( "Content-Disposition: attachment; filename=\"" . apply_filters( 'cp_requested_file_name', $args['file_name'], $args ) . "\"" );
+		header( "Content-Disposition: attachment; filename=\"" . $this->requested_filename( $args['file_name'], $args ) . "\"" );
 		header( "Content-Transfer-Encoding: binary" );
 
-		// If the file isn't locally hosted, process the redirect
+		// If the file isn't locally hosted, redirect to it rather than streaming it through this site.
+		// get_audio() encodes "&" for HTML; the Location value has to be the raw URL.
 		if ( filter_var( $requested_file, FILTER_VALIDATE_URL ) && ! $this->is_local_file( $requested_file ) ) {
-			$this->deliver_download( $requested_file );
+			$this->deliver_download( $this->redirect_location( $requested_file ), true );
 			exit;
 		}
 
@@ -303,6 +335,60 @@ class Download {
 	}
 
 	/**
+	 * Filename for the Content-Disposition header.
+	 *
+	 * The requested name — the `name` query argument, or the file basename when
+	 * that is empty — is passed through `cp_requested_file_name` and then
+	 * `sanitize_file_name()`. Cleaning the filter result covers both the
+	 * default and a filtered name. The extension stays with the name;
+	 * `sanitize_file_name()` keeps it.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $file_name Requested download name.
+	 * @param array  $args      Download arguments.
+	 * @return string
+	 */
+	function requested_filename( $file_name, $args ) {
+		$file_name = apply_filters( 'cp_requested_file_name', $file_name, $args );
+
+		return sanitize_file_name( $file_name );
+	}
+
+	/**
+	 * Location value for a file redirect.
+	 *
+	 * Item::get_audio() runs the stored URL through sanitize_embed(), which
+	 * encodes "&" as "&amp;". A Location header needs the raw URL. Paths that
+	 * are not URLs are returned unchanged. esc_url_raw() keeps the allowed
+	 * protocols already used for downloads and does not entity-encode "&".
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param string $file File path or URL.
+	 * @return string
+	 */
+	function redirect_location( $file ) {
+		if ( ! is_string( $file ) || '' === $file ) {
+			return $file;
+		}
+
+		$decoded = html_entity_decode( $file, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+		if ( ! filter_var( $decoded, FILTER_VALIDATE_URL ) && ! filter_var( $file, FILTER_VALIDATE_URL ) ) {
+			return $file;
+		}
+
+		$raw = esc_url_raw( $decoded );
+
+		if ( is_string( $raw ) && '' !== $raw ) {
+			return $raw;
+		}
+
+		return $decoded;
+	}
+
+	/**
 	 * Deliver the download file
 	 *
 	 * If enabled, the file is symlinked to better support large file downloads
@@ -316,7 +402,7 @@ class Download {
 
 		if ( $redirect ) {
 
-			header( 'Location: ' . $file );
+			header( 'Location: ' . $this->redirect_location( $file ) );
 
 		} else {
 

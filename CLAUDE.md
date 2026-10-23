@@ -178,6 +178,24 @@ npm run build
 - The plugin uses webpack for asset bundling
 - SASS is used for styling
 
+### Reporting Bugs
+
+Any time you find a bug, open a GitHub issue for it (`gh issue create --label bug`),
+even if it is outside the task at hand — during code review, docs checks, testing,
+or while working on something else. Don't leave it only in a chat reply, PR comment,
+or subagent report.
+
+- Confirm the bug in the code first, against the branch it affects.
+- Check open issues for a duplicate before filing.
+- In the body, say where it shows up for users, why it happens (with `file:line`
+  references), and a suggested fix. Mention the PR or task where it was found.
+- Fixing it in the same change is fine when it's in scope, but still file the
+  issue if the fix is deferred.
+- **Security bugs are the exception.** This repo is public, so don't open a
+  public issue for anything that exposes data or bypasses a permission check.
+  Raise it with the maintainer, who decides whether it goes into a private
+  GitHub security advisory or straight into a fix.
+
 ### Plugin Structure
 
 #### Core Files

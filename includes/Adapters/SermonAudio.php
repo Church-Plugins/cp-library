@@ -156,6 +156,7 @@ class SermonAudio extends Adapter {
 			'pageSize'               => $amount,
 			'broadcasterID'          => $this->get_setting( 'broadcaster_id', '' ),
 			'sortBy'                 => 'newest',
+			'requirePlaylist'        => 'false',
 			'preachedAfterTimestamp' => strtotime( $this->get_setting( 'ignore_before', 0 ) ),
 			'cache'                  => true
 		);
@@ -197,6 +198,7 @@ class SermonAudio extends Adapter {
 			'broadcasterID'          => $this->get_setting( 'broadcaster_id', '' ),
 			'sortBy'                 => 'oldest',
 			'page'                   => $batch,
+			'requirePlaylist'        => 'false',
 			'preachedAfterTimestamp' => strtotime( $this->get_setting( 'ignore_before', 0 ) ),
 			'cache'                  => true
 		);
@@ -267,6 +269,516 @@ class SermonAudio extends Adapter {
 	}
 
 	/**
+	 * Title to store for a SermonAudio sermon.
+	 *
+	 * SermonAudio's displayTitle is abbreviated, often with a trailing "...",
+	 * so separate parts of one series arrive with the same title. fullTitle is
+	 * the complete title and is nullable. A usable value is returned trim()'d:
+	 * surrounding whitespace is removed, and whitespace between words is kept.
+	 * Null, "", and a whitespace-only fullTitle fall back to displayTitle,
+	 * trim()'d the same way.
+	 *
+	 * When both titles are missing or blank this returns "". The formatted
+	 * item is what the sync hash covers, so a blank payload must hash the
+	 * same way on every fetch. "Untitled sermon" applies to new sermons, or
+	 * to an existing sermon that has no usable title. An existing sermon
+	 * with a usable title keeps that title.
+	 *
+	 * @param object $sermon Sermon payload from the SermonAudio API.
+	 * @return string Trimmed title, or "" when neither field is usable.
+	 */
+	public static function resolve_sermon_title( $sermon ) {
+		if ( isset( $sermon->fullTitle ) && is_string( $sermon->fullTitle ) ) {
+			$full_title = trim( $sermon->fullTitle );
+
+			if ( '' !== $full_title ) {
+				return $full_title;
+			}
+		}
+
+		if ( isset( $sermon->displayTitle ) && is_string( $sermon->displayTitle ) ) {
+			$display_title = trim( $sermon->displayTitle );
+
+			if ( '' !== $display_title ) {
+				return $display_title;
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Insert or update the WordPress post for an imported item.
+	 *
+	 * Blank-title handling applies only to sermons. A blank API title is ""
+	 * on the formatted item, which is what the sync hash stores. For a sermon
+	 * that already exists and has a usable title, that blank must not replace
+	 * the title on the post. The kept title is slashed because wp_insert_post()
+	 * unslashes its input, and a stored backslash would otherwise be stripped.
+	 * "Untitled sermon" applies to new sermons, or to an existing sermon that
+	 * has no usable title.
+	 *
+	 * A usable sermon title from the API is slashed the same way, so a
+	 * backslash is kept as sent. Speakers and series are passed through
+	 * untouched, as they were before this handling existed. An update keeps
+	 * any status they already have.
+	 *
+	 * @param array $item Post fields for wp_insert_post(), without external_id.
+	 * @return int|\WP_Error
+	 */
+	protected function insert_imported_post( $item ) {
+		$sermon_type = cp_library()->setup->post_types->item->post_type;
+
+		if ( ! isset( $item['post_type'] ) || $sermon_type !== $item['post_type'] ) {
+			return parent::insert_imported_post( $item );
+		}
+
+		$title = isset( $item['post_title'] ) ? $item['post_title'] : '';
+
+		if ( ! self::title_is_usable( $title ) ) {
+			$kept = null;
+
+			if ( ! empty( $item['ID'] ) ) {
+				$existing = get_post( $item['ID'] );
+
+				if ( $existing instanceof \WP_Post && self::title_is_usable( $existing->post_title ) ) {
+					// wp_insert_post() runs wp_unslash(). Slash the raw DB value
+					// so a backslash in the stored title survives.
+					$kept = wp_slash( $existing->post_title );
+				}
+			}
+
+			$item['post_title'] = null !== $kept ? $kept : __( 'Untitled sermon', 'cp-library' );
+		} else {
+			$item['post_title'] = wp_slash( $title );
+		}
+
+		return parent::insert_imported_post( $item );
+	}
+
+	/**
+	 * Whether a title has characters other than whitespace.
+	 *
+	 * @param mixed $title Title from the API or from an existing post.
+	 * @return bool
+	 */
+	private static function title_is_usable( $title ) {
+		return is_string( $title ) && '' !== trim( $title );
+	}
+
+	/**
+	 * Rewrite a SermonAudio scripture reference so our book list can keep it.
+	 *
+	 * SermonAudio spells the book in English and separates references with ";".
+	 * The book it sends for the psalter is "Psalm". Our list
+	 * (templates/__data/scripture_detailed_20230427_124224.json) names that book
+	 * "Psalms". Scripture::get_book() keeps a passage only when it starts with
+	 * one of those names, so "Psalm 46" was dropped and never saved.
+	 *
+	 * The book at the start of $passage is replaced with that canonical name.
+	 * The same map covers the other singular/plural mismatch (Revelations),
+	 * the usual abbreviations (Ps, Song of Songs, 1 Cor), those abbreviations
+	 * with the space removed (1Cor, 2Co, 1Jn), and spelled-out ordinals
+	 * (First Corinthians, 1st John, 3rd John). Matching is case-insensitive,
+	 * longest alias first, and stops at a boundary, so "Psalms" is not
+	 * rewritten again, "Mal" is not "Mark", "Ezek" is not "Ezra", and
+	 * "2 Corinthians" is not read as "1 Corinthians". A passage that still
+	 * matches nothing is returned unchanged. A trailing period on an
+	 * abbreviation is dropped, so "Ps. 23" becomes "Psalms 23".
+	 *
+	 * A comma is not a separator here. "Psalm 23:1, 4" is one reference.
+	 * Callers that already split on commas (the CSV scripture column) pass
+	 * each piece in separately.
+	 *
+	 * @param string $passage One reference, without a separating semicolon.
+	 * @return string
+	 */
+	public static function normalize_scripture_passage( $passage ) {
+		$passage = trim( (string) $passage );
+
+		if ( '' === $passage ) {
+			return '';
+		}
+
+		$lower = strtolower( $passage );
+
+		foreach ( self::scripture_book_aliases() as $alias => $canonical ) {
+			$alias_lower = strtolower( $alias );
+			$length      = strlen( $alias_lower );
+
+			if ( strlen( $lower ) < $length || substr( $lower, 0, $length ) !== $alias_lower ) {
+				continue;
+			}
+
+			$next = substr( $passage, $length, 1 );
+
+			if ( '.' === $next ) {
+				$rest = substr( $passage, $length + 1 );
+			} elseif ( self::is_scripture_book_boundary( $next ) ) {
+				$rest = substr( $passage, $length );
+			} else {
+				continue;
+			}
+
+			return $canonical . $rest;
+		}
+
+		return $passage;
+	}
+
+	/**
+	 * Normalize every reference in a SermonAudio bibleText value.
+	 *
+	 * Non-strings are returned as given. Blank pieces from a trailing
+	 * semicolon are dropped. Pieces are joined back with "; ".
+	 *
+	 * @param mixed $bible_text bibleText from the SermonAudio API.
+	 * @return mixed
+	 */
+	public static function normalize_bible_text( $bible_text ) {
+		if ( ! is_string( $bible_text ) ) {
+			return $bible_text;
+		}
+
+		$normalized = array();
+
+		foreach ( explode( ';', $bible_text ) as $passage ) {
+			$passage = self::normalize_scripture_passage( $passage );
+
+			if ( '' !== $passage ) {
+				$normalized[] = $passage;
+			}
+		}
+
+		return implode( '; ', $normalized );
+	}
+
+	/**
+	 * Alias (and canonical name) to the book name in our scripture list.
+	 *
+	 * Keys are matched longest-first. Canonical names are included so a book
+	 * that is already spelled our way is left on that spelling.
+	 *
+	 * @return array<string,string>
+	 */
+	private static function scripture_book_aliases() {
+		static $aliases = null;
+
+		if ( null !== $aliases ) {
+			return $aliases;
+		}
+
+		$canonical = array(
+			'Genesis',
+			'Exodus',
+			'Leviticus',
+			'Numbers',
+			'Deuteronomy',
+			'Joshua',
+			'Judges',
+			'Ruth',
+			'1 Samuel',
+			'2 Samuel',
+			'1 Kings',
+			'2 Kings',
+			'1 Chronicles',
+			'2 Chronicles',
+			'Ezra',
+			'Nehemiah',
+			'Esther',
+			'Job',
+			'Psalms',
+			'Proverbs',
+			'Ecclesiastes',
+			'Song of Solomon',
+			'Isaiah',
+			'Jeremiah',
+			'Lamentations',
+			'Ezekiel',
+			'Daniel',
+			'Hosea',
+			'Joel',
+			'Amos',
+			'Obadiah',
+			'Jonah',
+			'Micah',
+			'Nahum',
+			'Habakkuk',
+			'Zephaniah',
+			'Haggai',
+			'Zechariah',
+			'Malachi',
+			'Matthew',
+			'Mark',
+			'Luke',
+			'John',
+			'Acts',
+			'Romans',
+			'1 Corinthians',
+			'2 Corinthians',
+			'Galatians',
+			'Ephesians',
+			'Philippians',
+			'Colossians',
+			'1 Thessalonians',
+			'2 Thessalonians',
+			'1 Timothy',
+			'2 Timothy',
+			'Titus',
+			'Philemon',
+			'Hebrews',
+			'James',
+			'1 Peter',
+			'2 Peter',
+			'1 John',
+			'2 John',
+			'3 John',
+			'Jude',
+			'Revelation',
+		);
+
+		$map = array();
+
+		foreach ( $canonical as $book ) {
+			$map[ $book ] = $book;
+		}
+
+		$extra = array(
+			'Psalm'                  => 'Psalms',
+			'Ps'                     => 'Psalms',
+			'Psa'                    => 'Psalms',
+			'Psm'                    => 'Psalms',
+			'Pss'                    => 'Psalms',
+			'Revelations'            => 'Revelation',
+			'Apocalypse'             => 'Revelation',
+			'Song of Songs'          => 'Song of Solomon',
+			'Canticles'              => 'Song of Solomon',
+			'Canticle of Canticles'  => 'Song of Solomon',
+			'Gen'                    => 'Genesis',
+			'Ge'                     => 'Genesis',
+			'Ex'                     => 'Exodus',
+			'Exo'                    => 'Exodus',
+			'Exod'                   => 'Exodus',
+			'Lev'                    => 'Leviticus',
+			'Num'                    => 'Numbers',
+			'Numb'                   => 'Numbers',
+			'Deut'                   => 'Deuteronomy',
+			'Dt'                     => 'Deuteronomy',
+			'Josh'                   => 'Joshua',
+			'Judg'                   => 'Judges',
+			'Jdg'                    => 'Judges',
+			'1 Sam'                  => '1 Samuel',
+			'2 Sam'                  => '2 Samuel',
+			'1 Sa'                   => '1 Samuel',
+			'2 Sa'                   => '2 Samuel',
+			'I Samuel'               => '1 Samuel',
+			'II Samuel'              => '2 Samuel',
+			'1 Kgs'                  => '1 Kings',
+			'2 Kgs'                  => '2 Kings',
+			'1 Ki'                   => '1 Kings',
+			'2 Ki'                   => '2 Kings',
+			'I Kings'                => '1 Kings',
+			'II Kings'               => '2 Kings',
+			'1 Chr'                  => '1 Chronicles',
+			'2 Chr'                  => '2 Chronicles',
+			'1 Ch'                   => '1 Chronicles',
+			'2 Ch'                   => '2 Chronicles',
+			'I Chronicles'           => '1 Chronicles',
+			'II Chronicles'          => '2 Chronicles',
+			'Neh'                    => 'Nehemiah',
+			'Esth'                   => 'Esther',
+			'Prov'                   => 'Proverbs',
+			'Pro'                    => 'Proverbs',
+			'Eccl'                   => 'Ecclesiastes',
+			'Eccles'                 => 'Ecclesiastes',
+			'Ecc'                    => 'Ecclesiastes',
+			'Isa'                    => 'Isaiah',
+			'Jer'                    => 'Jeremiah',
+			'Lam'                    => 'Lamentations',
+			'Ezek'                   => 'Ezekiel',
+			'Ezk'                    => 'Ezekiel',
+			'Dan'                    => 'Daniel',
+			'Hos'                    => 'Hosea',
+			'Obad'                   => 'Obadiah',
+			'Mic'                    => 'Micah',
+			'Nah'                    => 'Nahum',
+			'Hab'                    => 'Habakkuk',
+			'Zeph'                   => 'Zephaniah',
+			'Hag'                    => 'Haggai',
+			'Zech'                   => 'Zechariah',
+			'Zec'                    => 'Zechariah',
+			'Mal'                    => 'Malachi',
+			'Matt'                   => 'Matthew',
+			'Mt'                     => 'Matthew',
+			'Mk'                     => 'Mark',
+			'Mrk'                    => 'Mark',
+			'Lk'                     => 'Luke',
+			'Luk'                    => 'Luke',
+			'Jn'                     => 'John',
+			'Jhn'                    => 'John',
+			'Rom'                    => 'Romans',
+			'1 Cor'                  => '1 Corinthians',
+			'2 Cor'                  => '2 Corinthians',
+			'1 Co'                   => '1 Corinthians',
+			'2 Co'                   => '2 Corinthians',
+			'I Corinthians'          => '1 Corinthians',
+			'II Corinthians'         => '2 Corinthians',
+			'I Cor'                  => '1 Corinthians',
+			'II Cor'                 => '2 Corinthians',
+			'Gal'                    => 'Galatians',
+			'Eph'                    => 'Ephesians',
+			'Phil'                   => 'Philippians',
+			'Php'                    => 'Philippians',
+			'Col'                    => 'Colossians',
+			'1 Thess'                => '1 Thessalonians',
+			'2 Thess'                => '2 Thessalonians',
+			'1 Th'                   => '1 Thessalonians',
+			'2 Th'                   => '2 Thessalonians',
+			'I Thessalonians'        => '1 Thessalonians',
+			'II Thessalonians'       => '2 Thessalonians',
+			'1 Tim'                  => '1 Timothy',
+			'2 Tim'                  => '2 Timothy',
+			'1 Ti'                   => '1 Timothy',
+			'2 Ti'                   => '2 Timothy',
+			'I Timothy'              => '1 Timothy',
+			'II Timothy'             => '2 Timothy',
+			'Tit'                    => 'Titus',
+			'Philem'                 => 'Philemon',
+			'Phlm'                   => 'Philemon',
+			'Phm'                    => 'Philemon',
+			'Heb'                    => 'Hebrews',
+			'Jas'                    => 'James',
+			'Jam'                    => 'James',
+			'1 Pet'                  => '1 Peter',
+			'2 Pet'                  => '2 Peter',
+			'1 Pe'                   => '1 Peter',
+			'2 Pe'                   => '2 Peter',
+			'I Peter'                => '1 Peter',
+			'II Peter'               => '2 Peter',
+			'1 Jn'                   => '1 John',
+			'2 Jn'                   => '2 John',
+			'3 Jn'                   => '3 John',
+			'I John'                 => '1 John',
+			'II John'                => '2 John',
+			'III John'               => '3 John',
+			'Rev'                    => 'Revelation',
+		);
+
+		foreach ( $extra as $alias => $book ) {
+			$map[ $alias ] = $book;
+		}
+
+		foreach ( self::numbered_book_forms() as $alias => $book ) {
+			$map[ $alias ] = $book;
+		}
+
+		uksort(
+			$map,
+			static function ( $a, $b ) {
+				return strlen( $b ) <=> strlen( $a );
+			}
+		);
+
+		$aliases = $map;
+
+		return $aliases;
+	}
+
+	/**
+	 * No-space and spelled-out forms of the numbered books.
+	 *
+	 * "1Cor" and "First Corinthians" do not start with "1 Corinthians", so
+	 * get_book() drops them. The number stays attached to the name it belongs
+	 * to: "2Co" is 2 Corinthians, not 1 Corinthians, and "1Ch" is not "1Co".
+	 *
+	 * @return array<string,string>
+	 */
+	private static function numbered_book_forms() {
+		$shorts = array(
+			'Samuel'        => array( 'Sam', 'Sa' ),
+			'Kings'         => array( 'Kgs', 'Ki' ),
+			'Chronicles'    => array( 'Chr', 'Ch' ),
+			'Corinthians'   => array( 'Cor', 'Co' ),
+			'Thessalonians' => array( 'Thess', 'Th' ),
+			'Timothy'       => array( 'Tim', 'Ti' ),
+			'Peter'         => array( 'Pet', 'Pe' ),
+			'John'          => array( 'Jn', 'Jhn' ),
+		);
+
+		$words = array(
+			'1' => array( 'First', '1st' ),
+			'2' => array( 'Second', '2nd' ),
+			'3' => array( 'Third', '3rd' ),
+		);
+
+		$books = array(
+			'1 Samuel',
+			'2 Samuel',
+			'1 Kings',
+			'2 Kings',
+			'1 Chronicles',
+			'2 Chronicles',
+			'1 Corinthians',
+			'2 Corinthians',
+			'1 Thessalonians',
+			'2 Thessalonians',
+			'1 Timothy',
+			'2 Timothy',
+			'1 Peter',
+			'2 Peter',
+			'1 John',
+			'2 John',
+			'3 John',
+		);
+
+		$map = array();
+
+		foreach ( $books as $book ) {
+			list( $number, $name ) = explode( ' ', $book, 2 );
+			$abbreviations         = isset( $shorts[ $name ] ) ? $shorts[ $name ] : array();
+
+			$map[ $number . $name ] = $book;
+
+			foreach ( $abbreviations as $abbreviation ) {
+				$map[ $number . $abbreviation ] = $book;
+			}
+
+			if ( empty( $words[ $number ] ) ) {
+				continue;
+			}
+
+			foreach ( $words[ $number ] as $word ) {
+				$map[ $word . ' ' . $name ] = $book;
+				$map[ $word . $name ]       = $book;
+
+				foreach ( $abbreviations as $abbreviation ) {
+					$map[ $word . ' ' . $abbreviation ] = $book;
+					$map[ $word . $abbreviation ]       = $book;
+				}
+			}
+		}
+
+		return $map;
+	}
+
+	/**
+	 * Whether the character after a book alias ends the book name.
+	 *
+	 * A letter continues the word ("Psalm" must not match inside "Psalms").
+	 * End of string, whitespace, and a chapter number or punctuation do.
+	 *
+	 * @param string $char One character, or "" at the end of the passage.
+	 * @return bool
+	 */
+	private static function is_scripture_book_boundary( $char ) {
+		if ( '' === $char ) {
+			return true;
+		}
+
+		return 1 === preg_match( '/[\s\d:;,\-–—()]/', $char );
+	}
+
+	/**
 	 * Formats a Sermon
 	 *
 	 * @param \stdClass $item The sermon to format.
@@ -282,7 +794,7 @@ class SermonAudio extends Adapter {
 
 		$args = array(
 			'external_id'  => $item->sermonID,
-			'post_title'   => $item->displayTitle,
+			'post_title'   => self::resolve_sermon_title( $item ),
 			'post_date'    => $post_date,
 			'post_status'  => 'publish',
 			'post_type'    => cp_library()->setup->post_types->item->post_type,
@@ -301,7 +813,7 @@ class SermonAudio extends Adapter {
 		}
 
 		if ( $item->bibleText ) {
-			$args['cpl_data']['scripture'] = $item->bibleText;
+			$args['cpl_data']['scripture'] = self::normalize_bible_text( $item->bibleText );
 		}
 
 		if ( $item->eventType ) {

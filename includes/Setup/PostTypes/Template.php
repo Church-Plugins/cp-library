@@ -216,7 +216,7 @@ class Template extends PostType {
 
 		$template = get_post( $template_id );
 
-		if ( ! $template ) {
+		if ( ! $template || ! self::template_is_renderable( $template ) ) {
 			return esc_html__( 'Template not found', 'cp-library' );
 		}
 
@@ -234,12 +234,50 @@ class Template extends PostType {
 	}
 
 	/**
+	 * Whether a post may be rendered as a template for the current user.
+	 *
+	 * Only template posts render. A published template without a password
+	 * renders for everyone; any other template renders only for a user who
+	 * can edit it, so drafts still preview in the editor.
+	 *
+	 * @since 1.8.0
+	 *
+	 * @param WP_Post|object $template The post to render.
+	 * @return bool
+	 */
+	public static function template_is_renderable( $template ) {
+		if ( empty( $template->ID ) || CP_LIBRARY_UPREFIX . '_template' !== $template->post_type ) {
+			return false;
+		}
+
+		if ( 'publish' === $template->post_status && ! post_password_required( $template ) ) {
+			return true;
+		}
+
+		return current_user_can( 'edit_post', $template->ID );
+	}
+
+	/**
 	 * Handles an ajax request
 	 */
 	public function render_ajax_content() {
+		if ( ! $this->template_ajax_is_allowed() ) {
+			wp_die( '', '', array( 'response' => 403 ) );
+			return;
+		}
+
 		$template_id = isset( $_GET['templateId'] ) ? absint( $_GET['templateId'] ) : 0;
 		echo self::render_content( $template_id ); // phpcs:ignore WordPress.Security.EscapeOutput
 		wp_die();
+	}
+
+	/**
+	 * Whether the template preview request may continue.
+	 *
+	 * @return bool
+	 */
+	public function template_ajax_is_allowed() {
+		return current_user_can( 'edit_posts' ) && (bool) check_ajax_referer( 'cpl_render_template', 'nonce', false );
 	}
 
 	/**
