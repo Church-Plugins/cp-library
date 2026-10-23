@@ -4,7 +4,7 @@ Tags: sermons, church, podcast, speakers, series
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.7.0
+Stable tag: 1.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -113,14 +113,24 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 
 == Changelog ==
 
-= Unreleased =
+= 1.8.0 =
+* New: Audio downloads from the share menu are saved under the audio file's own name instead of a name built from the sermon title. The name is cleaned up on the server so it is safe to save on any computer.
+* New: The sermon Transcript box accepts a `.vtt` or `.srt` caption file. Timestamps and caption markup are removed, leaving the text.
 * Fix: Scripture references that use "Psalm", a common abbreviation ("Ps", "1 Cor", "1Cor", "2Co", "1Jn"), or a spelled-out number ("First Corinthians", "3rd John") are rewritten to the book name CP Sermons stores, so those references are kept. This applies to SermonAudio import, CSV import, and saving a sermon in wp-admin. "Psalm 23" is stored as "Psalms 23". "2 Corinthians" is left as 2 Corinthians. SermonAudio and the sermon edit screen do not split on commas, so "Psalm 23:1, 4" stays one passage there. A CSV scripture cell still splits on every comma, as it did before, so "Psalm 23:1, 4" in a CSV cell loses the ", 4". "Ps 23, Jn 3:16" in a CSV cell is two references and both are kept.
 * Fix: SermonAudio imports now use the sermon's full title when SermonAudio provides one, and the abbreviated title when that full title is missing or blank. Surrounding whitespace on the title is trimmed. Backslashes in sermon titles are kept as sent. "Untitled sermon" applies to new sermons, or to an existing sermon that has no usable title. A sermon already imported keeps its title when SermonAudio sends no usable title and that sermon already has a usable title. Sermons already imported are retitled when they are fetched again: the most recent ones (Check Count, default 50) on the next scheduled sync or Check Now, and older ones on Start full import. A published sermon keeps its permalink. A pending sermon may get a new permalink when it is published, because WordPress clears the slug of a pending post when no user who can publish is logged in (for example a scheduled sync). An existing sermon keeps its status, so trash, draft, pending, private, and scheduled sermons stay that way, and a scheduled sermon keeps its date. Speakers and series keep any status on update, same as sermons. A future sermon whose stored date is already in the past flips to publish on update (unchanged WordPress behaviour). `wp cp sermonaudio import` and `wp cp sermonaudio import --recent` do not use the sync hash. The default command retitles every existing sermon that has a usable title; `--recent` retitles each sermon in the batch it fetches.
-* Security: Hardened the public item log endpoint (validated item IDs and actions, published items only, prepared queries) and added capability and nonce checks to admin export, import and adapter requests.
 * Fix: The analytics average view time now averages each separate listen instead of summing each visitor's listens, so repeat listeners can lower the number.
+* Fix: YouTube transcript import works again after YouTube changed how it serves caption files. When a transcript still can't be fetched, the sermon edit screen says so and suggests uploading a `.vtt` or `.srt` file or pasting the transcript. YouTube links with extra parameters, and `youtu.be`, live, embed and Shorts links, are recognized.
+* Fix: SermonAudio import includes sermons that are not part of a series.
+* Fix: Filtering or searching sermons on a page that uses the `[cp-sermons]` shortcode no longer leads to a "page not found" error.
+* Fix: Download in the share menu now downloads the sermon audio through your site instead of linking straight to the audio file. SoundCloud audio still links to SoundCloud.
+* Security: Hardened the public item log endpoint (validated item IDs and actions, published items only, prepared queries) and added capability and nonce checks to admin export, import and adapter requests.
 * Security: The sermon CSV export (Tools → Import/Export) now downloads directly instead of saving a copy in the uploads folder, where it was publicly reachable and included draft and private sermons. Running an export also deletes any `{Sermons}_YYYY-MM-DD.csv` files earlier exports left in the uploads folders.
 * Security: Template output (the `[cpl_template]` shortcode, the template block and the Beaver Builder, Divi and Elementor template modules) now only renders published templates. Before, any post ID would render, so a contributor could display private, draft or password-protected posts and pages. Draft templates still render for users who can edit them.
 * Security: Sermon audio downloads now only work for sermons the visitor can view. Before, the audio of a draft, private, scheduled or password-protected sermon could be downloaded by its ID.
+* Security: Draft, private, scheduled and password-protected sermons, and their variations, are only shown to visitors who can view them, in the REST API, shortcodes and templates. Transcripts are left out of REST API sermon lists and still included for a single sermon. Shortcode parameters are escaped, and admin actions and AJAX requests check the user's permissions.
+* Security: YouTube transcript import, for one sermon or in bulk, now checks that the user can edit each sermon.
+* Security: Filter error messages, filter option names and speaker names are shown as plain text.
+* Security: Updated the ChurchPlugins framework to 1.1.19. Its request actions now only run for a logged-in user with the required permission.
 
 = 1.7.0 =
 * New: **Tools → Import/Export → Full Migration** — move an entire sermon library between sites in one step. Exports sermons (with variations, timestamps, transcripts and downloads), series, speakers, service types, templates and taxonomy terms, and optionally your plugin settings. Imports run in small batches and can be resumed, so libraries with tens of thousands of sermons don't hit a PHP timeout. Re-importing the same file updates the existing content instead of duplicating it.
@@ -184,6 +194,9 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 * Feature updates and enhancements
 
 == Upgrade Notice ==
+
+= 1.8.0 =
+Security release, and updating is recommended. Draft, private and password-protected content is no longer exposed through sermon downloads, templates, the REST API or shortcodes. Also fixes YouTube transcript import, SermonAudio import of sermons without a series, and filters on pages that use the `[cp-sermons]` shortcode.
 
 = 1.7.0 =
 Adds a full-site migration tool for moving a sermon library between sites, and fixes several Speaker/Series assignment bugs. A one-time cleanup runs on upgrade to remove orphaned and duplicate Speaker/Series associations. If you use WP All Import, note that a blank or unmatched Speaker/Series column no longer clears existing assignments.
