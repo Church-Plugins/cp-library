@@ -38,6 +38,7 @@ npm run build
 * Bug Fix: Filter and search on a Page using `[cp-sermons]` no longer 404 (the `post_type` query arg is no longer submitted on Pages and singulars)
 * Bug Fix: SoundCloud detection in the share-menu download was inverted, so non-SoundCloud audio skipped the site download endpoint. Variation rows now carry `originID` so they work with the endpoint, and remote audio is redirected to rather than streamed through PHP
 * Note: The host chooses the file name, and the browser may play the file in a tab.
+* Fix: Downloading the audio for a sermon variation no longer opens a "File download error" page.
 * Security: Hardened the public item log endpoint (validated item IDs and actions, published items only, prepared queries) and added capability and nonce checks to admin export, import and adapter requests.
 * Security: The sermon CSV export (Tools → Import/Export) now downloads directly instead of saving a copy in the uploads folder, where it was publicly reachable and included draft and private sermons. The 1.8.0 upgrade migration deletes the export CSVs earlier versions left in the uploads folders, under any label; running an export also removes those with the current label.
 * Security: Template output (the `[cpl_template]` shortcode, the template block and the Beaver Builder, Divi and Elementor template modules) now only renders published templates. Before, any post ID would render, so a contributor could display private, draft or password-protected posts and pages. Draft templates still render for users who can edit them.
