@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { getAudioDownloadName } from "../../utils/downloadFilename";
 import { cplLog, cplVar } from "../../utils/helpers";
 import Box from '@mui/material/Box';
 import MenuItem from '@mui/material/MenuItem';
@@ -45,12 +46,12 @@ export default function ShareButton({ item, variant = "outlined" }) {
 
 		const link = document.createElement('a');
 
-		const downloadName = (item.title || 'download').replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.mp3';
+		const downloadName = getAudioDownloadName( item.audio );
 
 		if ( item.audio.includes('soundcloud') ) {
 	    link.href = item.audio;
 		} else {
-	    link.href = cplVar( 'url', 'site' ) + '?item_id=' + item.originID + '&key=audio&name=' + downloadName;
+	    link.href = cplVar( 'url', 'site' ) + '?item_id=' + item.originID + '&key=audio&name=' + encodeURIComponent( downloadName );
 		}
 
 		link.setAttribute(
