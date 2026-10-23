@@ -45,7 +45,6 @@ npm run build
 * Security: YouTube transcript import (single and bulk) checks a nonce and `edit_post` on each item
 * Security: Filter error messages, filter option titles and speaker names are escaped on output
 * Security: ChurchPlugins framework 1.1.19 — `cp_action` requests require a logged-in user with the needed capability and a valid nonce or same-site POST
-* Known issue (developers): calling `cpl_get_canonical_url()` or `cpl_output_canonical()` from custom code causes a fatal error.
 
 #### 1.7.0
 * **Major Feature**: Full-site Import/Export (Tools → Import/Export → Full Migration) — exports sermons (with variations, timestamps, transcripts and downloads), series, speakers, service types, templates, taxonomy terms and optionally plugin settings. Imports run in resumable batches; re-importing the same file updates instead of duplicating.
