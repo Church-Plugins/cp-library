@@ -116,6 +116,7 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 = 1.8.1 =
 * Fix: Watch and Listen could stop working after updating to 1.8.0 on sites behind a page cache or CDN (such as Cloudflare), because an older copy of a player file was still being served. Player files now get a new name with each release, so future updates won't load an old cached copy.
 * After updating, clear your site's page cache (including any cache your web host runs), your CDN cache (such as Cloudflare), and your browser cache.
+* Fix: Imported YouTube transcripts now show symbols such as & and quotes correctly instead of codes like &amp;.
 
 = 1.8.0 =
 * New: Audio hosted on your site is saved under the audio file's own name instead of a name built from the sermon title. The name is cleaned up so it is safe to save on any computer.
