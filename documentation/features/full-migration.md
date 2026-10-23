@@ -10,7 +10,7 @@ Full Migration is separate from the CSV import and export on the same Tools tab.
 2. Stay on the **Import/Export** tab (it is selected by default).
 3. Scroll down to the **Full Migration Export** and **Full Migration Import** boxes. They appear below the CSV tools.
 
-> **Note:** The default top-level admin menu is **Series** (**Set default menu item**). If you set that to Messages, or you rename a label, the menu name changes to match.
+On a new install the top-level admin menu is **Series**. To change it, go to Series > Settings > Advanced > **Set default menu item** (this option only appears when Series is enabled). If you choose Messages, turn Series off, or rename a label, the menu name changes to match.
 
 You need a user who can manage site options (typically an Administrator) to use Full Migration.
 

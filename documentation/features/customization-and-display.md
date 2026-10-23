@@ -29,14 +29,14 @@ Sermon and series archives render as a list.
 
 On a page, the **CP Sermons Sermons/Series** block toolbar has **List view** and **Grid view**. **Grid view** shows a **Columns** control.
 
-**Vertical (1 column)** is only the **Single Page Template** option on Series → Settings → Messages. It changes the single sermon page, not the archive.
+**Vertical (1 column)** is only the **Single Page Template** option on Series → Settings → Messages, or under Messages if Series is turned off. It changes the single sermon page, not the archive.
 
 ### Template Customization
 
 Templates can be customized in several ways:
 
 1. **Settings**
-   - Navigate to Series → Settings → Messages tab
+   - Navigate to Series → Settings → Messages tab, or under Messages if Series is turned off
    - Choose **Single Page Template** (**Default (2 column)** or **Vertical (1 column)**)
    - Set Image Aspect Ratio for thumbnails
    - Configure Info Items and Meta Items display
@@ -227,7 +227,7 @@ Control how filters appear on your sermon pages:
 
 ### Filter Settings
 
-Navigate to Series → Settings → Advanced to adjust:
+Navigate to Series → Settings → Advanced, or under Messages if Series is turned off, to adjust:
 - **Sort Topics**, **Sort Scripture**, **Sort Seasons**, and **Sort Speakers**: **By Message Count** or **Alphabetically** (Scripture uses **By Scripture Order**)
 - **Count Threshold** (default 3)
 - **Show Counts**: **Show** or **Hide**

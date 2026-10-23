@@ -26,10 +26,10 @@ Variations require Service Types to be enabled. See [Service Types](service-type
 
 ### Enabling Variations
 
-1. Navigate to Series → Settings → Advanced
+1. Navigate to Series → Settings → Advanced, or under Messages if Series is turned off
 2. Enable **Enable Service Types** in the Modules section
 3. Save Changes
-4. Navigate to Series → Settings → Messages tab
+4. Navigate to Series → Settings → Messages tab, or under Messages if Series is turned off
 5. Select **Enable** for **Enable Variations (beta)**
 6. Select the **Variation Source** (for example, Service Types)
 7. Save Changes
@@ -109,7 +109,7 @@ See [Podcast Setup](podcast-setup.md) for feed configuration details.
 
 ### Common Issues
 
-- **Variation Fields Not Showing** — Verify Service Types are enabled in Series → Settings → Advanced and **Enable Variations (beta)** is set to **Enable** in Series → Settings → Messages tab
+- **Variation Fields Not Showing** — Verify Service Types are enabled in Series → Settings → Advanced, or under Messages if Series is turned off, and **Enable Variations (beta)** is set to **Enable** in Series → Settings → Messages tab, or under Messages if Series is turned off
 - **Variations Not Displaying on Frontend** — Check template compatibility with your theme
 - **Media Not Loading** — Verify media file paths are correct for each variation
 
@@ -117,6 +117,6 @@ See [Podcast Setup](podcast-setup.md) for feed configuration details.
 
 For troubleshooting variation issues:
 
-1. Navigate to Series → Settings → Advanced
+1. Navigate to Series → Settings → Advanced, or under Messages if Series is turned off
 2. Set **Enable Debug** to **Enable**
-3. Check the log at Series → Tools → Log for variation-related errors
+3. Check the log at Series → Tools → Log (or under Messages if Series is turned off) for variation-related errors

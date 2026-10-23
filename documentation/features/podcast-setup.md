@@ -17,17 +17,17 @@ Your feed is `/messages/feed/podcast/` (or your slug) and works as soon as the p
 
 To set the title and artwork:
 
-1. Navigate to Series → Settings → Advanced
+1. Navigate to Series → Settings → Advanced, or under Messages if Series is turned off
 2. Set **Enable Podcast Feed** to **Enable**
 3. Click "Save Changes"
 
-A **Podcast** tab then appears in Series → Settings, where you fill in the feed details (at least Title and Image). Until a Title is saved, the feed is named after the newest sermon.
+A **Podcast** tab then appears in Series → Settings, or under Messages if Series is turned off, where you fill in the feed details (at least Title and Image). Until a Title is saved, the feed is named after the newest sermon.
 
 ## Configuring Podcast Settings
 
 All podcast settings are on the Podcast tab:
 
-1. Navigate to Series → Settings → Podcast tab
+1. Navigate to Series → Settings → Podcast tab, or under Messages if Series is turned off
 2. Configure the fields below
 3. Click "Save Changes"
 
