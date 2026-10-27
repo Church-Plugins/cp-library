@@ -4,7 +4,7 @@ Tags: sermons, church, podcast, speakers, series
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.8.0
+Stable tag: 1.8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -112,6 +112,10 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 6. Podcast settings configuration
 
 == Changelog ==
+
+= 1.8.1 =
+* Fix: Watch and Listen could stop working after updating to 1.8.0 on sites behind a page cache or CDN (such as Cloudflare), because an older copy of a player file was still being served. Player files now get a new name with each release, so an old cached copy can't be loaded by mistake.
+* After updating, clear your site's page cache, your CDN cache (such as Cloudflare), and your browser cache.
 
 = 1.8.0 =
 * New: Audio hosted on your site is saved under the audio file's own name instead of a name built from the sermon title. The name is cleaned up so it is safe to save on any computer.
