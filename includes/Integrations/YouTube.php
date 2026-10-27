@@ -964,8 +964,11 @@ class YouTube {
 	 * wp_kses_post(), so allowed formatting such as paragraphs and strong text
 	 * still renders. A "<" or ">" that is not part of a tag is escaped first:
 	 * wp_kses_post() otherwise treats everything from "<" through the next ">"
-	 * as markup, and "1 < 2 && 3 > 2" was shown as "1  2". Script and style
-	 * elements, including what is inside them, are removed before that pass.
+	 * as markup, and "1 < 2 && 3 > 2" was shown as "1  2". Text such as
+	 * "a<b and c>d" is still read as an opening <b>, and wp_kses_post() leaves
+	 * that tag open. force_balance_tags() closes it so it does not leak into
+	 * the markup that follows. Script and style elements, including what is
+	 * inside them, are removed before that pass.
 	 *
 	 * @param string $transcript Stored transcript.
 	 * @return string
@@ -1000,7 +1003,7 @@ class YouTube {
 			$transcript = str_replace( array_keys( $tags ), array_values( $tags ), $transcript );
 		}
 
-		return wp_kses_post( $transcript );
+		return force_balance_tags( wp_kses_post( $transcript ) );
 	}
 
 	/**

@@ -254,20 +254,75 @@ VTT;
 	}
 
 	/**
-	 * wp_kses_post() is WordPress. This stand-in keeps the tags a post allows
-	 * and turns a bare "&" into an entity, which is the part of kses these
-	 * tests depend on. Script removal is asserted against escape_transcript()
-	 * itself: this stand-in would leave the text inside a script element.
+	 * wp_kses_post() and force_balance_tags() are WordPress. This stand-in
+	 * keeps the tags a post allows, drops attributes on elements that allow
+	 * none (so "<b and c>" becomes "<b>", as kses does), and turns a bare "&"
+	 * into an entity. The balancer then closes any tag still open. Script
+	 * removal is asserted against escape_transcript() itself: this stand-in
+	 * would leave the text inside a script element.
 	 */
 	private function stub_wp_kses_post() {
 		Functions\when( 'wp_kses_post' )->alias(
 			static function ( $html ) {
 				$html = strip_tags( (string) $html, '<p><strong><em><b><i><br><a><ul><ol><li><h1><h2><h3><h4><blockquote><span>' );
+				$html = preg_replace( '/<(b|strong|em|i|br)\b[^>]*>/i', '<$1>', $html );
 				$html = preg_replace( '/&(?!(?:#\d+|#x[0-9a-f]+|\w+);)/i', '&amp;', $html );
 
 				return is_string( $html ) ? $html : '';
 			}
 		);
+
+		Functions\when( 'force_balance_tags' )->alias(
+			function ( $html ) {
+				return $this->balance_tags( $html );
+			}
+		);
+	}
+
+	/**
+	 * Close tags left open, in the same shape force_balance_tags() uses for
+	 * the transcripts these tests cover.
+	 *
+	 * @param string $html HTML that may contain an unclosed tag.
+	 * @return string
+	 */
+	private function balance_tags( $html ) {
+		$html   = (string) $html;
+		$stack  = array();
+		$out    = '';
+		$offset = 0;
+
+		while ( preg_match( '/<(\/?)([a-zA-Z0-9:-]+)([^>]*)>/', $html, $match, PREG_OFFSET_CAPTURE, $offset ) ) {
+			$pos  = $match[0][1];
+			$out .= substr( $html, $offset, $pos - $offset );
+			$name = strtolower( $match[2][0] );
+
+			if ( '/' === $match[1][0] ) {
+				$found = array_search( $name, $stack, true );
+
+				if ( false !== $found ) {
+					for ( $i = count( $stack ) - 1; $i > $found; $i-- ) {
+						$out .= '</' . array_pop( $stack ) . '>';
+					}
+
+					array_pop( $stack );
+					$out .= '</' . $name . '>';
+				}
+			} else {
+				$out     .= '<' . $name . $match[3][0] . '>';
+				$stack[] = $name;
+			}
+
+			$offset = $pos + strlen( $match[0][0] );
+		}
+
+		$out .= substr( $html, $offset );
+
+		while ( $stack ) {
+			$out .= '</' . array_pop( $stack ) . '>';
+		}
+
+		return $out;
 	}
 
 	/**
@@ -298,6 +353,20 @@ VTT;
 
 		$this->assertStringNotContainsString( '<', $html );
 		$this->assertSame( '1 < 2 && 3 > 2', html_entity_decode( $html, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+	}
+
+	/**
+	 * "a<b and c>d" matches the tag pattern, so wp_kses_post() keeps an opening
+	 * <b> and drops the words that were parsed as attributes. The following
+	 * paragraph must not inherit that unclosed tag.
+	 */
+	public function test_comparison_read_as_bold_is_closed() {
+		$this->stub_wp_kses_post();
+
+		$html = YouTube::escape_transcript( 'if a<b and c>d<p>after</p>' );
+
+		$this->assertSame( 'if a<b>d<p>after</p></b>', $html );
+		$this->assertSame( substr_count( $html, '<b>' ), substr_count( $html, '</b>' ) );
 	}
 
 	/**
