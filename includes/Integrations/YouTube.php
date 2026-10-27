@@ -248,9 +248,7 @@ class YouTube {
 		$transcript = apply_filters( 'cpl_fetch_transcript', $transcript, $post_id, $video_url );
 
 		// update post meta
-		$raw_text = implode( ' ', array_map( function( $item ) {
-			return '(t:' . floor( $item['offset'] ) . ') ' . $item['text'];
-		}, $transcript ) );
+		$raw_text = self::format_imported_transcript( $transcript );
 
 		// create a string of timestamp & character count groups
 		$char_groups = '';
@@ -506,6 +504,9 @@ class YouTube {
 	/**
 	 * Parse a timedtext caption XML body into offset/duration/text rows.
 	 *
+	 * Cue text is entity-decoded and then sanitized once. The raw XML capture
+	 * is not stored.
+	 *
 	 * @param string $transcript Raw caption XML.
 	 * @return array<int, array{text: string, duration: string, offset: string}>
 	 */
@@ -518,9 +519,9 @@ class YouTube {
 		$output = [];
 
 		for ( $i = 0; $i < $count; $i++ ) {
-			$text = $results[3][ $i ];
+			$text = self::normalize_caption_text( $results[3][ $i ] );
 
-			if ( '' === trim( html_entity_decode( $text, ENT_QUOTES, 'UTF-8' ) ) ) {
+			if ( '' === $text ) {
 				continue;
 			}
 
@@ -532,6 +533,85 @@ class YouTube {
 		}
 
 		return $output;
+	}
+
+	/**
+	 * Decode HTML entities in caption text.
+	 *
+	 * YouTube timedtext is already entity-encoded. An apostrophe is &#39;, and
+	 * the ampersand in that character reference is often escaped again, so the
+	 * XML text reads &amp;#39;. One decode leaves &#39;. Decode until the
+	 * string stops changing, and stop after two passes.
+	 *
+	 * @param string $text Caption text.
+	 * @return string
+	 */
+	public static function decode_caption_entities( $text ) {
+		$text  = (string) $text;
+		$flags = ENT_QUOTES | ENT_HTML5;
+
+		for ( $pass = 0; $pass < 2; $pass++ ) {
+			$decoded = html_entity_decode( $text, $flags, 'UTF-8' );
+
+			if ( $decoded === $text ) {
+				break;
+			}
+
+			$text = $decoded;
+		}
+
+		return $text;
+	}
+
+	/**
+	 * Decode caption entities, then strip tags once.
+	 *
+	 * Tags are removed after decoding so a double-encoded tag is not stored
+	 * as markup. The result is not passed through htmlspecialchars or esc_html,
+	 * which would encode an apostrophe or ampersand on the way into post meta.
+	 *
+	 * @param string $text Caption text.
+	 * @return string
+	 */
+	public static function normalize_caption_text( $text ) {
+		$text = self::decode_caption_entities( $text );
+		$text = wp_strip_all_tags( $text );
+		$text = self::strip_unclosed_markup( $text );
+
+		return trim( (string) $text );
+	}
+
+	/**
+	 * Transcript string saved for a list of caption cues.
+	 *
+	 * Each cue is "(t:N) " plus its text. N is the cue offset in whole seconds.
+	 * Those markers are not entity-encoded.
+	 *
+	 * @param mixed $cues Caption rows with text and offset.
+	 * @return string
+	 */
+	public static function format_imported_transcript( $cues ) {
+		if ( ! is_array( $cues ) ) {
+			return '';
+		}
+
+		$parts = [];
+
+		foreach ( $cues as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+
+			$text = self::normalize_caption_text( $item['text'] ?? '' );
+
+			if ( '' === $text ) {
+				continue;
+			}
+
+			$parts[] = '(t:' . floor( $item['offset'] ?? 0 ) . ') ' . $text;
+		}
+
+		return implode( ' ', $parts );
 	}
 
 	/**
@@ -760,7 +840,7 @@ class YouTube {
 	 * @return string
 	 */
 	protected static function strip_caption_markup( $line ) {
-		$line = html_entity_decode( (string) $line, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$line = self::decode_caption_entities( $line );
 		$line = preg_replace( '/\{[^}]*\}/', '', $line );
 
 		if ( ! is_string( $line ) ) {
