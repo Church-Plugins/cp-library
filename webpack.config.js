@@ -6,9 +6,11 @@ module.exports = {
 		...config.output,
 		publicPath: 'auto',
 		// Entry files stay [name].js so PHP can keep enqueueing build/src/{name}.js.
-		// Lazy chunks are requested by the webpack runtime with no ?ver=, so the
-		// filename has to change when the chunk does. Otherwise a cached
-		// reactPlayer*.js can run against a newer app.js and throw.
-		chunkFilename: '[name].[contenthash].js',
+		// Lazy chunks keep the v1.8.0 names on disk (reactPlayerFilePlayer.js).
+		// Webpack writes the file without the query and the runtime requests
+		// reactPlayerFilePlayer.js?ver=<contenthash>, so a cached copy of the
+		// previous chunk is not reused after a release. A page still holding
+		// v1.8.0's app.js requests the unversioned name and receives this file.
+		chunkFilename: '[name].js?ver=[contenthash]',
 	}
 };

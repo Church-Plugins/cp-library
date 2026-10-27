@@ -254,22 +254,32 @@ VTT;
 	}
 
 	/**
-	 * The public transcript runs through kses, which does not see an unclosed
-	 * '<'. That fragment has to be removed before kses runs. A closed tag is
-	 * left for kses.
+	 * The sermon page prints the transcript through escape_transcript().
+	 * wp_kses_post() deleted everything from a "<" through the next ">", so
+	 * "1 < 2 && 3 > 2" was shown as "1  2" even though the saved meta, the
+	 * REST field, and the admin pop-up still had the full sentence. Escaping
+	 * the whole string keeps the comparison and does not render markup.
 	 */
-	public function test_public_transcript_drops_an_unclosed_tag_before_kses() {
-		Functions\when( 'wp_kses_post' )->alias(
-			static function ( $text ) {
-				return $text;
-			}
-		);
+	public function test_public_transcript_escapes_literal_angle_brackets() {
+		$html = YouTube::escape_transcript( '1 < 2 && 3 > 2' );
 
-		$html = YouTube::escape_transcript( "Hello <img src=x onerror=alert(1)\n<p>Next</p>" );
+		$this->assertSame( '1 &lt; 2 &amp;&amp; 3 &gt; 2', $html );
+		$this->assertStringNotContainsString( '<', $html );
+	}
 
-		$this->assertStringNotContainsString( 'onerror', $html );
+	/**
+	 * Real tags, including an unclosed fragment and a script element, are
+	 * escaped rather than rendered. The stored characters stay readable.
+	 */
+	public function test_public_transcript_does_not_render_markup_or_script() {
+		$html = YouTube::escape_transcript( "Hello <img src=x onerror=alert(1)\n<p>Next</p><script>alert(1)</script>" );
+
+		$this->assertStringNotContainsString( '<img', $html );
+		$this->assertStringNotContainsString( '<p>', $html );
+		$this->assertStringNotContainsString( '<script', $html );
 		$this->assertStringContainsString( 'Hello', $html );
-		$this->assertStringContainsString( '<p>Next</p>', $html );
+		$this->assertStringContainsString( '&lt;p&gt;Next&lt;/p&gt;', $html );
+		$this->assertStringContainsString( '&lt;script&gt;alert(1)&lt;/script&gt;', $html );
 	}
 
 	/**
@@ -334,10 +344,11 @@ VTT;
 	 * as &#39;, and the ampersand in that character reference is often escaped
 	 * again, so the XML text is &amp;#39;. parse_caption_xml stored that raw
 	 * capture, and import_transcript wrote it to post meta with no decode, so
-	 * the saved transcript contained how&amp;#39;s. Decode until the string
-	 * stops changing, at most twice, then strip tags once. Do not run
-	 * htmlspecialchars on the way in. (t:N) markers are added from the cue
-	 * offset and must stay literal.
+	 * the saved transcript contained how&amp;#39;s. Markup is stripped after one
+	 * decode and before the final decode, so a decoded "<" stays text. Do not
+	 * run htmlspecialchars on the way in. (t:N) markers are added from the cue
+	 * offset and must stay literal. Normalizing the result again does not
+	 * change it.
 	 *
 	 * @dataProvider caption_entity_texts
 	 */
@@ -351,8 +362,15 @@ VTT;
 			'numeric apostrophe'        => [ 'how&#39;s', "how's" ],
 			'double-encoded apostrophe' => [ 'how&amp;#39;s', "how's" ],
 			'ampersand'                  => [ 'Faith &amp; works', 'Faith & works' ],
+			'double-encoded ampersand'   => [ 'Tom &amp;amp; Jerry', 'Tom & Jerry' ],
+			'encoded apostrophe only'    => [ '&amp;#39;', "'" ],
 			'double quote'               => [ 'say &quot;hello&quot;', 'say "hello"' ],
 			'plain apostrophe'           => [ "how's", "how's" ],
+			'less-than before a digit'   => [ '5 &amp;lt;6 then more', '5 <6 then more' ],
+			'less-than before a letter'  => [ 'if a&amp;lt;b we go', 'if a<b we go' ],
+			'escaped tag is literal'     => [ '&amp;lt;b&amp;gt;hi', '<b>hi' ],
+			'real font markup'           => [ '<font color="x">hi</font>', 'hi' ],
+			'nbsp only'                  => [ '&nbsp;', '' ],
 		];
 	}
 
@@ -393,5 +411,248 @@ VTT;
 		] );
 
 		$this->assertSame( "(t:6) how's everyone doing (t:8) good", $again );
+	}
+
+	/**
+	 * A literal "<" in a cue used to end the saved text, and a second
+	 * normalize turned an escaped "<b>hi" into "hi". A cue that is only a
+	 * no-break space used to leave an empty "(t:N)" marker.
+	 */
+	public function test_imported_transcript_keeps_literal_angle_brackets_and_skips_nbsp() {
+		$xml = '<transcript>'
+			. '<text start="1.2" dur="2">5 &amp;lt;6 then more</text>'
+			. '<text start="4" dur="1">if a&amp;lt;b we go</text>'
+			. '<text start="6" dur="1">&amp;lt;b&amp;gt;hi</text>'
+			. '<text start="8" dur="1">Tom &amp;amp; Jerry</text>'
+			. '<text start="9" dur="1">&amp;#39;</text>'
+			. '<text start="10" dur="1"><font color="x">hi</font></text>'
+			. '<text start="12" dur="1">&nbsp;</text>'
+			. '</transcript>';
+
+		$cues  = YouTube::parse_caption_xml( $xml );
+		$saved = YouTube::format_imported_transcript( $cues );
+
+		$this->assertSame(
+			'(t:1) 5 <6 then more (t:4) if a<b we go (t:6) <b>hi (t:8) Tom & Jerry (t:9) \' (t:10) hi',
+			$saved
+		);
+		$this->assertStringNotContainsString( '(t:12)', $saved );
+		$this->assertStringNotContainsString( "\u{00A0}", $saved );
+
+		$again = YouTube::format_imported_transcript( $cues );
+
+		$this->assertSame( $saved, $again );
+		$this->assertSame( '<b>hi', YouTube::normalize_caption_text( '<b>hi' ) );
+	}
+
+	/**
+	 * floor() throws a TypeError on PHP 8 when the offset is not numeric.
+	 * An empty string or a clock-style value becomes 0. A numeric string
+	 * still floors.
+	 */
+	public function test_non_numeric_cue_offsets_default_to_zero() {
+		$saved = YouTube::format_imported_transcript(
+			array(
+				array(
+					'offset' => '',
+					'text'   => 'Blank',
+				),
+				array(
+					'offset' => '1:05',
+					'text'   => 'Clock',
+				),
+				array(
+					'offset' => '6.4',
+					'text'   => 'Fine',
+				),
+			)
+		);
+
+		$this->assertSame( '(t:0) Blank (t:0) Clock (t:6) Fine', $saved );
+	}
+
+	/**
+	 * A cue whose text is only U+00A0 is not an empty "(t:N)" marker.
+	 */
+	public function test_nbsp_cue_text_is_skipped_without_a_timestamp_marker() {
+		$saved = YouTube::format_imported_transcript(
+			array(
+				array(
+					'offset' => '3',
+					'text'   => "\u{00A0}",
+				),
+				array(
+					'offset' => '5',
+					'text'   => 'Hello',
+				),
+			)
+		);
+
+		$this->assertSame( '(t:5) Hello', $saved );
+	}
+
+	/**
+	 * cpl_fetch_transcript is documented as array|WP_Error. A WP_Error, a
+	 * non-array, or cues that produce no text must come back as a WP_Error.
+	 * The sermon meta is left alone and cpl_imported_transcript does not fire.
+	 *
+	 * @dataProvider fetch_results_that_must_not_save
+	 */
+	public function test_fetch_filter_errors_do_not_save_or_fire_the_import_action( $filter_result ) {
+		$log     = $this->track_import_side_effects();
+		$youtube = $this->youtube_ready_to_import( $filter_result );
+
+		$result = $youtube->import_transcript( 15 );
+
+		$this->assertInstanceOf( \WP_Error::class, $result );
+		$this->assertSame( array(), $log->meta );
+		$this->assertNotContains( 'cpl_imported_transcript', $log->actions );
+
+		if ( is_wp_error( $filter_result ) ) {
+			$this->assertSame( $filter_result, $result );
+		} else {
+			$this->assertSame( 'youtube_captions_empty', $result->get_error_code() );
+		}
+	}
+
+	public function fetch_results_that_must_not_save() {
+		return array(
+			'wp error'    => array( new \WP_Error( 'fetch_failed', 'no captions' ) ),
+			'null'        => array( null ),
+			'string'      => array( 'not-cues' ),
+			'empty array' => array( array() ),
+			'nbsp only'   => array(
+				array(
+					array(
+						'offset' => '3',
+						'text'   => "\u{00A0}",
+					),
+				),
+			),
+		);
+	}
+
+	public function test_a_fetched_transcript_is_saved_and_the_import_action_fires() {
+		$log     = $this->track_import_side_effects();
+		$cues    = array(
+			array(
+				'offset' => '6.4',
+				'text'   => "how's everyone",
+			),
+		);
+		$youtube = $this->youtube_ready_to_import( $cues );
+
+		$result = $youtube->import_transcript( 15 );
+
+		$this->assertTrue( $result );
+		$this->assertSame(
+			array(
+				array( 15, 'transcript', "(t:6) how's everyone" ),
+			),
+			$log->meta
+		);
+		$this->assertSame( array( 'cpl_imported_transcript' ), $log->actions );
+	}
+
+	/**
+	 * @param mixed $filter_result Value the cpl_fetch_transcript filter returns.
+	 * @return TranscriptImportYouTube
+	 */
+	private function youtube_ready_to_import( $filter_result ) {
+		Functions\when( 'current_user_can' )->justReturn( true );
+		Functions\when( 'get_post_meta' )->justReturn( '' );
+		Functions\when( 'is_wp_error' )->alias(
+			static function ( $thing ) {
+				return $thing instanceof \WP_Error;
+			}
+		);
+		Functions\when( 'apply_filters' )->alias(
+			static function ( $tag, $value ) use ( $filter_result ) {
+				if ( 'cpl_fetch_transcript' === $tag ) {
+					return $filter_result;
+				}
+
+				return $value;
+			}
+		);
+
+		$youtube           = new TranscriptImportYouTube();
+		$youtube->fetched  = array(
+			array(
+				'text'   => 'Hello',
+				'offset' => '1',
+			),
+		);
+
+		return $youtube;
+	}
+
+	/**
+	 * @return object{meta: array, actions: array}
+	 */
+	private function track_import_side_effects() {
+		$log = (object) array(
+			'meta'    => array(),
+			'actions' => array(),
+		);
+
+		Functions\when( 'update_post_meta' )->alias(
+			static function () use ( $log ) {
+				$log->meta[] = func_get_args();
+
+				return true;
+			}
+		);
+		Functions\when( 'do_action' )->alias(
+			static function ( $hook ) use ( $log ) {
+				$log->actions[] = $hook;
+			}
+		);
+
+		return $log;
+	}
+}
+
+/**
+ * Serves a fixed video URL and a fixed fetch result so import_transcript()
+ * can be exercised without WordPress or the item tables.
+ */
+class TranscriptImportYouTube extends YouTube {
+
+	/** @var mixed */
+	public $fetched;
+
+	public function __construct() {
+	}
+
+	public function fetch_youtube_transcript( $video_id ) {
+		return $this->fetched;
+	}
+
+	protected function item_for_import( $post_id ) {
+		return new TranscriptImportItem();
+	}
+}
+
+/**
+ * Stand-in for the sermon item.
+ */
+class TranscriptImportItem {
+
+	/** @var TranscriptImportItemModel */
+	public $model;
+
+	public function __construct() {
+		$this->model = new TranscriptImportItemModel();
+	}
+}
+
+/**
+ * Stand-in for the item model.
+ */
+class TranscriptImportItemModel {
+
+	public function get_meta_value( $key ) {
+		return 'https://www.youtube.com/watch?v=jNQXAC9IVRw';
 	}
 }
