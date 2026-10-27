@@ -114,8 +114,8 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 == Changelog ==
 
 = 1.8.1 =
-* Fix: Watch and Listen could stop working after updating to 1.8.0 on sites behind a page cache or CDN (such as Cloudflare), because an older copy of a player file was still being served. Player files now get a new name with each release, so an old cached copy can't be loaded by mistake.
-* After updating, clear your site's page cache, your CDN cache (such as Cloudflare), and your browser cache.
+* Fix: Watch and Listen could stop working after updating to 1.8.0 on sites behind a page cache or CDN (such as Cloudflare), because an older copy of a player file was still being served. Player files now get a new name with each release, so future updates won't load an old cached copy.
+* After updating, clear your site's page cache (including any cache your web host runs), your CDN cache (such as Cloudflare), and your browser cache.
 
 = 1.8.0 =
 * New: Audio hosted on your site is saved under the audio file's own name instead of a name built from the sermon title. The name is cleaned up so it is safe to save on any computer.
@@ -200,6 +200,9 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 * Feature updates and enhancements
 
 == Upgrade Notice ==
+
+= 1.8.1 =
+Fixes Watch and Listen on sites with a page cache or CDN. Clear your site, host, CDN and browser caches after updating.
 
 = 1.8.0 =
 Security release, and updating is recommended. Draft, private and password-protected content is no longer exposed through sermon downloads, templates, the REST API or shortcodes. Also fixes YouTube transcript import, SermonAudio import of sermons without a series, and filters on pages that use the `[cp-sermons]` shortcode.
