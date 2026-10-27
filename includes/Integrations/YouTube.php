@@ -1003,7 +1003,7 @@ class YouTube {
 			$transcript = str_replace( array_keys( $tags ), array_values( $tags ), $transcript );
 		}
 
-		return force_balance_tags( wp_kses_post( $transcript ) );
+		return \force_balance_tags( wp_kses_post( $transcript ) );
 	}
 
 	/**
