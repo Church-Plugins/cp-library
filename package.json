@@ -3,8 +3,8 @@
   "version": "1.8.1",
   "private": true,
   "scripts": {
-    "start:blocks": "wp-scripts start --webpack-src-dir=blocks/ --output-path=build/blocks --config node_modules/@wordpress/scripts/config/webpack.config.js",
-    "build:blocks": "wp-scripts build --webpack-src-dir=blocks/ --output-path=build/blocks --config node_modules/@wordpress/scripts/config/webpack.config.js",
+    "start:blocks": "wp-scripts start --webpack-src-dir=blocks/ --output-path=build/blocks --config webpack.blocks.config.js",
+    "build:blocks": "wp-scripts build --webpack-src-dir=blocks/ --output-path=build/blocks --config webpack.blocks.config.js",
     "start:src": "wp-scripts start",
     "build:src": "wp-scripts build",
     "start": "npm run start:src && npm run start:blocks",

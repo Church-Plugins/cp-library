@@ -957,18 +957,50 @@ class YouTube {
 	}
 
 	/**
-	 * Escape transcript text before it is printed on the sermon page.
+	 * Prepare a transcript for the sermon page.
 	 *
-	 * wp_kses_post() treats everything from a "<" through the next ">" as a
-	 * tag, so "1 < 2 && 3 > 2" was saved correctly and then shown as "1  2".
-	 * Escaping the whole string keeps that comparison visible and keeps real
-	 * markup, including script, from being rendered.
+	 * The transcript box is a visual editor, and formatted transcripts (including
+	 * OpenAI output) are stored as HTML. Complete tags are left for
+	 * wp_kses_post(), so allowed formatting such as paragraphs and strong text
+	 * still renders. A "<" or ">" that is not part of a tag is escaped first:
+	 * wp_kses_post() otherwise treats everything from "<" through the next ">"
+	 * as markup, and "1 < 2 && 3 > 2" was shown as "1  2". Script and style
+	 * elements, including what is inside them, are removed before that pass.
 	 *
 	 * @param string $transcript Stored transcript.
 	 * @return string
 	 */
 	public static function escape_transcript( $transcript ) {
-		return htmlspecialchars( (string) $transcript, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8' );
+		$transcript = preg_replace( '#<(script|style)\b[^>]*>[\s\S]*?</\1\s*>#i', '', (string) $transcript );
+		$transcript = preg_replace( '#<(script|style)\b[^>]*>[\s\S]*$#i', '', (string) $transcript );
+
+		if ( ! is_string( $transcript ) ) {
+			return '';
+		}
+
+		$tags       = array();
+		$transcript = preg_replace_callback(
+			'/<\/?[A-Za-z][A-Za-z0-9:-]*\b[^<>]*>/',
+			static function ( $match ) use ( &$tags ) {
+				$key          = "\x1ACPL" . count( $tags ) . "\x1A";
+				$tags[ $key ] = $match[0];
+
+				return $key;
+			},
+			$transcript
+		);
+
+		if ( ! is_string( $transcript ) ) {
+			return '';
+		}
+
+		$transcript = str_replace( array( '<', '>' ), array( '&lt;', '&gt;' ), $transcript );
+
+		if ( $tags ) {
+			$transcript = str_replace( array_keys( $tags ), array_values( $tags ), $transcript );
+		}
+
+		return wp_kses_post( $transcript );
 	}
 
 	/**

@@ -28,6 +28,8 @@ npm run build
 * Fix: Watch and Listen could stop working after updating to 1.8.0 on sites behind a page cache or CDN (such as Cloudflare), because an older copy of a player file was still being served. Player files are now requested with a version number, so future updates won't load an old cached copy.
 * After updating, clear your site's page cache (including any cache your web host runs), your CDN cache (such as Cloudflare), and your browser cache.
 * Fix: YouTube transcripts imported after updating now show symbols such as & and quotes correctly instead of codes like &amp;. To fix a transcript imported earlier, delete it and import it again.
+* Fix: Imported transcripts no longer lose words or lines when symbols are cleaned up, and text between < and > now shows on the sermon page.
+* Fix: If a YouTube transcript can't be fetched, CP Sermons now says so instead of saving an empty transcript.
 
 #### 1.8.0
 * Enhancement: Share-menu downloads of audio hosted on this site use the audio file's own name (`getAudioDownloadName()`), cleaned on the server with `sanitize_file_name()` after the `cp_requested_file_name` filter. Audio hosted elsewhere does not use that name.

@@ -254,32 +254,66 @@ VTT;
 	}
 
 	/**
-	 * The sermon page prints the transcript through escape_transcript().
-	 * wp_kses_post() deleted everything from a "<" through the next ">", so
-	 * "1 < 2 && 3 > 2" was shown as "1  2" even though the saved meta, the
-	 * REST field, and the admin pop-up still had the full sentence. Escaping
-	 * the whole string keeps the comparison and does not render markup.
+	 * wp_kses_post() is WordPress. This stand-in keeps the tags a post allows
+	 * and turns a bare "&" into an entity, which is the part of kses these
+	 * tests depend on. Script removal is asserted against escape_transcript()
+	 * itself: this stand-in would leave the text inside a script element.
 	 */
-	public function test_public_transcript_escapes_literal_angle_brackets() {
-		$html = YouTube::escape_transcript( '1 < 2 && 3 > 2' );
+	private function stub_wp_kses_post() {
+		Functions\when( 'wp_kses_post' )->alias(
+			static function ( $html ) {
+				$html = strip_tags( (string) $html, '<p><strong><em><b><i><br><a><ul><ol><li><h1><h2><h3><h4><blockquote><span>' );
+				$html = preg_replace( '/&(?!(?:#\d+|#x[0-9a-f]+|\w+);)/i', '&amp;', $html );
 
-		$this->assertSame( '1 &lt; 2 &amp;&amp; 3 &gt; 2', $html );
-		$this->assertStringNotContainsString( '<', $html );
+				return is_string( $html ) ? $html : '';
+			}
+		);
 	}
 
 	/**
-	 * Real tags, including an unclosed fragment and a script element, are
-	 * escaped rather than rendered. The stored characters stay readable.
+	 * The transcript box is a visual editor, and OpenAI saves HTML. Allowed
+	 * tags have to render on the sermon page.
 	 */
-	public function test_public_transcript_does_not_render_markup_or_script() {
-		$html = YouTube::escape_transcript( "Hello <img src=x onerror=alert(1)\n<p>Next</p><script>alert(1)</script>" );
+	public function test_public_transcript_renders_formatted_html() {
+		$this->stub_wp_kses_post();
 
-		$this->assertStringNotContainsString( '<img', $html );
-		$this->assertStringNotContainsString( '<p>', $html );
-		$this->assertStringNotContainsString( '<script', $html );
-		$this->assertStringContainsString( 'Hello', $html );
-		$this->assertStringContainsString( '&lt;p&gt;Next&lt;/p&gt;', $html );
-		$this->assertStringContainsString( '&lt;script&gt;alert(1)&lt;/script&gt;', $html );
+		$html = YouTube::escape_transcript( '<p>Hello <strong>world</strong></p>' );
+
+		$this->assertStringContainsString( '<p>', $html );
+		$this->assertStringContainsString( '<strong>world</strong>', $html );
+		$this->assertStringContainsString( '</p>', $html );
+		$this->assertSame( 'Hello world', html_entity_decode( strip_tags( $html ), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+	}
+
+	/**
+	 * The sermon page prints the transcript through escape_transcript().
+	 * wp_kses_post() deletes from a literal "<" through the next ">", so
+	 * "1 < 2 && 3 > 2" was shown as "1  2" even though the saved meta, the
+	 * REST field, and the admin pop-up still had the full sentence.
+	 */
+	public function test_public_transcript_keeps_plain_text_between_angle_brackets() {
+		$this->stub_wp_kses_post();
+
+		$html = YouTube::escape_transcript( '1 < 2 && 3 > 2' );
+
+		$this->assertStringNotContainsString( '<', $html );
+		$this->assertSame( '1 < 2 && 3 > 2', html_entity_decode( $html, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+	}
+
+	/**
+	 * A script element is removed, including the text inside it, so it cannot
+	 * render. Surrounding formatting is kept.
+	 */
+	public function test_public_transcript_removes_script() {
+		$this->stub_wp_kses_post();
+
+		$html = YouTube::escape_transcript( '<p>Hello</p><script type="text/javascript">alert(1)</script><SCRIPT>alert(2)</SCRIPT><p>Next</p>' );
+
+		$this->assertStringNotContainsString( 'script', strtolower( $html ) );
+		$this->assertStringNotContainsString( 'alert(1)', $html );
+		$this->assertStringNotContainsString( 'alert(2)', $html );
+		$this->assertStringContainsString( '<p>Hello</p>', $html );
+		$this->assertStringContainsString( '<p>Next</p>', $html );
 	}
 
 	/**
