@@ -117,8 +117,8 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 * Fix: Watch and Listen could stop working after updating to 1.8.0 on sites behind a page cache or CDN (such as Cloudflare), because an older copy of a player file was still being served. Player files are now requested with a version number, so future updates won't load an old cached copy.
 * After updating, clear your site's page cache (including any cache your web host runs), your CDN cache (such as Cloudflare), and your browser cache.
 * Fix: YouTube transcripts imported after updating now show symbols such as & and quotes correctly instead of codes like &amp;. To fix a transcript imported earlier, delete it and import it again.
-* Fix: Imported transcripts no longer lose words or lines when symbols are cleaned up, and text between < and > now shows on the sermon page.
-* Fix: If a YouTube transcript can't be fetched, CP Sermons now says so instead of saving an empty transcript.
+* Fix: Imported transcripts no longer lose words or lines when symbols are cleaned up, and symbols such as < and > in transcripts now show on the sermon page.
+* Fix: If a YouTube transcript can't be fetched, CP Sermons no longer saves an empty transcript, and Import from YouTube on the sermon edit screen shows an error.
 
 = 1.8.0 =
 * New: Audio hosted on your site is saved under the audio file's own name instead of a name built from the sermon title. The name is cleaned up so it is safe to save on any computer.
