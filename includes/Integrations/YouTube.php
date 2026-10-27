@@ -203,7 +203,7 @@ class YouTube {
 		}
 
 		try {
-			$item = new Item( $post_id );
+			$item = $this->item_for_import( $post_id );
 		} catch ( \ChurchPlugins\Exception $e ) {
 			return new \WP_Error( 'item_error', $e->getMessage() );
 		}
@@ -247,15 +247,21 @@ class YouTube {
 		 */
 		$transcript = apply_filters( 'cpl_fetch_transcript', $transcript, $post_id, $video_url );
 
-		// update post meta
-		$raw_text = implode( ' ', array_map( function( $item ) {
-			return '(t:' . floor( $item['offset'] ) . ') ' . $item['text'];
-		}, $transcript ) );
+		// A failed or empty filter result is not saved and does not queue
+		// formatting. update_post_meta would otherwise store an empty transcript
+		// and report success.
+		if ( is_wp_error( $transcript ) ) {
+			return $transcript;
+		}
 
-		// create a string of timestamp & character count groups
-		$char_groups = '';
-		foreach ( $transcript as $item ) {
-			$char_groups .= floor( $item['offset'] ) . 's' . strlen( $item['text'] ) . 'c';
+		if ( ! is_array( $transcript ) ) {
+			return new \WP_Error( 'youtube_captions_empty', self::captions_unavailable_message() );
+		}
+
+		$raw_text = self::format_imported_transcript( $transcript );
+
+		if ( '' === $raw_text ) {
+			return new \WP_Error( 'youtube_captions_empty', self::captions_unavailable_message() );
 		}
 
 		update_post_meta( $post_id, 'transcript', $raw_text );
@@ -270,6 +276,17 @@ class YouTube {
 		do_action( 'cpl_imported_transcript', $raw_text, $post_id );
 
 		return true;
+	}
+
+	/**
+	 * Item whose video URL the transcript import reads.
+	 *
+	 * @param int $post_id Post ID.
+	 * @return Item
+	 * @throws \ChurchPlugins\Exception When the item cannot be loaded.
+	 */
+	protected function item_for_import( $post_id ) {
+		return new Item( $post_id );
 	}
 
 	/**
@@ -506,11 +523,14 @@ class YouTube {
 	/**
 	 * Parse a timedtext caption XML body into offset/duration/text rows.
 	 *
+	 * Cue text is normalized once here. format_imported_transcript() does not
+	 * decode or strip it again. The raw XML capture is not stored.
+	 *
 	 * @param string $transcript Raw caption XML.
 	 * @return array<int, array{text: string, duration: string, offset: string}>
 	 */
 	public static function parse_caption_xml( $transcript ) {
-		$pattern = '/<text start="([^"]*)" dur="([^"]*)">([^<]*)<\/text>/';
+		$pattern = '/<text start="([^"]*)" dur="([^"]*)">([\s\S]*?)<\/text>/';
 
 		preg_match_all( $pattern, (string) $transcript, $results );
 
@@ -518,9 +538,9 @@ class YouTube {
 		$output = [];
 
 		for ( $i = 0; $i < $count; $i++ ) {
-			$text = $results[3][ $i ];
+			$text = self::normalize_caption_text( $results[3][ $i ] );
 
-			if ( '' === trim( html_entity_decode( $text, ENT_QUOTES, 'UTF-8' ) ) ) {
+			if ( '' === $text ) {
 				continue;
 			}
 
@@ -532,6 +552,154 @@ class YouTube {
 		}
 
 		return $output;
+	}
+
+	/**
+	 * Decode HTML entities in caption text.
+	 *
+	 * YouTube timedtext is already entity-encoded. An apostrophe is &#39;, and
+	 * the ampersand in that character reference is often escaped again, so the
+	 * XML text reads &amp;#39;. One decode leaves &#39;. Decode until the
+	 * string stops changing, and stop after two passes.
+	 *
+	 * @param string $text Caption text.
+	 * @return string
+	 */
+	public static function decode_caption_entities( $text ) {
+		$text  = (string) $text;
+		$flags = ENT_QUOTES | ENT_HTML5;
+
+		for ( $pass = 0; $pass < 2; $pass++ ) {
+			$decoded = html_entity_decode( $text, $flags, 'UTF-8' );
+
+			if ( $decoded === $text ) {
+				break;
+			}
+
+			$text = $decoded;
+		}
+
+		return $text;
+	}
+
+	/**
+	 * Decode one layer of caption entities.
+	 *
+	 * A second pass is a separate step. Decoding twice before tags are stripped
+	 * turns a spoken "&lt;" into a "<" that is then removed as markup.
+	 *
+	 * @param string $text Caption text.
+	 * @return string
+	 */
+	protected static function decode_caption_entities_once( $text ) {
+		return html_entity_decode( (string) $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+	}
+
+	/**
+	 * Remove real caption tags, leaving their text.
+	 *
+	 * Only balanced tags are removed. An opening "<b>" with no closer, or a
+	 * comparison such as "a<b", is spoken text. Script and style elements are
+	 * removed with their contents.
+	 *
+	 * @param string $text Caption text after a single entity decode.
+	 * @return string
+	 */
+	protected static function strip_balanced_caption_markup( $text ) {
+		$text = preg_replace( '@<(script|style)\b[^>]*>.*?</\\1>@si', '', (string) $text );
+
+		if ( ! is_string( $text ) ) {
+			return '';
+		}
+
+		$previous = null;
+
+		while ( $previous !== $text ) {
+			$previous = $text;
+			$stripped = preg_replace( '/<([A-Za-z][A-Za-z0-9]*)\b[^<>]*>(.*?)<\/\1>/s', '$2', $text );
+
+			if ( ! is_string( $stripped ) ) {
+				break;
+			}
+
+			$text = $stripped;
+		}
+
+		return $text;
+	}
+
+	/**
+	 * Trim spaces, including the no-break space left by decoding "&nbsp;".
+	 *
+	 * @param string $text Caption text.
+	 * @return string
+	 */
+	protected static function trim_caption_whitespace( $text ) {
+		$text = preg_replace( '/^[\s\x{00A0}]+|[\s\x{00A0}]+$/u', '', (string) $text );
+
+		return is_string( $text ) ? $text : '';
+	}
+
+	/**
+	 * Turn caption cue text into the plain string stored on the sermon.
+	 *
+	 * Markup is stripped after one decode and before the final decode, so a
+	 * "<" that was "&amp;lt;" or "&lt;" is kept as text. Running this again
+	 * on its own result does not change that text. The result is not passed
+	 * through htmlspecialchars or esc_html, which would encode an apostrophe
+	 * or ampersand on the way into post meta.
+	 *
+	 * @param string $text Caption text.
+	 * @return string
+	 */
+	public static function normalize_caption_text( $text ) {
+		$text = self::decode_caption_entities_once( $text );
+		$text = self::strip_balanced_caption_markup( $text );
+		$text = self::decode_caption_entities_once( $text );
+
+		return self::trim_caption_whitespace( $text );
+	}
+
+	/**
+	 * Transcript string saved for a list of caption cues.
+	 *
+	 * Each cue is "(t:N) " plus its text. N is the cue offset in whole seconds.
+	 * Those markers are not entity-encoded. Cue text is already normalized by
+	 * parse_caption_xml(); this does not decode or strip it again. A non-numeric
+	 * offset (an empty string, or "1:05") is stored as 0 so floor() is not
+	 * given a string PHP 8 rejects.
+	 *
+	 * @param mixed $cues Caption rows with text and offset.
+	 * @return string
+	 */
+	public static function format_imported_transcript( $cues ) {
+		if ( ! is_array( $cues ) ) {
+			return '';
+		}
+
+		$parts = [];
+
+		foreach ( $cues as $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+
+			$text = self::trim_caption_whitespace( $item['text'] ?? '' );
+
+			if ( '' === $text ) {
+				continue;
+			}
+
+			$offset = $item['offset'] ?? 0;
+
+			if ( ! is_numeric( $offset ) ) {
+				$offset = 0;
+			}
+
+			$parts[] = '(t:' . (int) floor( (float) $offset ) . ') ' . $text;
+		}
+
+		return implode( ' ', $parts );
 	}
 
 	/**
@@ -760,7 +928,7 @@ class YouTube {
 	 * @return string
 	 */
 	protected static function strip_caption_markup( $line ) {
-		$line = html_entity_decode( (string) $line, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$line = self::decode_caption_entities( $line );
 		$line = preg_replace( '/\{[^}]*\}/', '', $line );
 
 		if ( ! is_string( $line ) ) {
@@ -789,18 +957,53 @@ class YouTube {
 	}
 
 	/**
-	 * Sanitize transcript HTML before it is printed.
+	 * Prepare a transcript for the sermon page.
 	 *
-	 * Closed tags are left for wp_kses_post(). An unclosed '<' fragment is removed
-	 * first, because kses does not treat it as a tag.
+	 * The transcript box is a visual editor, and formatted transcripts (including
+	 * OpenAI output) are stored as HTML. Complete tags are left for
+	 * wp_kses_post(), so allowed formatting such as paragraphs and strong text
+	 * still renders. A "<" or ">" that is not part of a tag is escaped first:
+	 * wp_kses_post() otherwise treats everything from "<" through the next ">"
+	 * as markup, and "1 < 2 && 3 > 2" was shown as "1  2". Text such as
+	 * "a<b and c>d" is still read as an opening <b>, and wp_kses_post() leaves
+	 * that tag open. force_balance_tags() closes it so it does not leak into
+	 * the markup that follows. Script and style elements, including what is
+	 * inside them, are removed before that pass.
 	 *
 	 * @param string $transcript Stored transcript.
 	 * @return string
 	 */
 	public static function escape_transcript( $transcript ) {
-		$transcript = self::strip_unclosed_markup( $transcript );
+		$transcript = preg_replace( '#<(script|style)\b[^>]*>[\s\S]*?</\1\s*>#i', '', (string) $transcript );
+		$transcript = preg_replace( '#<(script|style)\b[^>]*>[\s\S]*$#i', '', (string) $transcript );
 
-		return wp_kses_post( $transcript );
+		if ( ! is_string( $transcript ) ) {
+			return '';
+		}
+
+		$tags       = array();
+		$transcript = preg_replace_callback(
+			'/<\/?[A-Za-z][A-Za-z0-9:-]*\b[^<>]*>/',
+			static function ( $match ) use ( &$tags ) {
+				$key          = "\x1ACPL" . count( $tags ) . "\x1A";
+				$tags[ $key ] = $match[0];
+
+				return $key;
+			},
+			$transcript
+		);
+
+		if ( ! is_string( $transcript ) ) {
+			return '';
+		}
+
+		$transcript = str_replace( array( '<', '>' ), array( '&lt;', '&gt;' ), $transcript );
+
+		if ( $tags ) {
+			$transcript = str_replace( array_keys( $tags ), array_values( $tags ), $transcript );
+		}
+
+		return \force_balance_tags( wp_kses_post( $transcript ) );
 	}
 
 	/**

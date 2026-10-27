@@ -2,9 +2,9 @@
 Contributors: churchplugins, tannermoushey
 Tags: sermons, church, podcast, speakers, series
 Requires at least: 6.0
-Tested up to: 6.9
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.8.0
+Stable tag: 1.8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -113,6 +113,13 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 
 == Changelog ==
 
+= 1.8.1 =
+* Fix: Watch and Listen could stop working after updating to 1.8.0 on sites behind a page cache or CDN (such as Cloudflare), because an older copy of a player file was still being served. Player files are now requested with a version number, so future updates won't load an old cached copy.
+* After updating, clear your site's page cache (including any cache your web host runs), your CDN cache (such as Cloudflare), and your browser cache.
+* Fix: YouTube transcripts imported after updating now show symbols such as & and quotes correctly instead of codes like &amp;. To fix a transcript imported earlier, delete it and import it again.
+* Fix: Imported transcripts no longer lose words or lines when symbols are cleaned up, and symbols such as < and > in transcripts now show on the sermon page.
+* Fix: If a YouTube transcript can't be fetched, CP Sermons no longer saves an empty transcript, and Import from YouTube on the sermon edit screen shows an error.
+
 = 1.8.0 =
 * New: Audio hosted on your site is saved under the audio file's own name instead of a name built from the sermon title. The name is cleaned up so it is safe to save on any computer.
 * New: The sermon Transcript box accepts a `.vtt` or `.srt` caption file. Timestamps and caption markup are removed, leaving the text.
@@ -196,6 +203,9 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 * Feature updates and enhancements
 
 == Upgrade Notice ==
+
+= 1.8.1 =
+Fixes Watch and Listen on sites with a page cache or CDN. Clear your site, host, CDN and browser caches after updating.
 
 = 1.8.0 =
 Security release, and updating is recommended. Draft, private and password-protected content is no longer exposed through sermon downloads, templates, the REST API or shortcodes. Also fixes YouTube transcript import, SermonAudio import of sermons without a series, and filters on pages that use the `[cp-sermons]` shortcode.
