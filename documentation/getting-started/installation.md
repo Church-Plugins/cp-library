@@ -10,20 +10,13 @@ This guide covers installing CP Sermon Library, activating your license, and con
 
 ## Installing the Plugin
 
-### From WordPress Dashboard
-
-1. Log in to your WordPress dashboard
-2. Navigate to Plugins → Add New
-3. Search for "CP Sermon Library"
-4. Click "Install Now" and then "Activate"
-
-### Manual Installation
+CP Sermon Library is not listed in the WordPress plugin search. Install it from the zip file.
 
 1. Download the plugin .zip file from your Church Plugins account
 2. Log in to your WordPress dashboard
-3. Navigate to Plugins → Add New → Upload Plugin
-4. Choose the downloaded .zip file and click "Install Now"
-5. After installation completes, click "Activate Plugin"
+3. Go to Plugins > Add Plugin > Upload Plugin
+4. Choose the zip and click Install Now
+5. After the install finishes, click Activate Plugin
 
 ### Verify Installation
 
