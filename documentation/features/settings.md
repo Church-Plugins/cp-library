@@ -138,7 +138,7 @@ Enable or disable content types and features:
 - **Show Counts** — Show or hide the count of items in each filter option
 - **Count Threshold** — Minimum number of sermons for a filter option to display (default: 3)
 - **Disable Filters** — *(Deprecated)* Use the per-post-type "Disable Filters" settings on the Messages and Series tabs instead
-- **Sort Topics**, **Sort Scripture**, **Sort Seasons**, and **Sort Speakers** (when Speakers are enabled) — **By Message Count** or **Alphabetically**. Scripture uses **By Scripture Order** instead of **Alphabetically**.
+- **Sort Topics**, **Sort Scripture**, **Sort Seasons**, and **Sort Speakers** (when Speakers are enabled), and **Sort Service Types** (when Service Types are enabled) — **By Message Count** or **Alphabetically**. Scripture uses **By Scripture Order** instead of **Alphabetically**.
 
 ### Data
 
