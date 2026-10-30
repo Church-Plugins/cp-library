@@ -56,6 +56,8 @@ class Plugin {
 		add_filter( 'cp_library_sermon_audio_item', array( Matcher::class, 'filter_item' ), 100 );
 		add_filter( 'cpl_sermon_audio_adapter_item', array( Matcher::class, 'filter_item' ), 100, 2 );
 		add_filter( 'wp_insert_post_data', array( Matcher::class, 'keep_linked_content' ), 100, 2 );
+		add_action( 'save_post', array( Matcher::class, 'finish_sync_save' ), 999 );
+		add_action( 'shutdown', array( Matcher::class, 'clear_sync_flags' ) );
 		add_action( 'admin_notices', array( __CLASS__, 'notice_missing_core' ) );
 	}
 

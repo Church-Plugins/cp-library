@@ -40,6 +40,7 @@ class MatchExistingTest extends TestCase {
 		parent::set_up();
 		$this->adapter = new SermonAudio();
 		Matcher::reset_skipped();
+		remove_filter( 'cpl_sa_match_log_empty_skips', '__return_false' );
 	}
 
 	public function test_one_match_on_the_same_day_at_a_different_time_links_without_a_duplicate() {
@@ -54,12 +55,18 @@ class MatchExistingTest extends TestCase {
 		$after_first = apply_filters( 'cp_library_sermon_audio_item', $formatted );
 
 		$this->assertSame( $post_id, $after_first['ID'] );
-		$this->assertSame( 'sa-noon', get_post_meta( $post_id, 'external_id', true ) );
-		$this->assertSame( '1', get_post_meta( $post_id, Matcher::LINKED_META, true ) );
+		$this->assertSame( 'sa-noon', $after_first[ Matcher::PENDING_LINK_ARG ] );
+		$this->assertSame( 1, $after_first[ Matcher::KEEP_CONTENT_ARG ] );
+		$this->assertArrayNotHasKey( 'scripture', $after_first['cpl_data'] );
+		$this->assertSame( '', (string) get_post_meta( $post_id, 'external_id', true ) );
+		$this->assertSame( '', (string) get_post_meta( $post_id, Matcher::LINKED_META, true ) );
 
 		$model = $this->sync_formatted( $after_first );
 
 		$this->assertSame( $post_id, (int) $model->origin_id );
+		$this->assertSame( 'sa-noon', get_post_meta( $post_id, 'external_id', true ) );
+		$this->assertSame( '1', get_post_meta( $post_id, Matcher::LINKED_META, true ) );
+		$this->assertSame( '2024-05-12 12:00:00', get_post( $post_id )->post_date );
 		$this->assertSame( array( $post_id ), $this->posts_with_external_id( $post_type, 'sa-noon' ) );
 		$this->assertSame( '', (string) get_post_meta( $decoy_id, 'external_id', true ) );
 		$this->assertSame( array(), Matcher::$skipped );
@@ -87,6 +94,8 @@ class MatchExistingTest extends TestCase {
 		$post_type = cp_library()->setup->post_types->item->post_type;
 		$existing  = $this->sermon_post( 'Already Here', '2024-05-12 09:00:00', 'CSV notes stay.' );
 
+		// The test suite defines WP_DEBUG, so a no-candidate skip is recorded
+		// on the debug channel and not with the skips that name real posts.
 		$model = $this->sync(
 			$this->sermon( 'sa-new', 'Brand New Sermon', 'Brand New Sermon', '2024-05-12', 'SermonAudio body.' )
 		);
@@ -96,6 +105,7 @@ class MatchExistingTest extends TestCase {
 		$this->assertSame( '', (string) get_post_meta( $existing, 'external_id', true ) );
 		$this->assertSame( '', (string) get_post_meta( $existing, Matcher::LINKED_META, true ) );
 		$this->assertSame( 'CSV notes stay.', get_post( $existing )->post_content );
+		$this->assertSame( array(), Matcher::$skipped );
 		$this->assertSame(
 			array(
 				array(
@@ -105,12 +115,14 @@ class MatchExistingTest extends TestCase {
 					'reason'        => 'none',
 				),
 			),
-			Matcher::$skipped
+			Matcher::$debug_skipped
 		);
 		$this->assertSame( array( (int) $model->origin_id ), $this->posts_with_external_id( $post_type, 'sa-new' ) );
 	}
 
 	public function test_two_matches_log_candidate_ids_and_do_not_link() {
+		add_filter( 'cpl_sa_match_log_empty_skips', '__return_false' );
+
 		$first  = $this->sermon_post( 'The Good Shepherd', '2024-05-12 09:00:00', 'First notes.' );
 		$second = $this->sermon_post( 'The Good Shepherd!', '2024-05-12 18:00:00', 'Second notes.' );
 
@@ -136,9 +148,14 @@ class MatchExistingTest extends TestCase {
 			),
 			Matcher::$skipped
 		);
+		$this->assertSame( array(), Matcher::$debug_skipped );
+
+		remove_filter( 'cpl_sa_match_log_empty_skips', '__return_false' );
 	}
 
 	public function test_a_different_external_id_is_not_linked() {
+		add_filter( 'cpl_sa_match_log_empty_skips', '__return_false' );
+
 		$existing = $this->sermon_post( 'The Good Shepherd', '2024-05-12 09:00:00', 'Keep me.' );
 		update_post_meta( $existing, 'external_id', 'sa-other' );
 
@@ -162,6 +179,9 @@ class MatchExistingTest extends TestCase {
 			),
 			Matcher::$skipped
 		);
+		$this->assertSame( array(), Matcher::$debug_skipped );
+
+		remove_filter( 'cpl_sa_match_log_empty_skips', '__return_false' );
 	}
 
 	public function test_a_sermon_on_a_different_day_is_not_linked() {
@@ -171,6 +191,7 @@ class MatchExistingTest extends TestCase {
 
 		$this->assertNotSame( $existing, (int) $model->origin_id );
 		$this->assertSame( '', (string) get_post_meta( $existing, 'external_id', true ) );
+		$this->assertSame( array(), Matcher::$skipped );
 		$this->assertSame(
 			array(
 				array(
@@ -180,8 +201,114 @@ class MatchExistingTest extends TestCase {
 					'reason'        => 'none',
 				),
 			),
-			Matcher::$skipped
+			Matcher::$debug_skipped
 		);
+	}
+
+	public function test_a_new_sermon_is_not_logged_when_debug_logging_is_off() {
+		$log = sys_get_temp_dir() . '/cp-sermonaudio-match-tests.log';
+		file_put_contents( $log, '' );
+		add_filter( 'cpl_sa_match_log_empty_skips', '__return_false' );
+
+		$this->sync(
+			$this->sermon( 'sa-quiet', 'Brand New Sermon', 'Brand New Sermon', '2024-06-01', 'SermonAudio body.' )
+		);
+
+		$this->assertSame( array(), Matcher::$skipped );
+		$this->assertSame( array(), Matcher::$debug_skipped );
+		$logged = is_readable( $log ) ? (string) file_get_contents( $log ) : '';
+		$this->assertStringNotContainsString( 'Brand New Sermon', $logged );
+
+		remove_filter( 'cpl_sa_match_log_empty_skips', '__return_false' );
+	}
+
+	public function test_an_admin_edit_of_a_linked_sermon_persists_and_a_sync_keeps_it() {
+		$post_id = $this->sermon_post( 'The Good Shepherd', '2024-05-12 09:00:00', 'CSV notes.' );
+		$item    = ItemModel::get_instance_from_origin( $post_id );
+		$item->update_scripture( array( 'John 10:11' ) );
+
+		$this->sync(
+			$this->sermon(
+				'sa-admin',
+				'The Good Shepherd',
+				'The Good Shepherd',
+				'2024-05-12',
+				'SermonAudio body.',
+				'Psalm 23'
+			)
+		);
+
+		$this->assertSame( '1', get_post_meta( $post_id, Matcher::LINKED_META, true ) );
+		$scripture = get_post_meta( $post_id, '_cp_scripture', true );
+
+		$edited = 'Edited in the sermon editor.';
+		wp_update_post(
+			array(
+				'ID'           => $post_id,
+				'post_content' => $edited,
+			)
+		);
+
+		$this->assertSame( $edited, get_post( $post_id )->post_content );
+		$this->assertSame( $scripture, get_post_meta( $post_id, '_cp_scripture', true ) );
+
+		$this->sync(
+			$this->sermon(
+				'sa-admin',
+				'The Good Shepherd',
+				'The Good Shepherd',
+				'2024-05-12',
+				'SermonAudio should not replace the edit.',
+				'Romans 8:28'
+			)
+		);
+
+		$this->assertSame( $edited, get_post( $post_id )->post_content );
+		$this->assertSame( $scripture, get_post_meta( $post_id, '_cp_scripture', true ) );
+	}
+
+	public function test_a_queued_item_keeps_content_and_writes_the_link_when_flags_are_gone() {
+		$csv_content = 'CSV body with a backslash \\ and "quotes".';
+		$post_id     = $this->sermon_post( 'The Good Shepherd', '2024-05-12 09:00:00', 'placeholder' );
+
+		global $wpdb;
+		$wpdb->update(
+			$wpdb->posts,
+			array( 'post_content' => $csv_content ),
+			array( 'ID' => $post_id )
+		);
+		clean_post_cache( $post_id );
+
+		$formatted = apply_filters(
+			'cp_library_sermon_audio_item',
+			$this->adapter->format_item(
+				$this->sermon(
+					'sa-queue',
+					'The Good Shepherd',
+					'The Good Shepherd',
+					'2024-05-12',
+					'Queued SermonAudio body.',
+					'Psalm 23'
+				)
+			)
+		);
+		$formatted = apply_filters( 'cpl_sermon_audio_adapter_item', $formatted, $this->adapter );
+
+		$this->assertSame( '', (string) get_post_meta( $post_id, 'external_id', true ) );
+		$this->assertSame( 'sa-queue', $formatted[ Matcher::PENDING_LINK_ARG ] );
+		$this->assertArrayNotHasKey( 'scripture', $formatted['cpl_data'] );
+
+		// The background worker is a new request. Statics from the filter are gone.
+		// The item still carries the markers load_item() will pass to wp_insert_post().
+		Matcher::clear_sync_flags();
+
+		$model = $this->adapter->load_item( $formatted, ItemModel::class );
+
+		$this->assertSame( $post_id, (int) $model->origin_id );
+		$this->assertSame( $csv_content, get_post( $post_id )->post_content );
+		$this->assertSame( 'sa-queue', get_post_meta( $post_id, 'external_id', true ) );
+		$this->assertSame( '1', get_post_meta( $post_id, Matcher::LINKED_META, true ) );
+		$this->assertSame( '', (string) get_post_meta( $post_id, '_cp_scripture', true ) );
 	}
 
 	public function test_a_linked_sermon_keeps_content_and_scripture_after_resync() {

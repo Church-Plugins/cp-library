@@ -137,6 +137,17 @@ class MatcherDecisionTest extends TestCase {
 		$this->assertSame( '2024-05-13', Matcher::next_day( '2024-05-12' ) );
 	}
 
+	public function test_empty_skips_are_silent_unless_debug_logging_is_on() {
+		$this->assertSame( 'silent', Matcher::skip_log_channel( array(), false ) );
+		$this->assertSame( 'debug', Matcher::skip_log_channel( array(), true ) );
+	}
+
+	public function test_skips_with_candidates_stay_on_the_normal_log() {
+		$this->assertSame( 'normal', Matcher::skip_log_channel( array( 15 ), false ) );
+		$this->assertSame( 'normal', Matcher::skip_log_channel( array( 7, 12 ), false ) );
+		$this->assertSame( 'normal', Matcher::skip_log_channel( array( 4 ), true ) );
+	}
+
 	public function test_a_different_calendar_day_does_not_match() {
 		$this->assertNotSame(
 			Matcher::calendar_day( '2024-05-12 12:00:00' ),

@@ -23,11 +23,20 @@ if ( ! defined( 'ABSPATH' ) ) {
  * the existing post. This add-on also writes the external_id meta and its
  * own linked meta.
  *
- * On a sermon this add-on linked, post content and scripture are left as
- * they were. Content is put back in wp_insert_post_data, which runs after
- * kses. Scripture is removed from cpl_data before load_item:
- * SermonAudio::process_cpl_data() calls update_scripture() only when that
- * key is set, and update_scripture() has no filter of its own.
+ * On a sermon this add-on linked, a SermonAudio save does not replace post
+ * content or scripture. Content is put back in wp_insert_post_data only while
+ * that save carries this add-on's marker, so an editor, REST, or bulk edit
+ * still stores new content. The marker lives on the queued item, so a
+ * background sync still has it when load_item() runs in a later request.
+ * Scripture is removed from that same item's cpl_data. That key is not part
+ * of an admin save. SermonAudio::process_cpl_data() writes scripture only
+ * when the key is set, and update_scripture() has no filter of its own.
+ *
+ * external_id and the linked flag are not written in the filter. The filter
+ * sets the item ID so load_item() updates that post, and puts the SermonAudio
+ * id on the item. save_post during that insert writes the metas after the
+ * post row is stored. A failed insert never fires save_post, so the metas
+ * stay unset.
  */
 class Matcher {
 
@@ -37,12 +46,54 @@ class Matcher {
 	const LINKED_META = '_cpl_sa_match_linked';
 
 	/**
+	 * Item arg that tells wp_insert_post_data this save is a SermonAudio sync.
+	 * Not post meta. Admin saves do not send it.
+	 */
+	const KEEP_CONTENT_ARG = '_cpl_sa_match_keep_content';
+
+	/**
+	 * Item arg carrying the SermonAudio id to store after this insert succeeds.
+	 * Not post meta. Absent when the sermon was already linked.
+	 */
+	const PENDING_LINK_ARG = '_cpl_sa_match_pending_link';
+
+	/**
 	 * Skips recorded during this request. Tests read this. The same line is
 	 * written with error_log.
 	 *
 	 * @var array<int,array{title:string,date:string,candidate_ids:int[],reason:string}>
 	 */
 	public static $skipped = array();
+
+	/**
+	 * Zero-candidate skips recorded while debug logging is on.
+	 *
+	 * A new sermon matches nothing. Logging that at the normal level buried
+	 * the skips that name real candidates. Those stay in $skipped.
+	 *
+	 * @var array<int,array{title:string,date:string,candidate_ids:int[],reason:string}>
+	 */
+	public static $debug_skipped = array();
+
+	/**
+	 * Post IDs whose content may be restored during the sync insert in this request.
+	 *
+	 * Cleared on save_post for that ID. A later edit in the same request must
+	 * not still be treated as the sync save.
+	 *
+	 * @var array<int,bool>
+	 */
+	private static $protect_content = array();
+
+	/**
+	 * SermonAudio ids to write once the sync insert has been stored.
+	 *
+	 * Filled from the queued item inside wp_insert_post_data, which runs in
+	 * the request that actually saves, including a background worker.
+	 *
+	 * @var array<int,string>
+	 */
+	private static $pending_link = array();
 
 	/**
 	 * external_id values already logged during this request.
@@ -62,7 +113,19 @@ class Matcher {
 	 */
 	public static function reset_skipped() {
 		self::$skipped         = array();
+		self::$debug_skipped   = array();
 		self::$logged_skip_ids = array();
+		self::clear_sync_flags();
+	}
+
+	/**
+	 * Drop in-request sync flags. The queued item still carries its own markers.
+	 *
+	 * @return void
+	 */
+	public static function clear_sync_flags() {
+		self::$protect_content = array();
+		self::$pending_link    = array();
 	}
 
 	/**
@@ -126,20 +189,44 @@ class Matcher {
 			return $item;
 		}
 
-		update_post_meta( $post_id, 'external_id', $external_id );
-		update_post_meta( $post_id, self::LINKED_META, '1' );
-
+		// ID only. external_id and the linked flag are written on save_post
+		// after this insert is stored. The pending id travels on the item so
+		// a queue worker, which does not share this request's statics, still
+		// has it when load_item() runs.
 		$item['ID'] = $post_id;
 
-		return self::protect_linked_fields( $item, $post_id );
+		return self::protect_linked_fields( $item, $post_id, $external_id );
 	}
 
 	/**
-	 * Put the linked sermon's stored content back after wp_insert_post() sanitizes.
+	 * Write link metas after the sync insert is stored, and end the content shield.
+	 *
+	 * save_post runs only after wp_insert_post() has written the row. A failed
+	 * insert does not get here, so a sermon is not marked linked.
+	 *
+	 * @param int $post_id Saved post.
+	 * @return void
+	 */
+	public static function finish_sync_save( $post_id ) {
+		$post_id = (int) $post_id;
+
+		if ( isset( self::$pending_link[ $post_id ] ) ) {
+			update_post_meta( $post_id, 'external_id', self::$pending_link[ $post_id ] );
+			update_post_meta( $post_id, self::LINKED_META, '1' );
+			unset( self::$pending_link[ $post_id ] );
+		}
+
+		unset( self::$protect_content[ $post_id ] );
+	}
+
+	/**
+	 * Put the sermon's stored content back during a SermonAudio sync save.
 	 *
 	 * The filter receives slashed post data. WordPress unslashes it before
-	 * the database write, so the stored content is slashed here. Scripture
-	 * is not part of this write.
+	 * the database write, so the stored content is slashed here. An edit that
+	 * did not come from this sync has neither the item marker nor the
+	 * in-request flag, and its content is left alone. Scripture is not part
+	 * of this write.
 	 *
 	 * @param array $data    Slashed post data about to be saved.
 	 * @param array $postarr Post data passed to wp_insert_post().
@@ -152,7 +239,7 @@ class Matcher {
 
 		$post_id = isset( $postarr['ID'] ) ? (int) $postarr['ID'] : 0;
 
-		if ( $post_id <= 0 || ! self::is_linked( $post_id ) ) {
+		if ( $post_id <= 0 || ! self::sync_save_in_progress( $post_id, $postarr ) ) {
 			return $data;
 		}
 
@@ -160,6 +247,10 @@ class Matcher {
 
 		if ( self::item_post_type() !== $post_type ) {
 			return $data;
+		}
+
+		if ( isset( $postarr[ self::PENDING_LINK_ARG ] ) && '' !== (string) $postarr[ self::PENDING_LINK_ARG ] ) {
+			self::$pending_link[ $post_id ] = (string) $postarr[ self::PENDING_LINK_ARG ];
 		}
 
 		$existing = get_post( $post_id );
@@ -171,6 +262,21 @@ class Matcher {
 		$data['post_content'] = wp_slash( $existing->post_content );
 
 		return $data;
+	}
+
+	/**
+	 * Whether this insert is the SermonAudio save that should keep content.
+	 *
+	 * @param int   $post_id Post being saved.
+	 * @param array $postarr Data passed to wp_insert_post().
+	 * @return bool
+	 */
+	private static function sync_save_in_progress( $post_id, array $postarr ) {
+		if ( ! empty( self::$protect_content[ $post_id ] ) ) {
+			return true;
+		}
+
+		return ! empty( $postarr[ self::KEEP_CONTENT_ARG ] );
 	}
 
 	/**
@@ -374,18 +480,26 @@ class Matcher {
 	}
 
 	/**
-	 * Keep the sermon's current content in the payload and do not send scripture.
+	 * Keep the sermon's current content on this sync item, and do not send scripture.
 	 *
 	 * Reading the post from the database means a second pass of this filter
 	 * slashes the stored content once, not the value a previous pass already
-	 * slashed. wp_insert_post_data() writes that same stored content again
-	 * after kses, which is what actually stops the overwrite.
+	 * slashed. The keep-content arg is what wp_insert_post_data uses to tell
+	 * this sync save from an editor save. Scripture is dropped only from this
+	 * item. An admin save never builds a cpl_data payload, so this does not
+	 * shield those edits.
 	 *
-	 * @param array $item    Formatted sermon.
-	 * @param int   $post_id Existing sermon.
+	 * Pass $external_id when this save should record the link afterwards.
+	 * Omit it on a sermon that is already linked.
+	 *
+	 * @param array       $item        Formatted sermon.
+	 * @param int         $post_id     Existing sermon.
+	 * @param string|null $external_id SermonAudio id for a new link.
 	 * @return array
 	 */
-	private static function protect_linked_fields( array $item, $post_id ) {
+	private static function protect_linked_fields( array $item, $post_id, $external_id = null ) {
+		$post_id = (int) $post_id;
+
 		$existing = get_post( $post_id );
 
 		if ( $existing instanceof \WP_Post ) {
@@ -394,6 +508,13 @@ class Matcher {
 
 		if ( isset( $item['cpl_data'] ) && is_array( $item['cpl_data'] ) ) {
 			unset( $item['cpl_data']['scripture'] );
+		}
+
+		$item[ self::KEEP_CONTENT_ARG ] = 1;
+		self::$protect_content[ $post_id ] = true;
+
+		if ( null !== $external_id ) {
+			$item[ self::PENDING_LINK_ARG ] = (string) $external_id;
 		}
 
 		return $item;
@@ -427,6 +548,26 @@ class Matcher {
 	}
 
 	/**
+	 * Where a skip is written.
+	 *
+	 * A skip with at least one candidate (two sermons with the same title, or
+	 * one that already has a different SermonAudio id) is a normal log. A
+	 * skip with no candidates is the usual case for a new sermon. That one
+	 * is written only when debug logging is on, and otherwise dropped.
+	 *
+	 * @param int[] $candidate_ids Title matches.
+	 * @param bool  $debug         Whether empty skips are being recorded.
+	 * @return string normal, debug, or silent.
+	 */
+	public static function skip_log_channel( array $candidate_ids, $debug ) {
+		if ( count( $candidate_ids ) > 0 ) {
+			return 'normal';
+		}
+
+		return $debug ? 'debug' : 'silent';
+	}
+
+	/**
 	 * Record a skip: title, calendar day, and the candidate post IDs.
 	 *
 	 * @param string $external_id   SermonAudio id. One skip is logged per id per request.
@@ -446,6 +587,12 @@ class Matcher {
 		$ids = array_map( 'intval', $candidate_ids );
 		sort( $ids );
 
+		$channel = self::skip_log_channel( $ids, self::debug_logging_enabled() );
+
+		if ( 'silent' === $channel ) {
+			return;
+		}
+
 		$entry = array(
 			'title'         => (string) $title,
 			'date'          => (string) $date,
@@ -453,8 +600,38 @@ class Matcher {
 			'reason'        => (string) $reason,
 		);
 
-		self::$skipped[] = $entry;
+		if ( 'debug' === $channel ) {
+			self::$debug_skipped[] = $entry;
+			self::write_skip_log( $entry, false );
+			return;
+		}
 
+		self::$skipped[] = $entry;
+		self::write_skip_log( $entry, true );
+	}
+
+	/**
+	 * Empty skips follow WP_DEBUG unless a filter says otherwise.
+	 *
+	 * @return bool
+	 */
+	private static function debug_logging_enabled() {
+		$enabled = defined( 'WP_DEBUG' ) && WP_DEBUG;
+
+		if ( function_exists( 'apply_filters' ) ) {
+			$enabled = (bool) apply_filters( 'cpl_sa_match_log_empty_skips', $enabled );
+		}
+
+		return $enabled;
+	}
+
+	/**
+	 * @param array{title:string,date:string,candidate_ids:int[],reason:string} $entry Skip record.
+	 * @param bool                                                               $normal True for the always-on log.
+	 * @return void
+	 */
+	private static function write_skip_log( array $entry, $normal ) {
+		$ids     = $entry['candidate_ids'];
 		$message = sprintf(
 			'CP SermonAudio Match Existing: skipped title %s on %s; candidate IDs: %s',
 			function_exists( 'wp_json_encode' ) ? wp_json_encode( $entry['title'] ) : $entry['title'],
@@ -462,7 +639,7 @@ class Matcher {
 			empty( $ids ) ? '(none)' : implode( ', ', $ids )
 		);
 
-		if ( function_exists( 'cp_library' ) ) {
+		if ( $normal && function_exists( 'cp_library' ) ) {
 			$library = cp_library();
 
 			if ( is_object( $library ) && isset( $library->logging ) && is_object( $library->logging ) && method_exists( $library->logging, 'log' ) ) {
