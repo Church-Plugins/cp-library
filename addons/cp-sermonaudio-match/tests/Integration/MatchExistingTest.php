@@ -267,6 +267,80 @@ class MatchExistingTest extends TestCase {
 		$this->assertSame( $scripture, get_post_meta( $post_id, '_cp_scripture', true ) );
 	}
 
+	/**
+	 * A cron or queue request can filter a sermon and then not save it.
+	 * The next edit of that post in the same request has to keep the new body.
+	 */
+	public function test_filtering_without_a_save_does_not_revert_a_later_edit() {
+		$post_id = $this->sermon_post( 'The Good Shepherd', '2024-05-12 09:00:00', 'CSV notes.' );
+
+		$formatted = apply_filters(
+			'cp_library_sermon_audio_item',
+			$this->adapter->format_item( $this->sermon( 'sa-drop', 'The Good Shepherd', 'The Good Shepherd', '2024-05-12' ) )
+		);
+
+		$this->assertSame( $post_id, $formatted['ID'] );
+		$this->assertSame( 1, $formatted[ Matcher::KEEP_CONTENT_ARG ] );
+		$this->assertSame( '', (string) get_post_meta( $post_id, 'external_id', true ) );
+		$this->assertSame( '', (string) get_post_meta( $post_id, Matcher::LINKED_META, true ) );
+
+		$edited = 'Edited after a sync that did not save.';
+		wp_update_post(
+			array(
+				'ID'           => $post_id,
+				'post_content' => $edited,
+			)
+		);
+
+		$this->assertSame( $edited, get_post( $post_id )->post_content );
+		$this->assertSame( '', (string) get_post_meta( $post_id, 'external_id', true ) );
+		$this->assertSame( '', (string) get_post_meta( $post_id, Matcher::LINKED_META, true ) );
+	}
+
+	/**
+	 * wp_insert_post_data can stage a link and the insert can still fail
+	 * before save_post. The next plain save in that request must not link.
+	 */
+	public function test_a_failed_insert_does_not_link_the_next_plain_save() {
+		$post_type = cp_library()->setup->post_types->item->post_type;
+		$post_id   = $this->sermon_post( 'The Good Shepherd', '2024-05-12 09:00:00', 'CSV notes.' );
+
+		$formatted = apply_filters(
+			'cp_library_sermon_audio_item',
+			$this->adapter->format_item( $this->sermon( 'sa-fail', 'The Good Shepherd', 'The Good Shepherd', '2024-05-12', 'SermonAudio body.' ) )
+		);
+
+		// The pre-write hook ran. The insert did not. save_post did not.
+		Matcher::keep_linked_content(
+			array(
+				'post_content' => 'SermonAudio body.',
+				'post_type'    => $post_type,
+			),
+			array(
+				'ID'                        => $post_id,
+				'post_type'                 => $post_type,
+				Matcher::KEEP_CONTENT_ARG   => $formatted[ Matcher::KEEP_CONTENT_ARG ],
+				Matcher::PENDING_LINK_ARG   => $formatted[ Matcher::PENDING_LINK_ARG ],
+			)
+		);
+
+		$this->assertSame( '', (string) get_post_meta( $post_id, 'external_id', true ) );
+		$this->assertSame( '', (string) get_post_meta( $post_id, Matcher::LINKED_META, true ) );
+		$this->assertSame( 'CSV notes.', get_post( $post_id )->post_content );
+
+		$edited = 'Plain save after the insert failed.';
+		wp_update_post(
+			array(
+				'ID'           => $post_id,
+				'post_content' => $edited,
+			)
+		);
+
+		$this->assertSame( $edited, get_post( $post_id )->post_content );
+		$this->assertSame( '', (string) get_post_meta( $post_id, 'external_id', true ) );
+		$this->assertSame( '', (string) get_post_meta( $post_id, Matcher::LINKED_META, true ) );
+	}
+
 	public function test_a_queued_item_keeps_content_and_writes_the_link_when_flags_are_gone() {
 		$csv_content = 'CSV body with a backslash \\ and "quotes".';
 		$post_id     = $this->sermon_post( 'The Good Shepherd', '2024-05-12 09:00:00', 'placeholder' );

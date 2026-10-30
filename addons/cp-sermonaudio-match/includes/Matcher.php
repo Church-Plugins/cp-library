@@ -24,19 +24,21 @@ if ( ! defined( 'ABSPATH' ) ) {
  * own linked meta.
  *
  * On a sermon this add-on linked, a SermonAudio save does not replace post
- * content or scripture. Content is put back in wp_insert_post_data only while
- * that save carries this add-on's marker, so an editor, REST, or bulk edit
- * still stores new content. The marker lives on the queued item, so a
- * background sync still has it when load_item() runs in a later request.
- * Scripture is removed from that same item's cpl_data. That key is not part
- * of an admin save. SermonAudio::process_cpl_data() writes scripture only
- * when the key is set, and update_scripture() has no filter of its own.
+ * content or scripture. Content is put back in wp_insert_post_data only when
+ * the item being saved carries this add-on's marker. A request-level flag is
+ * not armed in the filter: a sync that fetches and then drops the item must
+ * not make a later edit in that same request restore the old body. The marker
+ * lives on the queued item, so a background worker still has it. Scripture is
+ * removed from that same item's cpl_data. That key is not part of an admin
+ * save. SermonAudio::process_cpl_data() writes scripture only when the key is
+ * set, and update_scripture() has no filter of its own.
  *
  * external_id and the linked flag are not written in the filter. The filter
  * sets the item ID so load_item() updates that post, and puts the SermonAudio
- * id on the item. save_post during that insert writes the metas after the
- * post row is stored. A failed insert never fires save_post, so the metas
- * stay unset.
+ * id on the item. wp_insert_post_data stages that id only for the save that
+ * carries the marker. save_post writes the metas after the row is stored. A
+ * later save in the same request that does not carry the marker clears the
+ * staging and does not link.
  */
 class Matcher {
 
@@ -76,20 +78,21 @@ class Matcher {
 	public static $debug_skipped = array();
 
 	/**
-	 * Post IDs whose content may be restored during the sync insert in this request.
+	 * Leftover content-shield ids. The filter does not arm this.
 	 *
-	 * Cleared on save_post for that ID. A later edit in the same request must
-	 * not still be treated as the sync save.
+	 * A save whose postarr has no keep-content marker clears its id here so
+	 * a sync that never saved cannot make a later edit restore old content.
 	 *
 	 * @var array<int,bool>
 	 */
 	private static $protect_content = array();
 
 	/**
-	 * SermonAudio ids to write once the sync insert has been stored.
+	 * SermonAudio ids staged by the save that is in wp_insert_post_data now.
 	 *
-	 * Filled from the queued item inside wp_insert_post_data, which runs in
-	 * the request that actually saves, including a background worker.
+	 * Staged only when that postarr carries the link marker. A save without
+	 * the marker clears the id before save_post, so a failed insert cannot
+	 * mark the next plain save as linked.
 	 *
 	 * @var array<int,string>
 	 */
@@ -199,10 +202,11 @@ class Matcher {
 	}
 
 	/**
-	 * Write link metas after the sync insert is stored, and end the content shield.
+	 * Write link metas after a sync insert that carried the link marker.
 	 *
-	 * save_post runs only after wp_insert_post() has written the row. A failed
-	 * insert does not get here, so a sermon is not marked linked.
+	 * keep_linked_content() stages the id only for that save. A later save
+	 * without the marker clears the staging before this runs, so this does
+	 * not link a plain edit that follows a failed insert.
 	 *
 	 * @param int $post_id Saved post.
 	 * @return void
@@ -210,12 +214,14 @@ class Matcher {
 	public static function finish_sync_save( $post_id ) {
 		$post_id = (int) $post_id;
 
-		if ( isset( self::$pending_link[ $post_id ] ) ) {
-			update_post_meta( $post_id, 'external_id', self::$pending_link[ $post_id ] );
-			update_post_meta( $post_id, self::LINKED_META, '1' );
-			unset( self::$pending_link[ $post_id ] );
+		if ( ! isset( self::$pending_link[ $post_id ] ) ) {
+			unset( self::$protect_content[ $post_id ] );
+			return;
 		}
 
+		update_post_meta( $post_id, 'external_id', self::$pending_link[ $post_id ] );
+		update_post_meta( $post_id, self::LINKED_META, '1' );
+		unset( self::$pending_link[ $post_id ] );
 		unset( self::$protect_content[ $post_id ] );
 	}
 
@@ -223,10 +229,10 @@ class Matcher {
 	 * Put the sermon's stored content back during a SermonAudio sync save.
 	 *
 	 * The filter receives slashed post data. WordPress unslashes it before
-	 * the database write, so the stored content is slashed here. An edit that
-	 * did not come from this sync has neither the item marker nor the
-	 * in-request flag, and its content is left alone. Scripture is not part
-	 * of this write.
+	 * the database write, so the stored content is slashed here. Only the
+	 * marker on this postarr counts. If it is absent, any id left from a
+	 * sync that did not finish is dropped and the save is left unchanged.
+	 * Scripture is not part of this write.
 	 *
 	 * @param array $data    Slashed post data about to be saved.
 	 * @param array $postarr Post data passed to wp_insert_post().
@@ -238,8 +244,18 @@ class Matcher {
 		}
 
 		$post_id = isset( $postarr['ID'] ) ? (int) $postarr['ID'] : 0;
+		$marked  = ! empty( $postarr[ self::KEEP_CONTENT_ARG ] );
 
-		if ( $post_id <= 0 || ! self::sync_save_in_progress( $post_id, $postarr ) ) {
+		if ( ! $marked ) {
+			if ( $post_id > 0 ) {
+				unset( self::$protect_content[ $post_id ] );
+				unset( self::$pending_link[ $post_id ] );
+			}
+
+			return $data;
+		}
+
+		if ( $post_id <= 0 ) {
 			return $data;
 		}
 
@@ -251,6 +267,8 @@ class Matcher {
 
 		if ( isset( $postarr[ self::PENDING_LINK_ARG ] ) && '' !== (string) $postarr[ self::PENDING_LINK_ARG ] ) {
 			self::$pending_link[ $post_id ] = (string) $postarr[ self::PENDING_LINK_ARG ];
+		} else {
+			unset( self::$pending_link[ $post_id ] );
 		}
 
 		$existing = get_post( $post_id );
@@ -262,21 +280,6 @@ class Matcher {
 		$data['post_content'] = wp_slash( $existing->post_content );
 
 		return $data;
-	}
-
-	/**
-	 * Whether this insert is the SermonAudio save that should keep content.
-	 *
-	 * @param int   $post_id Post being saved.
-	 * @param array $postarr Data passed to wp_insert_post().
-	 * @return bool
-	 */
-	private static function sync_save_in_progress( $post_id, array $postarr ) {
-		if ( ! empty( self::$protect_content[ $post_id ] ) ) {
-			return true;
-		}
-
-		return ! empty( $postarr[ self::KEEP_CONTENT_ARG ] );
 	}
 
 	/**
@@ -485,9 +488,9 @@ class Matcher {
 	 * Reading the post from the database means a second pass of this filter
 	 * slashes the stored content once, not the value a previous pass already
 	 * slashed. The keep-content arg is what wp_insert_post_data uses to tell
-	 * this sync save from an editor save. Scripture is dropped only from this
-	 * item. An admin save never builds a cpl_data payload, so this does not
-	 * shield those edits.
+	 * this sync save from an editor save. This does not arm a request flag.
+	 * Scripture is dropped only from this item. An admin save never builds a
+	 * cpl_data payload, so this does not shield those edits.
 	 *
 	 * Pass $external_id when this save should record the link afterwards.
 	 * Omit it on a sermon that is already linked.
@@ -498,8 +501,6 @@ class Matcher {
 	 * @return array
 	 */
 	private static function protect_linked_fields( array $item, $post_id, $external_id = null ) {
-		$post_id = (int) $post_id;
-
 		$existing = get_post( $post_id );
 
 		if ( $existing instanceof \WP_Post ) {
@@ -511,7 +512,6 @@ class Matcher {
 		}
 
 		$item[ self::KEEP_CONTENT_ARG ] = 1;
-		self::$protect_content[ $post_id ] = true;
 
 		if ( null !== $external_id ) {
 			$item[ self::PENDING_LINK_ARG ] = (string) $external_id;

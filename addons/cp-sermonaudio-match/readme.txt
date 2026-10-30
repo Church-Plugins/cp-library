@@ -18,7 +18,7 @@ This add-on runs before that insert. When no post has the SermonAudio id, it loo
 
 Zero matches, more than one match, or one match that already has a different `external_id` do nothing. A skip that names at least one candidate (more than one title match, or a different SermonAudio id) is written to the PHP error log and, when CP Library's logger is available, to that logger. The line includes the title, the calendar day, and the candidate post IDs. A skip with no candidates — every new sermon — is written only when `WP_DEBUG` is on. The filter `cpl_sa_match_log_empty_skips` can force that debug log on or off.
 
-The filter sets the sermon's ID so the sync updates that post. It does not write `external_id` or `_cpl_sa_match_linked` yet. Those are stored on `save_post`, after the sync insert has been saved. A failed insert does not mark the sermon as linked.
+The filter sets the sermon's ID so the sync updates that post. It does not write `external_id` or `_cpl_sa_match_linked`, and it does not arm a request-wide content shield. Those metas are stored on `save_post` only for the insert that carried the link marker. A sync that is fetched and then dropped does not change a later edit in that same request. A failed insert does not mark the next plain save as linked.
 
 On a sermon this add-on linked, a SermonAudio save does not overwrite post content or scripture. An edit in wp-admin, the REST API, or bulk edit still saves. Title, audio, video, and the rest of the SermonAudio payload still sync. The publish time moves from the CSV importer's 09:00 to SermonAudio's noon on that same calendar day.
 
