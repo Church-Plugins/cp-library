@@ -161,7 +161,7 @@ class ImportSermons extends BackgroundProcessImport {
 		$title        = trim( $item['title'] );
 		$desc         = trim( $item['description'] );
 		$transcript   = trim( $item['transcript'] );
-		$series       = explode( ';', $item['series'] )[0];
+		$series       = trim( explode( ';', (string) $item['series'] )[0] );
 		$date         = is_numeric( $date ) ? $date : strtotime( $item['date'] );
 		$location     = trim( strtolower( $item['location'] ) );
 		$service_type = array_filter( array_map( 'trim', explode( ',', $item['service_type'] ) ) );
@@ -272,23 +272,12 @@ class ImportSermons extends BackgroundProcessImport {
 			$series_id = $default_series;
 
 			if ( ! empty( $series ) ) {
-				$results = ItemType::search( 'title', $series );
+				$matched = self::matching_term_id( $series, $this->series_catalog() );
 
-				if ( empty( $results ) ) {
-					$results = ItemType::search( 'title', $series, true );
-				}
-
-				if ( count( $results ) ) {
-					// default to first result
-					$series_id = $results[0]->id;
-
-					// see if there is a direct match
-					foreach ( $results as $result ) {
-						if ( $result->title == $series ) {
-							$series_id = $result->id;
-						}
-					}
-				} elseif ( ! empty( $series ) ) { // create the series if it doesn't exist
+				// A partial name ("Hope" inside "Hope for Today") is not a match.
+				if ( null !== $matched ) {
+					$series_id = $matched;
+				} else {
 					$series_id = wp_insert_post(
 						[
 							'post_type'   => ItemType::get_prop( 'post_type' ),
@@ -416,6 +405,74 @@ class ImportSermons extends BackgroundProcessImport {
 	}
 
 	/**
+	 * Id of an existing term whose name matches exactly.
+	 *
+	 * Case and surrounding whitespace are ignored. A longer name that only
+	 * contains the lookup ("Hope" inside "Hope for Today") is not a match.
+	 *
+	 * @param string $name     Name from the import file.
+	 * @param array  $existing Objects with id and title, or an id => title map.
+	 * @return int|string|null Matching id, or null when nothing matches.
+	 */
+	public static function matching_term_id( $name, array $existing ) {
+		$needle = self::normalize_term_name( $name );
+
+		if ( '' === $needle ) {
+			return null;
+		}
+
+		foreach ( $existing as $key => $term ) {
+			if ( is_object( $term ) ) {
+				$id    = isset( $term->id ) ? $term->id : $key;
+				$title = isset( $term->title ) ? $term->title : '';
+			} elseif ( is_array( $term ) ) {
+				$id    = array_key_exists( 'id', $term ) ? $term['id'] : $key;
+				$title = isset( $term['title'] ) ? $term['title'] : '';
+			} else {
+				$id    = $key;
+				$title = $term;
+			}
+
+			if ( self::normalize_term_name( $title ) === $needle ) {
+				return $id;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Lowercase a term name and strip surrounding whitespace.
+	 *
+	 * @param mixed $name Raw name.
+	 * @return string
+	 */
+	public static function normalize_term_name( $name ) {
+		if ( is_array( $name ) || is_object( $name ) ) {
+			return '';
+		}
+
+		return strtolower( trim( (string) $name ) );
+	}
+
+	/**
+	 * Series rows currently stored, as id/title pairs.
+	 *
+	 * Read from the table on each lookup. ItemType::search() is a LIKE query,
+	 * which is what attached "Hope" to "Hope for Today".
+	 *
+	 * @return array
+	 */
+	protected function series_catalog() {
+		global $wpdb;
+
+		$table = ItemType::get_prop( 'table_name' );
+		$rows  = $wpdb->get_results( "SELECT id, title FROM {$table}" );
+
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
 	 * Get the ids for the provided speakers. Create them if they do not already exist.
 	 *
 	 * @since  1.1.0
@@ -436,9 +493,9 @@ class ImportSermons extends BackgroundProcessImport {
 		}
 
 		foreach ( $speakers as $speaker ) {
-			$speaker_id = array_search( strtolower( $speaker ), $all_speakers, true );
+			$speaker_id = self::matching_term_id( $speaker, $all_speakers );
 
-			if ( false === $speaker_id ) {
+			if ( null === $speaker_id ) {
 				$speaker_id = wp_insert_post(
 					[
 						'post_type'   => Speaker::get_prop( 'post_type' ),
@@ -482,10 +539,13 @@ class ImportSermons extends BackgroundProcessImport {
 	protected function get_service_type_ids( $service_types ) {
 		$types              = [];
 		$service_type_names = $this->maybe_get_service_types();
+		if ( ! is_array( $service_type_names ) ) {
+			return $types;
+		}
 		foreach ( $service_types as $type ) {
-			$type_id = array_search( strtolower( $type ), $service_type_names );
+			$type_id = self::matching_term_id( $type, $service_type_names );
 
-			if ( false === $type_id ) {
+			if ( null === $type_id ) {
 				$post_id = wp_insert_post(
 					[
 						'post_type'   => ServiceType::get_prop( 'post_type' ),
@@ -601,10 +661,10 @@ class ImportSermons extends BackgroundProcessImport {
 
 		$no_series_title = apply_filters( 'cp_library_import_sermons_default_series_title', __( 'No Series', 'cp-library' ) );
 
-		$results = ItemType::search( 'title', $no_series_title );
+		$existing = self::matching_term_id( $no_series_title, $this->series_catalog() );
 
-		if ( $results ) {
-			return $results[0]->id;
+		if ( null !== $existing ) {
+			return $existing;
 		}
 
 		$series_id = wp_insert_post(

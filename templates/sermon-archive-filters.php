@@ -20,7 +20,7 @@ $args = apply_filters( 'cpl_sermon_filter_args', [
     'template'        => 'grid',
     'taxonomies'      => [ 'cpl_scripture', 'cpl_topics', 'cpl_season' ],
     'speaker'         => true,
-    'service_type'    => CP_Library\Admin\Settings::get_item( 'enable_service_types', false ),
+    'service_type'    => cp_library()->setup->post_types->service_type_enabled(),
     'year'            => true,
 ] );
 

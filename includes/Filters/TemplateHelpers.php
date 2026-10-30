@@ -39,7 +39,7 @@ class TemplateHelpers {
             'template'        => 'grid',
             'taxonomies'      => [ 'cpl_scripture', 'cpl_topic', 'cpl_season' ],
             'speaker'         => true,
-            'service_type'    => Settings::get_item( 'enable_service_types', true ),
+            'service_type'    => cp_library()->setup->post_types->service_type_enabled(),
             'year'            => true,
         ];
 
