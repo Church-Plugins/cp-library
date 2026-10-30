@@ -8,19 +8,19 @@ Visual learners can benefit from our collection of video tutorials that demonstr
 - **Setup Wizard Walkthrough** (5:12)
   - Watch how to use the setup wizard to configure your sermon library
   - Covers all wizard steps and recommended settings
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/setup-wizard)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ### First Steps After Installation
 - **Adding Your First Sermon** (4:35)
   - Step-by-step process for adding a sermon
   - Adding media files and metadata
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/first-sermon)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ### Basic Configuration
 - **Essential Settings Overview** (7:23)
   - Tour of the most important plugin settings
   - Recommended configuration for most churches
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/essential-settings)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ## Content Management
 
@@ -29,27 +29,27 @@ Visual learners can benefit from our collection of video tutorials that demonstr
   - Adding, editing, and organizing sermons
   - Using the sermon editor effectively
   - Sermon metadata and organization
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/sermon-basics)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ### Series & Speakers
 - **Creating and Managing Series** (5:18)
   - How to create sermon series
   - Organizing sermons within series
   - Series display options
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/series-management)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 - **Speaker Management** (4:05)
   - Creating speaker profiles
   - Managing speaker information
   - Speaker archive pages
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/speaker-management)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ### Media Management
 - **Audio & Video Best Practices** (9:37)
   - Optimal file formats and encoding
   - Media player configuration
   - Managing media files effectively
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/media-best-practices)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ## Website Display
 
@@ -58,20 +58,20 @@ Visual learners can benefit from our collection of video tutorials that demonstr
   - Using sermon blocks in the WordPress editor
   - Creating custom sermon layouts
   - Block configuration options
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/block-editor)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 - **Shortcode Mastery** (6:24)
   - Using shortcodes to display sermons
   - Shortcode parameters and options
   - Advanced shortcode techniques
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/shortcodes)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ### Templates & Layout
 - **Customizing Sermon Templates** (14:52)
   - Understanding template options
   - Customizing display layouts
   - Creating custom templates
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/templates)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ## Advanced Features
 
@@ -80,34 +80,34 @@ Visual learners can benefit from our collection of video tutorials that demonstr
   - Setting up your podcast feed
   - Configuring podcast settings
   - Submitting to podcast directories
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/podcast-setup)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ### Sermon Variations
 - **Using Service Types & Variations** (7:32)
   - Setting up service types
   - Creating sermon variations
   - Managing variations effectively
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/variations)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ### Timestamps & Transcripts
 - **Adding & Managing Timestamps** (5:48)
   - Creating clickable sermon timestamps
   - Timestamp best practices
   - Timestamp display options
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/timestamps)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 - **Transcript Management** (8:16)
   - Adding sermon transcripts
   - YouTube transcript import
   - OpenAI integration (Pro)
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/transcripts)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ### Analytics & Tracking
 - **Understanding Sermon Analytics** (6:39)
   - Viewing engagement metrics
   - Interpreting analytics data
   - Using data to improve engagement
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/analytics)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ## Integration Tutorials
 
@@ -115,30 +115,30 @@ Visual learners can benefit from our collection of video tutorials that demonstr
 - **Beaver Builder Integration** (9:25)
   - Using sermon modules in Beaver Builder
   - Creating custom sermon layouts
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/beaver-builder)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 - **Divi Integration** (10:18)
   - Sermon modules for Divi
   - Building sermon layouts in Divi
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/divi)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 - **Elementor Integration** (11:42)
   - Sermon widgets for Elementor
   - Creating sermon pages with Elementor
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/elementor)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ### External Service Integration
 - **YouTube Integration** (7:52)
   - Connecting sermon videos from YouTube
   - Automatic transcript import
   - YouTube-specific features
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/youtube)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 - **SermonAudio Integration** (12:04)
   - Setting up SermonAudio connection
   - Syncing sermon content
   - Managing sermons across platforms
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/sermon-audio)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ## Administration Tutorials
 
@@ -147,21 +147,21 @@ Visual learners can benefit from our collection of video tutorials that demonstr
   - Role-based access control
   - Setting up sermon contributors
   - Managing editing permissions
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/user-permissions)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ### Import & Migration
 - **Importing Sermons** (10:15)
   - CSV import process
   - Migration from other plugins
   - Batch processing sermons
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/importing)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ### Maintenance
 - **Plugin Updates & Maintenance** (6:21)
   - Safe update procedures
   - Backing up sermon content
   - Optimizing performance
-  - [Watch Video](https://churchplugins.com/videos/sermon-library/maintenance)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ## Tutorial Series for Specific Church Types
 
@@ -169,14 +169,14 @@ Visual learners can benefit from our collection of video tutorials that demonstr
 - **CP Library for Small Churches** (Series - 4 videos)
   - Essential features for small congregations
   - Simplified setup and management
-  - [Watch Series](https://churchplugins.com/videos/sermon-library/small-church)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ### Multi-Campus Churches
 - **CP Library for Multi-Site Churches** (Series - 5 videos)
   - Managing sermons across multiple locations
   - Service types and variations
   - Campus-specific content
-  - [Watch Series](https://churchplugins.com/videos/sermon-library/multi-campus)
+  - [Find it on our YouTube channel](https://www.youtube.com/@ChurchPlugins)
 
 ## Request a Tutorial
 
