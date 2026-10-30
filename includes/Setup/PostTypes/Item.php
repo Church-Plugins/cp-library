@@ -8,6 +8,7 @@ use CP_Library\Setup\Taxonomies\Scripture as ScriptureTax;
 // Exit if accessed directly
 use CP_Library\Admin\Settings;
 use CP_Library\Exception;
+use CP_Library\Setup\ArchiveSearch;
 use CP_Library\Setup\Tables\ItemMeta;
 use CP_Library\Controllers\Item as ItemController;
 use CP_Library\Integrations\YouTube;
@@ -114,16 +115,17 @@ class Item extends PostType  {
 			return;
 		}
 
+		// posts_per_page is already set when this runs. WordPress copies the
+		// Reading setting into it during parse_query, before pre_get_posts, so
+		// a guard on that var returns for every archive request. Search has to
+		// be applied first or ?cpl_search= never filters the list.
+		ArchiveSearch::apply( $query );
+
 		if ( $query->get( 'posts_per_page' ) ) {
 			return;
 		}
 
 		$query->set( 'posts_per_page', Settings::get_item( 'per_page', 12 ) );
-		
-		// Handle custom search parameter
-		if ( !empty( $_GET['cpl_search'] ) ) {
-			$query->set( 's', sanitize_text_field( $_GET['cpl_search'] ) );
-		}
 	}
 
 	/**
