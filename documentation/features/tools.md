@@ -21,10 +21,11 @@ Key formatting rules:
 - **Multiple values** -- Separate multiple speakers, topics, seasons, or scripture references with commas (e.g., `Pastor Bob, Pastor John`).
 - **Downloads** -- Use the format `Name|URL` for named downloads. Separate multiple downloads with commas (e.g., `Notes|https://example.com/notes.pdf,https://example.com/bulletin.pdf`). You can also provide a URL without a name.
 - **Date** -- Accepts most standard date formats (e.g., `9/6/2009`, `2009-09-06`) or a Unix timestamp.
-- **Series** -- If a series name does not already exist, it will be created automatically. If no series is specified, sermons are assigned to a default "No Series" series.
+- **Series** -- If a series name does not already exist, it will be created automatically. If no series is specified, sermons are assigned to a default "No Series" series. Series are only assigned when Series are enabled.
 - **Speakers** -- If a speaker name does not already exist, it will be created automatically.
 - **Service Types** -- If a service type does not already exist, it will be created automatically.
-- **Topics, Seasons, Scripture** -- Terms that do not already exist will be created automatically.
+- **Topics, Seasons** -- Terms that do not already exist will be created automatically.
+- **Scripture** -- Each reference is matched to its Bible book, and the book term is created if needed. References whose book name is not recognized are skipped.
 
 ### Running an Import
 
@@ -32,7 +33,7 @@ Key formatting rules:
 2. Select your CSV file in the file input.
 3. Click **Import CSV** to upload the file.
 4. A column mapping table appears. For each sermon field, select the corresponding CSV column from the dropdown. A data preview shows the first row of data for each mapped column.
-5. Any field you do not need can be left set to **- Ignore this field -**.
+5. Any field you do not need can be left set to **- Ignore this field -** (the Variation row reads **- Do not detect Variations -**).
 6. Configure the additional options below the mapping table:
    - **Attempt to import mp3 files to the Media Library** -- When checked, audio file URLs are downloaded and added to your WordPress Media Library. Checked by default.
    - **Attempt to import downloadable files to the Media Library** -- When checked, downloadable file URLs are downloaded and added to your WordPress Media Library. Checked by default.
@@ -46,7 +47,7 @@ Key formatting rules:
 | Description | Sermon content/description |
 | Transcript | Sermon transcript text |
 | Date | Sermon date |
-| Series | Series name (creates the series if it does not exist) |
+| Series | Series name (creates the series if it does not exist; only available when Series are enabled) |
 | Location | Location name (only available when CP Locations is active) |
 | Speaker | Speaker name(s), comma-separated (only available when Speakers are enabled) |
 | Service Type | Service type name(s), comma-separated (only available when Service Types are enabled and not used as the variation source) |
@@ -68,7 +69,7 @@ The import runs as a background process. A progress bar displays the percentage 
 
 ### Duplicate Handling
 
-The importer checks for existing sermons before creating new ones. A sermon is considered a duplicate if it matches on title and date (and location, if applicable). When a duplicate is found, the existing sermon is updated rather than creating a new entry.
+The importer checks for existing sermons before creating new ones. A sermon is treated as a duplicate if an earlier import created it from the same title, date and location, or if an existing sermon has the same title and publish date (this second check does not look at location). When a duplicate is found, the existing sermon is updated rather than creating a new entry.
 
 ## CSV Export
 
@@ -96,7 +97,7 @@ Sites that used the "Show in Main List" checkbox under version 1.6.0 or 1.6.1 sh
 
 1. Navigate to **Series > Tools**.
 2. **Migrate Visibility Settings** is shown only when at least one sermon still holds legacy meta. The box reports that count.
-3. Click **Migrate Visibility Settings** to start. A status indicator shows progress.
+3. Click **Migrate Visibility Settings** and confirm the prompt. A status indicator shows progress.
 4. Sermons that were previously hidden continue to be hidden. Sermons that were previously visible carry no extra meta — they simply default to visible.
 
 The taxonomy term that controls visibility is left untouched by this tool — only the per-sermon meta key is rewritten.
