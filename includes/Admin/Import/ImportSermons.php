@@ -444,6 +444,10 @@ class ImportSermons extends BackgroundProcessImport {
 	/**
 	 * Lowercase a term name and strip surrounding whitespace.
 	 *
+	 * With no logged-in user, kses is active and wp_insert_post stores "&" as
+	 * "&amp;" (and quotes as entities). Decode both sides before comparing so
+	 * the stored title still matches the name from the file.
+	 *
 	 * @param mixed $name Raw name.
 	 * @return string
 	 */
@@ -452,7 +456,7 @@ class ImportSermons extends BackgroundProcessImport {
 			return '';
 		}
 
-		return strtolower( trim( (string) $name ) );
+		return strtolower( trim( html_entity_decode( (string) $name, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ) );
 	}
 
 	/**

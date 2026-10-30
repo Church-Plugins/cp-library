@@ -10,6 +10,9 @@
  * Speakers and service types already compared a lowercased name, but the
  * stored title was not trimmed, and the series path did not share that rule.
  * One comparison now covers all three: exact, case-insensitive, trimmed.
+ * Entity-encoded titles (kses stores "&" as "&amp;") are decoded first, so
+ * they still match the name from the file. A raw "&", apostrophe, or quote
+ * is unchanged by that decode and still matches.
  *
  * @package CP_Library
  */
@@ -80,6 +83,40 @@ class ImportTermMatchTest extends TestCase {
 		$this->assertNull( ImportSermons::matching_term_id( 'Hope', array( 4 => 'hope for today' ) ) );
 		$this->assertSame( 9, ImportSermons::matching_term_id( ' HOPE ', $speakers ) );
 		$this->assertSame( 4, ImportSermons::matching_term_id( 'HOPE FOR TODAY', $speakers ) );
+	}
+
+	public function test_encoded_ampersand_matches_the_raw_name() {
+		$id = ImportSermons::matching_term_id(
+			'Faith & Works',
+			array(
+				(object) array(
+					'id'    => 5,
+					'title' => 'Faith &amp; Works',
+				),
+			)
+		);
+
+		$this->assertSame( 5, $id );
+		$this->assertNull(
+			ImportSermons::matching_term_id(
+				'Faith',
+				array(
+					(object) array(
+						'id'    => 5,
+						'title' => 'Faith &amp; Works',
+					),
+				)
+			),
+			'decoding entities must not turn the compare into a partial match'
+		);
+	}
+
+	public function test_raw_ampersand_apostrophe_and_quote_names_still_match() {
+		$this->assertSame( 6, ImportSermons::matching_term_id( 'Faith & Works', array( 6 => 'Faith & Works' ) ) );
+		$this->assertSame( 7, ImportSermons::matching_term_id( 'O\'Brien', array( 7 => 'O\'Brien' ) ) );
+		$this->assertSame( 8, ImportSermons::matching_term_id( 'O\'Brien & Sons', array( 8 => 'O&#039;Brien &amp; Sons' ) ) );
+		$this->assertSame( 9, ImportSermons::matching_term_id( 'Say "Hello"', array( 9 => 'Say "Hello"' ) ) );
+		$this->assertSame( 10, ImportSermons::matching_term_id( 'Say "Hello"', array( 10 => 'Say &quot;Hello&quot;' ) ) );
 	}
 
 	public function test_blank_name_does_not_match() {
