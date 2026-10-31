@@ -1,6 +1,6 @@
 # Installation & Setup
 
-This guide covers installing CP Sermon Library, activating your license, and configuring essential settings.
+This guide covers installing CP Sermons, activating your license, and configuring essential settings.
 
 ## System Requirements
 
@@ -10,7 +10,7 @@ This guide covers installing CP Sermon Library, activating your license, and con
 
 ## Installing the Plugin
 
-CP Sermon Library is not listed in the WordPress plugin search. Install it from the zip file.
+CP Sermons is not listed in the WordPress plugin search. Install it from the zip file.
 
 1. Download the plugin .zip file from your Church Plugins account
 2. Log in to your WordPress dashboard
@@ -92,7 +92,7 @@ See the [Podcast Setup Guide](../features/podcast-setup.md) for detailed instruc
 
 ### Using the Block Editor
 
-CP Sermon Library provides Gutenberg blocks for displaying sermons:
+CP Sermons provides Gutenberg blocks for displaying sermons:
 
 1. Create or edit a page
 2. Insert the **CP Sermons Sermons/Series** block, or a pattern such as **Latest Sermon**, **Latest Sermons - Grid View**, or **Latest Series - List View**
@@ -111,7 +111,7 @@ As an alternative to blocks, you can use shortcodes:
 
 ### Using Archive Pages
 
-CP Sermon Library automatically creates archive pages based on your configured URL slugs. With default settings:
+CP Sermons automatically creates archive pages based on your configured URL slugs. With default settings:
 
 - Main sermon archive: `/messages/`
 - Series archive: `/series/`
