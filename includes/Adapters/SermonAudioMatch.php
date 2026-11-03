@@ -523,19 +523,21 @@ class SermonAudioMatch {
 	/**
 	 * Value to store for one supplied field, and whether the sermon should take it.
 	 *
-	 * With no snapshot yet the local value is left as it is, including when
-	 * it is empty. The caller records the feed without changing the sermon.
-	 * After that, the feed is applied only when it differs from the snapshot
-	 * and the local value is still the snapshotted one. A field is cleared
-	 * only in that case, when SermonAudio has removed a value it supplied.
+	 * With no snapshot yet the local value is left as it is. The caller
+	 * records the feed and the value actually stored. After that, the feed
+	 * is applied only when it differs from the snapshotted feed and the
+	 * local value still equals the snapshotted stored value. A field is
+	 * cleared only in that case. The stored value is what was read back
+	 * after save filters, not the raw feed text.
 	 *
-	 * @param mixed $local         Current local value.
-	 * @param mixed $feed          Value on this SermonAudio item.
-	 * @param bool  $has_snapshot  Whether this sermon has a supplied snapshot.
-	 * @param mixed $previous      Snapshotted feed value.
+	 * @param mixed $local            Current local value.
+	 * @param mixed $feed             Value on this SermonAudio item.
+	 * @param bool  $has_snapshot     Whether this sermon has a supplied snapshot.
+	 * @param mixed $previous_feed    Feed value last recorded.
+	 * @param mixed $previous_stored  Value read back after the last save.
 	 * @return array{value:string,apply:bool}
 	 */
-	public static function reconcile_supplied_field( $local, $feed, $has_snapshot, $previous ) {
+	public static function reconcile_supplied_field( $local, $feed, $has_snapshot, $previous_feed, $previous_stored ) {
 		$local_text = self::blank_text( $local );
 		$feed_text  = self::blank_text( $feed );
 
@@ -546,9 +548,10 @@ class SermonAudioMatch {
 			);
 		}
 
-		$previous_text = self::blank_text( $previous );
+		$previous_feed_text   = self::blank_text( $previous_feed );
+		$previous_stored_text = self::blank_text( $previous_stored );
 
-		if ( $feed_text === $previous_text || $local_text !== $previous_text ) {
+		if ( $feed_text === $previous_feed_text || $local_text !== $previous_stored_text ) {
 			return array(
 				'value' => $local_text,
 				'apply' => false,
@@ -633,17 +636,19 @@ class SermonAudioMatch {
 		$feed     = self::supplied_fields_from_item( $item );
 		$stored   = get_post_meta( $post_id, self::SUPPLIED_META, true );
 		$has      = is_array( $stored );
-		$content  = self::reconcile_supplied_field(
+		$content   = self::reconcile_supplied_field(
 			$local['content'],
 			$feed['content'],
 			$has,
-			$has && isset( $stored['content'] ) ? $stored['content'] : ''
+			self::snapshot_part( $stored, 'content', 'feed' ),
+			self::snapshot_part( $stored, 'content', 'stored' )
 		);
 		$scripture = self::reconcile_supplied_field(
 			$local['scripture'],
 			$feed['scripture'],
 			$has,
-			$has && isset( $stored['scripture'] ) ? $stored['scripture'] : ''
+			self::snapshot_part( $stored, 'scripture', 'feed' ),
+			self::snapshot_part( $stored, 'scripture', 'stored' )
 		);
 
 		if ( ! $content['apply'] && $post instanceof \WP_Post ) {
@@ -670,7 +675,71 @@ class SermonAudioMatch {
 		return array(
 			'item'            => $item,
 			'clear_scripture' => $clear,
+			'wrote_content'   => (bool) $content['apply'],
+			'wrote_scripture' => (bool) $scripture['apply'],
 		);
+	}
+
+	/**
+	 * One side of a supplied snapshot: the raw feed text or the stored text.
+	 *
+	 * @param mixed  $snapshot Stored meta, when it is an array.
+	 * @param string $field    content or scripture.
+	 * @param string $part     feed or stored.
+	 * @return string
+	 */
+	public static function snapshot_part( $snapshot, $field, $part ) {
+		if ( ! is_array( $snapshot ) || ! isset( $snapshot[ $field ] ) || ! is_array( $snapshot[ $field ] ) ) {
+			return '';
+		}
+
+		return isset( $snapshot[ $field ][ $part ] ) ? self::blank_text( $snapshot[ $field ][ $part ] ) : '';
+	}
+
+	/**
+	 * Record the feed text and the value read back after save filters.
+	 *
+	 * The first snapshot stores whatever is on the sermon, because that sync
+	 * does not write notes or scripture. Later syncs replace the stored
+	 * value only for a field this save wrote.
+	 *
+	 * @param int   $post_id         Sermon the matcher linked.
+	 * @param array $feed            content and scripture from this feed item.
+	 * @param bool  $wrote_content   Whether this save wrote notes.
+	 * @param bool  $wrote_scripture Whether this save wrote or cleared scripture.
+	 */
+	public static function record_supplied_snapshot( $post_id, array $feed, $wrote_content, $wrote_scripture ) {
+		$existing          = get_post_meta( $post_id, self::SUPPLIED_META, true );
+		$has               = is_array( $existing );
+		$post              = get_post( $post_id );
+		$content_stored    = ( $post instanceof \WP_Post ) ? self::blank_text( $post->post_content ) : '';
+		$scripture_stored  = self::scripture_text( self::stored_passages( $post_id ) );
+
+		if ( ! $has ) {
+			$snapshot = array(
+				'content'   => array(
+					'feed'   => $feed['content'],
+					'stored' => $content_stored,
+				),
+				'scripture' => array(
+					'feed'   => $feed['scripture'],
+					'stored' => $scripture_stored,
+				),
+			);
+		} else {
+			$snapshot = array(
+				'content'   => array(
+					'feed'   => $feed['content'],
+					'stored' => $wrote_content ? $content_stored : self::snapshot_part( $existing, 'content', 'stored' ),
+				),
+				'scripture' => array(
+					'feed'   => $feed['scripture'],
+					'stored' => $wrote_scripture ? $scripture_stored : self::snapshot_part( $existing, 'scripture', 'stored' ),
+				),
+			);
+		}
+
+		update_post_meta( $post_id, self::SUPPLIED_META, $snapshot );
 	}
 
 	/**

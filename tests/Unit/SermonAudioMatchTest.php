@@ -312,29 +312,42 @@ class SermonAudioMatchTest extends TestCase {
 	}
 
 	public function test_an_empty_feed_value_does_not_replace_a_local_value() {
-		$kept = SermonAudioMatch::reconcile_supplied_field( 'Church notes', '', true, 'SermonAudio notes' );
+		$kept = SermonAudioMatch::reconcile_supplied_field( 'Church notes', '', true, 'SermonAudio notes', 'SermonAudio notes' );
 
 		$this->assertFalse( $kept['apply'] );
 		$this->assertSame( 'Church notes', $kept['value'] );
 	}
 
 	public function test_a_supplied_value_is_cleared_when_the_feed_removes_it() {
-		$cleared = SermonAudioMatch::reconcile_supplied_field( 'SermonAudio notes', '', true, 'SermonAudio notes' );
+		$cleared = SermonAudioMatch::reconcile_supplied_field( 'SermonAudio notes', '', true, 'SermonAudio notes', 'SermonAudio notes' );
 
 		$this->assertTrue( $cleared['apply'] );
 		$this->assertSame( '', $cleared['value'] );
 	}
 
 	public function test_a_supplied_value_is_updated_when_the_feed_changes_it() {
-		$updated = SermonAudioMatch::reconcile_supplied_field( 'SermonAudio notes', 'Revised notes', true, 'SermonAudio notes' );
+		$updated = SermonAudioMatch::reconcile_supplied_field( 'SermonAudio notes', 'Revised notes', true, 'SermonAudio notes', 'SermonAudio notes' );
 
 		$this->assertTrue( $updated['apply'] );
 		$this->assertSame( 'Revised notes', $updated['value'] );
 	}
 
+	public function test_a_filtered_stored_value_still_counts_as_unedited() {
+		$updated = SermonAudioMatch::reconcile_supplied_field(
+			'<p class="synced">Hello</p>',
+			'<p>Revised</p>',
+			true,
+			'<p>Hello</p>',
+			'<p class="synced">Hello</p>'
+		);
+
+		$this->assertTrue( $updated['apply'] );
+		$this->assertSame( '<p>Revised</p>', $updated['value'] );
+	}
+
 	public function test_a_local_edit_is_not_overwritten_or_cleared() {
-		$edited = SermonAudioMatch::reconcile_supplied_field( 'My notes', 'Revised notes', true, 'SermonAudio notes' );
-		$kept   = SermonAudioMatch::reconcile_supplied_field( 'My notes', '', true, 'SermonAudio notes' );
+		$edited = SermonAudioMatch::reconcile_supplied_field( 'My notes', 'Revised notes', true, 'SermonAudio notes', 'SermonAudio notes' );
+		$kept   = SermonAudioMatch::reconcile_supplied_field( 'My notes', '', true, 'SermonAudio notes', 'SermonAudio notes' );
 
 		$this->assertFalse( $edited['apply'] );
 		$this->assertSame( 'My notes', $edited['value'] );
@@ -343,9 +356,9 @@ class SermonAudioMatchTest extends TestCase {
 	}
 
 	public function test_the_first_snapshot_does_not_change_the_local_value() {
-		$kept  = SermonAudioMatch::reconcile_supplied_field( 'Church notes', 'SermonAudio notes', false, '' );
-		$empty = SermonAudioMatch::reconcile_supplied_field( '', 'SermonAudio notes', false, '' );
-		$blank = SermonAudioMatch::reconcile_supplied_field( 'Church notes', '', false, '' );
+		$kept  = SermonAudioMatch::reconcile_supplied_field( 'Church notes', 'SermonAudio notes', false, '', '' );
+		$empty = SermonAudioMatch::reconcile_supplied_field( '', 'SermonAudio notes', false, '', '' );
+		$blank = SermonAudioMatch::reconcile_supplied_field( 'Church notes', '', false, '', '' );
 
 		$this->assertFalse( $kept['apply'] );
 		$this->assertSame( 'Church notes', $kept['value'] );
