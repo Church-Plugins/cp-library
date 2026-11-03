@@ -173,15 +173,63 @@ class ImportSermons extends BackgroundProcessImport {
 	}
 
 	/**
+	 * Id of the variation whose name matches $given.
+	 *
+	 * $options is the map from get_source_items(): source id => name.
+	 * update_variant() checks that id against get_source_items( true ), which
+	 * is these keys, so the returned value is that id.
+	 *
+	 * Names are compared after decoding entities, trimming, and lowercasing.
+	 *
+	 * @param string $given      Value from the CSV variation column.
+	 * @param array  $options    Source id => name.
+	 * @param int    $row_number Spreadsheet row, or 0 when it is not known.
+	 * @return int|string Source id.
+	 * @throws Exception When no name matches.
+	 */
+	public static function match_variation_id( $given, array $options, $row_number = 0 ) {
+		$needle = self::normalize_variation_name( $given );
+
+		if ( '' !== $needle ) {
+			foreach ( $options as $id => $label ) {
+				if ( self::normalize_variation_name( $label ) === $needle ) {
+					return $id;
+				}
+			}
+		}
+
+		$names = array();
+		foreach ( $options as $label ) {
+			$names[] = (string) $label;
+		}
+
+		$prefix = $row_number ? sprintf( 'Row %d: ', (int) $row_number ) : '';
+		$list   = $names ? implode( ', ', $names ) : '(none)';
+
+		throw new Exception( sprintf( '%sThe variation "%s" could not be found. Valid names: %s.', $prefix, $given, $list ) );
+	}
+
+	/**
+	 * @param mixed $name Variation name from the CSV or from a source item.
+	 * @return string
+	 */
+	private static function normalize_variation_name( $name ) {
+		$name = html_entity_decode( (string) $name, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+		return strtolower( trim( $name ) );
+	}
+
+	/**
 	 * Import a single item
 	 *
 	 * @since 1.4.10
 	 *
 	 * @param array $item Item to process.
 	 * @param array $options Import options.
+	 * @param int   $row_number Spreadsheet row, including the header row. 0 when unknown.
 	 * @throws Exception If there is an error importing the item.
 	 */
-	protected function import_item( $item, $options ): void {
+	protected function import_item( $item, $options, $row_number = 0 ): void {
 		global $wpdb;
 
 
@@ -360,11 +408,8 @@ class ImportSermons extends BackgroundProcessImport {
 		}
 
 		if ( $variation ) {
-			$variation_id = array_search( $variation, $variation_options );
-
-			if ( false === $variation_id ) {
-				throw new Exception( 'The provided variation could not be found in ' . cp_library()->setup->variations->get_source_label() );
-			}
+			// get_source_items() is id => name. update_variant() accepts that id.
+			$variation_id = self::match_variation_id( $variation, $variation_options, $row_number );
 
 			$variant = $item->update_variant(
 				[

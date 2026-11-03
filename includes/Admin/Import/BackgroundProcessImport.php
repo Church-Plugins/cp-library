@@ -388,7 +388,12 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 			// Convert data to UTF-8
 			$data = array_map( [ static::class, 'convert_to_utf8' ], $data );
 
-			$queue[] = array_combine( $headers, $data );
+			$item = array_combine( $headers, $data );
+			// Header is row 1, so the first sermon is row 2. $total has not been incremented yet.
+			if ( is_array( $item ) ) {
+				$item['_cpl_import_row'] = $total + 2;
+			}
+			$queue[] = $item;
 
 			$total++;
 		}
@@ -441,9 +446,10 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 
 		// import item
 		try {
-			$item = $this->parse_item( $item );
+			$row_number = ( is_array( $item ) && isset( $item['_cpl_import_row'] ) ) ? absint( $item['_cpl_import_row'] ) : 0;
+			$item       = $this->parse_item( $item );
 
-			$this->import_item( $item, $this->options );
+			$this->import_item( $item, $this->options, $row_number );
 
 			/**
 			 * Fires after each item is processed during the import process.
@@ -479,8 +485,9 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 	 *
 	 * @param array $item Item to import.
 	 * @param array $options Import options.
+	 * @param int   $row_number Spreadsheet row, including the header row. 0 when unknown.
 	 */
-	abstract protected function import_item( $item, $options ): void;
+	abstract protected function import_item( $item, $options, $row_number = 0 ): void;
 
 	/**
 	 * Parse the import options
