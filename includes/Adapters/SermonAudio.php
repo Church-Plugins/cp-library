@@ -321,12 +321,14 @@ class SermonAudio extends Adapter {
 	 * does not link either of them. A trashed sermon is not a candidate.
 	 *
 	 * Notes and scripture on a sermon this matcher linked follow the
-	 * supplied-field snapshot. The first such sync only records the feed
-	 * and the value stored on the sermon. A later sync updates or clears a
-	 * field only when the feed changed and the stored text is still what
-	 * that snapshot recorded after save. A local edit is left alone. A
-	 * sermon the sync itself created keeps taking the feed on every sync
-	 * and is not snapshotted. Title, audio, and video still update.
+	 * supplied-field snapshot. A field that already has text at link time
+	 * is locally owned and is never replaced. A field that is empty is
+	 * filled from SermonAudio on that sync, and only that field is updated
+	 * or cleared later, when the feed changed and the sermon still has the
+	 * value stored after save. A local edit of a filled field is left
+	 * alone. A sermon the sync itself created keeps taking the feed on
+	 * every sync and is not snapshotted. Title, audio, and video still
+	 * update.
 	 *
 	 * `cpl_sermon_audio_match_existing` disables only this fallback. Return
 	 * false and a sermon with no external id is inserted, as it was before.
@@ -343,6 +345,8 @@ class SermonAudio extends Adapter {
 		$track_snapshot   = false;
 		$wrote_content    = false;
 		$wrote_scripture  = false;
+		$own_content      = false;
+		$own_scripture    = false;
 		$batch_ambiguous  = is_array( $item ) && ! empty( $item[ SermonAudioMatch::BATCH_AMBIGUOUS ] );
 		$supplied         = is_array( $item ) ? SermonAudioMatch::supplied_fields_from_item( $item ) : null;
 
@@ -360,6 +364,8 @@ class SermonAudio extends Adapter {
 				$clear_scripture = $applied['clear_scripture'];
 				$wrote_content   = $applied['wrote_content'];
 				$wrote_scripture = $applied['wrote_scripture'];
+				$own_content     = $applied['own_content'];
+				$own_scripture   = $applied['own_scripture'];
 				$track_snapshot  = true;
 			} elseif ( ( null === $existing_id || '' === (string) $existing_id ) && ! $batch_ambiguous && $this->match_existing_enabled( $item ) ) {
 				$match_id = SermonAudioMatch::find_link( $item );
@@ -371,6 +377,8 @@ class SermonAudio extends Adapter {
 					$clear_scripture = $applied['clear_scripture'];
 					$wrote_content   = $applied['wrote_content'];
 					$wrote_scripture = $applied['wrote_scripture'];
+					$own_content     = $applied['own_content'];
+					$own_scripture   = $applied['own_scripture'];
 					$track_snapshot  = true;
 					$mark_id         = $match_id;
 				}
@@ -387,7 +395,7 @@ class SermonAudio extends Adapter {
 			}
 
 			if ( $track_snapshot && is_array( $supplied ) ) {
-				SermonAudioMatch::record_supplied_snapshot( $origin_id, $supplied, $wrote_content, $wrote_scripture );
+				SermonAudioMatch::record_supplied_snapshot( $origin_id, $supplied, $wrote_content, $wrote_scripture, $own_content, $own_scripture );
 			}
 
 			if ( $mark_id > 0 && $origin_id === $mark_id ) {
