@@ -260,30 +260,37 @@ class SermonAudioMatchTest extends TestCase {
 		$this->assertSame( 'neutral', SermonAudioMatch::media_relation( $audio_only, array( 'video' => array( 'https://youtu.be/abc' ) ) ) );
 	}
 
-	public function test_the_same_media_links_even_when_the_title_differs() {
-		$id = SermonAudioMatch::select_match(
-			array(
-				$this->candidate( 9, 'Morning message', '' ),
-			),
-			'Sunday Worship',
-			'sa-1',
-			array( 'audio' => array( 'https://media.sermonaudio.com/audio/sermon.mp3' ) )
-		);
-
-		$this->assertNull( $id );
-
-		$with_media = $this->candidate( 9, 'Morning message', '' );
-		$with_media['media'] = array(
+	public function test_the_same_media_does_not_link_a_different_title() {
+		$candidate = $this->candidate( 9, 'Morning message', '' );
+		$candidate['media'] = array(
 			'audio' => array( 'http://www.media.sermonaudio.com/audio/sermon.mp3?download=true' ),
 		);
 
-		$this->assertSame(
-			9,
+		$this->assertNull(
 			SermonAudioMatch::select_match(
-				array( $with_media ),
+				array( $candidate ),
 				'Sunday Worship',
 				'sa-1',
 				array( 'audio' => array( 'https://media.sermonaudio.com/audio/sermon.mp3' ) )
+			)
+		);
+	}
+
+	public function test_two_title_matches_with_the_same_url_are_not_linked() {
+		$audio = array(
+			'audio' => array( 'https://media.sermonaudio.com/audio/sermon.mp3' ),
+		);
+		$first = $this->candidate( 4, 'Sunday Worship', '' );
+		$second = $this->candidate( 9, 'sunday worship', '' );
+		$first['media'] = $audio;
+		$second['media'] = $audio;
+
+		$this->assertNull(
+			SermonAudioMatch::select_match(
+				array( $first, $second ),
+				'Sunday Worship',
+				'sa-1',
+				$audio
 			)
 		);
 	}

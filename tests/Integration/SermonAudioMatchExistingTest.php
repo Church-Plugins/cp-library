@@ -377,11 +377,11 @@ class SermonAudioMatchExistingTest extends TestCase {
 		$this->assertSame( '', (string) get_post_meta( $model->origin_id, SermonAudioMatch::LINKED_META, true ) );
 	}
 
-	public function test_the_same_audio_file_links_even_when_the_title_differs() {
+	public function test_the_same_media_and_a_different_title_creates_a_new_post() {
 		$post_id = $this->existing_sermon( 'Morning message', '2024-06-02 09:00:00', 'CSV notes' );
 		update_post_meta( $post_id, 'audio_url', 'http://www.media.sermonaudio.com/audio/sermon.mp3?sermonID=1&download=true' );
 
-		$model = $this->import(
+		$model   = $this->import(
 			$this->sermon(
 				'sa-same-file',
 				'Sunday Worship',
@@ -391,11 +391,49 @@ class SermonAudioMatchExistingTest extends TestCase {
 				'https://media.sermonaudio.com/audio/sermon.mp3/'
 			)
 		);
+		$created = (int) $model->origin_id;
 
-		$this->assertSame( $post_id, (int) $model->origin_id );
-		$this->assertSame( array( $post_id ), $this->sermon_ids() );
-		$this->assertSame( '1', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertNotSame( $post_id, $created );
+		$this->assertSame( array( $post_id, $created ), $this->sermon_ids() );
+		$this->assertSame( '', (string) get_post_meta( $post_id, 'external_id', true ) );
+		$this->assertSame( '', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
 		$this->assertSame( 'CSV notes', get_post( $post_id )->post_content );
+		$this->assertSame( 'Morning message', get_post( $post_id )->post_title );
+		$this->assertSame( array( $created ), $this->posts_with_external_id( 'sa-same-file' ) );
+		$this->assertSame( '', (string) get_post_meta( $created, SermonAudioMatch::LINKED_META, true ) );
+	}
+
+	public function test_two_same_day_sermons_with_the_same_title_and_url_are_not_linked() {
+		$url   = 'https://media.sermonaudio.com/audio/sermon.mp3?sermonID=1&download=true';
+		$first = $this->existing_sermon( 'Sunday Worship', '2024-06-02 09:00:00', 'First notes' );
+		$second = $this->existing_sermon( 'sunday   worship', '2024-06-02 11:00:00', 'Second notes' );
+		update_post_meta( $first, 'audio_url', $url );
+		update_post_meta( $second, 'audio_url', 'https://www.media.sermonaudio.com/audio/sermon.mp3/' );
+
+		$model   = $this->import(
+			$this->sermon(
+				'sa-two-urls',
+				'Sunday Worship',
+				'2024-06-02',
+				'From SermonAudio',
+				null,
+				$url
+			)
+		);
+		$created = (int) $model->origin_id;
+
+		$this->assertNotContains( $created, array( $first, $second ) );
+		$this->assertSame( array( $first, $second, $created ), $this->sermon_ids() );
+		$this->assertSame( array( $created ), $this->posts_with_external_id( 'sa-two-urls' ) );
+		$this->assertSame( '', (string) get_post_meta( $created, SermonAudioMatch::LINKED_META, true ) );
+
+		foreach ( array( $first, $second ) as $post_id ) {
+			$this->assertSame( '', (string) get_post_meta( $post_id, 'external_id', true ) );
+			$this->assertSame( '', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
+		}
+
+		$this->assertSame( 'First notes', get_post( $first )->post_content );
+		$this->assertSame( 'Second notes', get_post( $second )->post_content );
 	}
 
 	public function test_a_different_file_on_the_same_host_is_not_linked() {
@@ -467,7 +505,7 @@ class SermonAudioMatchExistingTest extends TestCase {
 		$model = $this->import(
 			$this->sermon(
 				'sa-redirect',
-				'A retitled sermon',
+				'Sunday Worship',
 				'2024-06-02',
 				'From SermonAudio',
 				null,

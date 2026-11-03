@@ -131,11 +131,13 @@ class SermonAudioMatch {
 	/**
 	 * The one post that may be linked, or null to create a new sermon.
 	 *
-	 * $candidates are sermons already limited to one calendar day. The same
-	 * audio or video file, including a stored redirect target, links that
-	 * one sermon. The same kind of file on one host with a different path
-	 * is not linked. Otherwise exactly one normalized title links, and a
-	 * post that already has a different external id does not.
+	 * $candidates are sermons already limited to one calendar day. A link
+	 * requires exactly one candidate with the same normalized title. Media
+	 * can only keep that candidate or remove it: the same file confirms it,
+	 * and the same kind of file on one host with a different path removes
+	 * it. A shared file does not link a sermon whose title differs. Two or
+	 * more that still qualify, and a post that already has a different
+	 * external id, are not linked.
 	 *
 	 * @param array<int,array{ID:int,post_title:string,external_id?:string,media?:array}> $candidates Same-day sermons.
 	 * @param mixed                                                                       $incoming_title Raw title.
@@ -145,42 +147,34 @@ class SermonAudioMatch {
 	 */
 	public static function select_match( array $candidates, $incoming_title, $incoming_external_id, array $incoming_media = array() ) {
 		$target = self::normalize_title( $incoming_title );
-		$strong = array();
-		$titles = array();
+
+		if ( '' === $target ) {
+			return null;
+		}
+
+		$matches = array();
 
 		foreach ( $candidates as $candidate ) {
-			$local_media = isset( $candidate['media'] ) && is_array( $candidate['media'] ) ? $candidate['media'] : array();
-			$relation    = self::media_relation( $local_media, $incoming_media );
-
-			if ( 'same' === $relation ) {
-				$strong[] = $candidate;
-				continue;
-			}
-
-			if ( 'block' === $relation || '' === $target ) {
-				continue;
-			}
-
 			$candidate_title = isset( $candidate['post_title'] ) ? $candidate['post_title'] : '';
 
-			if ( self::normalize_title( $candidate_title ) === $target ) {
-				$titles[] = $candidate;
+			if ( self::normalize_title( $candidate_title ) !== $target ) {
+				continue;
 			}
+
+			$local_media = isset( $candidate['media'] ) && is_array( $candidate['media'] ) ? $candidate['media'] : array();
+
+			if ( 'block' === self::media_relation( $local_media, $incoming_media ) ) {
+				continue;
+			}
+
+			$matches[] = $candidate;
 		}
 
-		if ( count( $strong ) > 1 ) {
+		if ( 1 !== count( $matches ) ) {
 			return null;
 		}
 
-		if ( 1 === count( $strong ) ) {
-			return self::linkable_id( $strong[0], $incoming_external_id );
-		}
-
-		if ( 1 !== count( $titles ) ) {
-			return null;
-		}
-
-		return self::linkable_id( $titles[0], $incoming_external_id );
+		return self::linkable_id( $matches[0], $incoming_external_id );
 	}
 
 	/**
