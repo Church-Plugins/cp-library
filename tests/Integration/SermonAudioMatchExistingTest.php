@@ -172,22 +172,21 @@ class SermonAudioMatchExistingTest extends TestCase {
 		$this->assertSame( 'https://cdn.example.com/audio/sunday-grace.mp3', $second->get_meta_value( 'audio_url' ) );
 	}
 
-	public function test_empty_content_and_scripture_are_filled_from_sermonaudio_and_then_kept() {
-		$post_id = $this->existing_sermon( 'Empty Vessel', '2024-06-02 09:00:00', '' );
+	public function test_an_empty_feed_field_does_not_overwrite_local_notes_or_scripture() {
+		$post_id = $this->existing_sermon( 'Sunday Grace', '2024-06-02 09:00:00', 'Church notes' );
+		$this->set_scripture( $post_id, 'John 3:16' );
 
-		$this->import( $this->sermon( 'sa-empty', 'Empty Vessel', '2024-06-02', 'SA description', 'Romans 8:28' ) );
+		$this->import( $this->sermon( 'sa-empty-feed', 'Sunday Grace', '2024-06-02', '' ) );
 
-		$this->assertSame( array( $post_id ), $this->sermon_ids() );
-		$this->assertSame( 'SA description', get_post( $post_id )->post_content );
-		$this->assertContains( 'Romans 8:28', $this->passages( $post_id ) );
-		$this->assertSame( '1', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
-
-		$this->import( $this->sermon( 'sa-empty', 'Empty Vessel', '2024-06-02', 'Changed later', 'John 1:1' ) );
-
-		$this->assertSame( array( $post_id ), $this->sermon_ids() );
-		$this->assertSame( 'SA description', get_post( $post_id )->post_content );
-		$this->assertContains( 'Romans 8:28', $this->passages( $post_id ) );
-		$this->assertNotContains( 'John 1:1', $this->passages( $post_id ) );
+		$this->assertSame( 'Church notes', get_post( $post_id )->post_content );
+		$this->assertContains( 'John 3:16', $this->passages( $post_id ) );
+		$this->assertSame(
+			array(
+				'content'   => '',
+				'scripture' => '',
+			),
+			get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true )
+		);
 	}
 
 	public function test_same_local_day_links_when_gmt_is_the_next_day() {
@@ -557,19 +556,84 @@ class SermonAudioMatchExistingTest extends TestCase {
 		$this->assertNotSame( (int) $speaker_id, (int) $model->origin_id );
 	}
 
-	public function test_a_sermon_already_linked_by_external_id_still_takes_sermonaudio_content() {
+	public function test_a_supplied_field_is_cleared_when_sermonaudio_removes_it() {
+		$post_id = $this->existing_sermon( 'Empty Vessel', '2024-06-02 09:00:00', '' );
+
+		$this->import( $this->sermon( 'sa-clear', 'Empty Vessel', '2024-06-02', 'SA description', 'Romans 8:28' ) );
+		$this->assertSame( 'SA description', get_post( $post_id )->post_content );
+		$this->assertContains( 'Romans 8:28', $this->passages( $post_id ) );
+
+		$this->import( $this->sermon( 'sa-clear', 'Empty Vessel', '2024-06-02', '' ) );
+
+		$this->assertSame( '', get_post( $post_id )->post_content );
+		$this->assertSame( array(), $this->passages( $post_id ) );
+		$this->assertSame(
+			array(
+				'content'   => '',
+				'scripture' => '',
+			),
+			get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true )
+		);
+	}
+
+	public function test_a_supplied_field_is_updated_when_sermonaudio_changes_it() {
+		$post_id = $this->existing_sermon( 'Empty Vessel', '2024-06-02 09:00:00', '' );
+
+		$this->import( $this->sermon( 'sa-change', 'Empty Vessel', '2024-06-02', 'SA description', 'Romans 8:28' ) );
+		$this->import( $this->sermon( 'sa-change', 'Empty Vessel', '2024-06-02', 'Changed later', 'John 1:1' ) );
+
+		$this->assertSame( array( $post_id ), $this->sermon_ids() );
+		$this->assertSame( 'Changed later', get_post( $post_id )->post_content );
+		$this->assertContains( 'John 1:1', $this->passages( $post_id ) );
+		$this->assertNotContains( 'Romans 8:28', $this->passages( $post_id ) );
+	}
+
+	public function test_a_locally_edited_field_is_not_overwritten() {
+		$post_id = $this->existing_sermon( 'Empty Vessel', '2024-06-02 09:00:00', '' );
+
+		$this->import( $this->sermon( 'sa-edit', 'Empty Vessel', '2024-06-02', 'SA description', 'Romans 8:28' ) );
+		wp_update_post(
+			array(
+				'ID'           => $post_id,
+				'post_content' => 'My notes',
+			)
+		);
+		$this->set_scripture( $post_id, 'John 3:16' );
+
+		$this->import( $this->sermon( 'sa-edit', 'Empty Vessel', '2024-06-02', 'Changed later', 'Psalm 23' ) );
+
+		$this->assertSame( 'My notes', get_post( $post_id )->post_content );
+		$this->assertContains( 'John 3:16', $this->passages( $post_id ) );
+		$this->assertNotContains( 'Psalm 23', $this->passages( $post_id ) );
+		$this->assertSame(
+			array(
+				'content'   => 'Changed later',
+				'scripture' => 'Psalms 23',
+			),
+			get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true )
+		);
+	}
+
+	public function test_a_sermon_with_no_snapshot_keeps_local_notes_and_records_the_feed() {
 		$post_id = $this->existing_sermon( 'Sunday Grace', '2024-06-02 09:00:00', 'Local notes' );
 		update_post_meta( $post_id, 'external_id', 'sa-already' );
 		$this->set_scripture( $post_id, 'John 3:16' );
+		$this->assertSame( '', get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true ) );
 
 		$model = $this->import( $this->sermon( 'sa-already', 'Sunday Grace', '2024-06-02', 'From SermonAudio', 'Romans 8:28' ) );
 
 		$this->assertSame( $post_id, (int) $model->origin_id );
 		$this->assertSame( array( $post_id ), $this->sermon_ids() );
-		$this->assertSame( 'From SermonAudio', get_post( $post_id )->post_content );
-		$this->assertContains( 'Romans 8:28', $this->passages( $post_id ) );
-		$this->assertNotContains( 'John 3:16', $this->passages( $post_id ) );
-		$this->assertSame( '', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertSame( 'Local notes', get_post( $post_id )->post_content );
+		$this->assertContains( 'John 3:16', $this->passages( $post_id ) );
+		$this->assertNotContains( 'Romans 8:28', $this->passages( $post_id ) );
+		$this->assertSame(
+			array(
+				'content'   => 'From SermonAudio',
+				'scripture' => 'Romans 8:28',
+			),
+			get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true )
+		);
 	}
 
 	/**

@@ -320,12 +320,13 @@ class SermonAudio extends Adapter {
 	 * batch that itself contains two sermons with that title on that day
 	 * does not link either of them. A trashed sermon is not a candidate.
 	 *
-	 * On that first link, and on every later sync of a sermon this matcher
-	 * linked, non-empty local content and existing scripture stay. Empty
-	 * content and empty scripture are filled from SermonAudio once. Title,
-	 * date, audio, and video still update, which is what an already-linked
-	 * sermon does. A sermon that already had this external id and was not
-	 * matched here still takes SermonAudio's content and scripture.
+	 * Notes and scripture follow the supplied-field snapshot. An empty feed
+	 * value does not erase a local value. A value SermonAudio previously
+	 * supplied is updated or cleared only when the feed changed and the
+	 * sermon still has that supplied value. A local edit is left alone.
+	 * The first sync of a sermon with no snapshot records the feed and
+	 * does not replace notes or scripture the sermon already has. Title,
+	 * audio, and video still update.
 	 *
 	 * `cpl_sermon_audio_match_existing` disables only this fallback. Return
 	 * false and a sermon with no external id is inserted, as it was before.
@@ -338,7 +339,9 @@ class SermonAudio extends Adapter {
 	 */
 	public function load_item( $item, $model ) {
 		$mark_id          = 0;
-		$batch_ambiguous = is_array( $item ) && ! empty( $item[ SermonAudioMatch::BATCH_AMBIGUOUS ] );
+		$clear_scripture  = false;
+		$batch_ambiguous  = is_array( $item ) && ! empty( $item[ SermonAudioMatch::BATCH_AMBIGUOUS ] );
+		$supplied         = is_array( $item ) ? SermonAudioMatch::supplied_fields_from_item( $item ) : null;
 
 		if ( is_array( $item ) ) {
 			unset( $item[ SermonAudioMatch::BATCH_AMBIGUOUS ] );
@@ -347,26 +350,43 @@ class SermonAudio extends Adapter {
 		if ( $this->item_is_sermon( $item ) ) {
 			$external_id = isset( $item['external_id'] ) ? (string) $item['external_id'] : '';
 			$existing_id = '' === $external_id ? null : $this->get_item_id_from_external( $external_id );
+			$update_id   = null;
 
 			if ( null !== $existing_id && '' !== (string) $existing_id ) {
-				if ( SermonAudioMatch::is_match_linked( (int) $existing_id ) ) {
-					$item = SermonAudioMatch::keep_nonempty_local_fields( $item, (int) $existing_id );
-				}
+				$update_id = (int) $existing_id;
 			} elseif ( ! $batch_ambiguous && $this->match_existing_enabled( $item ) ) {
 				$match_id = SermonAudioMatch::find_link( $item );
 
 				if ( null !== $match_id && '' === (string) get_post_meta( $match_id, 'external_id', true ) ) {
 					$item['ID'] = $match_id;
-					$item       = SermonAudioMatch::keep_nonempty_local_fields( $item, $match_id );
+					$update_id  = $match_id;
 					$mark_id    = $match_id;
 				}
+			}
+
+			if ( null !== $update_id ) {
+				$applied         = SermonAudioMatch::apply_supplied_snapshot( $item, $update_id );
+				$item            = $applied['item'];
+				$clear_scripture = $applied['clear_scripture'];
 			}
 		}
 
 		$loaded = parent::load_item( $item, $model );
 
-		if ( $mark_id > 0 && is_object( $loaded ) && (int) $loaded->origin_id === $mark_id ) {
-			update_post_meta( $mark_id, SermonAudioMatch::LINKED_META, '1' );
+		if ( $this->item_is_sermon( $item ) && is_object( $loaded ) && ! empty( $loaded->origin_id ) ) {
+			$origin_id = (int) $loaded->origin_id;
+
+			if ( $clear_scripture ) {
+				cp_library()->setup->taxonomies->scripture->update_object_scripture( $origin_id, array() );
+			}
+
+			if ( is_array( $supplied ) ) {
+				update_post_meta( $origin_id, SermonAudioMatch::SUPPLIED_META, $supplied );
+			}
+
+			if ( $mark_id > 0 && $origin_id === $mark_id ) {
+				update_post_meta( $mark_id, SermonAudioMatch::LINKED_META, '1' );
+			}
 		}
 
 		return $loaded;

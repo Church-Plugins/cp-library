@@ -36,6 +36,16 @@ class SermonAudioMatch {
 	const LINKED_META = '_cpl_sa_match_linked';
 
 	/**
+	 * Snapshot of the notes and scripture SermonAudio last supplied.
+	 *
+	 * A later sync updates or clears one of those fields only when the feed
+	 * value changed and the sermon still has the snapshotted value. A local
+	 * edit does not match the snapshot, so it is left alone. An empty feed
+	 * value does not erase a local value that SermonAudio did not supply.
+	 */
+	const SUPPLIED_META = '_cpl_sa_supplied';
+
+	/**
 	 * Item flag set when this sync batch has two sermons with the same
 	 * normalized title on the same site day.
 	 *
@@ -508,6 +518,178 @@ class SermonAudioMatch {
 		} elseif ( '_video_url_redirect' === $key ) {
 			$stored[ $post_id ]['redirect'][] = $value;
 		}
+	}
+
+	/**
+	 * Value to store for one supplied field, and whether the sermon should take it.
+	 *
+	 * With no snapshot yet, a non-empty local value stays and an empty one
+	 * may be filled. Nothing is cleared on that first sync. After that, the
+	 * feed is applied only when it differs from the snapshot and the local
+	 * value is still the snapshotted one. That includes clearing a value
+	 * SermonAudio used to send and has since removed.
+	 *
+	 * @param mixed $local         Current local value.
+	 * @param mixed $feed          Value on this SermonAudio item.
+	 * @param bool  $has_snapshot  Whether this sermon has a supplied snapshot.
+	 * @param mixed $previous      Snapshotted feed value.
+	 * @return array{value:string,apply:bool}
+	 */
+	public static function reconcile_supplied_field( $local, $feed, $has_snapshot, $previous ) {
+		$local_text = self::blank_text( $local );
+		$feed_text  = self::blank_text( $feed );
+
+		if ( ! $has_snapshot ) {
+			if ( '' === $local_text && '' !== $feed_text ) {
+				return array(
+					'value' => $feed_text,
+					'apply' => true,
+				);
+			}
+
+			return array(
+				'value' => $local_text,
+				'apply' => false,
+			);
+		}
+
+		$previous_text = self::blank_text( $previous );
+
+		if ( $feed_text === $previous_text || $local_text !== $previous_text ) {
+			return array(
+				'value' => $local_text,
+				'apply' => false,
+			);
+		}
+
+		return array(
+			'value' => $feed_text,
+			'apply' => true,
+		);
+	}
+
+	/**
+	 * Notes and scripture from a formatted SermonAudio item.
+	 *
+	 * @param array $item Formatted sermon.
+	 * @return array{content:string,scripture:string}
+	 */
+	public static function supplied_fields_from_item( array $item ) {
+		$scripture = '';
+
+		if ( isset( $item['cpl_data']['scripture'] ) && is_string( $item['cpl_data']['scripture'] ) ) {
+			$scripture = self::scripture_text( $item['cpl_data']['scripture'] );
+		}
+
+		return array(
+			'content'   => self::blank_text( isset( $item['post_content'] ) ? $item['post_content'] : '' ),
+			'scripture' => $scripture,
+		);
+	}
+
+	/**
+	 * Comparable scripture text.
+	 *
+	 * @param mixed $passages A passage string or a list of passages.
+	 * @return string
+	 */
+	public static function scripture_text( $passages ) {
+		if ( is_string( $passages ) ) {
+			$passages = explode( ';', $passages );
+		}
+
+		if ( ! is_array( $passages ) ) {
+			return '';
+		}
+
+		$clean = array();
+
+		foreach ( $passages as $passage ) {
+			if ( ! is_string( $passage ) ) {
+				continue;
+			}
+
+			$passage = trim( $passage );
+
+			if ( '' !== $passage ) {
+				$clean[] = $passage;
+			}
+		}
+
+		return implode( '; ', $clean );
+	}
+
+	/**
+	 * Keep or replace notes and scripture on an existing sermon.
+	 *
+	 * The returned item is what wp_insert_post() should receive. Scripture
+	 * that must be removed is not left on cpl_data; the caller deletes it
+	 * after the post is saved, because an unset scripture key does not
+	 * clear passages.
+	 *
+	 * @param array $item    Formatted sermon.
+	 * @param int   $post_id Existing sermon.
+	 * @return array{item:array,clear_scripture:bool}
+	 */
+	public static function apply_supplied_snapshot( array $item, $post_id ) {
+		$post     = get_post( $post_id );
+		$local    = array(
+			'content'   => ( $post instanceof \WP_Post ) ? $post->post_content : '',
+			'scripture' => self::scripture_text( self::stored_passages( $post_id ) ),
+		);
+		$feed     = self::supplied_fields_from_item( $item );
+		$stored   = get_post_meta( $post_id, self::SUPPLIED_META, true );
+		$has      = is_array( $stored );
+		$content  = self::reconcile_supplied_field(
+			$local['content'],
+			$feed['content'],
+			$has,
+			$has && isset( $stored['content'] ) ? $stored['content'] : ''
+		);
+		$scripture = self::reconcile_supplied_field(
+			$local['scripture'],
+			$feed['scripture'],
+			$has,
+			$has && isset( $stored['scripture'] ) ? $stored['scripture'] : ''
+		);
+
+		if ( ! $content['apply'] && $post instanceof \WP_Post ) {
+			$item['post_content'] = wp_slash( $post->post_content );
+		} elseif ( $content['apply'] ) {
+			$item['post_content'] = $feed['content'];
+		}
+
+		$clear = false;
+
+		if ( ! isset( $item['cpl_data'] ) || ! is_array( $item['cpl_data'] ) ) {
+			$item['cpl_data'] = array();
+		}
+
+		if ( ! $scripture['apply'] ) {
+			unset( $item['cpl_data']['scripture'] );
+		} elseif ( '' === $feed['scripture'] ) {
+			unset( $item['cpl_data']['scripture'] );
+			$clear = true;
+		} else {
+			$item['cpl_data']['scripture'] = $feed['scripture'];
+		}
+
+		return array(
+			'item'            => $item,
+			'clear_scripture' => $clear,
+		);
+	}
+
+	/**
+	 * @param mixed $value Field value.
+	 * @return string
+	 */
+	public static function blank_text( $value ) {
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+
+		return trim( $value );
 	}
 
 	/**

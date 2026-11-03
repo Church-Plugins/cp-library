@@ -311,6 +311,44 @@ class SermonAudioMatchTest extends TestCase {
 		);
 	}
 
+	public function test_an_empty_feed_value_does_not_replace_a_local_value() {
+		$kept = SermonAudioMatch::reconcile_supplied_field( 'Church notes', '', true, 'SermonAudio notes' );
+
+		$this->assertFalse( $kept['apply'] );
+		$this->assertSame( 'Church notes', $kept['value'] );
+	}
+
+	public function test_a_supplied_value_is_cleared_when_the_feed_removes_it() {
+		$cleared = SermonAudioMatch::reconcile_supplied_field( 'SermonAudio notes', '', true, 'SermonAudio notes' );
+
+		$this->assertTrue( $cleared['apply'] );
+		$this->assertSame( '', $cleared['value'] );
+	}
+
+	public function test_a_supplied_value_is_updated_when_the_feed_changes_it() {
+		$updated = SermonAudioMatch::reconcile_supplied_field( 'SermonAudio notes', 'Revised notes', true, 'SermonAudio notes' );
+
+		$this->assertTrue( $updated['apply'] );
+		$this->assertSame( 'Revised notes', $updated['value'] );
+	}
+
+	public function test_a_local_edit_is_not_overwritten() {
+		$edited = SermonAudioMatch::reconcile_supplied_field( 'My notes', 'Revised notes', true, 'SermonAudio notes' );
+
+		$this->assertFalse( $edited['apply'] );
+		$this->assertSame( 'My notes', $edited['value'] );
+	}
+
+	public function test_the_first_snapshot_keeps_existing_local_text() {
+		$kept = SermonAudioMatch::reconcile_supplied_field( 'Church notes', 'SermonAudio notes', false, '' );
+		$filled = SermonAudioMatch::reconcile_supplied_field( '', 'SermonAudio notes', false, '' );
+
+		$this->assertFalse( $kept['apply'] );
+		$this->assertSame( 'Church notes', $kept['value'] );
+		$this->assertTrue( $filled['apply'] );
+		$this->assertSame( 'SermonAudio notes', $filled['value'] );
+	}
+
 	public function test_nonempty_content_and_scripture_are_kept_and_empty_ones_are_not() {
 		$this->assertSame(
 			array(
