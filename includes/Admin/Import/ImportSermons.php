@@ -104,11 +104,11 @@ class ImportSermons extends BackgroundProcessImport {
 	/**
 	 * Passages from one CSV scripture cell.
 	 *
-	 * The scripture column is a comma-separated list of references. Each piece
-	 * is rewritten the same way as a SermonAudio reference, so "Psalm 23" and
-	 * "Ps 23, Jn 3:16" are kept. The shared rewriter does not itself split on
-	 * commas: "Psalm 23:1, 4" is one reference with a verse list, and splitting
-	 * that would drop the verses after the comma.
+	 * References are separated by ";" or by a comma that starts a new
+	 * reference. A comma followed by a verse number or range stays in the
+	 * same reference, so "Psalm 23:1, 4" is one passage and
+	 * "1 Thessalonians 2:1-12; 2 Corinthians 5:11-15" is two. Each piece is
+	 * rewritten the same way as a SermonAudio reference.
 	 *
 	 * @param mixed $field Raw scripture cell.
 	 * @return string[] Normalized passages, with empty pieces removed.
@@ -120,7 +120,7 @@ class ImportSermons extends BackgroundProcessImport {
 
 		$passages = array();
 
-		foreach ( explode( ',', $field ) as $passage ) {
+		foreach ( self::split_scripture_field( $field ) as $passage ) {
 			$passage = SermonAudio::normalize_scripture_passage( $passage );
 
 			if ( '' !== $passage ) {
@@ -129,6 +129,47 @@ class ImportSermons extends BackgroundProcessImport {
 		}
 
 		return $passages;
+	}
+
+	/**
+	 * Split a scripture cell on ";" and on commas that start a new reference.
+	 *
+	 * @param string $field Raw cell.
+	 * @return string[] Pieces, including blanks from a trailing separator.
+	 */
+	private static function split_scripture_field( $field ) {
+		$parts  = array();
+		$buffer = '';
+		$length = strlen( $field );
+
+		for ( $i = 0; $i < $length; $i++ ) {
+			$char = $field[ $i ];
+
+			if ( ';' === $char || ( ',' === $char && ! self::comma_is_verse_list( substr( $field, $i + 1 ) ) ) ) {
+				$parts[] = $buffer;
+				$buffer  = '';
+				continue;
+			}
+
+			$buffer .= $char;
+		}
+
+		$parts[] = $buffer;
+
+		return $parts;
+	}
+
+	/**
+	 * Whether the text after a comma is a verse number or range, not a new book.
+	 *
+	 * "4" and "4-6" continue the reference. "Jn 3:16", "1 John 1:9", and
+	 * "3rd John 1" start a new one.
+	 *
+	 * @param string $after Text after the comma.
+	 * @return bool
+	 */
+	private static function comma_is_verse_list( $after ) {
+		return 1 === preg_match( '/^\s*\d+[a-z]?(?:\s*[-–—]\s*\d+[a-z]?)?(?=\s*(?:$|[,;]))/i', $after );
 	}
 
 	/**
