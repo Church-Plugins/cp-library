@@ -308,6 +308,95 @@ class SermonAudio extends Adapter {
 	}
 
 	/**
+	 * Load a SermonAudio item.
+	 *
+	 * When no post has this sermonID, a cpl_item on the same site-local
+	 * calendar day with the same normalized title is updated instead of
+	 * inserted, but only when it is the only such sermon and it has no
+	 * external id of its own. `_cpl_sa_match_linked` is stored on that post.
+	 * Zero matches and two or more matches still insert a new sermon.
+	 *
+	 * On that first link, and on every later sync of a sermon this matcher
+	 * linked, non-empty local content and existing scripture stay. Empty
+	 * content and empty scripture are filled from SermonAudio once. Title,
+	 * date, audio, and video still update, which is what an already-linked
+	 * sermon does. A sermon that already had this external id and was not
+	 * matched here still takes SermonAudio's content and scripture.
+	 *
+	 * `cpl_sermon_audio_match_existing` disables only this fallback. Return
+	 * false and a sermon with no external id is inserted, as it was before.
+	 * Speakers and series are never matched.
+	 *
+	 * @param array           $item  Formatted item.
+	 * @param class-string    $model Model class.
+	 * @return \ChurchPlugins\Models\Table
+	 * @throws \ChurchPlugins\Exception When the item cannot be saved.
+	 */
+	public function load_item( $item, $model ) {
+		$mark_id = 0;
+
+		if ( $this->item_is_sermon( $item ) ) {
+			$external_id = isset( $item['external_id'] ) ? (string) $item['external_id'] : '';
+			$existing_id = '' === $external_id ? null : $this->get_item_id_from_external( $external_id );
+
+			if ( null !== $existing_id && '' !== (string) $existing_id ) {
+				if ( SermonAudioMatch::is_match_linked( (int) $existing_id ) ) {
+					$item = SermonAudioMatch::keep_nonempty_local_fields( $item, (int) $existing_id );
+				}
+			} elseif ( $this->match_existing_enabled( $item ) ) {
+				$match_id = SermonAudioMatch::find_link( $item );
+
+				if ( null !== $match_id && '' === (string) get_post_meta( $match_id, 'external_id', true ) ) {
+					$item['ID'] = $match_id;
+					$item       = SermonAudioMatch::keep_nonempty_local_fields( $item, $match_id );
+					$mark_id    = $match_id;
+				}
+			}
+		}
+
+		$loaded = parent::load_item( $item, $model );
+
+		if ( $mark_id > 0 && is_object( $loaded ) && (int) $loaded->origin_id === $mark_id ) {
+			update_post_meta( $mark_id, SermonAudioMatch::LINKED_META, '1' );
+		}
+
+		return $loaded;
+	}
+
+	/**
+	 * Whether $item is a sermon rather than a speaker or series.
+	 *
+	 * @param mixed $item Formatted item.
+	 * @return bool
+	 */
+	private function item_is_sermon( $item ) {
+		if ( ! is_array( $item ) || empty( $item['post_type'] ) ) {
+			return false;
+		}
+
+		return cp_library()->setup->post_types->item->post_type === $item['post_type'];
+	}
+
+	/**
+	 * Whether the title-and-day fallback may run for this sermon.
+	 *
+	 * @param array $item Formatted sermon.
+	 * @return bool
+	 */
+	private function match_existing_enabled( $item ) {
+		/**
+		 * Disable linking a SermonAudio sermon to an existing same-day title.
+		 *
+		 * Sermons that already store this external id are still updated.
+		 *
+		 * @param bool  $enabled Default true.
+		 * @param array $item    Formatted sermon about to be saved.
+		 * @param SermonAudio $adapter Adapter running the sync.
+		 */
+		return (bool) apply_filters( 'cpl_sermon_audio_match_existing', true, $item, $this );
+	}
+
+	/**
 	 * Insert or update the WordPress post for an imported item.
 	 *
 	 * Blank-title handling applies only to sermons. A blank API title is ""
