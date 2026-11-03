@@ -18,8 +18,10 @@
 namespace CP_Library\Tests\Unit;
 
 use ChurchPlugins\Exception;
+use CP_Library\Admin\Import\BackgroundProcessImport;
 use CP_Library\Admin\Import\ImportSermons;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
 /**
  * @covers \CP_Library\Admin\Import\ImportSermons::match_variation_id
@@ -62,6 +64,19 @@ class VariationMatchTest extends TestCase {
 		$this->assertStringContainsString( 'could not be found', $message );
 		$this->assertStringContainsString( 'Sermon', $message );
 		$this->assertStringContainsString( 'Presentation', $message );
+	}
+
+	/**
+	 * An optional third parameter is still a signature change. A subclass
+	 * compiled against the two-argument method fatals while the file is loading.
+	 */
+	public function test_import_item_stays_a_two_argument_method() {
+		$parent = new ReflectionMethod( BackgroundProcessImport::class, 'import_item' );
+		$child  = new ReflectionMethod( ImportSermons::class, 'import_item' );
+
+		$this->assertSame( 2, $parent->getNumberOfParameters() );
+		$this->assertSame( 2, $child->getNumberOfParameters() );
+		$this->assertTrue( $parent->isAbstract() );
 	}
 
 	public function test_a_miss_without_a_row_number_still_lists_the_value_and_names() {

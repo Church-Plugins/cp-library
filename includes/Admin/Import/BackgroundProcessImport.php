@@ -46,6 +46,16 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 	protected $field_mapping = array();
 
 	/**
+	 * Spreadsheet row of the item currently being imported, header included.
+	 *
+	 * Set in task() so import_item() can report it without a signature change.
+	 * 0 when the queued item did not carry a row.
+	 *
+	 * @var int
+	 */
+	protected $import_row = 0;
+
+	/**
 	 * Accepted mime types
 	 *
 	 * @var array
@@ -446,10 +456,10 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 
 		// import item
 		try {
-			$row_number = ( is_array( $item ) && isset( $item['_cpl_import_row'] ) ) ? absint( $item['_cpl_import_row'] ) : 0;
-			$item       = $this->parse_item( $item );
+			$this->import_row = ( is_array( $item ) && isset( $item['_cpl_import_row'] ) ) ? absint( $item['_cpl_import_row'] ) : 0;
+			$item             = $this->parse_item( $item );
 
-			$this->import_item( $item, $this->options, $row_number );
+			$this->import_item( $item, $this->options );
 
 			/**
 			 * Fires after each item is processed during the import process.
@@ -485,9 +495,8 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 	 *
 	 * @param array $item Item to import.
 	 * @param array $options Import options.
-	 * @param int   $row_number Spreadsheet row, including the header row. 0 when unknown.
 	 */
-	abstract protected function import_item( $item, $options, $row_number = 0 ): void;
+	abstract protected function import_item( $item, $options ): void;
 
 	/**
 	 * Parse the import options

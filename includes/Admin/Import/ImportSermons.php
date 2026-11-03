@@ -226,10 +226,9 @@ class ImportSermons extends BackgroundProcessImport {
 	 *
 	 * @param array $item Item to process.
 	 * @param array $options Import options.
-	 * @param int   $row_number Spreadsheet row, including the header row. 0 when unknown.
 	 * @throws Exception If there is an error importing the item.
 	 */
-	protected function import_item( $item, $options, $row_number = 0 ): void {
+	protected function import_item( $item, $options ): void {
 		global $wpdb;
 
 
@@ -409,7 +408,7 @@ class ImportSermons extends BackgroundProcessImport {
 
 		if ( $variation ) {
 			// get_source_items() is id => name. update_variant() accepts that id.
-			$variation_id = self::match_variation_id( $variation, $variation_options, $row_number );
+			$variation_id = self::match_variation_id( $variation, $variation_options, $this->import_row );
 
 			$variant = $item->update_variant(
 				[
