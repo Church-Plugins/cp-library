@@ -22,7 +22,6 @@ use ReflectionProperty;
 
 /**
  * @covers \CP_Library\Setup\Variations::service_type_is_source
- * @covers \CP_Library\Setup\Variations::is_enabled
  * @covers \CP_Library\Admin\Settings::save_empty_variation_source
  */
 class VariationSourceImportTest extends TestCase {

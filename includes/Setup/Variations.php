@@ -42,16 +42,7 @@ class Variations {
 	 * @author Tanner Moushey, 5/5/23
 	 */
 	public function is_enabled() {
-		$enabled = \CP_Library\Admin\Settings::get_item( 'variations_enabled', false );
-
-		// The Disable radio is stored as the string "0". (bool) "0" is true, so a
-		// saved "off" would otherwise leave Variations enabled.
-		if ( '0' === $enabled ) {
-			$enabled = false;
-		} else {
-			$enabled = (bool) $enabled;
-		}
-
+		$enabled = (bool) \CP_Library\Admin\Settings::get_item( 'variations_enabled', false );
 		return apply_filters( 'cpl_enable_variations', $enabled );
 	}
 
