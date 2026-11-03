@@ -332,9 +332,153 @@ class SermonAudioMatchExistingTest extends TestCase {
 
 		$this->assertSame( $post_id, (int) $model->origin_id );
 		$this->assertSame( array( $post_id ), $this->sermon_ids() );
-		$this->assertSame( '2024-03-10 23:30:00', get_post( $post_id )->post_date );
+		$this->assertSame( '2024-03-10 21:00:00', get_post( $post_id )->post_date );
 		$this->assertSame( '1', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
 		$this->assertSame( 'Local notes', get_post( $post_id )->post_content );
+	}
+
+	public function test_a_second_sync_keeps_the_post_date_saved_before_the_timezone_fallback() {
+		$this->use_los_angeles();
+
+		$local     = new \DateTimeImmutable( '2024-03-10 23:30:00', new \DateTimeZone( 'America/Los_Angeles' ) );
+		$timestamp = $local->getTimestamp();
+		$old_date  = gmdate( 'Y-m-d H:i:s', $timestamp );
+		$new_date  = wp_date( 'Y-m-d H:i:s', $timestamp );
+
+		$this->assertSame( '2024-03-11 06:30:00', $old_date );
+		$this->assertSame( '2024-03-10 23:30:00', $new_date );
+
+		$post_id = $this->existing_sermon( 'Evening Worship', $old_date, 'Already synced' );
+		update_post_meta( $post_id, 'external_id', 'sa-old-date' );
+
+		$sermon                   = $this->sermon( 'sa-old-date', 'Evening Worship', '', 'From SermonAudio' );
+		$sermon->preachDate       = '';
+		$sermon->publishTimestamp = $timestamp;
+
+		$model = $this->adapter->load_item( $this->adapter->format_item( $sermon ), ItemModel::class );
+
+		$this->assertSame( $post_id, (int) $model->origin_id );
+		$this->assertSame( $old_date, get_post( $post_id )->post_date );
+		$this->assertSame( array( $post_id ), $this->sermon_ids() );
+	}
+
+	public function test_a_new_sermon_without_a_preach_date_uses_the_site_day() {
+		$this->use_los_angeles();
+
+		$local     = new \DateTimeImmutable( '2024-03-10 23:30:00', new \DateTimeZone( 'America/Los_Angeles' ) );
+		$timestamp = $local->getTimestamp();
+		$sermon    = $this->sermon( 'sa-new-date', 'Evening Worship', '', 'From SermonAudio' );
+		$sermon->preachDate       = '';
+		$sermon->publishTimestamp = $timestamp;
+
+		$model = $this->adapter->load_item( $this->adapter->format_item( $sermon ), ItemModel::class );
+
+		$this->assertSame( '2024-03-10 23:30:00', get_post( $model->origin_id )->post_date );
+		$this->assertSame( '', (string) get_post_meta( $model->origin_id, SermonAudioMatch::LINKED_META, true ) );
+	}
+
+	public function test_the_same_audio_file_links_even_when_the_title_differs() {
+		$post_id = $this->existing_sermon( 'Morning message', '2024-06-02 09:00:00', 'CSV notes' );
+		update_post_meta( $post_id, 'audio_url', 'http://www.media.sermonaudio.com/audio/sermon.mp3?sermonID=1&download=true' );
+
+		$model = $this->import(
+			$this->sermon(
+				'sa-same-file',
+				'Sunday Worship',
+				'2024-06-02',
+				'From SermonAudio',
+				null,
+				'https://media.sermonaudio.com/audio/sermon.mp3/'
+			)
+		);
+
+		$this->assertSame( $post_id, (int) $model->origin_id );
+		$this->assertSame( array( $post_id ), $this->sermon_ids() );
+		$this->assertSame( '1', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertSame( 'CSV notes', get_post( $post_id )->post_content );
+	}
+
+	public function test_a_different_file_on_the_same_host_is_not_linked() {
+		$post_id = $this->existing_sermon( 'Sunday Worship', '2024-06-02 09:00:00', 'CSV notes' );
+		update_post_meta( $post_id, 'audio_url', 'https://media.sermonaudio.com/audio/111.mp3' );
+
+		$model   = $this->import(
+			$this->sermon(
+				'sa-other-file',
+				'Sunday Worship',
+				'2024-06-02',
+				'From SermonAudio',
+				null,
+				'https://media.sermonaudio.com/audio/222.mp3?download=true'
+			)
+		);
+		$created = (int) $model->origin_id;
+
+		$this->assertNotSame( $post_id, $created );
+		$this->assertSame( '', (string) get_post_meta( $post_id, 'external_id', true ) );
+		$this->assertSame( '', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertSame( 'CSV notes', get_post( $post_id )->post_content );
+		$this->assertSame( array( $created ), $this->posts_with_external_id( 'sa-other-file' ) );
+	}
+
+	public function test_a_different_host_falls_back_to_the_title_and_day() {
+		$post_id = $this->existing_sermon( 'Sunday Worship', '2024-06-02 09:00:00', 'CSV notes' );
+		update_post_meta( $post_id, 'video_url', 'https://www.youtube.com/watch?v=abc123' );
+
+		$model = $this->import(
+			$this->sermon(
+				'sa-youtube',
+				'Sunday Worship',
+				'2024-06-02',
+				'From SermonAudio',
+				null,
+				'https://media.sermonaudio.com/audio/sermon.mp3'
+			)
+		);
+
+		$this->assertSame( $post_id, (int) $model->origin_id );
+		$this->assertSame( 'CSV notes', get_post( $post_id )->post_content );
+		$this->assertSame( '1', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
+	}
+
+	public function test_a_sermon_with_no_local_media_still_links_by_title() {
+		$post_id = $this->existing_sermon( 'Sunday Worship', '2024-06-02 09:00:00', 'CSV notes' );
+
+		$model = $this->import(
+			$this->sermon(
+				'sa-no-local-media',
+				'Sunday Worship',
+				'2024-06-02',
+				'From SermonAudio',
+				null,
+				'https://media.sermonaudio.com/audio/sermon.mp3'
+			)
+		);
+
+		$this->assertSame( $post_id, (int) $model->origin_id );
+		$this->assertSame( array( $post_id ), $this->sermon_ids() );
+	}
+
+	public function test_an_old_sermonaudio_audio_url_matches_its_stored_redirect() {
+		$post_id = $this->existing_sermon( 'Sunday Worship', '2024-06-02 09:00:00', 'CSV notes' );
+		update_post_meta( $post_id, 'audio_url', 'https://media.sermonaudio.com/audio/old-sermon.mp3?sermonID=12345&download=true' );
+		update_post_meta( $post_id, '_video_url_redirect', 'https://cdn.sermonaudio.com/media/old-sermon.mp3' );
+
+		$model = $this->import(
+			$this->sermon(
+				'sa-redirect',
+				'A retitled sermon',
+				'2024-06-02',
+				'From SermonAudio',
+				null,
+				'https://www.cdn.sermonaudio.com/media/old-sermon.mp3?token=abc'
+			)
+		);
+
+		$this->assertSame( $post_id, (int) $model->origin_id );
+		$this->assertSame( array( $post_id ), $this->sermon_ids() );
+		$this->assertSame( 'CSV notes', get_post( $post_id )->post_content );
+		$this->assertSame( '1', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
 	}
 
 	public function test_the_match_filter_disables_linking() {

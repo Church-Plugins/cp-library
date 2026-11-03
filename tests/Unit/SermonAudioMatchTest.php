@@ -210,6 +210,100 @@ class SermonAudioMatchTest extends TestCase {
 		);
 	}
 
+	public function test_media_urls_match_after_scheme_www_query_and_slash_are_normalized() {
+		$local = array(
+			'audio' => array( 'http://www.media.sermonaudio.com/audio/sermon.mp3?sermonID=1&download=true' ),
+		);
+		$incoming = array(
+			'audio' => array( 'https://media.sermonaudio.com/audio/sermon.mp3/' ),
+		);
+
+		$this->assertSame( 'same', SermonAudioMatch::media_relation( $local, $incoming ) );
+	}
+
+	public function test_a_stored_redirect_target_is_the_same_media_as_the_new_url() {
+		$local = array(
+			'audio'    => array( 'https://media.sermonaudio.com/audio/old-sermon.mp3?download=true' ),
+			'redirect' => array( 'https://cdn.sermonaudio.com/media/old-sermon.mp3' ),
+		);
+		$incoming = array(
+			'audio' => array( 'https://www.cdn.sermonaudio.com/media/old-sermon.mp3?token=abc' ),
+		);
+
+		$this->assertSame( 'same', SermonAudioMatch::media_relation( $local, $incoming ) );
+	}
+
+	public function test_the_same_host_with_a_different_file_blocks_the_match() {
+		$local = array(
+			'audio' => array( 'https://media.sermonaudio.com/audio/111.mp3' ),
+		);
+		$incoming = array(
+			'audio' => array( 'https://media.sermonaudio.com/audio/222.mp3?download=true' ),
+		);
+
+		$this->assertSame( 'block', SermonAudioMatch::media_relation( $local, $incoming ) );
+	}
+
+	public function test_different_hosts_and_a_missing_side_do_not_block() {
+		$youtube = array(
+			'video' => array( 'https://www.youtube.com/watch?v=abc' ),
+		);
+		$sermon_audio = array(
+			'video' => array( 'https://media.sermonaudio.com/video/123.mp4' ),
+		);
+		$audio_only = array(
+			'audio' => array( 'https://media.sermonaudio.com/audio/123.mp3' ),
+		);
+
+		$this->assertSame( 'neutral', SermonAudioMatch::media_relation( $youtube, $sermon_audio ) );
+		$this->assertSame( 'neutral', SermonAudioMatch::media_relation( array(), $audio_only ) );
+		$this->assertSame( 'neutral', SermonAudioMatch::media_relation( $audio_only, array( 'video' => array( 'https://youtu.be/abc' ) ) ) );
+	}
+
+	public function test_the_same_media_links_even_when_the_title_differs() {
+		$id = SermonAudioMatch::select_match(
+			array(
+				$this->candidate( 9, 'Morning message', '' ),
+			),
+			'Sunday Worship',
+			'sa-1',
+			array( 'audio' => array( 'https://media.sermonaudio.com/audio/sermon.mp3' ) )
+		);
+
+		$this->assertNull( $id );
+
+		$with_media = $this->candidate( 9, 'Morning message', '' );
+		$with_media['media'] = array(
+			'audio' => array( 'http://www.media.sermonaudio.com/audio/sermon.mp3?download=true' ),
+		);
+
+		$this->assertSame(
+			9,
+			SermonAudioMatch::select_match(
+				array( $with_media ),
+				'Sunday Worship',
+				'sa-1',
+				array( 'audio' => array( 'https://media.sermonaudio.com/audio/sermon.mp3' ) )
+			)
+		);
+	}
+
+	public function test_a_different_file_on_the_same_host_is_not_linked_by_title() {
+		$candidate = $this->candidate( 9, 'Sunday Worship', '' );
+		$candidate['media'] = array(
+			'audio' => array( 'https://media.sermonaudio.com/audio/111.mp3' ),
+		);
+
+		$this->assertNull(
+			SermonAudioMatch::select_match(
+				array( $candidate ),
+				'Sunday Worship',
+				'sa-1',
+				array( 'audio' => array( 'https://media.sermonaudio.com/audio/222.mp3' ) )
+			)
+		);
+	}
+
 	public function test_nonempty_content_and_scripture_are_kept_and_empty_ones_are_not() {
 		$this->assertSame(
 			array(

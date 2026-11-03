@@ -431,6 +431,17 @@ class SermonAudio extends Adapter {
 			return parent::insert_imported_post( $item );
 		}
 
+		if ( ! empty( $item[ SermonAudioMatch::TIMESTAMP_DATE ] ) && ! empty( $item['ID'] ) ) {
+			$existing_date = get_post( $item['ID'] );
+
+			if ( $existing_date instanceof \WP_Post && is_string( $existing_date->post_date ) && '' !== $existing_date->post_date ) {
+				$item['post_date']     = $existing_date->post_date;
+				$item['post_date_gmt'] = $existing_date->post_date_gmt;
+			}
+		}
+
+		unset( $item[ SermonAudioMatch::TIMESTAMP_DATE ] );
+
 		$title = isset( $item['post_title'] ) ? $item['post_title'] : '';
 
 		if ( ! self::title_is_usable( $title ) ) {
@@ -883,14 +894,16 @@ class SermonAudio extends Adapter {
 	 * @return array The formatted sermon.
 	 */
 	public function format_item( $item ) {
+		$timestamp_date = false;
 
 		if ( ! empty( $item->preachDate ) && $date = strtotime( $item->preachDate ) ) {
 			$post_date = gmdate( 'Y-m-d H:i:s', $date + 12 * HOUR_IN_SECONDS ); // set publish time to noon
 		} else {
 			// publishTimestamp is a UTC unix time. post_date is site local,
-			// so an evening service stays on that local day instead of the
-			// next UTC day.
+			// so a new sermon stays on the local day instead of the next UTC
+			// day. Updates keep the post_date already stored.
 			$post_date = wp_date( 'Y-m-d H:i:s', (int) $item->publishTimestamp );
+			$timestamp_date = true;
 		}
 
 		$args = array(
@@ -919,6 +932,10 @@ class SermonAudio extends Adapter {
 
 		if ( $item->eventType ) {
 			$args['cpl_data']['service_type'] = $item->eventType;
+		}
+
+		if ( ! empty( $timestamp_date ) ) {
+			$args[ SermonAudioMatch::TIMESTAMP_DATE ] = 1;
 		}
 
 		return $args;
