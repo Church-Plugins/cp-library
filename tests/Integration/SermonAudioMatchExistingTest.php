@@ -557,9 +557,9 @@ class SermonAudioMatchExistingTest extends TestCase {
 	}
 
 	public function test_a_supplied_field_is_cleared_when_sermonaudio_removes_it() {
-		$post_id = $this->existing_sermon( 'Empty Vessel', '2024-06-02 09:00:00', '' );
+		$model   = $this->import( $this->sermon( 'sa-clear', 'Empty Vessel', '2024-06-02', 'SA description', 'Romans 8:28' ) );
+		$post_id = (int) $model->origin_id;
 
-		$this->import( $this->sermon( 'sa-clear', 'Empty Vessel', '2024-06-02', 'SA description', 'Romans 8:28' ) );
 		$this->assertSame( 'SA description', get_post( $post_id )->post_content );
 		$this->assertContains( 'Romans 8:28', $this->passages( $post_id ) );
 
@@ -577,9 +577,9 @@ class SermonAudioMatchExistingTest extends TestCase {
 	}
 
 	public function test_a_supplied_field_is_updated_when_sermonaudio_changes_it() {
-		$post_id = $this->existing_sermon( 'Empty Vessel', '2024-06-02 09:00:00', '' );
+		$model   = $this->import( $this->sermon( 'sa-change', 'Empty Vessel', '2024-06-02', 'SA description', 'Romans 8:28' ) );
+		$post_id = (int) $model->origin_id;
 
-		$this->import( $this->sermon( 'sa-change', 'Empty Vessel', '2024-06-02', 'SA description', 'Romans 8:28' ) );
 		$this->import( $this->sermon( 'sa-change', 'Empty Vessel', '2024-06-02', 'Changed later', 'John 1:1' ) );
 
 		$this->assertSame( array( $post_id ), $this->sermon_ids() );
@@ -588,10 +588,10 @@ class SermonAudioMatchExistingTest extends TestCase {
 		$this->assertNotContains( 'Romans 8:28', $this->passages( $post_id ) );
 	}
 
-	public function test_a_locally_edited_field_is_not_overwritten() {
-		$post_id = $this->existing_sermon( 'Empty Vessel', '2024-06-02 09:00:00', '' );
+	public function test_a_locally_edited_field_is_not_cleared_when_sermonaudio_removes_it() {
+		$model   = $this->import( $this->sermon( 'sa-edit', 'Empty Vessel', '2024-06-02', 'SA description', 'Romans 8:28' ) );
+		$post_id = (int) $model->origin_id;
 
-		$this->import( $this->sermon( 'sa-edit', 'Empty Vessel', '2024-06-02', 'SA description', 'Romans 8:28' ) );
 		wp_update_post(
 			array(
 				'ID'           => $post_id,
@@ -600,15 +600,15 @@ class SermonAudioMatchExistingTest extends TestCase {
 		);
 		$this->set_scripture( $post_id, 'John 3:16' );
 
-		$this->import( $this->sermon( 'sa-edit', 'Empty Vessel', '2024-06-02', 'Changed later', 'Psalm 23' ) );
+		$this->import( $this->sermon( 'sa-edit', 'Empty Vessel', '2024-06-02', '' ) );
 
 		$this->assertSame( 'My notes', get_post( $post_id )->post_content );
 		$this->assertContains( 'John 3:16', $this->passages( $post_id ) );
-		$this->assertNotContains( 'Psalm 23', $this->passages( $post_id ) );
+		$this->assertNotContains( 'Romans 8:28', $this->passages( $post_id ) );
 		$this->assertSame(
 			array(
-				'content'   => 'Changed later',
-				'scripture' => 'Psalms 23',
+				'content'   => '',
+				'scripture' => '',
 			),
 			get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true )
 		);
@@ -627,6 +627,21 @@ class SermonAudioMatchExistingTest extends TestCase {
 		$this->assertSame( 'Local notes', get_post( $post_id )->post_content );
 		$this->assertContains( 'John 3:16', $this->passages( $post_id ) );
 		$this->assertNotContains( 'Romans 8:28', $this->passages( $post_id ) );
+
+		$empty_id = $this->existing_sermon( 'Blank Notes', '2024-06-03 09:00:00', '' );
+		update_post_meta( $empty_id, 'external_id', 'sa-blank' );
+
+		$this->import( $this->sermon( 'sa-blank', 'Blank Notes', '2024-06-03', 'From SermonAudio', 'Romans 8:28' ) );
+
+		$this->assertSame( '', get_post( $empty_id )->post_content );
+		$this->assertSame( array(), $this->passages( $empty_id ) );
+		$this->assertSame(
+			array(
+				'content'   => 'From SermonAudio',
+				'scripture' => 'Romans 8:28',
+			),
+			get_post_meta( $empty_id, SermonAudioMatch::SUPPLIED_META, true )
+		);
 		$this->assertSame(
 			array(
 				'content'   => 'From SermonAudio',

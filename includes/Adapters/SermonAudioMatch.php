@@ -523,11 +523,11 @@ class SermonAudioMatch {
 	/**
 	 * Value to store for one supplied field, and whether the sermon should take it.
 	 *
-	 * With no snapshot yet, a non-empty local value stays and an empty one
-	 * may be filled. Nothing is cleared on that first sync. After that, the
-	 * feed is applied only when it differs from the snapshot and the local
-	 * value is still the snapshotted one. That includes clearing a value
-	 * SermonAudio used to send and has since removed.
+	 * With no snapshot yet the local value is left as it is, including when
+	 * it is empty. The caller records the feed without changing the sermon.
+	 * After that, the feed is applied only when it differs from the snapshot
+	 * and the local value is still the snapshotted one. A field is cleared
+	 * only in that case, when SermonAudio has removed a value it supplied.
 	 *
 	 * @param mixed $local         Current local value.
 	 * @param mixed $feed          Value on this SermonAudio item.
@@ -540,13 +540,6 @@ class SermonAudioMatch {
 		$feed_text  = self::blank_text( $feed );
 
 		if ( ! $has_snapshot ) {
-			if ( '' === $local_text && '' !== $feed_text ) {
-				return array(
-					'value' => $feed_text,
-					'apply' => true,
-				);
-			}
-
 			return array(
 				'value' => $local_text,
 				'apply' => false,

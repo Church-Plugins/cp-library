@@ -332,21 +332,27 @@ class SermonAudioMatchTest extends TestCase {
 		$this->assertSame( 'Revised notes', $updated['value'] );
 	}
 
-	public function test_a_local_edit_is_not_overwritten() {
+	public function test_a_local_edit_is_not_overwritten_or_cleared() {
 		$edited = SermonAudioMatch::reconcile_supplied_field( 'My notes', 'Revised notes', true, 'SermonAudio notes' );
+		$kept   = SermonAudioMatch::reconcile_supplied_field( 'My notes', '', true, 'SermonAudio notes' );
 
 		$this->assertFalse( $edited['apply'] );
 		$this->assertSame( 'My notes', $edited['value'] );
+		$this->assertFalse( $kept['apply'] );
+		$this->assertSame( 'My notes', $kept['value'] );
 	}
 
-	public function test_the_first_snapshot_keeps_existing_local_text() {
-		$kept = SermonAudioMatch::reconcile_supplied_field( 'Church notes', 'SermonAudio notes', false, '' );
-		$filled = SermonAudioMatch::reconcile_supplied_field( '', 'SermonAudio notes', false, '' );
+	public function test_the_first_snapshot_does_not_change_the_local_value() {
+		$kept  = SermonAudioMatch::reconcile_supplied_field( 'Church notes', 'SermonAudio notes', false, '' );
+		$empty = SermonAudioMatch::reconcile_supplied_field( '', 'SermonAudio notes', false, '' );
+		$blank = SermonAudioMatch::reconcile_supplied_field( 'Church notes', '', false, '' );
 
 		$this->assertFalse( $kept['apply'] );
 		$this->assertSame( 'Church notes', $kept['value'] );
-		$this->assertTrue( $filled['apply'] );
-		$this->assertSame( 'SermonAudio notes', $filled['value'] );
+		$this->assertFalse( $empty['apply'] );
+		$this->assertSame( '', $empty['value'] );
+		$this->assertFalse( $blank['apply'] );
+		$this->assertSame( 'Church notes', $blank['value'] );
 	}
 
 	public function test_nonempty_content_and_scripture_are_kept_and_empty_ones_are_not() {

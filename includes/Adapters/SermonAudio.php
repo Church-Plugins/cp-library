@@ -320,13 +320,12 @@ class SermonAudio extends Adapter {
 	 * batch that itself contains two sermons with that title on that day
 	 * does not link either of them. A trashed sermon is not a candidate.
 	 *
-	 * Notes and scripture follow the supplied-field snapshot. An empty feed
-	 * value does not erase a local value. A value SermonAudio previously
-	 * supplied is updated or cleared only when the feed changed and the
-	 * sermon still has that supplied value. A local edit is left alone.
-	 * The first sync of a sermon with no snapshot records the feed and
-	 * does not replace notes or scripture the sermon already has. Title,
-	 * audio, and video still update.
+	 * Notes and scripture follow the supplied-field snapshot. The first sync
+	 * of a sermon with no snapshot only records what SermonAudio sent. It
+	 * does not change notes or scripture. A later sync updates or clears a
+	 * field only when the feed changed and the sermon still has the
+	 * snapshotted value. A local edit is left alone. Title, audio, and
+	 * video still update.
 	 *
 	 * `cpl_sermon_audio_match_existing` disables only this fallback. Return
 	 * false and a sermon with no external id is inserted, as it was before.
