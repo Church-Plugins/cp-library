@@ -534,8 +534,10 @@ class Item extends Table  {
 			}
 		}
 
-		// trigger variation save
-		do_action( 'cpl_save_item_source_' . $item_data['variation_type'], $item_data['id'], $item_data['variation_id'] );
+		// None leaves the source empty. Don't fire a hook with no source type.
+		if ( '' !== (string) $item_data['variation_type'] ) {
+			do_action( 'cpl_save_item_source_' . $item_data['variation_type'], $item_data['id'], $item_data['variation_id'] );
+		}
 
 		$variant = new \CP_Library\Controllers\Item( $item_data['id'] );
 

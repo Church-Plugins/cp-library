@@ -297,7 +297,7 @@ class Tools
 								<?php endif; ?>
 
 								<!-- Service Types -->
-								<?php if (cp_library()->setup->post_types->service_type_enabled() && cp_library()->setup->variations->get_source() != cp_library()->setup->post_types->service_type->post_type) : ?>
+								<?php if (cp_library()->setup->post_types->service_type_enabled() && ! cp_library()->setup->variations->service_type_is_source()) : ?>
 									<tr>
 										<td><?php _e('Service Type', 'cp-library'); ?></td>
 										<td>

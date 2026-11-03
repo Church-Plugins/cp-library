@@ -312,8 +312,8 @@ class ImportSermons extends BackgroundProcessImport {
 			}
 		}
 
-		// Handle Service Types if they are not set as the variation source
-		if ( cp_library()->setup->post_types->service_type_enabled() && cp_library()->setup->variations->get_source() !== cp_library()->setup->post_types->service_type->post_type ) {
+		// Service Types are a normal column unless Variations are on and they are the source.
+		if ( cp_library()->setup->post_types->service_type_enabled() && ! cp_library()->setup->variations->service_type_is_source() ) {
 			$types = $this->get_service_type_ids( $service_type );
 			$item->update_service_types( $types );
 		}
