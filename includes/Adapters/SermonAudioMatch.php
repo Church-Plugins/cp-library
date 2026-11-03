@@ -523,46 +523,36 @@ class SermonAudioMatch {
 	/**
 	 * Value to store for one supplied field, and whether the sermon should take it.
 	 *
-	 * With no snapshot yet, a non-empty local value is locally owned and is
-	 * never taken from the feed. An empty local value is filled from the
-	 * feed on this sync. After that, only a field SermonAudio filled is
-	 * updated or cleared, and only when the feed changed and the local
-	 * value still equals the value stored after save filters. A locally
-	 * owned field is never changed.
+	 * With no snapshot yet, an empty local value is filled from the feed.
+	 * A non-empty local value is left in place. The caller stores the feed
+	 * value after the same filters a save applies. If that stored value
+	 * matches the local text, later feed changes update the field. If it
+	 * does not, the local text is an edit and is never overwritten or
+	 * cleared. After a snapshot exists, the feed is applied only when it
+	 * changed and the local value still equals the stored value.
 	 *
 	 * @param mixed $local            Current local value.
 	 * @param mixed $feed             Value on this SermonAudio item.
 	 * @param bool  $has_snapshot     Whether this sermon has a supplied snapshot.
 	 * @param mixed $previous_feed    Feed value last recorded.
-	 * @param mixed $previous_stored  Value read back after the last save.
-	 * @param bool  $locally_owned    Whether the field belonged to the site at link time.
-	 * @return array{value:string,apply:bool,owned:bool}
+	 * @param mixed $previous_stored  Normalized value last recorded.
+	 * @return array{value:string,apply:bool}
 	 */
-	public static function reconcile_supplied_field( $local, $feed, $has_snapshot, $previous_feed, $previous_stored, $locally_owned = false ) {
+	public static function reconcile_supplied_field( $local, $feed, $has_snapshot, $previous_feed, $previous_stored ) {
 		$local_text = self::blank_text( $local );
 		$feed_text  = self::blank_text( $feed );
 
-		if ( $locally_owned ) {
-			return array(
-				'value' => $local_text,
-				'apply' => false,
-				'owned' => true,
-			);
-		}
-
 		if ( ! $has_snapshot ) {
-			if ( '' !== $local_text ) {
+			if ( '' === $local_text && '' !== $feed_text ) {
 				return array(
-					'value' => $local_text,
-					'apply' => false,
-					'owned' => true,
+					'value' => $feed_text,
+					'apply' => true,
 				);
 			}
 
 			return array(
-				'value' => $feed_text,
-				'apply' => true,
-				'owned' => false,
+				'value' => $local_text,
+				'apply' => false,
 			);
 		}
 
@@ -573,15 +563,43 @@ class SermonAudioMatch {
 			return array(
 				'value' => $local_text,
 				'apply' => false,
-				'owned' => false,
 			);
 		}
 
 		return array(
 			'value' => $feed_text,
 			'apply' => true,
-			'owned' => false,
 		);
+	}
+
+	/**
+	 * Notes text as wp_insert_post() would store it.
+	 *
+	 * Runs the same database save filters, including content_save_pre and
+	 * kses when the current user cannot post unfiltered HTML. The result is
+	 * unslashed, matching the post_content column.
+	 *
+	 * @param mixed $content Feed notes.
+	 * @return string
+	 */
+	public static function saved_note_text( $content ) {
+		$content = self::blank_text( $content );
+
+		if ( '' === $content || ! function_exists( 'sanitize_post_field' ) ) {
+			return $content;
+		}
+
+		$saved = sanitize_post_field( 'post_content', $content, 0, 'db' );
+
+		if ( ! is_string( $saved ) ) {
+			return $content;
+		}
+
+		if ( function_exists( 'wp_unslash' ) ) {
+			$saved = wp_unslash( $saved );
+		}
+
+		return self::blank_text( $saved );
 	}
 
 	/**
@@ -661,16 +679,14 @@ class SermonAudioMatch {
 			$feed['content'],
 			$has,
 			self::snapshot_part( $stored, 'content', 'feed' ),
-			self::snapshot_part( $stored, 'content', 'stored' ),
-			'1' === self::snapshot_part( $stored, 'content', 'owned' )
+			self::snapshot_part( $stored, 'content', 'stored' )
 		);
 		$scripture = self::reconcile_supplied_field(
 			$local['scripture'],
 			$feed['scripture'],
 			$has,
 			self::snapshot_part( $stored, 'scripture', 'feed' ),
-			self::snapshot_part( $stored, 'scripture', 'stored' ),
-			'1' === self::snapshot_part( $stored, 'scripture', 'owned' )
+			self::snapshot_part( $stored, 'scripture', 'stored' )
 		);
 
 		if ( ! $content['apply'] && $post instanceof \WP_Post ) {
@@ -699,8 +715,6 @@ class SermonAudioMatch {
 			'clear_scripture' => $clear,
 			'wrote_content'   => (bool) $content['apply'],
 			'wrote_scripture' => (bool) $scripture['apply'],
-			'own_content'     => (bool) $content['owned'],
-			'own_scripture'   => (bool) $scripture['owned'],
 		);
 	}
 
@@ -723,19 +737,17 @@ class SermonAudioMatch {
 	/**
 	 * Record the feed text and the value read back after save filters.
 	 *
-	 * The first snapshot marks a non-empty local field as owned. A field this
-	 * save filled records the value read back after save filters. Later
-	 * syncs replace that stored value only when the field was written again.
-	 * An owned field stays owned.
+	 * The first snapshot stores the feed value after the save filters. A
+	 * field this save wrote uses the value read back from the post, which
+	 * is that same filtered text. Later syncs replace the stored value
+	 * only when the field was written again.
 	 *
 	 * @param int   $post_id         Sermon the matcher linked.
 	 * @param array $feed            content and scripture from this feed item.
 	 * @param bool  $wrote_content   Whether this save wrote notes.
 	 * @param bool  $wrote_scripture Whether this save wrote or cleared scripture.
-	 * @param bool  $own_content     Whether notes were already on the sermon.
-	 * @param bool  $own_scripture   Whether scripture was already on the sermon.
 	 */
-	public static function record_supplied_snapshot( $post_id, array $feed, $wrote_content, $wrote_scripture, $own_content = false, $own_scripture = false ) {
+	public static function record_supplied_snapshot( $post_id, array $feed, $wrote_content, $wrote_scripture ) {
 		$existing          = get_post_meta( $post_id, self::SUPPLIED_META, true );
 		$has               = is_array( $existing );
 		$post              = get_post( $post_id );
@@ -746,13 +758,11 @@ class SermonAudioMatch {
 			$snapshot = array(
 				'content'   => array(
 					'feed'   => $feed['content'],
-					'stored' => $content_stored,
-					'owned'  => $own_content ? '1' : '',
+					'stored' => $wrote_content ? $content_stored : self::saved_note_text( $feed['content'] ),
 				),
 				'scripture' => array(
 					'feed'   => $feed['scripture'],
-					'stored' => $scripture_stored,
-					'owned'  => $own_scripture ? '1' : '',
+					'stored' => $wrote_scripture ? $scripture_stored : $feed['scripture'],
 				),
 			);
 		} else {
@@ -760,12 +770,10 @@ class SermonAudioMatch {
 				'content'   => array(
 					'feed'   => $feed['content'],
 					'stored' => $wrote_content ? $content_stored : self::snapshot_part( $existing, 'content', 'stored' ),
-					'owned'  => self::snapshot_part( $existing, 'content', 'owned' ),
 				),
 				'scripture' => array(
 					'feed'   => $feed['scripture'],
 					'stored' => $wrote_scripture ? $scripture_stored : self::snapshot_part( $existing, 'scripture', 'stored' ),
-					'owned'  => self::snapshot_part( $existing, 'scripture', 'owned' ),
 				),
 			);
 		}

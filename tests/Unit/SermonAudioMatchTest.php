@@ -355,23 +355,28 @@ class SermonAudioMatchTest extends TestCase {
 		$this->assertSame( 'My notes', $kept['value'] );
 	}
 
-	public function test_a_non_empty_local_field_is_owned_and_an_empty_one_is_filled() {
+	public function test_the_first_sync_fills_an_empty_value_and_keeps_a_different_one() {
 		$kept  = SermonAudioMatch::reconcile_supplied_field( 'Church notes', 'SermonAudio notes', false, '', '' );
 		$empty = SermonAudioMatch::reconcile_supplied_field( '', 'SermonAudio notes', false, '', '' );
 
 		$this->assertFalse( $kept['apply'] );
-		$this->assertTrue( $kept['owned'] );
 		$this->assertSame( 'Church notes', $kept['value'] );
 		$this->assertTrue( $empty['apply'] );
-		$this->assertFalse( $empty['owned'] );
 		$this->assertSame( 'SermonAudio notes', $empty['value'] );
 	}
 
-	public function test_a_locally_owned_field_is_never_replaced() {
-		$kept = SermonAudioMatch::reconcile_supplied_field( 'Church notes', 'SA desc 2', true, 'SA desc', 'Church notes', true );
+	public function test_a_local_value_that_matches_the_supplied_value_follows_the_feed() {
+		$updated = SermonAudioMatch::reconcile_supplied_field( 'SA desc', 'SA desc 2', true, 'SA desc', 'SA desc' );
+
+		$this->assertTrue( $updated['apply'] );
+		$this->assertSame( 'SA desc 2', $updated['value'] );
+	}
+
+	public function test_a_local_value_that_differs_from_the_supplied_value_is_kept() {
+		$kept = SermonAudioMatch::reconcile_supplied_field( 'Local notes', 'SA desc 2', true, 'SA desc', 'SA desc' );
 
 		$this->assertFalse( $kept['apply'] );
-		$this->assertSame( 'Church notes', $kept['value'] );
+		$this->assertSame( 'Local notes', $kept['value'] );
 	}
 
 	public function test_nonempty_content_and_scripture_are_kept_and_empty_ones_are_not() {

@@ -184,13 +184,11 @@ class SermonAudioMatchExistingTest extends TestCase {
 			array(
 				'content'   => array(
 					'feed'   => '',
-					'stored' => 'Church notes',
-					'owned'  => '1',
+					'stored' => '',
 				),
 				'scripture' => array(
 					'feed'   => '',
-					'stored' => 'John 3:16',
-					'owned'  => '1',
+					'stored' => '',
 				),
 			),
 			get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true )
@@ -580,12 +578,10 @@ class SermonAudioMatchExistingTest extends TestCase {
 				'content'   => array(
 					'feed'   => '',
 					'stored' => '',
-					'owned'  => '',
 				),
 				'scripture' => array(
 					'feed'   => '',
 					'stored' => '',
-					'owned'  => '',
 				),
 			),
 			get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true )
@@ -599,7 +595,6 @@ class SermonAudioMatchExistingTest extends TestCase {
 
 		$this->assertSame( 'SA description', get_post( $post_id )->post_content );
 		$this->assertContains( 'Romans 8:28', $this->passages( $post_id ) );
-		$this->assertSame( '', SermonAudioMatch::snapshot_part( get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true ), 'content', 'owned' ) );
 
 		$this->import( $this->sermon( 'sa-change', 'Changed Vessel', '2024-06-02', 'Changed later', 'John 1:1' ) );
 
@@ -654,9 +649,8 @@ class SermonAudioMatchExistingTest extends TestCase {
 
 		$this->assertSame( 'From SermonAudio', get_post( $empty_id )->post_content );
 		$this->assertContains( 'Romans 8:28', $this->passages( $empty_id ) );
-		$this->assertSame( '', SermonAudioMatch::snapshot_part( get_post_meta( $empty_id, SermonAudioMatch::SUPPLIED_META, true ), 'content', 'owned' ) );
-		$this->assertSame( '1', SermonAudioMatch::snapshot_part( get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true ), 'content', 'owned' ) );
-		$this->assertSame( '1', SermonAudioMatch::snapshot_part( get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true ), 'scripture', 'owned' ) );
+		$this->assertSame( 'From SermonAudio', SermonAudioMatch::snapshot_part( get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true ), 'content', 'stored' ) );
+		$this->assertSame( 'Romans 8:28', SermonAudioMatch::snapshot_part( get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true ), 'scripture', 'stored' ) );
 	}
 
 	public function test_local_notes_and_scripture_survive_repeated_feed_changes_after_linking() {
@@ -672,8 +666,52 @@ class SermonAudioMatchExistingTest extends TestCase {
 		$this->assertContains( 'John 3:16', $this->passages( $post_id ) );
 		$this->assertNotContains( 'Romans 1:1', $this->passages( $post_id ) );
 		$this->assertNotContains( 'Romans 8:28', $this->passages( $post_id ) );
-		$this->assertSame( '1', SermonAudioMatch::snapshot_part( get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true ), 'content', 'owned' ) );
-		$this->assertSame( '1', SermonAudioMatch::snapshot_part( get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true ), 'scripture', 'owned' ) );
+		$this->assertSame( 'SA desc', SermonAudioMatch::snapshot_part( get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true ), 'content', 'stored' ) );
+		$this->assertSame( 'Romans 8:28', SermonAudioMatch::snapshot_part( get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true ), 'scripture', 'stored' ) );
+	}
+
+	public function test_a_local_value_equal_to_sermonaudio_follows_later_feed_changes() {
+		$post_id = $this->existing_sermon( 'Matching Notes', '2024-06-02 09:00:00', 'SA description' );
+		$this->set_scripture( $post_id, 'Romans 8:28' );
+
+		$this->import( $this->sermon( 'sa-match-notes', 'Matching Notes', '2024-06-02', 'SA description', 'Romans 8:28' ) );
+
+		$this->assertSame( 'SA description', get_post( $post_id )->post_content );
+		$this->assertContains( 'Romans 8:28', $this->passages( $post_id ) );
+
+		$this->import( $this->sermon( 'sa-match-notes', 'Matching Notes', '2024-06-02', 'SA desc 2', 'Romans 1:1' ) );
+
+		$this->assertSame( 'SA desc 2', get_post( $post_id )->post_content );
+		$this->assertContains( 'Romans 1:1', $this->passages( $post_id ) );
+		$this->assertNotContains( 'Romans 8:28', $this->passages( $post_id ) );
+	}
+
+	public function test_save_filter_normalization_does_not_look_like_a_local_edit() {
+		add_filter( 'content_save_pre', array( $this, 'filter_synced_note_markup' ) );
+
+		$raw     = '<p>See <a href="https://example.com/sermon">the notes</a>.</p>';
+		$post_id = $this->existing_sermon( 'Filtered Notes', '2024-06-02 09:00:00', $raw );
+		$stored  = get_post( $post_id )->post_content;
+
+		$this->assertStringContainsString( '[synced]', $stored );
+		$this->assertStringContainsString( 'https://example.com/sermon', $stored );
+
+		try {
+			$this->import( $this->sermon( 'sa-kses', 'Filtered Notes', '2024-06-02', $raw ) );
+
+			$this->assertSame( $stored, get_post( $post_id )->post_content );
+			$this->assertSame( $stored, SermonAudioMatch::snapshot_part( get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true ), 'content', 'stored' ) );
+
+			$updated = '<p>Updated <a href="https://example.com/sermon">the notes</a>.</p>';
+			$this->import( $this->sermon( 'sa-kses', 'Filtered Notes', '2024-06-02', $updated ) );
+
+			$after = get_post( $post_id )->post_content;
+			$this->assertStringContainsString( 'Updated', $after );
+			$this->assertStringContainsString( '[synced]', $after );
+			$this->assertStringContainsString( 'https://example.com/sermon', $after );
+		} finally {
+			remove_filter( 'content_save_pre', array( $this, 'filter_synced_note_markup' ) );
+		}
 	}
 
 	public function test_a_plain_synced_sermon_takes_feed_notes_on_every_sync() {
