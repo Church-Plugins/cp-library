@@ -36,6 +36,15 @@ class SermonAudioMatch {
 	const LINKED_META = '_cpl_sa_match_linked';
 
 	/**
+	 * Item flag set when this sync batch has two sermons with the same
+	 * normalized title on the same site day.
+	 *
+	 * Not post meta. load_item() removes it before the post is saved. A
+	 * sermon that already has this SermonAudio id still updates.
+	 */
+	const BATCH_AMBIGUOUS = '_cpl_sa_match_batch_ambiguous';
+
+	/**
 	 * Comparison form of a title.
 	 *
 	 * Order is fixed: decode HTML entities once, trim, lowercase, collapse
@@ -191,6 +200,73 @@ class SermonAudioMatch {
 	}
 
 	/**
+	 * Mark sermons that must not be title-matched because the batch itself
+	 * is ambiguous.
+	 *
+	 * A 9:00 and an 11:00 sermon can share a title and a site day. Linking
+	 * either one to the single local sermon with that title would pick the
+	 * wrong service. Both are flagged, and the sync inserts new posts.
+	 * Keys on the array are preserved. An empty normalized title is never
+	 * a collision.
+	 *
+	 * @param array $items Formatted sermons from one sync batch.
+	 * @return array
+	 */
+	public static function flag_batch_ambiguities( array $items ) {
+		$counts = array();
+		$keys   = array();
+
+		foreach ( $items as $index => $item ) {
+			$keys[ $index ] = self::day_title_key( $item );
+
+			if ( '' === $keys[ $index ] ) {
+				continue;
+			}
+
+			if ( ! isset( $counts[ $keys[ $index ] ] ) ) {
+				$counts[ $keys[ $index ] ] = 0;
+			}
+
+			$counts[ $keys[ $index ] ]++;
+		}
+
+		foreach ( $items as $index => $item ) {
+			if ( ! is_array( $item ) ) {
+				continue;
+			}
+
+			$key = $keys[ $index ];
+
+			if ( '' !== $key && isset( $counts[ $key ] ) && $counts[ $key ] >= 2 ) {
+				$items[ $index ][ self::BATCH_AMBIGUOUS ] = 1;
+			}
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Site day and normalized title, or '' when either is missing.
+	 *
+	 * @param mixed $item Formatted sermon.
+	 * @return string
+	 */
+	public static function day_title_key( $item ) {
+		if ( ! is_array( $item ) ) {
+			return '';
+		}
+
+		$day   = self::calendar_day( isset( $item['post_date'] ) ? $item['post_date'] : '' );
+		$title = self::normalize_title( isset( $item['post_title'] ) ? $item['post_title'] : '' );
+
+		if ( '' === $day || '' === $title ) {
+			return '';
+		}
+
+		return $day . "\n" . $title;
+	}
+
+	/**
 	 * Existing sermon to link, or null when the sync should create one.
 	 *
 	 * The lookup is the posts whose post_date falls on the incoming
@@ -265,9 +341,9 @@ class SermonAudioMatch {
 	 * cpl_item rows whose post_date falls on $day, one entry per post.
 	 *
 	 * Statuses are an equality list so MySQL can use type_status_date and
-	 * range-scan post_date instead of reading every sermon. Auto-drafts and
-	 * revisions are not in the list. Trash is: a trashed sermon is still the
-	 * sermon for that day, and linking it does not publish a second copy.
+	 * range-scan post_date instead of reading every sermon. Auto-drafts,
+	 * revisions, and trash are not in the list. A trashed sermon is not a
+	 * candidate, so the sync cannot update it or publish it again.
 	 *
 	 * @param string $post_type Item post type.
 	 * @param string $day       Y-m-d.
@@ -282,7 +358,7 @@ class SermonAudioMatch {
 			return array();
 		}
 
-		$statuses = array( 'publish', 'draft', 'pending', 'private', 'future', 'trash' );
+		$statuses = array( 'publish', 'draft', 'pending', 'private', 'future' );
 		$in       = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
 		$sql      = "SELECT p.ID, p.post_title, pm.meta_value AS external_id
 			FROM {$wpdb->posts} p

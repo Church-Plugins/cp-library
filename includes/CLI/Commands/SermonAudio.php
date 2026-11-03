@@ -8,6 +8,7 @@
 namespace CP_Library\CLI\Commands;
 
 use CP_Library\Adapters\Init as AdaptersInit;
+use CP_Library\Adapters\SermonAudioMatch;
 use WP_CLI;
 
 /**
@@ -242,6 +243,8 @@ class SermonAudio {
 
 			$sermons[ $sermon->sermonID ] = apply_filters( 'cp_library_sermon_audio_item', $formatted_item );
 		}
+
+		$sermons = SermonAudioMatch::flag_batch_ambiguities( $sermons );
 
 		// Load speakers first so item attachments can resolve them by external_id.
 		foreach ( $speakers as $speaker ) {

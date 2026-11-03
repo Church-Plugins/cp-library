@@ -246,6 +246,80 @@ class SermonAudioMatchExistingTest extends TestCase {
 		$this->assertSame( array( $post_id, $created ), $this->sermon_ids() );
 	}
 
+	public function test_two_batch_sermons_with_the_same_title_on_the_same_day_are_not_linked() {
+		$existing = $this->existing_sermon( 'Sunday Worship', '2024-06-02 09:00:00', 'Local notes' );
+		$morning  = $this->adapter->format_item( $this->sermon( 'sa-9am', 'Sunday Worship', '2024-06-02', 'Nine' ) );
+		$late     = $this->adapter->format_item( $this->sermon( 'sa-11am', 'sunday   worship', '2024-06-02', 'Eleven' ) );
+		$morning['post_date'] = '2024-06-02 09:00:00';
+		$late['post_date']    = '2024-06-02 11:00:00';
+
+		$batch = SermonAudioMatch::flag_batch_ambiguities( array( $morning, $late ) );
+
+		$first  = $this->adapter->load_item( $batch[0], ItemModel::class );
+		$second = $this->adapter->load_item( $batch[1], ItemModel::class );
+
+		$this->assertNotSame( $existing, (int) $first->origin_id );
+		$this->assertNotSame( $existing, (int) $second->origin_id );
+		$this->assertNotSame( (int) $first->origin_id, (int) $second->origin_id );
+		$this->assertSame( array( $existing, (int) $first->origin_id, (int) $second->origin_id ), $this->sermon_ids() );
+		$this->assertSame( '', (string) get_post_meta( $existing, 'external_id', true ) );
+		$this->assertSame( '', (string) get_post_meta( $existing, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertSame( 'Local notes', get_post( $existing )->post_content );
+		$this->assertSame( array( (int) $first->origin_id ), $this->posts_with_external_id( 'sa-9am' ) );
+		$this->assertSame( array( (int) $second->origin_id ), $this->posts_with_external_id( 'sa-11am' ) );
+		$this->assertSame( '', (string) get_post_meta( $first->origin_id, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertSame( '', (string) get_post_meta( $second->origin_id, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertSame( 'publish', get_post_status( $first->origin_id ) );
+		$this->assertSame( 'publish', get_post_status( $second->origin_id ) );
+	}
+
+	public function test_a_trashed_sermon_is_not_linked_or_republished() {
+		$post_id = $this->existing_sermon( 'Sunday Worship', '2024-06-02 09:00:00', 'Trashed notes' );
+		wp_trash_post( $post_id );
+
+		$this->assertSame( 'trash', get_post_status( $post_id ) );
+
+		$model   = $this->import( $this->sermon( 'sa-trash', 'Sunday Worship', '2024-06-02', 'From SermonAudio' ) );
+		$created = (int) $model->origin_id;
+
+		$this->assertNotSame( $post_id, $created );
+		$this->assertSame( 'trash', get_post_status( $post_id ) );
+		$this->assertSame( 'Trashed notes', get_post( $post_id )->post_content );
+		$this->assertSame( 'Sunday Worship', get_post( $post_id )->post_title );
+		$this->assertSame( '', (string) get_post_meta( $post_id, 'external_id', true ) );
+		$this->assertSame( '', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertSame( 'publish', get_post_status( $created ) );
+		$this->assertSame( array( $created ), $this->posts_with_external_id( 'sa-trash' ) );
+		$this->assertSame( '', (string) get_post_meta( $created, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertSame( array( $post_id, $created ), $this->sermon_ids() );
+	}
+
+	public function test_publish_timestamp_without_a_preach_date_matches_the_site_day_around_midnight() {
+		$this->use_los_angeles();
+
+		$local     = new \DateTimeImmutable( '2024-03-10 23:30:00', new \DateTimeZone( 'America/Los_Angeles' ) );
+		$timestamp = $local->getTimestamp();
+
+		$this->assertStringStartsWith( '2024-03-11', gmdate( 'Y-m-d H:i:s', $timestamp ) );
+
+		$post_id = $this->existing_sermon( 'Evening Worship', '2024-03-10 21:00:00', 'Local notes' );
+		$sermon  = $this->sermon( 'sa-evening', 'Evening Worship', '', 'From SermonAudio' );
+		$sermon->preachDate       = '';
+		$sermon->publishTimestamp = $timestamp;
+
+		$formatted = $this->adapter->format_item( $sermon );
+
+		$this->assertSame( '2024-03-10 23:30:00', $formatted['post_date'] );
+
+		$model = $this->adapter->load_item( $formatted, ItemModel::class );
+
+		$this->assertSame( $post_id, (int) $model->origin_id );
+		$this->assertSame( array( $post_id ), $this->sermon_ids() );
+		$this->assertSame( '2024-03-10 23:30:00', get_post( $post_id )->post_date );
+		$this->assertSame( '1', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertSame( 'Local notes', get_post( $post_id )->post_content );
+	}
+
 	public function test_the_match_filter_disables_linking() {
 		add_filter( 'cpl_sermon_audio_match_existing', '__return_false' );
 		$post_id = $this->existing_sermon( 'Sunday Grace', '2024-06-02 09:00:00', 'Keep me' );

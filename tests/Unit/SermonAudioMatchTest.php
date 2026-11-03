@@ -141,6 +141,65 @@ class SermonAudioMatchTest extends TestCase {
 		);
 	}
 
+	public function test_two_sermons_in_one_batch_with_the_same_day_and_title_are_ambiguous() {
+		$batch = SermonAudioMatch::flag_batch_ambiguities(
+			array(
+				'sa-9'  => array(
+					'post_title' => 'Sunday Worship',
+					'post_date'  => '2024-06-02 09:00:00',
+				),
+				'sa-11' => array(
+					'post_title' => 'sunday   worship',
+					'post_date'  => '2024-06-02 11:00:00',
+				),
+				'sa-other' => array(
+					'post_title' => 'A different sermon',
+					'post_date'  => '2024-06-02 09:00:00',
+				),
+			)
+		);
+
+		$this->assertSame( 1, $batch['sa-9'][ SermonAudioMatch::BATCH_AMBIGUOUS ] );
+		$this->assertSame( 1, $batch['sa-11'][ SermonAudioMatch::BATCH_AMBIGUOUS ] );
+		$this->assertArrayNotHasKey( SermonAudioMatch::BATCH_AMBIGUOUS, $batch['sa-other'] );
+	}
+
+	public function test_the_same_title_on_different_days_is_not_ambiguous() {
+		$batch = SermonAudioMatch::flag_batch_ambiguities(
+			array(
+				array(
+					'post_title' => 'Sunday Worship',
+					'post_date'  => '2024-06-02 09:00:00',
+				),
+				array(
+					'post_title' => 'Sunday Worship',
+					'post_date'  => '2024-06-09 11:00:00',
+				),
+			)
+		);
+
+		$this->assertArrayNotHasKey( SermonAudioMatch::BATCH_AMBIGUOUS, $batch[0] );
+		$this->assertArrayNotHasKey( SermonAudioMatch::BATCH_AMBIGUOUS, $batch[1] );
+	}
+
+	public function test_blank_titles_in_a_batch_are_not_treated_as_ambiguous() {
+		$batch = SermonAudioMatch::flag_batch_ambiguities(
+			array(
+				array(
+					'post_title' => '   ',
+					'post_date'  => '2024-06-02 09:00:00',
+				),
+				array(
+					'post_title' => '',
+					'post_date'  => '2024-06-02 11:00:00',
+				),
+			)
+		);
+
+		$this->assertArrayNotHasKey( SermonAudioMatch::BATCH_AMBIGUOUS, $batch[0] );
+		$this->assertArrayNotHasKey( SermonAudioMatch::BATCH_AMBIGUOUS, $batch[1] );
+	}
+
 	public function test_an_empty_normalized_title_does_not_link_an_empty_sermon() {
 		$this->assertNull(
 			SermonAudioMatch::select_match(

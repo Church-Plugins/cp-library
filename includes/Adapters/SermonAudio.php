@@ -136,6 +136,8 @@ class SermonAudio extends Adapter {
 			$sermons[ $sermon->sermonID ] = apply_filters( 'cp_library_sermon_audio_item', $item );
 		}
 
+		$sermons = SermonAudioMatch::flag_batch_ambiguities( $sermons );
+
 		// enqueues items to be processed
 		$this->enqueue( $sermons );
 
@@ -314,7 +316,9 @@ class SermonAudio extends Adapter {
 	 * calendar day with the same normalized title is updated instead of
 	 * inserted, but only when it is the only such sermon and it has no
 	 * external id of its own. `_cpl_sa_match_linked` is stored on that post.
-	 * Zero matches and two or more matches still insert a new sermon.
+	 * Zero matches and two or more matches still insert a new sermon. A
+	 * batch that itself contains two sermons with that title on that day
+	 * does not link either of them. A trashed sermon is not a candidate.
 	 *
 	 * On that first link, and on every later sync of a sermon this matcher
 	 * linked, non-empty local content and existing scripture stay. Empty
@@ -333,7 +337,12 @@ class SermonAudio extends Adapter {
 	 * @throws \ChurchPlugins\Exception When the item cannot be saved.
 	 */
 	public function load_item( $item, $model ) {
-		$mark_id = 0;
+		$mark_id          = 0;
+		$batch_ambiguous = is_array( $item ) && ! empty( $item[ SermonAudioMatch::BATCH_AMBIGUOUS ] );
+
+		if ( is_array( $item ) ) {
+			unset( $item[ SermonAudioMatch::BATCH_AMBIGUOUS ] );
+		}
 
 		if ( $this->item_is_sermon( $item ) ) {
 			$external_id = isset( $item['external_id'] ) ? (string) $item['external_id'] : '';
@@ -343,7 +352,7 @@ class SermonAudio extends Adapter {
 				if ( SermonAudioMatch::is_match_linked( (int) $existing_id ) ) {
 					$item = SermonAudioMatch::keep_nonempty_local_fields( $item, (int) $existing_id );
 				}
-			} elseif ( $this->match_existing_enabled( $item ) ) {
+			} elseif ( ! $batch_ambiguous && $this->match_existing_enabled( $item ) ) {
 				$match_id = SermonAudioMatch::find_link( $item );
 
 				if ( null !== $match_id && '' === (string) get_post_meta( $match_id, 'external_id', true ) ) {
@@ -878,7 +887,10 @@ class SermonAudio extends Adapter {
 		if ( ! empty( $item->preachDate ) && $date = strtotime( $item->preachDate ) ) {
 			$post_date = gmdate( 'Y-m-d H:i:s', $date + 12 * HOUR_IN_SECONDS ); // set publish time to noon
 		} else {
-			$post_date = gmdate( 'Y-m-d H:i:s', $item->publishTimestamp );
+			// publishTimestamp is a UTC unix time. post_date is site local,
+			// so an evening service stays on that local day instead of the
+			// next UTC day.
+			$post_date = wp_date( 'Y-m-d H:i:s', (int) $item->publishTimestamp );
 		}
 
 		$args = array(
