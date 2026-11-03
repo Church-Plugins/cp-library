@@ -294,6 +294,23 @@ class SermonAudioMatchExistingTest extends TestCase {
 		$this->assertSame( array( $post_id, $created ), $this->sermon_ids() );
 	}
 
+	public function test_a_trashed_duplicate_does_not_block_linking_the_live_sermon() {
+		$live   = $this->existing_sermon( 'Sunday Worship', '2024-06-02 09:00:00', 'Live notes' );
+		$trashed = $this->existing_sermon( 'Sunday Worship', '2024-06-02 11:00:00', 'Trashed notes' );
+		wp_trash_post( $trashed );
+
+		$model = $this->import( $this->sermon( 'sa-live', 'Sunday Worship', '2024-06-02', 'From SermonAudio' ) );
+
+		$this->assertSame( $live, (int) $model->origin_id );
+		$this->assertSame( 'trash', get_post_status( $trashed ) );
+		$this->assertSame( 'Trashed notes', get_post( $trashed )->post_content );
+		$this->assertSame( '', (string) get_post_meta( $trashed, 'external_id', true ) );
+		$this->assertSame( '', (string) get_post_meta( $trashed, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertSame( 'Live notes', get_post( $live )->post_content );
+		$this->assertSame( '1', (string) get_post_meta( $live, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertSame( array( $live ), $this->posts_with_external_id( 'sa-live' ) );
+	}
+
 	public function test_publish_timestamp_without_a_preach_date_matches_the_site_day_around_midnight() {
 		$this->use_los_angeles();
 
