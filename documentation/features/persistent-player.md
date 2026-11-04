@@ -21,7 +21,7 @@ When a video is playing in the persistent player, a video panel appears above th
 - **Sermon Information** -- Shows the current sermon title with a link back to the sermon page
 - **Playback Controls** -- Play/pause, seek bar, skip forward/back, and playback speed
 - **Time Display** -- Shows current position and total duration
-- **Site Logo** -- Displays your site logo alongside the player
+- **Site Logo** -- Displays the **Site Logo** set in Series → Settings → Main, or under Messages if Series is turned off (the plugin's default logo if none is set)
 - **Close Button** -- Dismiss the player and stop playback
 
 ## User Experience

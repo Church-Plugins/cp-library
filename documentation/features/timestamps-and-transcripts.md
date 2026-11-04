@@ -4,11 +4,11 @@ This guide covers the timestamp and transcript features in CP Sermon Library.
 
 ## Sermon Timestamps
 
-Timestamps allow you to place a visual marker on the media player's timeline, helping listeners find where the sermon begins in a longer recording.
+Timestamps allow you to place a visual marker on the video player's timeline, helping listeners find where the sermon begins in a longer recording.
 
 ### How Timestamps Work
 
-When you set a timestamp on a sermon, a marker labeled "Sermon" appears on the player's timeline slider at that point. When a listener drags the slider near the marker, it automatically snaps to the exact timestamp position. This makes it easy for listeners to skip pre-sermon content (announcements, worship, etc.) and jump directly to the message.
+When you set a timestamp on a sermon, a marker labeled "Sermon" appears on the video player's timeline slider (audio playback shows no marker) at that point. When a listener drags the slider near the marker, it automatically snaps to the exact timestamp position. This makes it easy for listeners to skip pre-sermon content (announcements, worship, etc.) and jump directly to the message.
 
 ### Adding a Timestamp
 
@@ -114,7 +114,7 @@ Using timestamps and transcripts improves your content's accessibility:
 ### Timestamp Not Working
 
 - Verify the timestamp format is correct (`mm:ss` or `hh:mm:ss`)
-- Check that the media file is properly attached to the sermon
+- Check that a video is attached in **Message Video**. The marker shows only on video playback
 - Ensure the media player is loading without JavaScript errors
 
 ### YouTube Import Issues

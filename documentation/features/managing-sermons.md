@@ -139,7 +139,7 @@ As an administrator, you can filter sermons in the admin area by:
 
 1. Navigating to Series → Messages
 2. Using the month dropdown at the top of the list
-3. Using the **Speaker**, **Series**, and **Service Type** column links to filter the list
+3. Using the **Speaker** and **Series** column links to filter the list. The **Service Type** column link is there too when **Enable Service Types** is on under Settings → Advanced.
 
 ## Controlling Sermon Visibility
 

@@ -12,7 +12,7 @@ CP Sermon Library automatically creates archive pages for:
 - Series - All sermon series
 - Speakers - All sermon speakers
 - Topics - Sermons by topic
-- Scripture - Sermons by Bible reference
+- Scripture - Sermons by book of the Bible
 - Seasons - Sermons by seasons
 
 These archives are accessible at URLs like:
@@ -20,7 +20,7 @@ These archives are accessible at URLs like:
 - /series/
 - /speakers/
 - /topics/faith/
-- /scripture/john-3/
+- /scripture/john/
 - /seasons/summer-2023/
 
 ### Layout Options
