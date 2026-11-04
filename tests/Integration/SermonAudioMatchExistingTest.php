@@ -45,6 +45,8 @@ class SermonAudioMatchExistingTest extends TestCase {
 	public function tear_down() {
 		update_option( 'timezone_string', $this->timezone_before );
 		remove_filter( 'cpl_sermon_audio_match_existing', '__return_false' );
+		remove_filter( 'update_post_metadata', array( $this, 'throw_when_snapshot_is_saved' ), 10 );
+		remove_filter( 'delete_post_metadata', array( $this, 'throw_when_scripture_is_cleared' ), 10 );
 		parent::tear_down();
 	}
 
@@ -127,6 +129,95 @@ class SermonAudioMatchExistingTest extends TestCase {
 		$this->assertContains( 'John 3:16', $this->passages( $post_id ) );
 		$this->assertNotContains( 'Romans 8:28', $this->passages( $post_id ) );
 		$this->assertSame( '1', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
+	}
+
+	/**
+	 * Saving the supplied snapshot happens after the post is written. If that
+	 * step throws, the SermonAudio id from this attempt must not stay, or the
+	 * next sync treats the post as its own and replaces local notes and scripture.
+	 */
+	public function test_a_snapshot_failure_rolls_back_so_the_next_sync_keeps_local_fields() {
+		$post_id = $this->existing_sermon( 'Sunday Grace', '2024-06-02 09:00:00', 'Keep these notes' );
+		$this->set_scripture( $post_id, 'John 3:16' );
+		$sermon = $this->sermon( 'sa-snapshot', 'Sunday Grace', '2024-06-02', 'From SermonAudio', 'Romans 8:28' );
+
+		add_filter( 'update_post_metadata', array( $this, 'throw_when_snapshot_is_saved' ), 10, 5 );
+
+		try {
+			$this->import( $sermon );
+			$this->fail( 'the snapshot step must throw' );
+		} catch ( \ChurchPlugins\Exception $e ) {
+			$this->assertStringContainsString( 'snapshot failed', $e->getMessage() );
+		} finally {
+			remove_filter( 'update_post_metadata', array( $this, 'throw_when_snapshot_is_saved' ), 10 );
+		}
+
+		$this->assertSame( '', (string) get_post_meta( $post_id, 'external_id', true ) );
+		$this->assertSame( '', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertSame( '', get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true ) );
+		$this->assertSame( 'Keep these notes', get_post( $post_id )->post_content );
+		$this->assertContains( 'John 3:16', $this->passages( $post_id ) );
+
+		$model = $this->import( $sermon );
+
+		$this->assertSame( $post_id, (int) $model->origin_id );
+		$this->assertSame( array( $post_id ), $this->sermon_ids() );
+		$this->assertSame( 'Keep these notes', get_post( $post_id )->post_content );
+		$this->assertContains( 'John 3:16', $this->passages( $post_id ) );
+		$this->assertNotContains( 'Romans 8:28', $this->passages( $post_id ) );
+	}
+
+	/**
+	 * Clearing scripture happens after the post is written and before the
+	 * match marker. If that step throws, the next sync must still keep the
+	 * local notes and scripture.
+	 */
+	public function test_a_scripture_failure_rolls_back_so_the_next_sync_keeps_local_fields() {
+		$post_id = $this->existing_sermon( 'Sunday Grace', '2024-06-02 09:00:00', 'Keep these notes' );
+		$this->set_scripture( $post_id, 'John 3:16' );
+		$notes = get_post( $post_id )->post_content;
+		update_post_meta(
+			$post_id,
+			SermonAudioMatch::SUPPLIED_META,
+			array(
+				'content'   => array(
+					'feed'   => $notes,
+					'stored' => $notes,
+				),
+				'scripture' => array(
+					'feed'   => 'John 3:16',
+					'stored' => 'John 3:16',
+				),
+			)
+		);
+
+		$clearing = $this->sermon( 'sa-scripture', 'Sunday Grace', '2024-06-02', $notes, null );
+		$later    = $this->sermon( 'sa-scripture', 'Sunday Grace', '2024-06-02', 'From SermonAudio', 'Romans 8:28' );
+
+		add_filter( 'delete_post_metadata', array( $this, 'throw_when_scripture_is_cleared' ), 10, 5 );
+
+		try {
+			$this->import( $clearing );
+			$this->fail( 'the scripture step must throw' );
+		} catch ( \ChurchPlugins\Exception $e ) {
+			$this->assertStringContainsString( 'scripture failed', $e->getMessage() );
+		} finally {
+			remove_filter( 'delete_post_metadata', array( $this, 'throw_when_scripture_is_cleared' ), 10 );
+		}
+
+		$this->assertSame( '', (string) get_post_meta( $post_id, 'external_id', true ) );
+		$this->assertSame( '', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertSame( '', get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true ) );
+		$this->assertSame( 'Keep these notes', get_post( $post_id )->post_content );
+		$this->assertContains( 'John 3:16', $this->passages( $post_id ) );
+
+		$model = $this->import( $later );
+
+		$this->assertSame( $post_id, (int) $model->origin_id );
+		$this->assertSame( array( $post_id ), $this->sermon_ids() );
+		$this->assertSame( 'Keep these notes', get_post( $post_id )->post_content );
+		$this->assertContains( 'John 3:16', $this->passages( $post_id ) );
+		$this->assertNotContains( 'Romans 8:28', $this->passages( $post_id ) );
 	}
 
 	/**
@@ -905,6 +996,34 @@ class SermonAudioMatchExistingTest extends TestCase {
 	 * @param mixed $content Post content being saved.
 	 * @return mixed
 	 */
+	/**
+	 * @param mixed  $check
+	 * @param int    $object_id
+	 * @param string $meta_key
+	 * @return mixed
+	 */
+	public function throw_when_snapshot_is_saved( $check, $object_id, $meta_key, $meta_value = null, $prev_value = '' ) {
+		if ( SermonAudioMatch::SUPPLIED_META === $meta_key ) {
+			throw new \ChurchPlugins\Exception( 'snapshot failed' );
+		}
+
+		return $check;
+	}
+
+	/**
+	 * @param mixed  $check
+	 * @param int    $object_id
+	 * @param string $meta_key
+	 * @return mixed
+	 */
+	public function throw_when_scripture_is_cleared( $check, $object_id, $meta_key, $meta_value = '', $delete_all = false ) {
+		if ( '_cp_scripture' === $meta_key ) {
+			throw new \ChurchPlugins\Exception( 'scripture failed' );
+		}
+
+		return $check;
+	}
+
 	public function filter_synced_note_markup( $content ) {
 		if ( ! is_string( $content ) || false !== strpos( $content, '[synced]' ) ) {
 			return $content;
