@@ -25,7 +25,7 @@ If more than one supported plugin has data in the database, the wizard will list
 3. Each detected plugin is listed with a count such as **3 Sermons found**. Click **Get Started** on the one you want.
 4. Click the button labeled **Copy {count} sermon from {plugin name}** or **Copy {count} sermons from {plugin name}**.
 5. The migration runs as a **background process**. The wizard shows a progress percentage, then **Migration complete!** Click **Close**.
-6. If a sermon was already migrated, it is updated in place. Re-running does not create a second copy. The match is stored as `migration_id` on the imported sermon.
+6. If a sermon was already migrated, it is not copied again. The existing sermon keeps its title, content and date; the migration re-applies its media, downloads, series, speakers and topics. The match is stored as `migration_id` on the imported sermon.
 
 The source plugin does **not** need to be active for migration to work. The wizard reads directly from the database, so it can detect and migrate data even after the original plugin has been deactivated.
 
