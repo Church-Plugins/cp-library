@@ -3,6 +3,7 @@ namespace CP_Library\Setup\PostTypes;
 use ChurchPlugins\Helpers;
 
 use CP_Library\Admin\Settings;
+use CP_Library\Setup\ArchiveSearch;
 use ChurchPlugins\Exception;
 use CP_Library\Models\ItemType as Model;
 use CP_Library\Models\Item as ItemModel;
@@ -307,16 +308,15 @@ class ItemType extends PostType  {
 			return;
 		}
 
+		// Same posts_per_page guard as the sermon archive: WordPress has already
+		// filled it, so search has to be applied before that return.
+		ArchiveSearch::apply( $query );
+
 		if ( $query->get( 'posts_per_page' ) ) {
 			return;
 		}
 
 		$query->set( 'posts_per_page', Settings::get_item_type( 'per_page', 12 ) );
-
-		// Handle custom search parameter
-		if ( !empty( $_GET['cpl_search'] ) ) {
-			$query->set( 's', sanitize_text_field( $_GET['cpl_search'] ) );
-		}
 	}
 
 	/**
