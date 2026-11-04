@@ -913,8 +913,8 @@ class SermonAudioMatch {
 	 * Existing sermon to link, or null when the sync should create one.
 	 *
 	 * The lookup is the posts whose post_date falls on the incoming
-	 * calendar day, for this post type only. Speakers and series are not
-	 * candidates. There is no unbounded scan of cpl_item.
+	 * calendar day, for this post type only. Speakers and series use
+	 * find_named_link() instead. There is no unbounded scan of cpl_item.
 	 *
 	 * @param array $item Formatted sermon, with post_type, post_title, post_date, and external_id.
 	 * @return int|null
@@ -935,6 +935,68 @@ class SermonAudioMatch {
 			$external,
 			self::incoming_media( $item )
 		);
+	}
+
+	/**
+	 * The one existing speaker or series a SermonAudio speaker or series should update.
+	 *
+	 * SermonAudio speakers and series were only found by external_id, so a
+	 * speaker or series created on the site (by hand or by CSV import) got a
+	 * second copy with the same name on the first sync. The sermon then moved
+	 * to the copy. A post of the same type whose normalized title matches is
+	 * reused instead, when it is the only one with that name and it has no
+	 * other SermonAudio id. Two local posts with the name still insert a new
+	 * one, because either could be the wrong person or series.
+	 *
+	 * @param array $item Formatted speaker or series, with post_type, post_title, and external_id.
+	 * @return int|null
+	 */
+	public static function find_named_link( array $item ) {
+		$post_type = isset( $item['post_type'] ) ? (string) $item['post_type'] : '';
+		$title     = isset( $item['post_title'] ) ? $item['post_title'] : '';
+		$external  = isset( $item['external_id'] ) ? (string) $item['external_id'] : '';
+
+		if ( '' === $post_type || '' === self::normalize_title( $title ) ) {
+			return null;
+		}
+
+		return self::select_named_match( self::posts_of_type( $post_type ), $title, $external );
+	}
+
+	/**
+	 * Pick the only candidate whose normalized title matches, if it can be linked.
+	 *
+	 * Every title match counts toward the "only one" rule, including one that
+	 * already has a different SermonAudio id. That one is then not linkable,
+	 * so the result is null and a new post is inserted.
+	 *
+	 * @param array  $candidates           Rows with ID, post_title, and external_id.
+	 * @param string $incoming_title       SermonAudio name.
+	 * @param string $incoming_external_id SermonAudio id.
+	 * @return int|null
+	 */
+	public static function select_named_match( array $candidates, $incoming_title, $incoming_external_id ) {
+		$target = self::normalize_title( $incoming_title );
+
+		if ( '' === $target ) {
+			return null;
+		}
+
+		$matches = array();
+
+		foreach ( $candidates as $candidate ) {
+			$candidate_title = isset( $candidate['post_title'] ) ? $candidate['post_title'] : '';
+
+			if ( self::normalize_title( $candidate_title ) === $target ) {
+				$matches[] = $candidate;
+			}
+		}
+
+		if ( 1 !== count( $matches ) ) {
+			return null;
+		}
+
+		return self::linkable_id( $matches[0], $incoming_external_id );
 	}
 
 	/**
@@ -997,8 +1059,46 @@ class SermonAudioMatch {
 			array( $day . ' 00:00:00', $next . ' 00:00:00' )
 		);
 
-		$rows = $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A );
+		return self::rows_by_id( $wpdb->get_results( $wpdb->prepare( $sql, $args ), ARRAY_A ) );
+	}
 
+	/**
+	 * Speaker or series posts that could be linked, one entry per post.
+	 *
+	 * Speakers and series are a short list on any site, so every live post
+	 * of the type is read and titles are compared in PHP. That keeps entity
+	 * decoding and whitespace the same as the sermon title match. Trash,
+	 * auto-drafts, and revisions are not candidates.
+	 *
+	 * @param string $post_type Speaker or series post type.
+	 * @return array<int,array{ID:int,post_title:string,external_id:string}>
+	 */
+	private static function posts_of_type( $post_type ) {
+		global $wpdb;
+
+		if ( ! isset( $wpdb->posts, $wpdb->postmeta ) ) {
+			return array();
+		}
+
+		$statuses = array( 'publish', 'draft', 'pending', 'private', 'future' );
+		$in       = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
+		$sql      = "SELECT p.ID, p.post_title, pm.meta_value AS external_id
+			FROM {$wpdb->posts} p
+			LEFT JOIN {$wpdb->postmeta} pm
+				ON pm.post_id = p.ID AND pm.meta_key = 'external_id'
+			WHERE p.post_type = %s
+				AND p.post_status IN ( $in )";
+
+		return self::rows_by_id( $wpdb->get_results( $wpdb->prepare( $sql, array_merge( array( $post_type ), $statuses ) ), ARRAY_A ) );
+	}
+
+	/**
+	 * Collapse post rows joined to external_id meta into one entry per post.
+	 *
+	 * @param mixed $rows Result of $wpdb->get_results( ..., ARRAY_A ).
+	 * @return array<int,array{ID:int,post_title:string,external_id:string}>
+	 */
+	private static function rows_by_id( $rows ) {
 		if ( ! is_array( $rows ) ) {
 			return array();
 		}

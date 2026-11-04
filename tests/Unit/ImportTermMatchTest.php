@@ -14,6 +14,10 @@
  * they still match the name from the file. A raw "&", apostrophe, or quote
  * is unchanged by that decode and still matches.
  *
+ * Lowercasing was strtolower(), which leaves multibyte capitals alone, so
+ * "église centrale" did not match the series "Église Centrale" and the import
+ * created a second one (#249). The comparison now lowercases UTF-8.
+ *
  * @package CP_Library
  */
 
@@ -129,5 +133,19 @@ class ImportTermMatchTest extends TestCase {
 
 		$this->assertNull( ImportSermons::matching_term_id( '', $existing ) );
 		$this->assertNull( ImportSermons::matching_term_id( '   ', $existing ) );
+	}
+
+	public function test_non_ascii_capitals_match_the_existing_name() {
+		$id = ImportSermons::matching_term_id(
+			'église centrale',
+			array(
+				(object) array(
+					'id'    => 7,
+					'title' => 'Église Centrale',
+				),
+			)
+		);
+
+		$this->assertSame( 7, $id );
 	}
 }

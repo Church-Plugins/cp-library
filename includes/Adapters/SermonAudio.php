@@ -332,9 +332,16 @@ class SermonAudio extends Adapter {
 	 * with any partial snapshot or match marker, so the post is not left
 	 * half-linked.
 	 *
-	 * `cpl_sermon_audio_match_existing` disables only this fallback. Return
-	 * false and a sermon with no external id is inserted, as it was before.
-	 * Speakers and series are never matched.
+	 * A speaker or series with no post for its SermonAudio id updates the
+	 * one existing post of that type with the same normalized name, when
+	 * there is exactly one and it has no other SermonAudio id. Otherwise a
+	 * new one is inserted. SermonAudio's name, bio or description, and image
+	 * then replace the local ones, so the site does not end up with two
+	 * copies of the same speaker or series.
+	 *
+	 * `cpl_sermon_audio_match_existing` disables only these fallbacks. Return
+	 * false and a sermon, speaker, or series with no external id is
+	 * inserted, as it was before.
 	 *
 	 * @param array           $item  Formatted item.
 	 * @param class-string    $model Model class.
@@ -377,6 +384,19 @@ class SermonAudio extends Adapter {
 					$wrote_scripture = $applied['wrote_scripture'];
 					$track_snapshot  = true;
 					$mark_id         = $match_id;
+				}
+			}
+		}
+
+		if ( $this->item_is_speaker_or_series( $item ) ) {
+			$external_id = isset( $item['external_id'] ) ? (string) $item['external_id'] : '';
+			$existing_id = '' === $external_id ? null : $this->get_item_id_from_external( $external_id );
+
+			if ( ( null === $existing_id || '' === (string) $existing_id ) && $this->match_existing_enabled( $item ) ) {
+				$match_id = SermonAudioMatch::find_named_link( $item );
+
+				if ( null !== $match_id ) {
+					$item['ID'] = $match_id;
 				}
 			}
 		}
@@ -431,6 +451,22 @@ class SermonAudio extends Adapter {
 	}
 
 	/**
+	 * Whether $item is a speaker or series rather than a sermon.
+	 *
+	 * @param mixed $item Formatted item.
+	 * @return bool
+	 */
+	private function item_is_speaker_or_series( $item ) {
+		if ( ! is_array( $item ) || empty( $item['post_type'] ) ) {
+			return false;
+		}
+
+		$post_types = cp_library()->setup->post_types;
+
+		return in_array( $item['post_type'], array( $post_types->speaker->post_type, $post_types->item_type->post_type ), true );
+	}
+
+	/**
 	 * Whether the title-and-day fallback may run for this sermon.
 	 *
 	 * @param array $item Formatted sermon.
@@ -438,12 +474,14 @@ class SermonAudio extends Adapter {
 	 */
 	private function match_existing_enabled( $item ) {
 		/**
-		 * Disable linking a SermonAudio sermon to an existing same-day title.
+		 * Disable linking SermonAudio items to existing posts.
 		 *
-		 * Sermons that already store this external id are still updated.
+		 * Covers a sermon with the same title on the same day, and a speaker
+		 * or series with the same name. Posts that already store this
+		 * external id are still updated.
 		 *
 		 * @param bool  $enabled Default true.
-		 * @param array $item    Formatted sermon about to be saved.
+		 * @param array $item    Formatted sermon, speaker, or series about to be saved.
 		 * @param SermonAudio $adapter Adapter running the sync.
 		 */
 		return (bool) apply_filters( 'cpl_sermon_audio_match_existing', true, $item, $this );
@@ -1058,6 +1096,9 @@ class SermonAudio extends Adapter {
 	/**
 	 * Adds an attachment to a sermon
 	 *
+	 * The speaker replaces the sermon's speakers. The series is added, except
+	 * on a sermon the matcher linked, where it replaces the local series.
+	 *
 	 * @param \CP_Library\Models\Item $item The item to add the attachment to.
 	 * @param mixed                   $attachment The attachment to add.
 	 * @param string                  $attachment_key The key of the attachment.
@@ -1066,7 +1107,13 @@ class SermonAudio extends Adapter {
 		if ( 'cpl_speaker' === $attachment_key ) {
 			$item->update_speakers( [ $attachment->id ] );
 		} elseif ( 'cpl_item_type' === $attachment_key ) {
-			$item->add_type( $attachment->id );
+			if ( SermonAudioMatch::is_match_linked( (int) $item->origin_id ) ) {
+				// A linked sermon already had a local series (often the CSV
+				// default). Adding SermonAudio's would put it in two series.
+				$item->update_types( [ $attachment->id ] );
+			} else {
+				$item->add_type( $attachment->id );
+			}
 		}
 	}
 

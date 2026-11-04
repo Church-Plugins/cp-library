@@ -407,4 +407,33 @@ class SermonAudioMatchTest extends TestCase {
 			'external_id' => $external_id,
 		);
 	}
+
+	/**
+	 * A speaker or series already on the site is reused by name (#247).
+	 * Two with the name, or one with another SermonAudio id, are not.
+	 */
+	public function test_named_match_reuses_the_only_local_post_with_that_name() {
+		$candidates = array(
+			array( 'ID' => 4, 'post_title' => 'John Smith', 'external_id' => '' ),
+			array( 'ID' => 5, 'post_title' => 'Jane Doe', 'external_id' => '' ),
+		);
+
+		$this->assertSame( 4, SermonAudioMatch::select_named_match( $candidates, ' john  smith ', 'sa-1' ) );
+		$this->assertNull( SermonAudioMatch::select_named_match( $candidates, 'John', 'sa-1' ) );
+		$this->assertNull( SermonAudioMatch::select_named_match( $candidates, '   ', 'sa-1' ) );
+	}
+
+	public function test_named_match_skips_ambiguous_names_and_other_sermonaudio_ids() {
+		$two = array(
+			array( 'ID' => 4, 'post_title' => 'John Smith', 'external_id' => '' ),
+			array( 'ID' => 6, 'post_title' => 'JOHN SMITH', 'external_id' => '' ),
+		);
+		$other = array(
+			array( 'ID' => 4, 'post_title' => 'John Smith', 'external_id' => 'sa-other' ),
+		);
+
+		$this->assertNull( SermonAudioMatch::select_named_match( $two, 'John Smith', 'sa-1' ) );
+		$this->assertNull( SermonAudioMatch::select_named_match( $other, 'John Smith', 'sa-1' ) );
+		$this->assertSame( 4, SermonAudioMatch::select_named_match( $other, 'John Smith', 'sa-other' ) );
+	}
 }

@@ -25,6 +25,9 @@ class RowImporter extends ImportSermons {
 
 	public function __construct() {
 		// The parent constructor reads saved config and registers cron hooks.
+		// Rows here stand for a CSV that has every column, so map them all.
+		$fields = array_keys( $this->field_mapping );
+		$this->load_mapping( array_combine( $fields, $fields ) );
 	}
 
 	/**
