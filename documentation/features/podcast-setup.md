@@ -111,7 +111,6 @@ Common issues to check:
 
 ### Cover Art Not Displaying
 
-1. Verify the image is at least 1400×1400 pixels
+1. Verify the image is between 1400×1400 and 3000×3000 pixels
 2. Check file format (JPG or PNG)
-3. Ensure the file is JPG or PNG format
-4. Re-upload the image in podcast settings
+3. Re-upload the image in podcast settings

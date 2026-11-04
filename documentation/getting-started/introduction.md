@@ -1,6 +1,6 @@
-# Introduction to CP Sermon Library
+# Introduction to CP Sermons
 
-CP Sermon Library is a comprehensive WordPress plugin designed for churches and ministries to manage and display sermons, sermon series, speakers, and related media.
+CP Sermons is a comprehensive WordPress plugin designed for churches and ministries to manage and display sermons, sermon series, speakers, and related media.
 
 ## Key Features
 
@@ -22,7 +22,7 @@ On a new install the top-level admin menu is **Series**. To change it, go to Ser
 
 ## How It Works
 
-CP Sermon Library adds a complete sermon management system to your WordPress site:
+CP Sermons adds a complete sermon management system to your WordPress site:
 
 1. **Add content** — Create sermons, series, and speakers through the familiar WordPress admin
 2. **Organize** — Use categories like topics, scripture references, and seasons to keep your library organized

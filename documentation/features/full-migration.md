@@ -23,7 +23,7 @@ The export is a single portable file (for example, `sermons.ndjson.gz`). It incl
 - Speakers
 - Service types
 - Templates
-- Taxonomy terms (topics, seasons, scripture, and other CP Sermons taxonomies)
+- Taxonomy terms (topics, seasons and scripture)
 - Plugin settings, optionally (off by default; check **Include plugin settings** on export, or pass `--include-settings` with WP-CLI)
 
 Featured image URLs travel with the content. Whether those files (and downloadable files) are copied into the destination site's Media Library depends on the import option described below.
@@ -92,4 +92,4 @@ If the export included settings, your permalinks may need to be rebuilt after th
 
 ## Related
 
-For CSV import and export, merging speakers, and the debug Log, see [Tools: Import, Export & Maintenance](https://docs.churchplugins.com/knowledge-base/tools-cp-library/).
+For CSV import and export, merging speakers, and the debug Log, see [Tools: Import, Export & Maintenance](tools.md).

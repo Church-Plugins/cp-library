@@ -113,28 +113,29 @@ class Variations {
 	}
 
 	/**
-	 * Get variation source
+	 * Label for the active variation source.
+	 *
+	 * get_source() already filters the key. The label is the name from
+	 * get_sources(), so that key filter cannot replace it with the slug.
 	 *
 	 * @since  1.1.0
 	 *
-	 * @return mixed|void
-	 * @author Tanner Moushey, 5/5/23
+	 * @return string
 	 */
 	public function get_source_label() {
 		$key = $this->get_source();
 
 		if ( '' === $key ) {
-			$source = __( 'None', 'cp-library' );
-		} else {
-			$sources = $this->get_sources();
-			$source  = __( 'Source could not be found', 'cp-library' );
-
-			if ( isset( $sources[ $key ] ) ) {
-				$source = $sources[ $key ];
-			}
+			return __( 'None', 'cp-library' );
 		}
 
-		return apply_filters( 'cpl_variations_source', $source );
+		$sources = $this->get_sources();
+
+		if ( isset( $sources[ $key ] ) ) {
+			return $sources[ $key ];
+		}
+
+		return __( 'Source could not be found', 'cp-library' );
 	}
 
 	/**

@@ -105,8 +105,10 @@ class ImportSermons extends BackgroundProcessImport {
 	 * Passages from one CSV scripture cell.
 	 *
 	 * References are separated by ";" or by a comma that starts a new
-	 * reference. A comma followed by a verse number or range stays in the
-	 * same reference, so "Psalm 23:1, 4" is one passage and
+	 * reference. A comma followed by a verse, a verse range, or
+	 * chapter:verse stays in the same reference. A range may use a hyphen,
+	 * an en dash, or an em dash. "Psalm 23:1, 4", "Psalm 23:1, 4–6", and
+	 * "Romans 8:28, 9:1" are each one passage.
 	 * "1 Thessalonians 2:1-12; 2 Corinthians 5:11-15" is two. Each piece is
 	 * rewritten the same way as a SermonAudio reference.
 	 *
@@ -162,14 +164,19 @@ class ImportSermons extends BackgroundProcessImport {
 	/**
 	 * Whether the text after a comma is a verse number or range, not a new book.
 	 *
-	 * "4" and "4-6" continue the reference. "Jn 3:16", "1 John 1:9", and
+	 * "4", "4-6", "4–6", and "9:1" continue the reference. The dash may be
+	 * a hyphen, an en dash, or an em dash. "Jn 3:16", "1 John 1:9", and
 	 * "3rd John 1" start a new one.
 	 *
 	 * @param string $after Text after the comma.
 	 * @return bool
 	 */
 	private static function comma_is_verse_list( $after ) {
-		return 1 === preg_match( '/^\s*\d+[a-z]?(?:\s*[-–—]\s*\d+[a-z]?)?(?=\s*(?:$|[,;]))/i', $after );
+		$verse   = '\d+[a-z]?';
+		$range   = '(?:\s*[-–—]\s*' . $verse . '(?::' . $verse . ')?)?';
+		$pattern = '/^\s*' . $verse . '(?::' . $verse . ')?' . $range . '(?=\s*(?:$|[,;]))/iu';
+
+		return 1 === preg_match( $pattern, $after );
 	}
 
 	/**
@@ -180,6 +187,8 @@ class ImportSermons extends BackgroundProcessImport {
 	 * is these keys, so the returned value is that id.
 	 *
 	 * Names are compared after decoding entities, trimming, and lowercasing.
+	 * Lowercasing uses UTF-8, so "Église" and "église" match. "&amp;" and
+	 * "&" match.
 	 *
 	 * @param string $given      Value from the CSV variation column.
 	 * @param array  $options    Source id => name.
@@ -215,8 +224,13 @@ class ImportSermons extends BackgroundProcessImport {
 	 */
 	private static function normalize_variation_name( $name ) {
 		$name = html_entity_decode( (string) $name, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$name = trim( $name );
 
-		return strtolower( trim( $name ) );
+		if ( function_exists( 'mb_strtolower' ) ) {
+			return mb_strtolower( $name, 'UTF-8' );
+		}
+
+		return strtolower( $name );
 	}
 
 	/**

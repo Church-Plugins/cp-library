@@ -44,6 +44,7 @@ class VariationMatchTest extends TestCase {
 		$this->assertSame( 4, ImportSermons::match_variation_id( '  Presentation ', $options ) );
 		$this->assertSame( 9, ImportSermons::match_variation_id( 'Faith & Works', $options ) );
 		$this->assertSame( 9, ImportSermons::match_variation_id( 'faith &amp; works', $options, 3 ) );
+		$this->assertSame( 7, ImportSermons::match_variation_id( 'église centrale', array( 7 => 'Église Centrale' ) ) );
 	}
 
 	public function test_a_miss_names_the_row_the_value_and_the_valid_names() {

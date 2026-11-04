@@ -326,7 +326,11 @@ class SermonAudio extends Adapter {
 	 * edit and is never replaced. A local value that matches it follows
 	 * the feed. An empty local field is filled on the link sync. A sermon
 	 * the sync itself created keeps taking the feed on every sync and is
-	 * not snapshotted. Title, audio, and video still update.
+	 * not snapshotted. Title, audio, and video still update. If the save,
+	 * the scripture clear, the snapshot, or the match marker throws while
+	 * linking, the SermonAudio id written on that attempt is removed, along
+	 * with any partial snapshot or match marker, so the post is not left
+	 * half-linked.
 	 *
 	 * `cpl_sermon_audio_match_existing` disables only this fallback. Return
 	 * false and a sermon with no external id is inserted, as it was before.
@@ -377,22 +381,36 @@ class SermonAudio extends Adapter {
 			}
 		}
 
-		$loaded = parent::load_item( $item, $model );
+		try {
+			$loaded = parent::load_item( $item, $model );
 
-		if ( $this->item_is_sermon( $item ) && is_object( $loaded ) && ! empty( $loaded->origin_id ) ) {
-			$origin_id = (int) $loaded->origin_id;
+			if ( $this->item_is_sermon( $item ) && is_object( $loaded ) && ! empty( $loaded->origin_id ) ) {
+				$origin_id = (int) $loaded->origin_id;
 
-			if ( $clear_scripture ) {
-				cp_library()->setup->taxonomies->scripture->update_object_scripture( $origin_id, array() );
+				if ( $clear_scripture ) {
+					cp_library()->setup->taxonomies->scripture->update_object_scripture( $origin_id, array() );
+				}
+
+				if ( $track_snapshot && is_array( $supplied ) ) {
+					SermonAudioMatch::record_supplied_snapshot( $origin_id, $supplied, $wrote_content, $wrote_scripture );
+				}
+
+				if ( $mark_id > 0 && $origin_id === $mark_id ) {
+					update_post_meta( $mark_id, SermonAudioMatch::LINKED_META, '1' );
+				}
+			}
+		} catch ( \Throwable $e ) {
+			// external_id is written before scripture is cleared and before
+			// the snapshot and match marker. Drop all three so a throw in
+			// any of those steps is not a half-linked post. The next sync
+			// can match again and still keep local notes and scripture.
+			if ( $mark_id > 0 ) {
+				delete_post_meta( $mark_id, 'external_id' );
+				delete_post_meta( $mark_id, SermonAudioMatch::SUPPLIED_META );
+				delete_post_meta( $mark_id, SermonAudioMatch::LINKED_META );
 			}
 
-			if ( $track_snapshot && is_array( $supplied ) ) {
-				SermonAudioMatch::record_supplied_snapshot( $origin_id, $supplied, $wrote_content, $wrote_scripture );
-			}
-
-			if ( $mark_id > 0 && $origin_id === $mark_id ) {
-				update_post_meta( $mark_id, SermonAudioMatch::LINKED_META, '1' );
-			}
+			throw $e;
 		}
 
 		return $loaded;

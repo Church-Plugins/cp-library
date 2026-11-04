@@ -22,7 +22,7 @@ Rather than creating entirely separate sermon entries, variations maintain the r
 
 ## Prerequisites
 
-Variations require Service Types to be enabled. See [Service Types](service-types.md) for setup instructions.
+Variations need a variation source: Service Types, or a supported add-on. See [Service Types](service-types.md) for setup instructions.
 
 ### Enabling Variations
 
