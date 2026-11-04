@@ -57,6 +57,12 @@ class Variations {
 	 */
 	public function get_source_items( $id = false ) {
 		$source = $this->get_source();
+
+		// None saves an empty source. Don't build a filter name from it.
+		if ( '' === $source ) {
+			return [];
+		}
+
 		$items = apply_filters( 'cpl_variations_source_items_' . $source, [] );
 
 		if ( $id ) {
@@ -75,8 +81,35 @@ class Variations {
 	 * @author Tanner Moushey, 5/5/23
 	 */
 	public function get_source() {
-		$source = \CP_Library\Admin\Settings::get_item( 'variation_source' );
-		return apply_filters( 'cpl_variations_source', $source );
+		$source = \CP_Library\Admin\Settings::get_item( 'variation_source', '' );
+		$source = apply_filters( 'cpl_variations_source', $source );
+
+		if ( ! is_string( $source ) ) {
+			return '';
+		}
+
+		return $source;
+	}
+
+	/**
+	 * Service Types are the variation source only while Variations are on and
+	 * the saved source is the service type. An empty source (None) is not.
+	 *
+	 * @return bool
+	 */
+	public function service_type_is_source() {
+		if ( ! $this->is_enabled() ) {
+			return false;
+		}
+
+		$source = $this->get_source();
+		if ( '' === $source ) {
+			return false;
+		}
+
+		$service_type = cp_library()->setup->post_types->service_type;
+
+		return is_object( $service_type ) && $source === $service_type->post_type;
 	}
 
 	/**
@@ -88,11 +121,17 @@ class Variations {
 	 * @author Tanner Moushey, 5/5/23
 	 */
 	public function get_source_label() {
-		$sources = $this->get_sources();
-		$source  = __( 'Source could not be found', 'cp-library' );
+		$key = $this->get_source();
 
-		if ( isset( $sources[ $this->get_source() ] ) ) {
-			$source = $sources[ $this->get_source() ];
+		if ( '' === $key ) {
+			$source = __( 'None', 'cp-library' );
+		} else {
+			$sources = $this->get_sources();
+			$source  = __( 'Source could not be found', 'cp-library' );
+
+			if ( isset( $sources[ $key ] ) ) {
+				$source = $sources[ $key ];
+			}
 		}
 
 		return apply_filters( 'cpl_variations_source', $source );
