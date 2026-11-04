@@ -48,6 +48,122 @@ class SermonAudioMatchExistingTest extends TestCase {
 		parent::tear_down();
 	}
 
+	/**
+	 * A variation child copies the parent's title and date. It is not a
+	 * second sermon, so it must not make the day's title look ambiguous,
+	 * and a child that sits alone on the feed's day must not be overwritten.
+	 */
+	public function test_variation_children_are_not_match_candidates() {
+		$day    = '2024-06-02 09:00:00';
+		$parent = $this->existing_sermon( 'Sunday Grace', $day, 'Parent notes' );
+		$this->set_scripture( $parent, 'John 3:16' );
+		$child = $this->existing_sermon( 'Sunday Grace', $day, 'Child notes' );
+		$this->set_parent( $child, $parent );
+
+		$model = $this->import( $this->sermon( 'sa-child', 'Sunday Grace', '2024-06-02', 'From SermonAudio', 'Romans 8:28' ) );
+
+		$this->assertSame( $parent, (int) $model->origin_id );
+		$this->assertSame( array( $parent, $child ), $this->sermon_ids() );
+		$this->assertSame( array( $parent ), $this->posts_with_external_id( 'sa-child' ) );
+		$this->assertSame( '1', (string) get_post_meta( $parent, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertSame( 'Parent notes', get_post( $parent )->post_content );
+		$this->assertContains( 'John 3:16', $this->passages( $parent ) );
+		$this->assertNotContains( 'Romans 8:28', $this->passages( $parent ) );
+		$this->assertSame( 'Child notes', get_post( $child )->post_content );
+		$this->assertSame( '', (string) get_post_meta( $child, 'external_id', true ) );
+		$this->assertSame( '', (string) get_post_meta( $child, SermonAudioMatch::LINKED_META, true ) );
+
+		$other_day = $this->existing_sermon( 'Evening Grace', '2024-06-01 09:00:00', 'Parent on another day' );
+		$only_child = $this->existing_sermon( 'Evening Grace', $day, 'Variant notes' );
+		$this->set_parent( $only_child, $other_day );
+		$this->set_scripture( $only_child, 'John 3:16' );
+
+		$created = $this->import( $this->sermon( 'sa-child-day', 'Evening Grace', '2024-06-02', 'From SermonAudio', 'Romans 8:28' ) );
+		$created_id = (int) $created->origin_id;
+
+		$this->assertNotSame( $only_child, $created_id );
+		$this->assertNotSame( $other_day, $created_id );
+		$this->assertSame( 'Variant notes', get_post( $only_child )->post_content );
+		$this->assertContains( 'John 3:16', $this->passages( $only_child ) );
+		$this->assertSame( '', (string) get_post_meta( $only_child, 'external_id', true ) );
+		$this->assertSame( '', (string) get_post_meta( $only_child, SermonAudioMatch::LINKED_META, true ) );
+	}
+
+	/**
+	 * external_id is stored before scripture and the model finish saving.
+	 * If that save throws, the post must not stay linked by external_id
+	 * without the match marker. The next sync still has to keep the local
+	 * notes and scripture.
+	 */
+	public function test_a_failed_link_rolls_back_so_the_next_sync_keeps_local_fields() {
+		$post_id = $this->existing_sermon( 'Sunday Grace', '2024-06-02 09:00:00', 'Keep these notes' );
+		$this->set_scripture( $post_id, 'John 3:16' );
+		$sermon = $this->sermon( 'sa-rollback', 'Sunday Grace', '2024-06-02', 'From SermonAudio', 'Romans 8:28' );
+
+		$throwing = new class() extends SermonAudio {
+			public function process_cpl_data( $item, $cpl_data, $post_type ) {
+				throw new \ChurchPlugins\Exception( 'save failed' );
+			}
+		};
+
+		try {
+			$throwing->load_item( $throwing->format_item( $sermon ), ItemModel::class );
+			$this->fail( 'the save must throw' );
+		} catch ( \ChurchPlugins\Exception $e ) {
+			$this->assertStringContainsString( 'save failed', $e->getMessage() );
+		}
+
+		$this->assertSame( '', (string) get_post_meta( $post_id, 'external_id', true ) );
+		$this->assertSame( '', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
+		$this->assertSame( '', get_post_meta( $post_id, SermonAudioMatch::SUPPLIED_META, true ) );
+		$this->assertSame( 'Keep these notes', get_post( $post_id )->post_content );
+		$this->assertContains( 'John 3:16', $this->passages( $post_id ) );
+
+		$model = $this->import( $sermon );
+
+		$this->assertSame( $post_id, (int) $model->origin_id );
+		$this->assertSame( array( $post_id ), $this->sermon_ids() );
+		$this->assertSame( 'Keep these notes', get_post( $post_id )->post_content );
+		$this->assertContains( 'John 3:16', $this->passages( $post_id ) );
+		$this->assertNotContains( 'Romans 8:28', $this->passages( $post_id ) );
+		$this->assertSame( '1', (string) get_post_meta( $post_id, SermonAudioMatch::LINKED_META, true ) );
+	}
+
+	/**
+	 * The first snapshot has to use the same scripture form later reads use.
+	 * A book spelled "Psalm", or a range written with an en dash, is not a
+	 * local edit. A later feed correction still applies. A different passage
+	 * does not.
+	 */
+	public function test_scripture_snapshot_ignores_book_spelling_and_dash_style() {
+		$book = $this->existing_sermon( 'Book Spelling', '2024-06-02 09:00:00', 'Local notes' );
+		update_post_meta( $book, '_cp_scripture', array( 'Psalm 23' ) );
+
+		$this->import( $this->sermon( 'sa-book', 'Book Spelling', '2024-06-02', 'From SermonAudio', 'Psalm 23' ) );
+		$this->assertSame( array( 'Psalm 23' ), $this->passages( $book ) );
+
+		$this->import( $this->sermon( 'sa-book', 'Book Spelling', '2024-06-02', 'From SermonAudio', 'Psalm 24' ) );
+		$this->assertSame( array( 'Psalms 24' ), $this->passages( $book ) );
+		$this->assertSame( 'Local notes', get_post( $book )->post_content );
+
+		$dash = $this->existing_sermon( 'Dash Style', '2024-06-03 09:00:00', 'Dash notes' );
+		update_post_meta( $dash, '_cp_scripture', array( 'Psalms 23:1–4' ) );
+
+		$this->import( $this->sermon( 'sa-dash', 'Dash Style', '2024-06-03', 'Dash notes', 'Psalm 23:1-4' ) );
+		$this->assertSame( array( 'Psalms 23:1–4' ), $this->passages( $dash ) );
+
+		$this->import( $this->sermon( 'sa-dash', 'Dash Style', '2024-06-03', 'Dash notes', 'Psalm 23:1-6' ) );
+		$this->assertSame( array( 'Psalms 23:1-6' ), $this->passages( $dash ) );
+
+		$edited = $this->existing_sermon( 'Real Edit', '2024-06-04 09:00:00', 'Edited notes' );
+		$this->set_scripture( $edited, 'John 3:16' );
+		$this->import( $this->sermon( 'sa-edited', 'Real Edit', '2024-06-04', 'Edited notes', 'Psalm 23' ) );
+		$this->import( $this->sermon( 'sa-edited', 'Real Edit', '2024-06-04', 'Edited notes', 'Psalm 24' ) );
+		$this->assertContains( 'John 3:16', $this->passages( $edited ) );
+		$this->assertNotContains( 'Psalms 24', $this->passages( $edited ) );
+		$this->assertSame( 'Edited notes', get_post( $edited )->post_content );
+	}
+
 	public function test_one_normalized_title_on_that_day_links_and_keeps_nonempty_local_fields() {
 		$day       = '2024-06-02 09:00:00';
 		$decoy_id  = $this->existing_sermon( 'A different sermon', $day, 'Decoy notes', 'decoy-slug' );
@@ -804,6 +920,23 @@ class SermonAudioMatchExistingTest extends TestCase {
 	 * @param string $slug
 	 * @return int
 	 */
+	/**
+	 * @param int $child_id
+	 * @param int $parent_id
+	 */
+	private function set_parent( $child_id, $parent_id ) {
+		global $wpdb;
+
+		$wpdb->update(
+			$wpdb->posts,
+			array( 'post_parent' => $parent_id ),
+			array( 'ID' => $child_id ),
+			array( '%d' ),
+			array( '%d' )
+		);
+		clean_post_cache( $child_id );
+	}
+
 	private function existing_sermon( $title, $local_date, $content = 'Local notes', $slug = '' ) {
 		$args = array(
 			'post_type'     => $this->post_type(),

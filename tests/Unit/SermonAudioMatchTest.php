@@ -379,24 +379,19 @@ class SermonAudioMatchTest extends TestCase {
 		$this->assertSame( 'Local notes', $kept['value'] );
 	}
 
-	public function test_nonempty_content_and_scripture_are_kept_and_empty_ones_are_not() {
+	public function test_comparable_scripture_ignores_book_spelling_dash_style_and_order() {
 		$this->assertSame(
-			array(
-				'content'   => true,
-				'scripture' => true,
-			),
-			SermonAudioMatch::preserved_fields( ' Local notes ', array( 'John 3:16' ) )
+			SermonAudioMatch::comparable_scripture( 'Psalm 23:1–4' ),
+			SermonAudioMatch::comparable_scripture( 'Psalms 23:1-4' )
 		);
 		$this->assertSame(
-			array(
-				'content'   => false,
-				'scripture' => false,
-			),
-			SermonAudioMatch::preserved_fields( '   ', array( '  ', '' ) )
+			SermonAudioMatch::comparable_scripture( 'Romans 8:28; John 3:16' ),
+			SermonAudioMatch::comparable_scripture( array( 'John 3:16', 'Romans 8:28' ) )
 		);
-		$this->assertFalse( SermonAudioMatch::preserved_fields( null, null )['content'] );
-		$this->assertFalse( SermonAudioMatch::preserved_fields( '', '   ' )['scripture'] );
-		$this->assertTrue( SermonAudioMatch::preserved_fields( '', 'John 3:16' )['scripture'] );
+		$this->assertNotSame(
+			SermonAudioMatch::comparable_scripture( 'John 3:16' ),
+			SermonAudioMatch::comparable_scripture( 'Romans 8:28' )
+		);
 	}
 
 	/**

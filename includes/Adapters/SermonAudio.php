@@ -326,7 +326,9 @@ class SermonAudio extends Adapter {
 	 * edit and is never replaced. A local value that matches it follows
 	 * the feed. An empty local field is filled on the link sync. A sermon
 	 * the sync itself created keeps taking the feed on every sync and is
-	 * not snapshotted. Title, audio, and video still update.
+	 * not snapshotted. Title, audio, and video still update. If the save
+	 * throws while linking, the SermonAudio id written on that attempt is
+	 * removed, so the post is not left linked without the match marker.
 	 *
 	 * `cpl_sermon_audio_match_existing` disables only this fallback. Return
 	 * false and a sermon with no external id is inserted, as it was before.
@@ -377,7 +379,18 @@ class SermonAudio extends Adapter {
 			}
 		}
 
-		$loaded = parent::load_item( $item, $model );
+		try {
+			$loaded = parent::load_item( $item, $model );
+		} catch ( \Throwable $e ) {
+			// external_id is written before scripture and the model finish.
+			// Drop it so a failed link is not half-saved. The next sync can
+			// match again and still keep local notes and scripture.
+			if ( $mark_id > 0 ) {
+				delete_post_meta( $mark_id, 'external_id' );
+			}
+
+			throw $e;
+		}
 
 		if ( $this->item_is_sermon( $item ) && is_object( $loaded ) && ! empty( $loaded->origin_id ) ) {
 			$origin_id = (int) $loaded->origin_id;

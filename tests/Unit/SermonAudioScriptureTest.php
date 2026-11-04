@@ -245,6 +245,41 @@ class SermonAudioScriptureTest extends TestCase {
 		);
 	}
 
+	/**
+	 * Word and Excel write verse ranges with an en dash or an em dash.
+	 * Those bytes must stay inside the passage. "Psalm 23:1, 4–6" is one
+	 * reference, not "Psalm 23:1" plus a bookless "4–6".
+	 */
+	public function test_csv_scripture_keeps_en_dash_and_em_dash_verse_ranges() {
+		$this->assertSame(
+			array( 'Psalms 23:1, 4–6' ),
+			ImportSermons::scripture_passages( 'Psalm 23:1, 4–6' )
+		);
+		$this->assertSame(
+			array( 'Psalms 23:1, 4—6' ),
+			ImportSermons::scripture_passages( 'Psalm 23:1, 4—6' )
+		);
+	}
+
+	/**
+	 * A comma before chapter:verse continues the same book. "Romans 8:28, 9:1"
+	 * is one reference. A later book name still starts a new passage.
+	 */
+	public function test_csv_scripture_keeps_cross_chapter_references_together() {
+		$this->assertSame(
+			array( 'Romans 8:28, 9:1' ),
+			ImportSermons::scripture_passages( 'Romans 8:28, 9:1' )
+		);
+		$this->assertSame(
+			array( 'Romans 8:28, 9:1-5', 'John 3:16' ),
+			ImportSermons::scripture_passages( 'Romans 8:28, 9:1-5; John 3:16' )
+		);
+		$this->assertSame(
+			array( 'Genesis 1:1, 2:3', 'Exodus 20:1' ),
+			ImportSermons::scripture_passages( 'Genesis 1:1, 2:3, Exodus 20:1' )
+		);
+	}
+
 	public function test_admin_save_keeps_a_psalm_reference() {
 		$saved = null;
 		$terms = null;

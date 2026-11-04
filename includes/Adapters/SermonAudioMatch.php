@@ -29,9 +29,10 @@ class SermonAudioMatch {
 	/**
 	 * Post meta set on a sermon this matcher linked.
 	 *
-	 * Later syncs of that sermon keep non-empty local content and scripture.
-	 * A sermon that already had this SermonAudio id, and was never matched
-	 * here, does not have the meta and still takes SermonAudio's copy.
+	 * Later syncs of that sermon follow the supplied-field snapshot. A local
+	 * edit to notes or scripture does not match the snapshot, so it is left
+	 * alone. A sermon that already had this SermonAudio id, and was never
+	 * matched here, does not have the meta and still takes SermonAudio's copy.
 	 */
 	const LINKED_META = '_cpl_sa_match_linked';
 
@@ -654,6 +655,41 @@ class SermonAudioMatch {
 	}
 
 	/**
+	 * Scripture in the form the snapshot and later reads share.
+	 *
+	 * Book names use the same rewrite a save uses. A range dash (hyphen,
+	 * en dash, em dash, or minus) is a hyphen. Passage order is ignored, so
+	 * a reordered list is not a local edit. A different book or verse still
+	 * differs, and that local value is never overwritten.
+	 *
+	 * @param mixed $passages A passage string or a list of passages.
+	 * @return string
+	 */
+	public static function comparable_scripture( $passages ) {
+		$text = self::scripture_text( $passages );
+
+		if ( '' === $text ) {
+			return '';
+		}
+
+		$parts = array();
+
+		foreach ( explode( ';', $text ) as $passage ) {
+			$passage = str_replace( array( '–', '—', '−' ), '-', $passage );
+			$passage = SermonAudio::normalize_scripture_passage( $passage );
+			$passage = trim( $passage );
+
+			if ( '' !== $passage ) {
+				$parts[] = $passage;
+			}
+		}
+
+		sort( $parts, SORT_STRING );
+
+		return implode( '; ', $parts );
+	}
+
+	/**
 	 * Keep or replace notes and scripture on an existing sermon.
 	 *
 	 * The returned item is what wp_insert_post() should receive. Scripture
@@ -669,7 +705,7 @@ class SermonAudioMatch {
 		$post     = get_post( $post_id );
 		$local    = array(
 			'content'   => ( $post instanceof \WP_Post ) ? $post->post_content : '',
-			'scripture' => self::scripture_text( self::stored_passages( $post_id ) ),
+			'scripture' => self::comparable_scripture( self::stored_passages( $post_id ) ),
 		);
 		$feed     = self::supplied_fields_from_item( $item );
 		$stored   = get_post_meta( $post_id, self::SUPPLIED_META, true );
@@ -683,10 +719,10 @@ class SermonAudioMatch {
 		);
 		$scripture = self::reconcile_supplied_field(
 			$local['scripture'],
-			$feed['scripture'],
+			self::comparable_scripture( $feed['scripture'] ),
 			$has,
-			self::snapshot_part( $stored, 'scripture', 'feed' ),
-			self::snapshot_part( $stored, 'scripture', 'stored' )
+			self::comparable_scripture( self::snapshot_part( $stored, 'scripture', 'feed' ) ),
+			self::comparable_scripture( self::snapshot_part( $stored, 'scripture', 'stored' ) )
 		);
 
 		if ( ! $content['apply'] && $post instanceof \WP_Post ) {
@@ -740,7 +776,9 @@ class SermonAudioMatch {
 	 * The first snapshot stores the feed value after the save filters. A
 	 * field this save wrote uses the value read back from the post, which
 	 * is that same filtered text. Later syncs replace the stored value
-	 * only when the field was written again.
+	 * only when the field was written again. Scripture is stored in the
+	 * same comparable form later reads use, so book spelling, dash style,
+	 * and passage order are not local edits.
 	 *
 	 * @param int   $post_id         Sermon the matcher linked.
 	 * @param array $feed            content and scripture from this feed item.
@@ -752,7 +790,8 @@ class SermonAudioMatch {
 		$has               = is_array( $existing );
 		$post              = get_post( $post_id );
 		$content_stored    = ( $post instanceof \WP_Post ) ? self::blank_text( $post->post_content ) : '';
-		$scripture_stored  = self::scripture_text( self::stored_passages( $post_id ) );
+		$scripture_feed    = self::comparable_scripture( $feed['scripture'] );
+		$scripture_stored  = self::comparable_scripture( self::stored_passages( $post_id ) );
 
 		if ( ! $has ) {
 			$snapshot = array(
@@ -761,8 +800,8 @@ class SermonAudioMatch {
 					'stored' => $wrote_content ? $content_stored : self::saved_note_text( $feed['content'] ),
 				),
 				'scripture' => array(
-					'feed'   => $feed['scripture'],
-					'stored' => $wrote_scripture ? $scripture_stored : $feed['scripture'],
+					'feed'   => $scripture_feed,
+					'stored' => $wrote_scripture ? $scripture_stored : $scripture_feed,
 				),
 			);
 		} else {
@@ -772,8 +811,8 @@ class SermonAudioMatch {
 					'stored' => $wrote_content ? $content_stored : self::snapshot_part( $existing, 'content', 'stored' ),
 				),
 				'scripture' => array(
-					'feed'   => $feed['scripture'],
-					'stored' => $wrote_scripture ? $scripture_stored : self::snapshot_part( $existing, 'scripture', 'stored' ),
+					'feed'   => $scripture_feed,
+					'stored' => $wrote_scripture ? $scripture_stored : self::comparable_scripture( self::snapshot_part( $existing, 'scripture', 'stored' ) ),
 				),
 			);
 		}
@@ -791,26 +830,6 @@ class SermonAudioMatch {
 		}
 
 		return trim( $value );
-	}
-
-	/**
-	 * Whether a match-linked save must leave each local value in place.
-	 *
-	 * Content is kept when it has a non-whitespace character. Scripture is
-	 * kept when at least one passage is non-empty. An empty value is filled
-	 * from SermonAudio on this save. The same rule runs on the first link
-	 * and on every later sync of a sermon this matcher linked, so the next
-	 * run cannot replace what the first run kept.
-	 *
-	 * @param mixed $content  Stored post_content.
-	 * @param mixed $passages Stored passages.
-	 * @return array{content:bool,scripture:bool}
-	 */
-	public static function preserved_fields( $content, $passages ) {
-		return array(
-			'content'   => is_string( $content ) && '' !== trim( $content ),
-			'scripture' => self::passages_are_nonempty( $passages ),
-		);
 	}
 
 	/**
@@ -919,34 +938,6 @@ class SermonAudioMatch {
 	}
 
 	/**
-	 * Put non-empty local content and scripture back onto a sync item.
-	 *
-	 * wp_insert_post() unslashes its input, so the stored content is slashed
-	 * here. The value is read from the database on each save, so a second
-	 * sync slashes the stored content once and not a value already slashed.
-	 *
-	 * @param array $item    Formatted sermon.
-	 * @param int   $post_id Existing sermon.
-	 * @return array
-	 */
-	public static function keep_nonempty_local_fields( array $item, $post_id ) {
-		$post     = get_post( $post_id );
-		$content  = ( $post instanceof \WP_Post ) ? $post->post_content : '';
-		$passages = self::stored_passages( $post_id );
-		$keep     = self::preserved_fields( $content, $passages );
-
-		if ( $keep['content'] && $post instanceof \WP_Post ) {
-			$item['post_content'] = wp_slash( $post->post_content );
-		}
-
-		if ( $keep['scripture'] && isset( $item['cpl_data'] ) && is_array( $item['cpl_data'] ) ) {
-			unset( $item['cpl_data']['scripture'] );
-		}
-
-		return $item;
-	}
-
-	/**
 	 * Passages stored for a sermon, or an empty array when scripture is unavailable.
 	 *
 	 * @param int $post_id Post ID.
@@ -972,7 +963,9 @@ class SermonAudioMatch {
 	 * Statuses are an equality list so MySQL can use type_status_date and
 	 * range-scan post_date instead of reading every sermon. Auto-drafts,
 	 * revisions, and trash are not in the list. A trashed sermon is not a
-	 * candidate, so the sync cannot update it or publish it again.
+	 * candidate, so the sync cannot update it or publish it again. A
+	 * variation child has the parent's title and date and post_parent set,
+	 * so it is not a candidate either.
 	 *
 	 * @param string $post_type Item post type.
 	 * @param string $day       Y-m-d.
@@ -995,6 +988,7 @@ class SermonAudioMatch {
 				ON pm.post_id = p.ID AND pm.meta_key = 'external_id'
 			WHERE p.post_type = %s
 				AND p.post_status IN ( $in )
+				AND p.post_parent = 0
 				AND p.post_date >= %s
 				AND p.post_date < %s";
 		$args     = array_merge(
@@ -1034,29 +1028,5 @@ class SermonAudioMatch {
 		}
 
 		return array_values( $by_id );
-	}
-
-	/**
-	 * Whether any passage string is non-empty.
-	 *
-	 * @param mixed $passages Stored passages.
-	 * @return bool
-	 */
-	private static function passages_are_nonempty( $passages ) {
-		if ( is_string( $passages ) ) {
-			return '' !== trim( $passages );
-		}
-
-		if ( ! is_array( $passages ) ) {
-			return false;
-		}
-
-		foreach ( $passages as $passage ) {
-			if ( is_string( $passage ) && '' !== trim( $passage ) ) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 }

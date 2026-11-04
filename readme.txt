@@ -4,7 +4,7 @@ Tags: sermons, church, podcast, speakers, series
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.8.1
+Stable tag: 1.8.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -117,6 +117,10 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 * Fix: SermonAudio sync now links a sermon to an existing post with the same title on the same day, instead of creating a duplicate. Media links can confirm or rule out a match but never link sermons on their own.
 * Change: A new sermon synced from SermonAudio without a preach date now gets its SermonAudio published date in your site's timezone, instead of UTC. Existing sermons are not changed.
 * Fix: When the SermonAudio sync links a sermon to an existing post, that post keeps its local notes and scripture. A sync only clears a field when SermonAudio removed a value it had supplied before and that value hasn't been edited on your site.
+* New: Variation Source now has a None option.
+* Fix: CSV import now maps and imports Service Type when Variations are turned off.
+* Change: In a CSV import, separate multiple scripture passages with semicolons, for example "John 3:16; Romans 8:28". A comma stays in the same passage when it continues a verse, a verse range, or the next chapter, so "Psalm 23:1, 4", "Psalm 23:1, 4–6", and "Romans 8:28, 9:1" each stay one reference. A comma before a different book still starts another passage, so "Psalm 23, John 3:16" is two references.
+* Fix: CSV import now matches variation names regardless of capital letters or special characters such as &.
 
 = 1.8.1 =
 * Fix: Watch and Listen could stop working after updating to 1.8.0 on sites behind a page cache or CDN (such as Cloudflare), because an older copy of a player file was still being served. Player files are now requested with a version number, so future updates won't load an old cached copy.
