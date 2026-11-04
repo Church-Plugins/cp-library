@@ -522,14 +522,17 @@ class SermonAudio extends Adapter {
 	 * abbreviation is dropped, so "Ps. 23" becomes "Psalms 23".
 	 *
 	 * A comma is not a separator here. "Psalm 23:1, 4" is one reference.
-	 * Callers that already split on commas (the CSV scripture column) pass
-	 * each piece in separately.
+	 * Callers that split lists (the CSV scripture column) pass each piece in
+	 * separately.
+	 *
+	 * Leading or trailing commas and semicolons are punctuation, not part of
+	 * the book name. ",Esther" and ";Psalm 3;" still name a book.
 	 *
 	 * @param string $passage One reference, without a separating semicolon.
 	 * @return string
 	 */
 	public static function normalize_scripture_passage( $passage ) {
-		$passage = trim( (string) $passage );
+		$passage = trim( (string) $passage, " \t\n\r\0\x0B,;" );
 
 		if ( '' === $passage ) {
 			return '';

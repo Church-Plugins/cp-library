@@ -104,11 +104,11 @@ class ImportSermons extends BackgroundProcessImport {
 	/**
 	 * Passages from one CSV scripture cell.
 	 *
-	 * The scripture column is a comma-separated list of references. Each piece
-	 * is rewritten the same way as a SermonAudio reference, so "Psalm 23" and
-	 * "Ps 23, Jn 3:16" are kept. The shared rewriter does not itself split on
-	 * commas: "Psalm 23:1, 4" is one reference with a verse list, and splitting
-	 * that would drop the verses after the comma.
+	 * References are separated by ";" or by a comma that starts a new
+	 * reference. A comma followed by a verse number or range stays in the
+	 * same reference, so "Psalm 23:1, 4" is one passage and
+	 * "1 Thessalonians 2:1-12; 2 Corinthians 5:11-15" is two. Each piece is
+	 * rewritten the same way as a SermonAudio reference.
 	 *
 	 * @param mixed $field Raw scripture cell.
 	 * @return string[] Normalized passages, with empty pieces removed.
@@ -120,7 +120,7 @@ class ImportSermons extends BackgroundProcessImport {
 
 		$passages = array();
 
-		foreach ( explode( ',', $field ) as $passage ) {
+		foreach ( self::split_scripture_field( $field ) as $passage ) {
 			$passage = SermonAudio::normalize_scripture_passage( $passage );
 
 			if ( '' !== $passage ) {
@@ -129,6 +129,94 @@ class ImportSermons extends BackgroundProcessImport {
 		}
 
 		return $passages;
+	}
+
+	/**
+	 * Split a scripture cell on ";" and on commas that start a new reference.
+	 *
+	 * @param string $field Raw cell.
+	 * @return string[] Pieces, including blanks from a trailing separator.
+	 */
+	private static function split_scripture_field( $field ) {
+		$parts  = array();
+		$buffer = '';
+		$length = strlen( $field );
+
+		for ( $i = 0; $i < $length; $i++ ) {
+			$char = $field[ $i ];
+
+			if ( ';' === $char || ( ',' === $char && ! self::comma_is_verse_list( substr( $field, $i + 1 ) ) ) ) {
+				$parts[] = $buffer;
+				$buffer  = '';
+				continue;
+			}
+
+			$buffer .= $char;
+		}
+
+		$parts[] = $buffer;
+
+		return $parts;
+	}
+
+	/**
+	 * Whether the text after a comma is a verse number or range, not a new book.
+	 *
+	 * "4" and "4-6" continue the reference. "Jn 3:16", "1 John 1:9", and
+	 * "3rd John 1" start a new one.
+	 *
+	 * @param string $after Text after the comma.
+	 * @return bool
+	 */
+	private static function comma_is_verse_list( $after ) {
+		return 1 === preg_match( '/^\s*\d+[a-z]?(?:\s*[-–—]\s*\d+[a-z]?)?(?=\s*(?:$|[,;]))/i', $after );
+	}
+
+	/**
+	 * Id of the variation whose name matches $given.
+	 *
+	 * $options is the map from get_source_items(): source id => name.
+	 * update_variant() checks that id against get_source_items( true ), which
+	 * is these keys, so the returned value is that id.
+	 *
+	 * Names are compared after decoding entities, trimming, and lowercasing.
+	 *
+	 * @param string $given      Value from the CSV variation column.
+	 * @param array  $options    Source id => name.
+	 * @param int    $row_number Spreadsheet row, or 0 when it is not known.
+	 * @return int|string Source id.
+	 * @throws Exception When no name matches.
+	 */
+	public static function match_variation_id( $given, array $options, $row_number = 0 ) {
+		$needle = self::normalize_variation_name( $given );
+
+		if ( '' !== $needle ) {
+			foreach ( $options as $id => $label ) {
+				if ( self::normalize_variation_name( $label ) === $needle ) {
+					return $id;
+				}
+			}
+		}
+
+		$names = array();
+		foreach ( $options as $label ) {
+			$names[] = (string) $label;
+		}
+
+		$prefix = $row_number ? sprintf( 'Row %d: ', (int) $row_number ) : '';
+		$list   = $names ? implode( ', ', $names ) : '(none)';
+
+		throw new Exception( sprintf( '%sThe variation "%s" could not be found. Valid names: %s.', $prefix, $given, $list ) );
+	}
+
+	/**
+	 * @param mixed $name Variation name from the CSV or from a source item.
+	 * @return string
+	 */
+	private static function normalize_variation_name( $name ) {
+		$name = html_entity_decode( (string) $name, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+		return strtolower( trim( $name ) );
 	}
 
 	/**
@@ -312,18 +400,15 @@ class ImportSermons extends BackgroundProcessImport {
 			}
 		}
 
-		// Handle Service Types if they are not set as the variation source
-		if ( cp_library()->setup->post_types->service_type_enabled() && cp_library()->setup->variations->get_source() !== cp_library()->setup->post_types->service_type->post_type ) {
+		// Service Types are a normal column unless Variations are on and they are the source.
+		if ( cp_library()->setup->post_types->service_type_enabled() && ! cp_library()->setup->variations->service_type_is_source() ) {
 			$types = $this->get_service_type_ids( $service_type );
 			$item->update_service_types( $types );
 		}
 
 		if ( $variation ) {
-			$variation_id = array_search( $variation, $variation_options );
-
-			if ( false === $variation_id ) {
-				throw new Exception( 'The provided variation could not be found in ' . cp_library()->setup->variations->get_source_label() );
-			}
+			// get_source_items() is id => name. update_variant() accepts that id.
+			$variation_id = self::match_variation_id( $variation, $variation_options, $this->import_row );
 
 			$variant = $item->update_variant(
 				[
