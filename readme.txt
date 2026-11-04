@@ -113,6 +113,11 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 
 == Changelog ==
 
+= 1.8.2 =
+* Fix: SermonAudio sync now links a sermon to an existing post with the same title on the same day, instead of creating a duplicate. Media links can confirm or rule out a match but never link sermons on their own.
+* Change: A new sermon synced from SermonAudio without a preach date now gets its SermonAudio published date in your site's timezone, instead of UTC. Existing sermons are not changed.
+* Fix: When the SermonAudio sync links a sermon to an existing post, that post keeps its local notes and scripture. A sync only clears a field when SermonAudio removed a value it had supplied before and that value hasn't been edited on your site.
+
 = 1.8.1 =
 * Fix: Watch and Listen could stop working after updating to 1.8.0 on sites behind a page cache or CDN (such as Cloudflare), because an older copy of a player file was still being served. Player files are now requested with a version number, so future updates won't load an old cached copy.
 * After updating, clear your site's page cache (including any cache your web host runs), your CDN cache (such as Cloudflare), and your browser cache.

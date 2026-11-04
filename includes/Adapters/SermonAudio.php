@@ -136,6 +136,8 @@ class SermonAudio extends Adapter {
 			$sermons[ $sermon->sermonID ] = apply_filters( 'cp_library_sermon_audio_item', $item );
 		}
 
+		$sermons = SermonAudioMatch::flag_batch_ambiguities( $sermons );
+
 		// enqueues items to be processed
 		$this->enqueue( $sermons );
 
@@ -308,6 +310,128 @@ class SermonAudio extends Adapter {
 	}
 
 	/**
+	 * Load a SermonAudio item.
+	 *
+	 * When no post has this sermonID, a cpl_item on the same site-local
+	 * calendar day with the same normalized title is updated instead of
+	 * inserted, but only when it is the only such sermon and it has no
+	 * external id of its own. `_cpl_sa_match_linked` is stored on that post.
+	 * Zero matches and two or more matches still insert a new sermon. A
+	 * batch that itself contains two sermons with that title on that day
+	 * does not link either of them. A trashed sermon is not a candidate.
+	 *
+	 * Notes and scripture on a sermon this matcher linked follow the
+	 * supplied-field snapshot. The snapshot stores the SermonAudio value
+	 * after the save filters. A local value that differs from that is an
+	 * edit and is never replaced. A local value that matches it follows
+	 * the feed. An empty local field is filled on the link sync. A sermon
+	 * the sync itself created keeps taking the feed on every sync and is
+	 * not snapshotted. Title, audio, and video still update.
+	 *
+	 * `cpl_sermon_audio_match_existing` disables only this fallback. Return
+	 * false and a sermon with no external id is inserted, as it was before.
+	 * Speakers and series are never matched.
+	 *
+	 * @param array           $item  Formatted item.
+	 * @param class-string    $model Model class.
+	 * @return \ChurchPlugins\Models\Table
+	 * @throws \ChurchPlugins\Exception When the item cannot be saved.
+	 */
+	public function load_item( $item, $model ) {
+		$mark_id          = 0;
+		$clear_scripture  = false;
+		$track_snapshot   = false;
+		$wrote_content    = false;
+		$wrote_scripture  = false;
+		$batch_ambiguous  = is_array( $item ) && ! empty( $item[ SermonAudioMatch::BATCH_AMBIGUOUS ] );
+		$supplied         = is_array( $item ) ? SermonAudioMatch::supplied_fields_from_item( $item ) : null;
+
+		if ( is_array( $item ) ) {
+			unset( $item[ SermonAudioMatch::BATCH_AMBIGUOUS ] );
+		}
+
+		if ( $this->item_is_sermon( $item ) ) {
+			$external_id = isset( $item['external_id'] ) ? (string) $item['external_id'] : '';
+			$existing_id = '' === $external_id ? null : $this->get_item_id_from_external( $external_id );
+
+			if ( null !== $existing_id && '' !== (string) $existing_id && SermonAudioMatch::is_match_linked( (int) $existing_id ) ) {
+				$applied         = SermonAudioMatch::apply_supplied_snapshot( $item, (int) $existing_id );
+				$item            = $applied['item'];
+				$clear_scripture = $applied['clear_scripture'];
+				$wrote_content   = $applied['wrote_content'];
+				$wrote_scripture = $applied['wrote_scripture'];
+				$track_snapshot  = true;
+			} elseif ( ( null === $existing_id || '' === (string) $existing_id ) && ! $batch_ambiguous && $this->match_existing_enabled( $item ) ) {
+				$match_id = SermonAudioMatch::find_link( $item );
+
+				if ( null !== $match_id && '' === (string) get_post_meta( $match_id, 'external_id', true ) ) {
+					$item['ID']      = $match_id;
+					$applied         = SermonAudioMatch::apply_supplied_snapshot( $item, $match_id );
+					$item            = $applied['item'];
+					$clear_scripture = $applied['clear_scripture'];
+					$wrote_content   = $applied['wrote_content'];
+					$wrote_scripture = $applied['wrote_scripture'];
+					$track_snapshot  = true;
+					$mark_id         = $match_id;
+				}
+			}
+		}
+
+		$loaded = parent::load_item( $item, $model );
+
+		if ( $this->item_is_sermon( $item ) && is_object( $loaded ) && ! empty( $loaded->origin_id ) ) {
+			$origin_id = (int) $loaded->origin_id;
+
+			if ( $clear_scripture ) {
+				cp_library()->setup->taxonomies->scripture->update_object_scripture( $origin_id, array() );
+			}
+
+			if ( $track_snapshot && is_array( $supplied ) ) {
+				SermonAudioMatch::record_supplied_snapshot( $origin_id, $supplied, $wrote_content, $wrote_scripture );
+			}
+
+			if ( $mark_id > 0 && $origin_id === $mark_id ) {
+				update_post_meta( $mark_id, SermonAudioMatch::LINKED_META, '1' );
+			}
+		}
+
+		return $loaded;
+	}
+
+	/**
+	 * Whether $item is a sermon rather than a speaker or series.
+	 *
+	 * @param mixed $item Formatted item.
+	 * @return bool
+	 */
+	private function item_is_sermon( $item ) {
+		if ( ! is_array( $item ) || empty( $item['post_type'] ) ) {
+			return false;
+		}
+
+		return cp_library()->setup->post_types->item->post_type === $item['post_type'];
+	}
+
+	/**
+	 * Whether the title-and-day fallback may run for this sermon.
+	 *
+	 * @param array $item Formatted sermon.
+	 * @return bool
+	 */
+	private function match_existing_enabled( $item ) {
+		/**
+		 * Disable linking a SermonAudio sermon to an existing same-day title.
+		 *
+		 * Sermons that already store this external id are still updated.
+		 *
+		 * @param bool  $enabled Default true.
+		 * @param array $item    Formatted sermon about to be saved.
+		 * @param SermonAudio $adapter Adapter running the sync.
+		 */
+		return (bool) apply_filters( 'cpl_sermon_audio_match_existing', true, $item, $this );
+	}
+
+	/**
 	 * Insert or update the WordPress post for an imported item.
 	 *
 	 * Blank-title handling applies only to sermons. A blank API title is ""
@@ -332,6 +456,17 @@ class SermonAudio extends Adapter {
 		if ( ! isset( $item['post_type'] ) || $sermon_type !== $item['post_type'] ) {
 			return parent::insert_imported_post( $item );
 		}
+
+		if ( ! empty( $item[ SermonAudioMatch::TIMESTAMP_DATE ] ) && ! empty( $item['ID'] ) ) {
+			$existing_date = get_post( $item['ID'] );
+
+			if ( $existing_date instanceof \WP_Post && is_string( $existing_date->post_date ) && '' !== $existing_date->post_date ) {
+				$item['post_date']     = $existing_date->post_date;
+				$item['post_date_gmt'] = $existing_date->post_date_gmt;
+			}
+		}
+
+		unset( $item[ SermonAudioMatch::TIMESTAMP_DATE ] );
 
 		$title = isset( $item['post_title'] ) ? $item['post_title'] : '';
 
@@ -788,11 +923,16 @@ class SermonAudio extends Adapter {
 	 * @return array The formatted sermon.
 	 */
 	public function format_item( $item ) {
+		$timestamp_date = false;
 
 		if ( ! empty( $item->preachDate ) && $date = strtotime( $item->preachDate ) ) {
 			$post_date = gmdate( 'Y-m-d H:i:s', $date + 12 * HOUR_IN_SECONDS ); // set publish time to noon
 		} else {
-			$post_date = gmdate( 'Y-m-d H:i:s', $item->publishTimestamp );
+			// publishTimestamp is a UTC unix time. post_date is site local,
+			// so a new sermon stays on the local day instead of the next UTC
+			// day. Updates keep the post_date already stored.
+			$post_date = wp_date( 'Y-m-d H:i:s', (int) $item->publishTimestamp );
+			$timestamp_date = true;
 		}
 
 		$args = array(
@@ -821,6 +961,10 @@ class SermonAudio extends Adapter {
 
 		if ( $item->eventType ) {
 			$args['cpl_data']['service_type'] = $item->eventType;
+		}
+
+		if ( ! empty( $timestamp_date ) ) {
+			$args[ SermonAudioMatch::TIMESTAMP_DATE ] = 1;
 		}
 
 		return $args;
