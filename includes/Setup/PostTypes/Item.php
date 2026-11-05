@@ -148,9 +148,9 @@ class Item extends PostType  {
 			return;
 		}
 
-		// if we are filtering the variation, don't filter out the parents
-		if ( cp_library()->setup->post_types->service_type->post_type === cp_library()->setup->variations->get_source()
-			 && ! empty( $_GET['service-type'] ) ) {
+		// if we are filtering the variation, don't filter out the parents.
+		// A saved Service Types source does not count while Variations are off.
+		if ( cp_library()->setup->variations->service_type_is_source() && ! empty( $_GET['service-type'] ) ) {
 			$query->set( 'cpl_limit_child_visibility', true );
 			return;
 		}

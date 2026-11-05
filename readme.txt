@@ -124,6 +124,7 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 * Fix: CSV import now matches variation names regardless of capital letters or special characters such as &.
 * Fix: CSV import now matches series, speaker, and service type names regardless of accented capital letters, such as "Église" and "église".
 * Fix: A CSV import with no Service Type column no longer removes service types from existing sermons. A mapped Service Type column with an empty cell still clears them.
+* Fix: Filtering the sermon archive by Service Type no longer shows variation sermons as separate results when Variations are turned off.
 
 = 1.8.1 =
 * Fix: Watch and Listen could stop working after updating to 1.8.0 on sites behind a page cache or CDN (such as Cloudflare), because an older copy of a player file was still being served. Player files are now requested with a version number, so future updates won't load an old cached copy.

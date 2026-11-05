@@ -64,6 +64,23 @@ class SermonAudioMatch {
 	const TIMESTAMP_DATE = '_cpl_sa_timestamp_date';
 
 	/**
+	 * A formatted item without the keys this matcher adds for itself.
+	 *
+	 * BATCH_AMBIGUOUS and TIMESTAMP_DATE tell load_item() how to save the
+	 * item. They are not SermonAudio data, so they must not change the sync
+	 * hash. Otherwise a sermon is re-synced when another same-title sermon
+	 * joins or leaves its page, or when it lacks a preach date.
+	 *
+	 * @param array $item Formatted item.
+	 * @return array
+	 */
+	public static function without_internal_keys( array $item ) {
+		unset( $item[ self::BATCH_AMBIGUOUS ], $item[ self::TIMESTAMP_DATE ] );
+
+		return $item;
+	}
+
+	/**
 	 * Comparison form of a title.
 	 *
 	 * Order is fixed: decode HTML entities once, trim, lowercase, collapse

@@ -440,6 +440,24 @@ class SermonAudio extends Adapter {
 	}
 
 	/**
+	 * Sync hash for a formatted item, ignoring the matcher's internal keys.
+	 *
+	 * The queued item keeps those keys. Only the comparison against the
+	 * stored hash leaves them out, so an unchanged sermon is not re-synced.
+	 * The result is the same hash 1.8.1 stored for an unchanged item.
+	 *
+	 * @param mixed $item Formatted item.
+	 * @return string
+	 */
+	public function create_store_key( $item ) {
+		if ( is_array( $item ) ) {
+			$item = SermonAudioMatch::without_internal_keys( $item );
+		}
+
+		return parent::create_store_key( $item );
+	}
+
+	/**
 	 * Whether $item is a sermon rather than a speaker or series.
 	 *
 	 * @param mixed $item Formatted item.
