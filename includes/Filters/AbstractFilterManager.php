@@ -599,8 +599,41 @@ abstract class AbstractFilterManager {
 	}
 
 	/**
-	 * Get default disabled filters for this post type
-	 * Subclasses can override if needed
+	 * Whether a saved Disable Filters value hides this facet.
+	 *
+	 * @param string $facet_id         Registered facet id.
+	 * @param mixed  $disabled_filters Values stored by the checkbox.
+	 * @return bool
+	 */
+	public static function is_facet_disabled( $facet_id, $disabled_filters ) {
+		if ( ! is_array( $disabled_filters ) ) {
+			return false;
+		}
+
+		$needle = self::normalize_filter_id( $facet_id );
+
+		foreach ( $disabled_filters as $disabled ) {
+			if ( self::normalize_filter_id( $disabled ) === $needle ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Compare filter ids from settings and from facet registration.
+	 *
+	 * @param mixed $id Facet id or saved checkbox value.
+	 * @return string
+	 */
+	public static function normalize_filter_id( $id ) {
+		return str_replace( '_', '-', strtolower( trim( (string) $id ) ) );
+	}
+
+	/**
+	 * Get default disabled filters for this post type.
+	 * Subclasses can override if needed.
 	 *
 	 * @return array
 	 * @since 1.6.0
@@ -636,10 +669,14 @@ abstract class AbstractFilterManager {
 		// Get disabled filters
 		$disabled_filters = $args['disabled_filters'];
 
-		// Get available facets (excluding disabled ones and non-public ones)
+		// Get available facets (excluding disabled ones and non-public ones).
+		// Saved ids and facet ids are compared with "_" and "-" treated as the
+		// same character, so a Disable Filters value of service_type hides the
+		// facet registered as service-type. A value already stored as
+		// service-type hides it too.
 		$facets = $this->get_facets( [ 'public' => true ] );
 		$facets = array_filter( $facets, function ( $id ) use ( $disabled_filters ) {
-			return ! in_array( $id, $disabled_filters );
+			return ! self::is_facet_disabled( $id, $disabled_filters );
 		}, ARRAY_FILTER_USE_KEY );
 
 		$facet_order = ['cpl_topic', 'cpl_scripture', 'cpl_speaker'];

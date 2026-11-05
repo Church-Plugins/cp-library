@@ -11,7 +11,6 @@
 namespace CP_Library\Filters\Types;
 
 use CP_Library\Filters\AbstractFilterManager;
-use CP_Library\Admin\Settings;
 use ChurchPlugins\Helpers;
 
 /**
@@ -84,8 +83,10 @@ class SermonFilterManager extends AbstractFilterManager {
 			'query_var' => 'speaker',
 		] );
 
-		// Register service type facet if enabled
-		if ( Settings::get_item( 'enable_service_types', true ) ) {
+		// Register service type facet only while that post type is on.
+		// enable_service_types is not a saved setting and defaulted to on, so
+		// the filter showed on /messages/ when Service Types were disabled.
+		if ( cp_library()->setup->post_types->service_type_enabled() ) {
 			$this->register_source_facet( 'service-type', 'service_type', [
 				'label'     => __( 'Service Type', 'cp-library' ),
 				'param'     => 'facet-service-type',
