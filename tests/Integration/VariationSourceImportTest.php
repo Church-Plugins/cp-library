@@ -167,6 +167,7 @@ class VariationSourceImportTest extends TestCase {
 
 	private function import_sermon( $title, $service_type ) {
 		$importer = new ImportSermons();
+		$importer->load_mapping( array( 'service_type' => 'Service Type' ) );
 		$method   = new ReflectionMethod( ImportSermons::class, 'import_item' );
 		$method->setAccessible( true );
 		$method->invoke(

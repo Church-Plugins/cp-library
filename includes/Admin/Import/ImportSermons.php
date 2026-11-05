@@ -404,7 +404,9 @@ class ImportSermons extends BackgroundProcessImport {
 		}
 
 		// Service Types are a normal column unless Variations are on and they are the source.
-		if ( cp_library()->setup->post_types->service_type_enabled() && ! cp_library()->setup->variations->service_type_is_source() ) {
+		// An unmapped column leaves existing service types alone. A mapped column with an
+		// empty cell clears them.
+		if ( $this->column_is_mapped( 'service_type' ) && cp_library()->setup->post_types->service_type_enabled() && ! cp_library()->setup->variations->service_type_is_source() ) {
 			$types = $this->get_service_type_ids( $service_type );
 			$item->update_service_types( $types );
 		}
@@ -543,6 +545,8 @@ class ImportSermons extends BackgroundProcessImport {
 	/**
 	 * Lowercase a term name and strip surrounding whitespace.
 	 *
+	 * Lowercasing uses UTF-8, so "Église" and "église" match.
+	 *
 	 * With no logged-in user, kses is active and wp_insert_post stores "&" as
 	 * "&amp;" (and quotes as entities). Decode both sides before comparing so
 	 * the stored title still matches the name from the file.
@@ -555,7 +559,26 @@ class ImportSermons extends BackgroundProcessImport {
 			return '';
 		}
 
-		return strtolower( trim( html_entity_decode( (string) $name, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ) );
+		$name = trim( html_entity_decode( (string) $name, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+
+		if ( function_exists( 'mb_strtolower' ) ) {
+			return mb_strtolower( $name, 'UTF-8' );
+		}
+
+		return strtolower( $name );
+	}
+
+	/**
+	 * Whether the CSV mapping assigned a column to this field.
+	 *
+	 * An unmapped field reads as '' on every row, which is not the same as a
+	 * mapped column whose cell is empty.
+	 *
+	 * @param string $field Field mapping key, such as service_type.
+	 * @return bool
+	 */
+	protected function column_is_mapped( $field ) {
+		return isset( $this->field_mapping[ $field ] ) && '' !== (string) $this->field_mapping[ $field ];
 	}
 
 	/**
