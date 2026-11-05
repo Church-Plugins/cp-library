@@ -182,6 +182,11 @@ namespace CP_Library\Tests\Unit {
 								public function is_enabled() {
 									return true;
 								}
+
+								// Same rule as Variations::service_type_is_source().
+								public function service_type_is_source() {
+									return $this->is_enabled() && 'cpl_service_type' === $this->get_source();
+								}
 							},
 						],
 					];
