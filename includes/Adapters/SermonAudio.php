@@ -335,9 +335,12 @@ class SermonAudio extends Adapter {
 	 * A speaker or series with no post for its SermonAudio id updates the
 	 * one existing post of that type with the same normalized name, when
 	 * there is exactly one and it has no other SermonAudio id. Otherwise a
-	 * new one is inserted. SermonAudio's name, bio or description, and image
-	 * then replace the local ones, so the site does not end up with two
-	 * copies of the same speaker or series.
+	 * new one is inserted. SermonAudio's name replaces the local name. A
+	 * bio, description, or image replaces the local one when SermonAudio
+	 * has that value. A blank bio or description does not replace a
+	 * hand-written local one, and a blank image does not replace the local
+	 * image, so the site does not end up with two copies of the same
+	 * speaker or series.
 	 *
 	 * `cpl_sermon_audio_match_existing` disables only these fallbacks. Return
 	 * false and a sermon, speaker, or series with no external id is
@@ -499,14 +502,29 @@ class SermonAudio extends Adapter {
 	 * has no usable title.
 	 *
 	 * A usable sermon title from the API is slashed the same way, so a
-	 * backslash is kept as sent. Speakers and series are passed through
-	 * untouched, as they were before this handling existed. An update keeps
-	 * any status they already have.
+	 * backslash is kept as sent. An update keeps any status a speaker or
+	 * series already has.
+	 *
+	 * A blank SermonAudio bio or description must not replace text already
+	 * on a speaker or series when the feed also has a name. The formatted
+	 * item still carries that blank, because the sync hash is the formatted
+	 * item. The stored text is put back here, slashed the same way as a
+	 * kept sermon title. A non-blank bio or description is saved as
+	 * formatted. A blank name leaves a blank bio blank: a series whose
+	 * title, description, and excerpt are all empty is still rejected, and
+	 * the series is not updated. Images are not handled here:
+	 * format_speaker() and format_item_type() omit featured_image when
+	 * SermonAudio has no image, so a blank image never replaces the local
+	 * one.
 	 *
 	 * @param array $item Post fields for wp_insert_post(), without external_id.
 	 * @return int|\WP_Error
 	 */
 	protected function insert_imported_post( $item ) {
+		if ( $this->item_is_speaker_or_series( $item ) ) {
+			$item = $this->retain_local_text_when_feed_text_is_blank( $item );
+		}
+
 		$sermon_type = cp_library()->setup->post_types->item->post_type;
 
 		if ( ! isset( $item['post_type'] ) || $sermon_type !== $item['post_type'] ) {
@@ -545,6 +563,82 @@ class SermonAudio extends Adapter {
 		}
 
 		return parent::insert_imported_post( $item );
+	}
+
+	/**
+	 * Put a hand-written speaker bio or series description back when the feed is blank.
+	 *
+	 * Runs for every update of a speaker or series that has a feed name,
+	 * including the sync that name-links the post and later syncs that find
+	 * it by SermonAudio id. A new post has no local text to keep. A blank
+	 * feed name does not keep the local text, so an empty series payload
+	 * is still rejected.
+	 *
+	 * @param array $item Post fields for wp_insert_post(), without external_id.
+	 * @return array
+	 */
+	private function retain_local_text_when_feed_text_is_blank( $item ) {
+		$incoming = '';
+
+		if ( isset( $item['post_content'] ) && is_string( $item['post_content'] ) ) {
+			$incoming = $item['post_content'];
+		}
+
+		$local = null;
+
+		if ( ! empty( $item['ID'] ) ) {
+			$existing = get_post( $item['ID'] );
+
+			if ( $existing instanceof \WP_Post ) {
+				$local = $existing->post_content;
+			}
+		}
+
+		$title    = isset( $item['post_title'] ) ? $item['post_title'] : '';
+		$decision = self::text_to_store_for_speaker_or_series( $incoming, $local, $title );
+
+		if ( $decision['slash'] ) {
+			// wp_insert_post() runs wp_unslash(). Slash the raw DB value
+			// so a backslash in the stored bio survives.
+			$item['post_content'] = wp_slash( $decision['text'] );
+		}
+
+		return $item;
+	}
+
+	/**
+	 * Bio or description to store for a speaker or series.
+	 *
+	 * A blank feed value on an update that has a feed name returns the local
+	 * text and asks the caller to slash it. Any other feed value is stored
+	 * as sent, including a blank value on a new post. A blank feed name
+	 * leaves a blank bio blank, so a series with no title and no description
+	 * is still rejected instead of being saved with its old description and
+	 * an empty title.
+	 *
+	 * @param mixed       $incoming Feed text after kses.
+	 * @param string|null $local    Stored post_content, or null when this is not an update.
+	 * @param mixed       $title    Feed title.
+	 * @return array{text:string,slash:bool} Text to store, and whether the caller must slash it.
+	 */
+	public static function text_to_store_for_speaker_or_series( $incoming, $local, $title ) {
+		if ( ! is_string( $incoming ) ) {
+			$incoming = '';
+		}
+
+		$title_is_blank = ! is_string( $title ) || '' === trim( $title );
+
+		if ( ! $title_is_blank && null !== $local && '' === trim( $incoming ) ) {
+			return array(
+				'text'  => is_string( $local ) ? $local : '',
+				'slash' => true,
+			);
+		}
+
+		return array(
+			'text'  => $incoming,
+			'slash' => false,
+		);
 	}
 
 	/**
@@ -1097,7 +1191,8 @@ class SermonAudio extends Adapter {
 	 * Adds an attachment to a sermon
 	 *
 	 * The speaker replaces the sermon's speakers. The series is added, except
-	 * on a sermon the matcher linked, where it replaces the local series.
+	 * on a sermon the matcher linked, where it replaces the local series on
+	 * every sync. A second series added by hand is removed.
 	 *
 	 * @param \CP_Library\Models\Item $item The item to add the attachment to.
 	 * @param mixed                   $attachment The attachment to add.

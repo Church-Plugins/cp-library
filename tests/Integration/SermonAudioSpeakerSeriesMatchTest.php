@@ -10,9 +10,13 @@
  *
  * The one local speaker or series with the same normalized name is now
  * updated instead. Two local posts with that name, or one with a different
- * SermonAudio id, still insert a new post. On a linked sermon the SermonAudio
- * series replaces the local one. A sermon the sync created still has the
- * series added, as before.
+ * SermonAudio id, still insert a new post. SermonAudio's name replaces the
+ * local name, and a bio, description, or image replaces the local one when
+ * SermonAudio has that value. A blank bio or description must not wipe a
+ * hand-written local one. A blank image must not remove the local image.
+ * On a linked sermon the SermonAudio series replaces the local one on every
+ * sync, including a second series added by hand. A sermon the sync created
+ * still has the series added, as before.
  *
  * @package CP_Library
  */
@@ -97,6 +101,54 @@ class SermonAudioSpeakerSeriesMatchTest extends TestCase {
 		$this->assertSame( '', (string) get_post_meta( $local, 'external_id', true ) );
 	}
 
+	public function test_an_empty_sermonaudio_bio_keeps_the_hand_written_bio() {
+		$local = $this->local_post( $this->speaker_type(), 'John Smith', 'Hand-written bio' );
+
+		$model = $this->load_speaker( 'sa-spk-keep-bio', 'John Smith', '' );
+
+		$this->assertSame( $local, (int) $model->origin_id );
+		$this->assertSame( 'Hand-written bio', get_post( $local )->post_content );
+		$this->assertSame( 'John Smith', get_post( $local )->post_title );
+	}
+
+	public function test_a_blank_sermonaudio_bio_on_a_later_sync_keeps_the_bio_and_takes_the_name() {
+		$local = $this->local_post( $this->speaker_type(), 'John Smith', 'Hand-written bio' );
+		$this->load_speaker( 'sa-spk-later-bio', 'John Smith', '' );
+
+		$this->load_speaker( 'sa-spk-later-bio', 'Pastor John', '   ' );
+
+		$post = get_post( $local );
+		$this->assertSame( 'Pastor John', $post->post_title );
+		$this->assertSame( 'Hand-written bio', $post->post_content );
+	}
+
+	public function test_a_sermonaudio_bio_on_a_later_sync_replaces_the_kept_bio() {
+		$local = $this->local_post( $this->speaker_type(), 'John Smith', 'Hand-written bio' );
+		$this->load_speaker( 'sa-spk-replace-bio', 'John Smith', '' );
+
+		$this->load_speaker( 'sa-spk-replace-bio', 'John Smith', 'SermonAudio bio' );
+
+		$this->assertSame( 'SermonAudio bio', get_post( $local )->post_content );
+	}
+
+	public function test_an_empty_feed_bio_keeps_a_backslash_in_the_local_bio() {
+		$local = $this->local_post( $this->speaker_type(), 'John Smith', 'placeholder' );
+		$this->store_raw_content( $local, "It's a \\ path" );
+
+		$this->load_speaker( 'sa-spk-slash', 'John Smith', '' );
+
+		$this->assertSame( "It's a \\ path", get_post( $local )->post_content );
+	}
+
+	public function test_an_empty_sermonaudio_image_leaves_the_local_speaker_image() {
+		$local = $this->local_post( $this->speaker_type(), 'John Smith', 'Hand-written bio' );
+		$thumb = $this->give_thumbnail( $local );
+
+		$this->load_speaker( 'sa-spk-image', 'John Smith', '' );
+
+		$this->assertSame( $thumb, (int) get_post_thumbnail_id( $local ) );
+	}
+
 	public function test_a_local_series_with_the_same_name_is_updated_not_duplicated() {
 		$local = $this->local_post( $this->series_type(), 'Romans', 'Local description' );
 
@@ -105,6 +157,32 @@ class SermonAudioSpeakerSeriesMatchTest extends TestCase {
 		$this->assertSame( $local, (int) $model->origin_id );
 		$this->assertSame( array( $local ), $this->post_ids( $this->series_type() ) );
 		$this->assertSame( 'sa-ser-1', (string) get_post_meta( $local, 'external_id', true ) );
+	}
+
+	public function test_an_empty_sermonaudio_description_keeps_the_hand_written_description() {
+		$local = $this->local_post( $this->series_type(), 'Romans', 'Hand-written description' );
+
+		$model = $this->load_series( 'sa-ser-keep', 'Romans', '' );
+
+		$this->assertSame( $local, (int) $model->origin_id );
+		$this->assertSame( 'Hand-written description', get_post( $local )->post_content );
+	}
+
+	public function test_a_sermonaudio_description_replaces_the_local_description() {
+		$local = $this->local_post( $this->series_type(), 'Romans', 'Hand-written description' );
+
+		$this->load_series( 'sa-ser-over', 'Romans', 'From SermonAudio' );
+
+		$this->assertSame( 'From SermonAudio', get_post( $local )->post_content );
+	}
+
+	public function test_an_empty_sermonaudio_series_image_leaves_the_local_image() {
+		$local = $this->local_post( $this->series_type(), 'Romans', 'Hand-written description' );
+		$thumb = $this->give_thumbnail( $local );
+
+		$this->load_series( 'sa-ser-image', 'Romans', '' );
+
+		$this->assertSame( $thumb, (int) get_post_thumbnail_id( $local ) );
 	}
 
 	public function test_a_linked_sermon_has_its_series_replaced_not_added() {
@@ -153,11 +231,11 @@ class SermonAudioSpeakerSeriesMatchTest extends TestCase {
 		return $this->adapter->load_item( $this->adapter->format_speaker( $speaker ), SpeakerModel::class );
 	}
 
-	private function load_series( $id, $title ) {
+	private function load_series( $id, $title, $description = '' ) {
 		$series = (object) array(
 			'seriesID'    => $id,
 			'title'       => $title,
-			'description' => '',
+			'description' => $description,
 			'image'       => '',
 			'broadcaster' => (object) array( 'imageURL' => '' ),
 		);
@@ -178,6 +256,57 @@ class SermonAudioSpeakerSeriesMatchTest extends TestCase {
 			'bibleText'        => null,
 			'eventType'        => null,
 		);
+	}
+
+	/**
+	 * Store post_content with a literal backslash.
+	 *
+	 * wp_insert_post() unslashes input, so a backslash passed there would
+	 * not be what the database holds.
+	 *
+	 * @param int    $post_id Post to update.
+	 * @param string $content Raw database value. A PHP '\\' pair is one backslash.
+	 */
+	private function store_raw_content( $post_id, $content ) {
+		global $wpdb;
+
+		$wpdb->update(
+			$wpdb->posts,
+			array( 'post_content' => $content ),
+			array( 'ID' => $post_id ),
+			array( '%s' ),
+			array( '%d' )
+		);
+		clean_post_cache( $post_id );
+	}
+
+	/**
+	 * Attach a featured image without sideloading a file.
+	 *
+	 * set_post_thumbnail() refuses an attachment that has no image metadata.
+	 * The sync guard is "no featured_image key, so the meta is left alone",
+	 * which this meta write can observe.
+	 *
+	 * @param int $post_id Post that already has a local image.
+	 * @return int Attachment ID stored as _thumbnail_id.
+	 */
+	private function give_thumbnail( $post_id ) {
+		$id = wp_insert_post(
+			array(
+				'post_title'     => 'Local portrait',
+				'post_status'    => 'inherit',
+				'post_type'      => 'attachment',
+				'post_mime_type' => 'image/jpeg',
+			),
+			true
+		);
+		$this->assertNotWPError( $id );
+		$id = (int) $id;
+
+		update_post_meta( $post_id, '_thumbnail_id', $id );
+		$this->assertSame( $id, (int) get_post_thumbnail_id( $post_id ) );
+
+		return $id;
 	}
 
 	private function local_post( $post_type, $title, $content = '', $date = '' ) {
