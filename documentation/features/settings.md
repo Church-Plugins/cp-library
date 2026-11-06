@@ -61,7 +61,7 @@ Control what information displays with each sermon. The choices are **Publish Da
 
 ### Filter Settings
 
-- **Disable Filters** — Check the facets to hide on the sermon archive: **Topics**, **Scripture**, **Seasons**, **Speakers** (when Speakers are enabled), and **Year**
+- **Disable Filters** — Check the facets to hide on the sermon archive: **Topics**, **Scripture**, **Seasons**, **Speakers** (when Speakers are enabled), **Service Types** (when Service Types are enabled), and **Year**
 
 ## Exclude a Sermon from the Podcast
 
