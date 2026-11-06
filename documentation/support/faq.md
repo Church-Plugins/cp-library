@@ -80,7 +80,7 @@ Service Types categorize sermons by the service they were delivered in (Sunday M
 
 ### What are Sermon Variations?
 
-Variations let you create different versions of the same sermon for multiple services, each with their own speaker, media, and timestamps. See [Sermon Variations](../features/sermon-variations.md). Variations need **Enable Service Types** turned on (**Advanced** tab), **Enable Variations (beta)** turned on (**Messages** tab), and a **Variation Source** picked (**Messages** tab).
+Variations let you create different versions of the same sermon for multiple services, each with their own speaker, media, and timestamps. See [Sermon Variations](../features/sermon-variations.md). Variations need **Enable Service Types** turned on (**Advanced** tab) and **Enable Variations (beta)** turned on (**Messages** tab). On the **Messages** tab, **Variation Source** includes **None**. Choose a source such as Service Types to build variations. **None** leaves sermons without a variation source.
 
 ### Can I hide certain sermons from the main list?
 

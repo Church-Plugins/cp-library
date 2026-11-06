@@ -53,6 +53,30 @@ Once enabled, a "Sermon Audio" settings tab appears:
 6. Click "Start full import" to begin importing sermons
 7. Configure the Update Check interval for automatic syncing of new content
 
+### Sermons already on your site
+
+A sync links a SermonAudio sermon to one sermon already on your site when the titles match and both fall on the same calendar day in your site's timezone. Capital letters and extra spaces in the title do not matter. If two sermons that day share the title, or SermonAudio sends two sermons with that title for that day, the sync adds a new sermon. A sermon already tied to a different SermonAudio id is left alone.
+
+Audio and video can confirm that link or rule it out. The same file confirms it. A different file of the same kind, on the same host, rules it out. A matching file does not link a sermon whose title is different.
+
+A new sermon with no preach date on SermonAudio is dated with SermonAudio's published time, in your site's timezone. A sermon already on your site keeps its date when SermonAudio has no preach date.
+
+When the sync links to a sermon you already had:
+
+- Notes and scripture already on that sermon stay on the first link. If notes or scripture are empty, SermonAudio's text is filled in. On a later sync, those fields change when SermonAudio's text changed and the sermon still has the text from the last sync. An edit made on the site stays as you wrote it. If SermonAudio removes notes or scripture it had supplied, and nobody has edited that field, the field is cleared.
+- Speaker, service type, audio, and video follow SermonAudio on every sync when SermonAudio sends that value. SermonAudio's speaker replaces the speakers on the sermon. SermonAudio's service type replaces the service type. Audio and video are updated to the SermonAudio files. If SermonAudio does not send a speaker, service type, audio file, or video, the one already on the sermon stays.
+- SermonAudio's series replaces the series on the sermon. A second series added by hand is removed, so the sermon is listed in one series.
+
+A sermon the sync adds as a new post still takes SermonAudio's notes on each later sync. It also takes SermonAudio's scripture when SermonAudio sends a passage.
+
+### Speakers and series already on your site
+
+A sync reuses the one speaker or series that already has the same name, and updates that record. Capital letters and extra spaces do not matter. SermonAudio's name replaces the name on your site.
+
+A bio, description, or picture from SermonAudio replaces the one on your site when SermonAudio has that value. An empty bio or description leaves a bio or description you wrote in place. An empty picture leaves the picture on your site in place. For a series, SermonAudio uses the series picture, or the broadcaster picture when the series has none.
+
+If two speakers or two series on your site share that name, the sync creates a new one. A speaker or series already tied to a different SermonAudio id is left alone, and a new one is created.
+
 ### Importing from the Command Line
 
 For scripted, scheduled, or large-broadcaster imports, CP Sermon Library provides a WP-CLI command. The command runs the same import as the admin button but synchronously, so it returns when the import is finished and exits with a real status code.

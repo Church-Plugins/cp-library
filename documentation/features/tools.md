@@ -18,14 +18,16 @@ A sample CSV file is available for download directly from the import page. Use i
 
 Key formatting rules:
 
-- **Multiple values** -- Separate multiple speakers, topics, seasons, or scripture references with commas (e.g., `Pastor Bob, Pastor John`).
+- **Multiple values** -- Separate multiple speakers, topics, or seasons with commas (e.g., `Pastor Bob, Pastor John`).
+- **Scripture** -- Separate passages with semicolons, for example `John 3:16; Romans 8:28`. A comma stays in the same passage when it continues a verse, a verse range, or the next chapter, so `Psalm 23:1, 4` and `Romans 8:28, 9:1` are each one reference. A comma before a different book starts another passage, so `Psalm 23, John 3:16` is two references.
+- **Names** -- A variation, series, speaker, or service type name matches an existing one when it is the same name. Capital letters do not matter, including accented letters such as Église and église. An ampersand matches the encoded form a spreadsheet may save (`Faith & Works` matches `Faith &amp; Works`). Spaces at the start or end of the name are ignored. A shorter name does not match a longer one, so Hope does not attach to Hope for Today.
 - **Downloads** -- Use the format `Name|URL` for named downloads. Separate multiple downloads with commas (e.g., `Notes|https://example.com/notes.pdf,https://example.com/bulletin.pdf`). You can also provide a URL without a name.
 - **Date** -- Accepts most standard date formats (e.g., `9/6/2009`, `2009-09-06`) or a Unix timestamp.
 - **Series** -- If a series name does not already exist, it will be created automatically. If no series is specified, sermons are assigned to a default "No Series" series. Series are only assigned when Series are enabled.
 - **Speakers** -- If a speaker name does not already exist, it will be created automatically.
-- **Service Types** -- If a service type does not already exist, it will be created automatically.
+- **Service Types** -- If a service type does not already exist, it will be created automatically. The Service Type column is imported when Service Types are enabled and they are not the active variation source. That includes when Variations are turned off, even if Variation Source is still set to Service Types. Leaving Service Type unmapped leaves the service types already on a sermon. A file with no Service Type column is unmapped. A mapped Service Type cell that is empty clears them.
 - **Topics, Seasons** -- Terms that do not already exist will be created automatically.
-- **Scripture** -- Each reference is matched to its Bible book, and the book term is created if needed. References whose book name is not recognized are skipped.
+- **Scripture books** -- Each passage is matched to its Bible book, and the book term is created if needed. References whose book name is not recognized are skipped. Use the semicolon and comma rules above when a cell has more than one passage.
 
 ### Running an Import
 
@@ -50,10 +52,10 @@ Key formatting rules:
 | Series | Series name (creates the series if it does not exist; only available when Series are enabled) |
 | Location | Location name (only available when CP Locations is active) |
 | Speaker | Speaker name(s), comma-separated (only available when Speakers are enabled) |
-| Service Type | Service type name(s), comma-separated (only available when Service Types are enabled and not used as the variation source) |
+| Service Type | Service type name(s), comma-separated. Shown when Service Types are enabled and they are not the active variation source, including when Variations are turned off. An unmapped column leaves existing service types in place. A mapped empty cell clears them. |
 | Topics | Topic name(s), comma-separated |
 | Season | Season name(s), comma-separated |
-| Scripture | Scripture reference(s), comma-separated |
+| Scripture | Scripture passage(s). Separate passages with semicolons. A comma that continues a verse, a range, or the next chapter stays in the same passage. |
 | Thumbnail | URL to a thumbnail image |
 | Video | Video URL or embed code |
 | Audio | Audio file URL |
