@@ -136,6 +136,8 @@ class SermonAudio extends Adapter {
 			$sermons[ $sermon->sermonID ] = apply_filters( 'cp_library_sermon_audio_item', $item );
 		}
 
+		$sermons = SermonAudioMatch::flag_batch_ambiguities( $sermons );
+
 		// enqueues items to be processed
 		$this->enqueue( $sermons );
 
@@ -308,6 +310,205 @@ class SermonAudio extends Adapter {
 	}
 
 	/**
+	 * Load a SermonAudio item.
+	 *
+	 * When no post has this sermonID, a cpl_item on the same site-local
+	 * calendar day with the same normalized title is updated instead of
+	 * inserted, but only when it is the only such sermon and it has no
+	 * external id of its own. `_cpl_sa_match_linked` is stored on that post.
+	 * Zero matches and two or more matches still insert a new sermon. A
+	 * batch that itself contains two sermons with that title on that day
+	 * does not link either of them. A trashed sermon is not a candidate.
+	 *
+	 * Notes and scripture on a sermon this matcher linked follow the
+	 * supplied-field snapshot. The snapshot stores the SermonAudio value
+	 * after the save filters. A local value that differs from that is an
+	 * edit and is never replaced. A local value that matches it follows
+	 * the feed. An empty local field is filled on the link sync. A sermon
+	 * the sync itself created keeps taking the feed on every sync and is
+	 * not snapshotted. Title, audio, and video still update. If the save,
+	 * the scripture clear, the snapshot, or the match marker throws while
+	 * linking, the SermonAudio id written on that attempt is removed, along
+	 * with any partial snapshot or match marker, so the post is not left
+	 * half-linked.
+	 *
+	 * A speaker or series with no post for its SermonAudio id updates the
+	 * one existing post of that type with the same normalized name, when
+	 * there is exactly one and it has no other SermonAudio id. Otherwise a
+	 * new one is inserted. SermonAudio's name replaces the local name. A
+	 * bio, description, or image replaces the local one when SermonAudio
+	 * has that value. A blank bio or description does not replace a
+	 * hand-written local one, and a blank image does not replace the local
+	 * image, so the site does not end up with two copies of the same
+	 * speaker or series.
+	 *
+	 * `cpl_sermon_audio_match_existing` disables only these fallbacks. Return
+	 * false and a sermon, speaker, or series with no external id is
+	 * inserted, as it was before.
+	 *
+	 * @param array           $item  Formatted item.
+	 * @param class-string    $model Model class.
+	 * @return \ChurchPlugins\Models\Table
+	 * @throws \ChurchPlugins\Exception When the item cannot be saved.
+	 */
+	public function load_item( $item, $model ) {
+		$mark_id          = 0;
+		$clear_scripture  = false;
+		$track_snapshot   = false;
+		$wrote_content    = false;
+		$wrote_scripture  = false;
+		$batch_ambiguous  = is_array( $item ) && ! empty( $item[ SermonAudioMatch::BATCH_AMBIGUOUS ] );
+		$supplied         = is_array( $item ) ? SermonAudioMatch::supplied_fields_from_item( $item ) : null;
+
+		if ( is_array( $item ) ) {
+			unset( $item[ SermonAudioMatch::BATCH_AMBIGUOUS ] );
+		}
+
+		if ( $this->item_is_sermon( $item ) ) {
+			$external_id = isset( $item['external_id'] ) ? (string) $item['external_id'] : '';
+			$existing_id = '' === $external_id ? null : $this->get_item_id_from_external( $external_id );
+
+			if ( null !== $existing_id && '' !== (string) $existing_id && SermonAudioMatch::is_match_linked( (int) $existing_id ) ) {
+				$applied         = SermonAudioMatch::apply_supplied_snapshot( $item, (int) $existing_id );
+				$item            = $applied['item'];
+				$clear_scripture = $applied['clear_scripture'];
+				$wrote_content   = $applied['wrote_content'];
+				$wrote_scripture = $applied['wrote_scripture'];
+				$track_snapshot  = true;
+			} elseif ( ( null === $existing_id || '' === (string) $existing_id ) && ! $batch_ambiguous && $this->match_existing_enabled( $item ) ) {
+				$match_id = SermonAudioMatch::find_link( $item );
+
+				if ( null !== $match_id && '' === (string) get_post_meta( $match_id, 'external_id', true ) ) {
+					$item['ID']      = $match_id;
+					$applied         = SermonAudioMatch::apply_supplied_snapshot( $item, $match_id );
+					$item            = $applied['item'];
+					$clear_scripture = $applied['clear_scripture'];
+					$wrote_content   = $applied['wrote_content'];
+					$wrote_scripture = $applied['wrote_scripture'];
+					$track_snapshot  = true;
+					$mark_id         = $match_id;
+				}
+			}
+		}
+
+		if ( $this->item_is_speaker_or_series( $item ) ) {
+			$external_id = isset( $item['external_id'] ) ? (string) $item['external_id'] : '';
+			$existing_id = '' === $external_id ? null : $this->get_item_id_from_external( $external_id );
+
+			if ( ( null === $existing_id || '' === (string) $existing_id ) && $this->match_existing_enabled( $item ) ) {
+				$match_id = SermonAudioMatch::find_named_link( $item );
+
+				if ( null !== $match_id ) {
+					$item['ID'] = $match_id;
+				}
+			}
+		}
+
+		try {
+			$loaded = parent::load_item( $item, $model );
+
+			if ( $this->item_is_sermon( $item ) && is_object( $loaded ) && ! empty( $loaded->origin_id ) ) {
+				$origin_id = (int) $loaded->origin_id;
+
+				if ( $clear_scripture ) {
+					cp_library()->setup->taxonomies->scripture->update_object_scripture( $origin_id, array() );
+				}
+
+				if ( $track_snapshot && is_array( $supplied ) ) {
+					SermonAudioMatch::record_supplied_snapshot( $origin_id, $supplied, $wrote_content, $wrote_scripture );
+				}
+
+				if ( $mark_id > 0 && $origin_id === $mark_id ) {
+					update_post_meta( $mark_id, SermonAudioMatch::LINKED_META, '1' );
+				}
+			}
+		} catch ( \Throwable $e ) {
+			// external_id is written before scripture is cleared and before
+			// the snapshot and match marker. Drop all three so a throw in
+			// any of those steps is not a half-linked post. The next sync
+			// can match again and still keep local notes and scripture.
+			if ( $mark_id > 0 ) {
+				delete_post_meta( $mark_id, 'external_id' );
+				delete_post_meta( $mark_id, SermonAudioMatch::SUPPLIED_META );
+				delete_post_meta( $mark_id, SermonAudioMatch::LINKED_META );
+			}
+
+			throw $e;
+		}
+
+		return $loaded;
+	}
+
+	/**
+	 * Sync hash for a formatted item, ignoring the matcher's internal keys.
+	 *
+	 * The queued item keeps those keys. Only the comparison against the
+	 * stored hash leaves them out, so an unchanged sermon is not re-synced.
+	 * The result is the same hash 1.8.1 stored for an unchanged item.
+	 *
+	 * @param mixed $item Formatted item.
+	 * @return string
+	 */
+	public function create_store_key( $item ) {
+		if ( is_array( $item ) ) {
+			$item = SermonAudioMatch::without_internal_keys( $item );
+		}
+
+		return parent::create_store_key( $item );
+	}
+
+	/**
+	 * Whether $item is a sermon rather than a speaker or series.
+	 *
+	 * @param mixed $item Formatted item.
+	 * @return bool
+	 */
+	private function item_is_sermon( $item ) {
+		if ( ! is_array( $item ) || empty( $item['post_type'] ) ) {
+			return false;
+		}
+
+		return cp_library()->setup->post_types->item->post_type === $item['post_type'];
+	}
+
+	/**
+	 * Whether $item is a speaker or series rather than a sermon.
+	 *
+	 * @param mixed $item Formatted item.
+	 * @return bool
+	 */
+	private function item_is_speaker_or_series( $item ) {
+		if ( ! is_array( $item ) || empty( $item['post_type'] ) ) {
+			return false;
+		}
+
+		$post_types = cp_library()->setup->post_types;
+
+		return in_array( $item['post_type'], array( $post_types->speaker->post_type, $post_types->item_type->post_type ), true );
+	}
+
+	/**
+	 * Whether the title-and-day fallback may run for this sermon.
+	 *
+	 * @param array $item Formatted sermon.
+	 * @return bool
+	 */
+	private function match_existing_enabled( $item ) {
+		/**
+		 * Disable linking SermonAudio items to existing posts.
+		 *
+		 * Covers a sermon with the same title on the same day, and a speaker
+		 * or series with the same name. Posts that already store this
+		 * external id are still updated.
+		 *
+		 * @param bool  $enabled Default true.
+		 * @param array $item    Formatted sermon, speaker, or series about to be saved.
+		 * @param SermonAudio $adapter Adapter running the sync.
+		 */
+		return (bool) apply_filters( 'cpl_sermon_audio_match_existing', true, $item, $this );
+	}
+
+	/**
 	 * Insert or update the WordPress post for an imported item.
 	 *
 	 * Blank-title handling applies only to sermons. A blank API title is ""
@@ -319,19 +520,45 @@ class SermonAudio extends Adapter {
 	 * has no usable title.
 	 *
 	 * A usable sermon title from the API is slashed the same way, so a
-	 * backslash is kept as sent. Speakers and series are passed through
-	 * untouched, as they were before this handling existed. An update keeps
-	 * any status they already have.
+	 * backslash is kept as sent. An update keeps any status a speaker or
+	 * series already has.
+	 *
+	 * A blank SermonAudio bio or description must not replace text already
+	 * on a speaker or series when the feed also has a name. The formatted
+	 * item still carries that blank, because the sync hash is the formatted
+	 * item. The stored text is put back here, slashed the same way as a
+	 * kept sermon title. A non-blank bio or description is saved as
+	 * formatted. A blank name leaves a blank bio blank: a series whose
+	 * title, description, and excerpt are all empty is still rejected, and
+	 * the series is not updated. Images are not handled here:
+	 * format_speaker() and format_item_type() omit featured_image when
+	 * SermonAudio has no image, so a blank image never replaces the local
+	 * one.
 	 *
 	 * @param array $item Post fields for wp_insert_post(), without external_id.
 	 * @return int|\WP_Error
 	 */
 	protected function insert_imported_post( $item ) {
+		if ( $this->item_is_speaker_or_series( $item ) ) {
+			$item = $this->retain_local_text_when_feed_text_is_blank( $item );
+		}
+
 		$sermon_type = cp_library()->setup->post_types->item->post_type;
 
 		if ( ! isset( $item['post_type'] ) || $sermon_type !== $item['post_type'] ) {
 			return parent::insert_imported_post( $item );
 		}
+
+		if ( ! empty( $item[ SermonAudioMatch::TIMESTAMP_DATE ] ) && ! empty( $item['ID'] ) ) {
+			$existing_date = get_post( $item['ID'] );
+
+			if ( $existing_date instanceof \WP_Post && is_string( $existing_date->post_date ) && '' !== $existing_date->post_date ) {
+				$item['post_date']     = $existing_date->post_date;
+				$item['post_date_gmt'] = $existing_date->post_date_gmt;
+			}
+		}
+
+		unset( $item[ SermonAudioMatch::TIMESTAMP_DATE ] );
 
 		$title = isset( $item['post_title'] ) ? $item['post_title'] : '';
 
@@ -354,6 +581,82 @@ class SermonAudio extends Adapter {
 		}
 
 		return parent::insert_imported_post( $item );
+	}
+
+	/**
+	 * Put a hand-written speaker bio or series description back when the feed is blank.
+	 *
+	 * Runs for every update of a speaker or series that has a feed name,
+	 * including the sync that name-links the post and later syncs that find
+	 * it by SermonAudio id. A new post has no local text to keep. A blank
+	 * feed name does not keep the local text, so an empty series payload
+	 * is still rejected.
+	 *
+	 * @param array $item Post fields for wp_insert_post(), without external_id.
+	 * @return array
+	 */
+	private function retain_local_text_when_feed_text_is_blank( $item ) {
+		$incoming = '';
+
+		if ( isset( $item['post_content'] ) && is_string( $item['post_content'] ) ) {
+			$incoming = $item['post_content'];
+		}
+
+		$local = null;
+
+		if ( ! empty( $item['ID'] ) ) {
+			$existing = get_post( $item['ID'] );
+
+			if ( $existing instanceof \WP_Post ) {
+				$local = $existing->post_content;
+			}
+		}
+
+		$title    = isset( $item['post_title'] ) ? $item['post_title'] : '';
+		$decision = self::text_to_store_for_speaker_or_series( $incoming, $local, $title );
+
+		if ( $decision['slash'] ) {
+			// wp_insert_post() runs wp_unslash(). Slash the raw DB value
+			// so a backslash in the stored bio survives.
+			$item['post_content'] = wp_slash( $decision['text'] );
+		}
+
+		return $item;
+	}
+
+	/**
+	 * Bio or description to store for a speaker or series.
+	 *
+	 * A blank feed value on an update that has a feed name returns the local
+	 * text and asks the caller to slash it. Any other feed value is stored
+	 * as sent, including a blank value on a new post. A blank feed name
+	 * leaves a blank bio blank, so a series with no title and no description
+	 * is still rejected instead of being saved with its old description and
+	 * an empty title.
+	 *
+	 * @param mixed       $incoming Feed text after kses.
+	 * @param string|null $local    Stored post_content, or null when this is not an update.
+	 * @param mixed       $title    Feed title.
+	 * @return array{text:string,slash:bool} Text to store, and whether the caller must slash it.
+	 */
+	public static function text_to_store_for_speaker_or_series( $incoming, $local, $title ) {
+		if ( ! is_string( $incoming ) ) {
+			$incoming = '';
+		}
+
+		$title_is_blank = ! is_string( $title ) || '' === trim( $title );
+
+		if ( ! $title_is_blank && null !== $local && '' === trim( $incoming ) ) {
+			return array(
+				'text'  => is_string( $local ) ? $local : '',
+				'slash' => true,
+			);
+		}
+
+		return array(
+			'text'  => $incoming,
+			'slash' => false,
+		);
 	}
 
 	/**
@@ -387,14 +690,17 @@ class SermonAudio extends Adapter {
 	 * abbreviation is dropped, so "Ps. 23" becomes "Psalms 23".
 	 *
 	 * A comma is not a separator here. "Psalm 23:1, 4" is one reference.
-	 * Callers that already split on commas (the CSV scripture column) pass
-	 * each piece in separately.
+	 * Callers that split lists (the CSV scripture column) pass each piece in
+	 * separately.
+	 *
+	 * Leading or trailing commas and semicolons are punctuation, not part of
+	 * the book name. ",Esther" and ";Psalm 3;" still name a book.
 	 *
 	 * @param string $passage One reference, without a separating semicolon.
 	 * @return string
 	 */
 	public static function normalize_scripture_passage( $passage ) {
-		$passage = trim( (string) $passage );
+		$passage = trim( (string) $passage, " \t\n\r\0\x0B,;" );
 
 		if ( '' === $passage ) {
 			return '';
@@ -785,11 +1091,16 @@ class SermonAudio extends Adapter {
 	 * @return array The formatted sermon.
 	 */
 	public function format_item( $item ) {
+		$timestamp_date = false;
 
 		if ( ! empty( $item->preachDate ) && $date = strtotime( $item->preachDate ) ) {
 			$post_date = gmdate( 'Y-m-d H:i:s', $date + 12 * HOUR_IN_SECONDS ); // set publish time to noon
 		} else {
-			$post_date = gmdate( 'Y-m-d H:i:s', $item->publishTimestamp );
+			// publishTimestamp is a UTC unix time. post_date is site local,
+			// so a new sermon stays on the local day instead of the next UTC
+			// day. Updates keep the post_date already stored.
+			$post_date = wp_date( 'Y-m-d H:i:s', (int) $item->publishTimestamp );
+			$timestamp_date = true;
 		}
 
 		$args = array(
@@ -818,6 +1129,10 @@ class SermonAudio extends Adapter {
 
 		if ( $item->eventType ) {
 			$args['cpl_data']['service_type'] = $item->eventType;
+		}
+
+		if ( ! empty( $timestamp_date ) ) {
+			$args[ SermonAudioMatch::TIMESTAMP_DATE ] = 1;
 		}
 
 		return $args;
@@ -893,6 +1208,10 @@ class SermonAudio extends Adapter {
 	/**
 	 * Adds an attachment to a sermon
 	 *
+	 * The speaker replaces the sermon's speakers. The series is added, except
+	 * on a sermon the matcher linked, where it replaces the local series on
+	 * every sync. A second series added by hand is removed.
+	 *
 	 * @param \CP_Library\Models\Item $item The item to add the attachment to.
 	 * @param mixed                   $attachment The attachment to add.
 	 * @param string                  $attachment_key The key of the attachment.
@@ -901,7 +1220,13 @@ class SermonAudio extends Adapter {
 		if ( 'cpl_speaker' === $attachment_key ) {
 			$item->update_speakers( [ $attachment->id ] );
 		} elseif ( 'cpl_item_type' === $attachment_key ) {
-			$item->add_type( $attachment->id );
+			if ( SermonAudioMatch::is_match_linked( (int) $item->origin_id ) ) {
+				// A linked sermon already had a local series (often the CSV
+				// default). Adding SermonAudio's would put it in two series.
+				$item->update_types( [ $attachment->id ] );
+			} else {
+				$item->add_type( $attachment->id );
+			}
 		}
 	}
 
