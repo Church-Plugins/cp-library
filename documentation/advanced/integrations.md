@@ -65,7 +65,7 @@ When the sync links to a sermon you already had:
 
 - Notes and scripture already on that sermon stay on the first link. If notes or scripture are empty, SermonAudio's text is filled in. On a later sync, those fields change when SermonAudio's text changed and the sermon still has the text from the last sync. An edit made on the site stays as you wrote it. If SermonAudio removes notes or scripture it had supplied, and nobody has edited that field, the field is cleared.
 - Speaker, service type, audio, and video follow SermonAudio on every sync when SermonAudio sends that value. SermonAudio's speaker replaces the speakers on the sermon. SermonAudio's service type replaces the service type. Audio and video are updated to the SermonAudio files. If SermonAudio does not send a speaker, service type, audio file, or video, the one already on the sermon stays.
-- SermonAudio's series replaces the series on the sermon. A second series added by hand is removed, so the sermon is listed in one series.
+- The series is replaced when SermonAudio sends a series (which removes a hand-added second series). If SermonAudio sends no series, the series already on the sermon stay.
 
 A sermon the sync adds as a new post still takes SermonAudio's notes on each later sync. It also takes SermonAudio's scripture when SermonAudio sends a passage.
 
