@@ -58,7 +58,7 @@ Key formatting rules:
 | Video | Video URL or embed code |
 | Audio | Audio file URL |
 | Downloads | Downloadable file(s) in `Name|URL` format, comma-separated |
-| Variation | Variation identifier (used to group multiple rows as variations of the same sermon) |
+| Variation | The variation source item (for example, a service type name) this row belongs to. Rows that share a title become variations of the same sermon. Ignored unless Variations are enabled. |
 
 ### Import Progress and Cancellation
 
