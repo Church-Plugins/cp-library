@@ -31,8 +31,10 @@ Variations need a variation source: Service Types, or a supported add-on. See [S
 3. Save Changes
 4. Navigate to Series → Settings → Messages tab, or under Messages if Series is turned off
 5. Select **Enable** for **Enable Variations (beta)**
-6. Select the **Variation Source** (for example, Service Types)
+6. Select the **Variation Source**. The list includes your sources (for example, Service Types) and **None**.
 7. Save Changes
+
+**None** means there is no variation source. Sermons are not split into variations from Service Types. Choose a source such as Service Types when you want a variation for each service.
 
 ### Creating Service Types
 

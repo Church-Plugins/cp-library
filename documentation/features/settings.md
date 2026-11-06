@@ -57,7 +57,7 @@ Control what information displays with each sermon. The choices are **Publish Da
 **Enable Variations (beta)** and **Variation Source** appear only after a variation source exists. Turn on **Enable Service Types** on the Advanced tab (or a supported add-on), save, and reopen the Messages tab. Until then, this section only explains that Service Types or an add-on is required.
 
 - **Enable Variations (beta)** — **Enable** or **Disable** (default: **Disable**)
-- **Variation Source** — Select the source for variations (for example, Service Types)
+- **Variation Source** — Select the source for variations (for example, Service Types). **None** is one of the choices. **None** saves no source, so sermons are not split into variations from Service Types.
 
 ### Filter Settings
 
@@ -158,6 +158,8 @@ Configure your SermonAudio connection and import settings:
 - **Update Check** — How often to automatically check for new sermons (e.g., twice daily)
 - **Check Now** — Manually trigger an update check
 - **Check Count** — Number of sermons to check per update
+
+A sync can link a SermonAudio sermon to a sermon, speaker, or series already on your site. See [SermonAudio Integration](../advanced/integrations.md#sermons-already-on-your-site).
 
 ## License Tab
 

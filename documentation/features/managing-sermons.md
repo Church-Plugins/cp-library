@@ -135,6 +135,8 @@ To add a manually created transcript:
 
 Site visitors can search and filter sermons on the sermon archive. The filter form includes a search field, **Service Type**, and the facets left on under **Disable Filters** (**Topics**, **Scripture**, **Seasons**, **Speakers**, and **Year**).
 
+With Variations turned off, the Service Type filter lists each sermon once. Variation sermons are not shown as separate results. They appear as their own results when Variations are on and Service Types are the variation source.
+
 As an administrator, you can filter sermons in the admin area by:
 
 1. Navigating to Series → Messages

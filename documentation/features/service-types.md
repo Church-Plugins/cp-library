@@ -43,6 +43,8 @@ Each service type has its own archive page that displays all sermons for that se
 
 The sermon archive includes a Service Type filter that allows visitors to filter sermons by service type.
 
+With Variations turned off, that filter lists each sermon once. Variation sermons are not shown as separate results. Variation sermons appear as their own results when Variations are on and Service Types are the variation source.
+
 ## Service Type Templates
 
 Service Type archives use a dedicated template that:
