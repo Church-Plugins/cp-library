@@ -31,6 +31,52 @@ class Settings {
 	}
 
 	/**
+	 * Whether the opt-in YouTube thumbnail fallback is enabled.
+	 *
+	 * The checkbox is stored on the Main settings tab, next to Default Thumbnail.
+	 * An absent value is off, so existing sites keep the current thumbnail order.
+	 *
+	 * @return bool
+	 */
+	public static function youtube_thumbnail_fallback_enabled() {
+		$value = self::get( 'youtube_thumbnail_fallback', '' );
+
+		return self::is_checked( $value );
+	}
+
+	/**
+	 * Store a CMB2 checkbox as '1' or an empty string.
+	 *
+	 * @param mixed $value Submitted value.
+	 * @return string
+	 */
+	public static function sanitize_checkbox( $value ) {
+		if ( is_array( $value ) ) {
+			$value = reset( $value );
+		}
+
+		return self::is_checked( $value ) ? '1' : '';
+	}
+
+	/**
+	 * Whether a checkbox value should be treated as on.
+	 *
+	 * @param mixed $value Stored or submitted value.
+	 * @return bool
+	 */
+	protected static function is_checked( $value ) {
+		if ( true === $value || 1 === $value ) {
+			return true;
+		}
+
+		if ( ! is_scalar( $value ) ) {
+			return false;
+		}
+
+		return in_array( strtolower( trim( (string) $value ) ), array( '1', 'on', 'true', 'yes' ), true );
+	}
+
+	/**
 	 * Get a value from the options table
 	 *
 	 * @param $key
@@ -243,6 +289,18 @@ class Settings {
 				 ),
 			),
 			'preview_size' => 'medium', // Image size to use when previewing in the admin
+		) );
+
+		$main_options->add_field( array(
+			'name'            => __( 'YouTube Thumbnail', 'cp-library' ),
+			'desc'            => sprintf(
+				/* translators: %s: singular sermon label, lowercased */
+				__( 'When a %s has no image of its own, use its YouTube video thumbnail before the series image. Off by default. Shown on the site only. It is not saved as the featured image, and podcast artwork is unchanged.', 'cp-library' ),
+				strtolower( cp_library()->setup->post_types->item->single_label )
+			),
+			'id'              => 'youtube_thumbnail_fallback',
+			'type'            => 'checkbox',
+			'sanitization_cb' => array( __CLASS__, 'sanitize_checkbox' ),
 		) );
 
 		$main_options->add_field( array(

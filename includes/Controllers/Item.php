@@ -10,6 +10,7 @@ use CP_Library\Models\Item as ItemModel;
 use CP_Library\Models\ServiceType;
 use CP_Library\Models\Speaker;
 use CP_Library\Util\Convenience;
+use CP_Library\Util\YouTubeThumbnail;
 use CP_Library\Admin\Settings\Podcast;
 
 class Item extends Controller{
@@ -323,43 +324,45 @@ class Item extends Controller{
 	/**
 	 * Get thumbnail
 	 *
+	 * Order: the sermon's own image, then the video thumbnail, then the series
+	 * image, then the service type image, then the site default. The video
+	 * slot is the Vimeo thumbnail. When YouTube Thumbnail is enabled, a YouTube
+	 * video uses that same slot instead. Pass 'podcast' (or call this while a
+	 * feed renders) to leave YouTube out; podcast artwork stays as it is.
+	 *
+	 * Resolved when the sermon is displayed. The YouTube URL is not saved as
+	 * the featured image.
+	 *
+	 * @param string $context 'podcast' skips the YouTube fallback. A size such as 'large' is ignored.
 	 * @return mixed|void
 	 * @since  1.0.0
 	 *
 	 * @author Tanner Moushey
 	 */
-	public function get_thumbnail() {
-		// priority for getting thumbnail is as follows:
-		// Sermon thumbnail -> Vimeo thumbnail -> Series thumbnail -> Service Type thumbnail -> Global default thumbnail
-
+	public function get_thumbnail( $context = '' ) {
 		if ( $thumb = get_the_post_thumbnail_url( $this->post->ID, 'full' ) ) {
 			return $this->filter( $thumb, __FUNCTION__ );
 		}
 
-		$thumb = $this->maybeGetVimeoThumb();
+		$thumb = false;
 
-		if ( ! $thumb && ! empty( $this->get_types() ) ) {
-			try {
-				$type = new ItemType( $this->get_types()[0]['id'], false );
-				$thumb = $type->get_thumbnail();
-			} catch( Exception $e ) {
-				error_log( $e );
-			}
+		if ( $this->youtube_thumbnail_fallback_allowed( $context ) ) {
+			$thumb = $this->maybe_get_youtube_thumb();
+		}
+
+		if ( ! $thumb ) {
+			$thumb = $this->maybeGetVimeoThumb();
+		}
+
+		if ( ! $thumb ) {
+			$thumb = $this->series_thumbnail();
 		}
 
 		if ( apply_filters( 'cpl_item_get_thumbnail_use_service_type', ! $thumb, $this ) ) {
-			$service_types = wp_list_pluck( $this->get_service_types(), 'origin_id' );
+			$service_type_thumb = $this->service_type_thumbnail();
 
-			// try to find a service type with a thumbnail
-			if ( ! empty( $service_types ) ) {
-				foreach ( $service_types as $service_type_id ) {
-					$service_type_thumb = get_the_post_thumbnail_url( $service_type_id, 'full' );
-
-					if ( $service_type_thumb ) {
-						$thumb = $service_type_thumb;
-						break;
-					}
-				}
+			if ( $service_type_thumb ) {
+				$thumb = $service_type_thumb;
 			}
 		}
 
@@ -368,6 +371,93 @@ class Item extends Controller{
 		}
 
 		return $this->filter( $thumb, __FUNCTION__ );
+	}
+
+	/**
+	 * Whether this request may use a YouTube thumbnail.
+	 *
+	 * @param string $context Thumbnail context.
+	 * @return bool
+	 */
+	protected function youtube_thumbnail_fallback_allowed( $context ) {
+		$is_feed  = function_exists( 'is_feed' ) && is_feed();
+		$is_admin = function_exists( 'is_admin' ) && is_admin();
+		$is_ajax  = function_exists( 'wp_doing_ajax' ) && wp_doing_ajax();
+
+		return YouTubeThumbnail::fallback_allowed(
+			Settings::youtube_thumbnail_fallback_enabled(),
+			(string) $context,
+			$is_feed,
+			$is_admin,
+			$is_ajax
+		);
+	}
+
+	/**
+	 * YouTube thumbnail for this sermon's video, or an empty string.
+	 *
+	 * @return string
+	 */
+	protected function maybe_get_youtube_thumb() {
+		if ( ! is_object( $this->model ) || ! method_exists( $this->model, 'get_meta_value' ) ) {
+			return '';
+		}
+
+		$video_id = YouTubeThumbnail::id_from_sources(
+			$this->model->get_meta_value( 'video_url' ),
+			$this->model->get_meta_value( 'video_id_youtube' )
+		);
+
+		if ( '' === $video_id ) {
+			return '';
+		}
+
+		return YouTubeThumbnail::url_for( $video_id );
+	}
+
+	/**
+	 * Series image, including the series default when the series has none.
+	 *
+	 * @return string
+	 */
+	protected function series_thumbnail() {
+		if ( empty( $this->get_types() ) ) {
+			return '';
+		}
+
+		try {
+			$type  = new ItemType( $this->get_types()[0]['id'], false );
+			$thumb = $type->get_thumbnail();
+
+			return $thumb ? $thumb : '';
+		} catch ( Exception $e ) {
+			error_log( $e );
+		}
+
+		return '';
+	}
+
+	/**
+	 * First service type image for this sermon.
+	 *
+	 * @return string
+	 */
+	protected function service_type_thumbnail() {
+		$service_types = wp_list_pluck( $this->get_service_types(), 'origin_id' );
+
+		if ( empty( $service_types ) ) {
+			return '';
+		}
+
+		foreach ( $service_types as $service_type_id ) {
+			$service_type_thumb = get_the_post_thumbnail_url( $service_type_id, 'full' );
+
+			if ( $service_type_thumb ) {
+				return $service_type_thumb;
+			}
+		}
+
+		return '';
 	}
 
 	/**
@@ -1083,8 +1173,18 @@ class Item extends Controller{
 		$description = apply_filters( 'the_excerpt_rss', get_the_excerpt() );
 
 		if ( Podcast::get( 'show_item_image', false ) ) {
-			$img = $this->get_thumbnail( 'large' );
-			$description = sprintf( "<img src='%s' alt='%s' />\n\r%s", $img, $this->get_title(), $description );
+			// Podcast artwork stays on the sermon's own image and the older
+			// fallbacks. The YouTube thumbnail is not square and is not used here.
+			$img = $this->get_thumbnail( 'podcast' );
+
+			if ( $img ) {
+				$description = sprintf(
+					"<img src=\"%s\" alt=\"%s\" />\n\r%s",
+					esc_url( $img ),
+					esc_attr( $this->get_title() ),
+					$description
+				);
+			}
 		}
 
 		return $this->filter( wpautop( $description ), __FUNCTION__ );

@@ -2,8 +2,10 @@
 
 namespace CP_Library\Setup\Blocks;
 
+use CP_Library\Admin\Settings;
 use CP_Library\Models\Item;
 use CP_Library\Setup\Blocks\Block;
+use CP_Library\Util\YouTubeThumbnail;
 
 class ItemGraphic extends Block {
 	public $name = 'item-graphic';
@@ -73,8 +75,15 @@ class ItemGraphic extends Block {
 			$attr['style'] = empty( $attr['style'] ) ? $extra_styles : $attr['style'] . $extra_styles;
 		}
 
-		$featured_image = attachment_url_to_postid( $block->context['item']['thumb'] );
-		$featured_image = wp_get_attachment_image( $featured_image, $size_slug, false, $attr );
+		$thumb_url      = isset( $block->context['item']['thumb'] ) ? $block->context['item']['thumb'] : '';
+		$attachment_id  = $thumb_url ? attachment_url_to_postid( $thumb_url ) : 0;
+		$attachment_html = $attachment_id ? wp_get_attachment_image( $attachment_id, $size_slug, false, $attr ) : '';
+		$featured_image = YouTubeThumbnail::remote_image_html(
+			$thumb_url,
+			$attachment_html,
+			$attr,
+			Settings::youtube_thumbnail_fallback_enabled()
+		);
 
 		if ( $is_link ) {
 			$link_target    = $attributes['linkTarget'];
