@@ -47,7 +47,8 @@ Control what information displays with each sermon. The choices are **Publish Da
 
 - **Info Items** — Items shown under the title on the single view, grid view, and list view
 - **Meta Items** — Items shown above the title on the single view and at the bottom of the card in the list view
-Selected items show in the order they appear in the field. Drag them to change the order. The same order is used on the sermon archive and the single sermon page.
+
+  Selected items show in the order they appear in the field. Drag them to change the order. The same order is used on the sermon archive and the single sermon page.
 
 ### Transcript Settings
 
