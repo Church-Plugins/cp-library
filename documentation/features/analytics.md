@@ -4,7 +4,7 @@ CP Sermon Library includes built-in analytics to track sermon engagement. Analyt
 
 ## Accessing Analytics
 
-Navigate to Series → Analytics to view the analytics dashboard. You need a user who can manage site options (typically an Administrator).
+Navigate to Series → Analytics, or Messages → Analytics if **Set default menu item** under Settings → Advanced is Messages or Series is turned off. You need a user who can manage site options (typically an Administrator).
 
 ## Available Metrics
 

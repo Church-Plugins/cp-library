@@ -2,7 +2,7 @@
 
 This guide covers adding, organizing, and managing sermon content in CP Sermon Library.
 
-> **Note:** The default top-level admin menu is **Series** (**Set default menu item**). If you set that to Messages, or you rename a label, the menu name changes to match.
+On a new install the top-level admin menu is **Series**. To change it, go to Series > Settings > Advanced > **Set default menu item** (this option only appears when Series is enabled). If you choose Messages, turn Series off, or rename a label, the menu name changes to match.
 
 ## Adding a New Sermon
 
@@ -133,13 +133,15 @@ To add a manually created transcript:
 
 ## Searching & Filtering Sermons
 
-Site visitors can search and filter sermons on the sermon archive. The filter form includes a search field, **Service Type**, and the facets left on under **Disable Filters** (**Topics**, **Scripture**, **Seasons**, **Speakers**, and **Year**).
+Site visitors can search and filter sermons on the sermon archive. The filter form includes a search field and the facets left on under **Disable Filters** (**Topics**, **Scripture**, **Seasons**, **Speakers**, and **Year**). When **Enable Service Types** is on (Settings → Advanced), it also includes **Service Type**.
+
+With Variations turned off, the Service Type filter lists each sermon once. Variation sermons are not shown as separate results. They appear as their own results when Variations are on and Service Types are the variation source.
 
 As an administrator, you can filter sermons in the admin area by:
 
 1. Navigating to Series → Messages
 2. Using the month dropdown at the top of the list
-3. Using the **Speaker**, **Series**, and **Service Type** column links to filter the list
+3. Using the **Speaker** and **Series** column links to filter the list. The **Service Type** column link is there too when **Enable Service Types** is on under Settings → Advanced.
 
 ## Controlling Sermon Visibility
 

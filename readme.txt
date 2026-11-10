@@ -2,9 +2,9 @@
 Contributors: churchplugins, tannermoushey
 Tags: sermons, church, podcast, speakers, series
 Requires at least: 6.0
-Tested up to: 6.9
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.8.0
+Stable tag: 1.8.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -113,6 +113,26 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 
 == Changelog ==
 
+= 1.8.2 =
+* Fix: SermonAudio sync now links a sermon to an existing post with the same title on the same day, instead of creating a duplicate. Media links can confirm or rule out a match but never link sermons on their own.
+* Change: A new sermon synced from SermonAudio without a preach date now gets its SermonAudio published date in your site's timezone, instead of UTC. Existing sermons are not changed.
+* Fix: When the SermonAudio sync links a sermon to an existing post, that post keeps its local notes and scripture. A sync only clears a field when SermonAudio removed a value it had supplied before and that value hasn't been edited on your site. Speaker, series, service type, audio, and video on a match-linked sermon follow SermonAudio on every sync. SermonAudio's series replaces the local one, so a second series added by hand is removed and the sermon isn't listed in two series.
+* Fix: SermonAudio sync now reuses a speaker or series already on your site with the same name, instead of creating a second copy. SermonAudio's name replaces the local name. A bio, description, or image from SermonAudio replaces the local one when SermonAudio has that value. An empty SermonAudio bio or description leaves a hand-written local bio or description in place, and an empty image leaves the local image in place. If two speakers or series on your site share that name, a new one is still created.
+* New: Variation Source now has a None option.
+* Fix: CSV import now maps and imports Service Type when Variations are turned off.
+* Change: In a CSV import, separate multiple scripture passages with semicolons, for example "John 3:16; Romans 8:28". A comma stays in the same passage when it continues a verse, a verse range, or the next chapter, so "Psalm 23:1, 4", "Psalm 23:1, 4–6", and "Romans 8:28, 9:1" each stay one reference. A comma before a different book still starts another passage, so "Psalm 23, John 3:16" is two references.
+* Fix: CSV import now matches variation names regardless of capital letters or special characters such as &.
+* Fix: CSV import now matches series, speaker, and service type names regardless of accented capital letters, such as "Église" and "église".
+* Fix: A CSV import with no Service Type column no longer removes service types from existing sermons. A mapped Service Type column with an empty cell still clears them.
+* Fix: Filtering the sermon archive by Service Type no longer shows variation sermons as separate results when Variations are turned off.
+
+= 1.8.1 =
+* Fix: Watch and Listen could stop working after updating to 1.8.0 on sites behind a page cache or CDN (such as Cloudflare), because an older copy of a player file was still being served. Player files are now requested with a version number, so future updates won't load an old cached copy.
+* After updating, clear your site's page cache (including any cache your web host runs), your CDN cache (such as Cloudflare), and your browser cache.
+* Fix: YouTube transcripts imported after updating now show symbols such as & and quotes correctly instead of codes like &amp;. To fix a transcript imported earlier, delete it and import it again.
+* Fix: Imported transcripts no longer lose words or lines when symbols are cleaned up, and symbols such as < and > in transcripts now show on the sermon page.
+* Fix: If a YouTube transcript can't be fetched, CP Sermons no longer saves an empty transcript, and Import from YouTube on the sermon edit screen shows an error.
+
 = 1.8.0 =
 * New: Audio hosted on your site is saved under the audio file's own name instead of a name built from the sermon title. The name is cleaned up so it is safe to save on any computer.
 * New: The sermon Transcript box accepts a `.vtt` or `.srt` caption file. Timestamps and caption markup are removed, leaving the text.
@@ -196,6 +216,9 @@ Go to **Messages → Settings → Messages → Filters** or **Messages → Setti
 * Feature updates and enhancements
 
 == Upgrade Notice ==
+
+= 1.8.1 =
+Fixes Watch and Listen on sites with a page cache or CDN. Clear your site, host, CDN and browser caches after updating.
 
 = 1.8.0 =
 Security release, and updating is recommended. Draft, private and password-protected content is no longer exposed through sermon downloads, templates, the REST API or shortcodes. Also fixes YouTube transcript import, SermonAudio import of sermons without a series, and filters on pages that use the `[cp-sermons]` shortcode.

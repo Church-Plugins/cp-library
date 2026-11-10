@@ -4,11 +4,11 @@ This guide covers the timestamp and transcript features in CP Sermon Library.
 
 ## Sermon Timestamps
 
-Timestamps allow you to place a visual marker on the media player's timeline, helping listeners find where the sermon begins in a longer recording.
+Timestamps allow you to place a visual marker on the video player's timeline, helping listeners find where the sermon begins in a longer recording.
 
 ### How Timestamps Work
 
-When you set a timestamp on a sermon, a marker labeled "Sermon" appears on the player's timeline slider at that point. When a listener drags the slider near the marker, it automatically snaps to the exact timestamp position. This makes it easy for listeners to skip pre-sermon content (announcements, worship, etc.) and jump directly to the message.
+When you set a timestamp on a sermon, a marker labeled "Sermon" appears on the video player's timeline slider (audio playback shows no marker) at that point. When a listener drags the slider near the marker, it automatically snaps to the exact timestamp position. This makes it easy for listeners to skip pre-sermon content (announcements, worship, etc.) and jump directly to the message.
 
 ### Adding a Timestamp
 
@@ -48,18 +48,20 @@ Transcripts make your sermon content searchable, accessible, and beneficial for 
 
 ### YouTube Transcript Import
 
-Videos with captions, either uploaded or auto-generated, can have their transcripts imported. The first caption track YouTube lists is used, in any language. Watch (youtube.com/watch?v=), youtu.be, Shorts, live, and embed links all work, as does embed code that contains one of them:
+Videos with captions, either uploaded or auto-generated, can have their transcripts imported. If a video has captions in more than one language, the import may pick a non-English track. Watch (youtube.com/watch?v=), youtu.be, Shorts, live, and embed links all work, as does embed code that contains one of them:
 
 1. Add the YouTube link or embed code to **Message Video**, then update the sermon
-2. In the sermon list, click **Import** in the Transcript column
+2. In the sermon list, click the **Import** link in the Transcript column
 3. Review and edit the imported transcript
 4. Update the sermon
 
-You can also click **Import from YouTube** in the Transcript box on the sermon edit screen. It appears whenever the **Message Video** field holds a YouTube link the plugin can read.
+On the sermon edit screen, click **Import from YouTube** in the Transcript box. It appears whenever the **Message Video** field holds a YouTube link the plugin can read.
 
-You can also use the bulk action "Import Transcript" to import transcripts for multiple sermons at once.
+In the sermon list, the **Import Transcript** bulk action imports transcripts for multiple sermons at once.
 
-> **Note:** YouTube transcript import uses the first caption track YouTube lists, whether that track was uploaded or auto-generated, in any language. If YouTube returns no captions, upload a `.vtt` or `.srt` caption file in the Transcript box, or paste the transcript.
+Importing again over an existing transcript isn't allowed. To fix an older transcript (for example one showing HTML codes), delete it first, then import again.
+
+> **Note:** If YouTube returns no captions, upload a `.vtt` or `.srt` caption file in the Transcript box, or paste the transcript.
 
 ### OpenAI Integration for Transcript Formatting
 
@@ -79,7 +81,7 @@ Once configured, transcripts imported from YouTube are automatically sent to Ope
 
 Control whether transcripts appear on sermon pages:
 
-1. Navigate to Series → Settings → Messages tab
+1. Navigate to Series → Settings → Messages tab, or under Messages if Series is turned off
 2. Find **Transcript**
 3. Choose **Show** or **Hide**
 4. Save Changes
@@ -112,17 +114,17 @@ Using timestamps and transcripts improves your content's accessibility:
 ### Timestamp Not Working
 
 - Verify the timestamp format is correct (`mm:ss` or `hh:mm:ss`)
-- Check that the media file is properly attached to the sermon
+- Check that a video is attached in **Message Video**. The marker shows only on video playback
 - Ensure the media player is loading without JavaScript errors
 
 ### YouTube Import Issues
 
-- Verify the video has captions, either uploaded or auto-generated. The import uses the first track YouTube lists, in any language
+- Verify the video has captions, either uploaded or auto-generated. If a video has captions in more than one language, the import may pick a non-English track
 - Check that the YouTube URL is correct and the video is public
 - Try with a different YouTube video to rule out video-specific issues
 
 ### Transcript Not Displaying
 
-- Check that **Transcript** is set to **Show** in Series → Settings → Messages tab
+- Check that **Transcript** is set to **Show** in Series → Settings → Messages tab, or under Messages if Series is turned off
 - Verify the sermon has transcript content entered
 - Test with a default WordPress theme to rule out theme conflicts

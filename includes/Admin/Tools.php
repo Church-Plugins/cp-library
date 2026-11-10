@@ -297,7 +297,7 @@ class Tools
 								<?php endif; ?>
 
 								<!-- Service Types -->
-								<?php if (cp_library()->setup->post_types->service_type_enabled() && cp_library()->setup->variations->get_source() != cp_library()->setup->post_types->service_type->post_type) : ?>
+								<?php if (cp_library()->setup->post_types->service_type_enabled() && ! cp_library()->setup->variations->service_type_is_source()) : ?>
 									<tr>
 										<td><?php _e('Service Type', 'cp-library'); ?></td>
 										<td>
@@ -1068,12 +1068,6 @@ class Tools
 				} catch (\ChurchPlugins\Exception $e) {
 					continue;
 				}
-			}
-
-			// move terms to first speaker
-			$terms = wp_get_object_terms($speaker->origin_id, cp_library()->setup->taxonomies->speaker->taxonomy);
-			if (! empty($terms)) {
-				wp_set_object_terms($first_speaker->origin_id, wp_list_pluck($terms, 'term_id'), cp_library()->setup->taxonomies->speaker->taxonomy, true);
 			}
 
 			// delete the speaker

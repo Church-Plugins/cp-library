@@ -198,7 +198,30 @@ class Settings {
 	protected function __construct() {
 		add_action( 'cmb2_admin_init', [ $this, 'register_main_options_metabox' ] );
 		add_action( 'cmb2_save_options_page_fields', 'flush_rewrite_rules' );
+		add_filter( 'cmb2_override_variation_source_meta_remove', [ $this, 'save_empty_variation_source' ], 10, 2 );
 		add_action( 'cmb2_render_cpl_submit_button', [ $this, 'custom_button_form_field' ], 10, 5 );
+	}
+
+	/**
+	 * Keep Variation Source when None is saved.
+	 *
+	 * CMB2 removes an empty select value. None has to be stored as an empty
+	 * string so the saved source is cleared.
+	 *
+	 * @param mixed $override Short-circuit value.
+	 * @param array $args     Field data from CMB2.
+	 * @return mixed
+	 */
+	public function save_empty_variation_source( $override, $args ) {
+		if ( null !== $override ) {
+			return $override;
+		}
+
+		if ( empty( $args['id'] ) || 'cpl_item_options' !== $args['id'] ) {
+			return $override;
+		}
+
+		return cmb2_options( $args['id'] )->update( 'variation_source', '', false, true );
 	}
 
 	public function register_main_options_metabox() {
@@ -544,11 +567,13 @@ class Settings {
 		) );
 
 		$options->add_field( array(
-			'name' => __( 'Variation Source', 'cp-library' ),
-			'id'   => 'variation_source',
-			'type' => 'select',
-			'desc' => __( 'The Variation Source is used to define the different sermons variations.', 'cp-library' ),
-			'options' => $variation_sources,
+			'name'             => __( 'Variation Source', 'cp-library' ),
+			'id'               => 'variation_source',
+			'type'             => 'select',
+			'desc'             => __( 'The Variation Source is used to define the different sermons variations.', 'cp-library' ),
+			'default'          => '',
+			'show_option_none' => __( 'None', 'cp-library' ),
+			'options'          => $variation_sources,
 		) );
 
 		// Add Disable Filters setting

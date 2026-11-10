@@ -25,7 +25,7 @@ If more than one supported plugin has data in the database, the wizard will list
 3. Each detected plugin is listed with a count such as **3 Sermons found**. Click **Get Started** on the one you want.
 4. Click the button labeled **Copy {count} sermon from {plugin name}** or **Copy {count} sermons from {plugin name}**.
 5. The migration runs as a **background process**. The wizard shows a progress percentage, then **Migration complete!** Click **Close**.
-6. If a sermon was already migrated, it is updated in place. Re-running does not create a second copy. The match is stored as `migration_id` on the imported sermon.
+6. If a sermon was already migrated, it is not copied again. The existing sermon keeps its title, content and date; the migration re-applies its media, downloads, series, speakers and topics. The match is stored as `migration_id` on the imported sermon.
 
 The source plugin does **not** need to be active for migration to work. The wizard reads directly from the database, so it can detect and migrate data even after the original plugin has been deactivated.
 
@@ -35,14 +35,14 @@ Once migration is complete:
 
 1. Review your imported sermons under Series → Messages
 2. Check that series, speakers, and media transferred correctly
-3. Navigate to Series → Settings to configure your preferences
+3. Navigate to Series → Settings, or under Messages if Series is turned off, to configure your preferences
 4. Go to Settings → Permalinks and click "Save Changes" to update URL structure
 
 ## Manual Setup (No Migration)
 
 If you're starting fresh without existing sermon data, proceed directly to configuration:
 
-1. **Configure Labels** — Navigate to Series → Settings to customize content labels (rename "Messages" to "Sermons," etc.)
+1. **Configure Labels** — Navigate to Series → Settings, or under Messages if Series is turned off, to customize content labels (rename "Messages" to "Sermons," etc.)
 2. **Set Up Post Types** — Enable Series, Speakers, and optionally Service Types in the Advanced settings tab
 3. **Configure Display** — On the Messages tab, set **Single Page Template**, **Image Aspect Ratio**, **Info Items**, and **Meta Items**
 4. **Set Up Podcast** — On the Advanced tab, set **Enable Podcast Feed** to **Enable**, save, then fill in the Podcast tab
@@ -52,7 +52,7 @@ See the [Installation Guide](installation.md) for detailed first-steps instructi
 
 ## Configuring Essential Settings
 
-After migration or fresh setup, review these key settings areas:
+After migration or fresh setup, review these key settings areas. These settings are under Series → Settings, or under Messages if Series is turned off:
 
 ### Series → Settings → Main Tab
 - Primary color for the media player
