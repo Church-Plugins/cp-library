@@ -18,7 +18,7 @@ Upload an image to use as the logo for your messages.
 
 Upload a fallback thumbnail image used when a sermon or series doesn't have a featured image set.
 
-**YouTube Thumbnail** — A checkbox under Default Thumbnail. It is off until you check it. When a sermon has no image of its own, this uses the picture from its YouTube video before the series image. The picture is shown on your site pages only. It is not saved as the sermon's featured image, it is not used in the podcast feed, and it is not shown in WordPress admin screens or in a CSV export.
+**YouTube Thumbnail** — A checkbox under Default Thumbnail. It is off until you check it. When a sermon has no image of its own, this uses the picture from its YouTube video before the series image. The picture is shown on your site pages only. It is not saved as the sermon's featured image, it is not used in the podcast feed, and it is not shown in WordPress admin lists or edit screens or in a CSV export.
 
 #### Sermon image order
 
