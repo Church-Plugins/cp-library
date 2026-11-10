@@ -11,7 +11,9 @@ use CP_Library\Integrations\YouTube;
  * write is a transient that remembers, per video id, whether the thumbnail
  * exists. A confirmed max-resolution image is kept for 30 days. A confirmed
  * miss is kept for 7 days. A failed or timed-out check is kept for an hour
- * and the sermon shows hqdefault.jpg until that hour is up.
+ * and the sermon shows hqdefault.jpg until that hour is up. The first
+ * transport failure also marks YouTube unreachable for 15 minutes, and no
+ * further remote checks run until that expires.
  */
 class YouTubeThumbnail {
 
@@ -29,6 +31,16 @@ class YouTubeThumbnail {
 	 * The check failed. Show hqdefault.jpg until this expires.
 	 */
 	const TTL_UNKNOWN = 3600;
+
+	/**
+	 * Site-wide pause after a transport failure. Fifteen minutes.
+	 */
+	const TTL_UNREACHABLE = 900;
+
+	/**
+	 * Set only when wp_remote_* returns a WP_Error.
+	 */
+	const UNREACHABLE_KEY = 'cpl_yt_unreachable';
 
 	/**
 	 * Remote checks started in one PHP request. Further videos use hqdefault
@@ -168,7 +180,9 @@ class YouTubeThumbnail {
 			return '';
 		}
 
-		if ( self::probe_budget_spent() ) {
+		// An outage, a timeout already seen in this request, or the per-request
+		// cap: show hqdefault and do not record that as a confirmed miss.
+		if ( self::youtube_is_unreachable() || self::probe_budget_spent() ) {
 			self::$resolved[ $video_id ] = 'hq-unverified';
 
 			return self::url_for_decision( $video_id, 'hq-unverified' );
@@ -399,7 +413,7 @@ class YouTubeThumbnail {
 		$head = wp_remote_head( $url, $args );
 
 		if ( self::is_error( $head ) ) {
-			self::$stop_probing = true;
+			self::mark_unreachable();
 
 			return null;
 		}
@@ -414,7 +428,7 @@ class YouTubeThumbnail {
 			$get                             = wp_remote_get( $url, $get_args );
 
 			if ( self::is_error( $get ) ) {
-				self::$stop_probing = true;
+				self::mark_unreachable();
 
 				return null;
 			}
@@ -499,6 +513,31 @@ class YouTubeThumbnail {
 	 */
 	protected static function probe_budget_spent() {
 		return self::$stop_probing || self::$probes >= self::MAX_PROBES;
+	}
+
+	/**
+	 * Remember a transport failure for the whole site.
+	 *
+	 * HTTP responses, including 404, 5xx, and the 120x90 placeholder, are
+	 * answers about one video and do not call this.
+	 */
+	protected static function mark_unreachable() {
+		self::$stop_probing = true;
+
+		if ( function_exists( 'set_transient' ) ) {
+			set_transient( self::UNREACHABLE_KEY, '1', self::TTL_UNREACHABLE );
+		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected static function youtube_is_unreachable() {
+		if ( ! function_exists( 'get_transient' ) ) {
+			return false;
+		}
+
+		return (bool) get_transient( self::UNREACHABLE_KEY );
 	}
 
 	/**

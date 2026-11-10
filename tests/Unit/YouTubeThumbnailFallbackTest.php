@@ -200,6 +200,9 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 	/** @var array<string,mixed>|\WP_Error|null */
 	public $hq_response = null;
 
+	/** @var array<string,mixed>|\WP_Error|null */
+	public $get_response = null;
+
 	protected function setUp(): void {
 		parent::setUp();
 		Monkey\setUp();
@@ -218,6 +221,7 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 		$this->transient_ttls  = array();
 		$this->head_response   = null;
 		$this->hq_response     = null;
+		$this->get_response    = null;
 
 		YouTubeThumbnail::reset_request_state();
 
@@ -330,6 +334,10 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 		Functions\when( 'wp_remote_get' )->alias(
 			static function () use ( $test ) {
 				$test->get_requests++;
+
+				if ( null !== $test->get_response ) {
+					return $test->get_response;
+				}
 
 				return array(
 					'response' => array( 'code' => 200 ),
@@ -727,7 +735,107 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 		YouTubeThumbnail::url_for( 'dQw4w9WgXcQ' );
 
 		$this->assertSame( 1, $this->head_requests, 'the hour-long cache must absorb the next lookup' );
+		$this->assertSame( '1', $this->transients[ YouTubeThumbnail::UNREACHABLE_KEY ] );
+		$this->assertSame( YouTubeThumbnail::TTL_UNREACHABLE, $this->transient_ttls[ YouTubeThumbnail::UNREACHABLE_KEY ] );
 		$this->assertSame( 0, $this->writes );
+	}
+
+	public function test_first_timeout_sets_the_site_unreachable_flag() {
+		$this->head_response = new \WP_Error( 'http_request_failed', 'timed out' );
+
+		YouTubeThumbnail::url_for( 'dQw4w9WgXcQ' );
+
+		$this->assertSame( '1', $this->transients[ YouTubeThumbnail::UNREACHABLE_KEY ] );
+		$this->assertSame( YouTubeThumbnail::TTL_UNREACHABLE, $this->transient_ttls[ YouTubeThumbnail::UNREACHABLE_KEY ] );
+		$this->assertSame( 1, $this->head_requests );
+
+		YouTubeThumbnail::reset_request_state();
+		unset( $this->transients[ YouTubeThumbnail::UNREACHABLE_KEY ] );
+		$this->head_response = array(
+			'response' => array( 'code' => 200 ),
+			'headers'  => array(),
+			'body'     => '',
+		);
+		$this->get_response = new \WP_Error( 'http_request_failed', 'connection refused' );
+
+		YouTubeThumbnail::url_for( 'jNQXAC9IVRw' );
+
+		$this->assertSame( '1', $this->transients[ YouTubeThumbnail::UNREACHABLE_KEY ] );
+		$this->assertSame( 1, $this->get_requests, 'a failed GET is a transport error too' );
+	}
+
+	public function test_unreachable_flag_makes_later_requests_skip_probes_until_it_expires() {
+		$this->head_response = new \WP_Error( 'http_request_failed', 'timed out' );
+
+		YouTubeThumbnail::url_for( 'dQw4w9WgXcQ' );
+		$this->assertSame( 1, $this->head_requests );
+
+		YouTubeThumbnail::reset_request_state();
+
+		$this->assertSame(
+			'https://img.youtube.com/vi/jNQXAC9IVRw/hqdefault.jpg',
+			YouTubeThumbnail::url_for( 'jNQXAC9IVRw' )
+		);
+		$this->assertSame( 1, $this->head_requests, 'no remote check while YouTube is marked unreachable' );
+		$this->assertArrayNotHasKey(
+			YouTubeThumbnail::TRANSIENT_PREFIX . 'jNQXAC9IVRw',
+			$this->transients,
+			'an unverified hqdefault is not stored as a miss'
+		);
+		$this->assertSame(
+			'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+			YouTubeThumbnail::url_for( 'dQw4w9WgXcQ' ),
+			'a video already cached is still used'
+		);
+		$this->assertSame( 1, $this->head_requests );
+
+		unset( $this->transients[ YouTubeThumbnail::UNREACHABLE_KEY ] );
+		YouTubeThumbnail::reset_request_state();
+		$this->head_response = null;
+
+		$this->assertSame(
+			'https://img.youtube.com/vi/jNQXAC9IVRw/maxresdefault.jpg',
+			YouTubeThumbnail::url_for( 'jNQXAC9IVRw' )
+		);
+		$this->assertSame( 2, $this->head_requests, 'probing resumes after the flag expires' );
+	}
+
+	public function test_http_status_and_placeholder_do_not_mark_youtube_unreachable() {
+		$this->head_response = array(
+			'response' => array( 'code' => 404 ),
+			'headers'  => array(),
+			'body'     => '',
+		);
+		$this->hq_response = array(
+			'response' => array( 'code' => 200 ),
+			'headers'  => array( 'content-length' => '18000' ),
+			'body'     => '',
+		);
+
+		YouTubeThumbnail::url_for( 'dQw4w9WgXcQ' );
+		$this->assertArrayNotHasKey( YouTubeThumbnail::UNREACHABLE_KEY, $this->transients );
+
+		YouTubeThumbnail::reset_request_state();
+		$this->head_response = array(
+			'response' => array( 'code' => 200 ),
+			'headers'  => array( 'content-length' => '1097' ),
+			'body'     => '',
+		);
+
+		YouTubeThumbnail::url_for( 'jNQXAC9IVRw' );
+		$this->assertArrayNotHasKey( YouTubeThumbnail::UNREACHABLE_KEY, $this->transients, 'the 120x90 placeholder is a per-video result' );
+
+		YouTubeThumbnail::reset_request_state();
+		$this->head_response = array(
+			'response' => array( 'code' => 500 ),
+			'headers'  => array(),
+			'body'     => '',
+		);
+		$this->hq_response = null;
+
+		YouTubeThumbnail::url_for( 'v2lcFS3FCEc' );
+		$this->assertArrayNotHasKey( YouTubeThumbnail::UNREACHABLE_KEY, $this->transients, 'an HTTP 500 is not a transport failure' );
+		$this->assertGreaterThan( 0, $this->head_requests );
 	}
 
 	public function test_head_without_content_length_uses_one_small_get() {
