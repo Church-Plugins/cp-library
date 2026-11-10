@@ -382,12 +382,14 @@ class Item extends Controller{
 	protected function youtube_thumbnail_fallback_allowed( $context ) {
 		$is_feed  = function_exists( 'is_feed' ) && is_feed();
 		$is_admin = function_exists( 'is_admin' ) && is_admin();
+		$is_ajax  = function_exists( 'wp_doing_ajax' ) && wp_doing_ajax();
 
 		return YouTubeThumbnail::fallback_allowed(
 			Settings::youtube_thumbnail_fallback_enabled(),
 			(string) $context,
 			$is_feed,
-			$is_admin
+			$is_admin,
+			$is_ajax
 		);
 	}
 

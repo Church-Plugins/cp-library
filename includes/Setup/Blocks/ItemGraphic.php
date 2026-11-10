@@ -2,6 +2,7 @@
 
 namespace CP_Library\Setup\Blocks;
 
+use CP_Library\Admin\Settings;
 use CP_Library\Models\Item;
 use CP_Library\Setup\Blocks\Block;
 use CP_Library\Util\YouTubeThumbnail;
@@ -77,7 +78,12 @@ class ItemGraphic extends Block {
 		$thumb_url      = isset( $block->context['item']['thumb'] ) ? $block->context['item']['thumb'] : '';
 		$attachment_id  = $thumb_url ? attachment_url_to_postid( $thumb_url ) : 0;
 		$attachment_html = $attachment_id ? wp_get_attachment_image( $attachment_id, $size_slug, false, $attr ) : '';
-		$featured_image = YouTubeThumbnail::remote_image_html( $thumb_url, $attachment_html, $attr );
+		$featured_image = YouTubeThumbnail::remote_image_html(
+			$thumb_url,
+			$attachment_html,
+			$attr,
+			Settings::youtube_thumbnail_fallback_enabled()
+		);
 
 		if ( $is_link ) {
 			$link_target    = $attributes['linkTarget'];

@@ -170,6 +170,15 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 	/** @var bool */
 	public $is_admin = false;
 
+	/** @var bool */
+	public $is_ajax = false;
+
+	/** @var bool */
+	public $is_cron = false;
+
+	/** @var bool */
+	public $read_transients = true;
+
 	/** @var int */
 	public $writes = 0;
 
@@ -182,8 +191,14 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 	/** @var array<string,mixed> */
 	public $transients = array();
 
+	/** @var array<string,int> */
+	public $transient_ttls = array();
+
 	/** @var array<string,mixed>|null */
 	public $head_response = null;
+
+	/** @var array<string,mixed>|\WP_Error|null */
+	public $hq_response = null;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -191,13 +206,20 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 
 		$this->options       = array();
 		$this->sermon_image  = false;
-		$this->is_feed       = false;
-		$this->is_admin      = false;
-		$this->writes        = 0;
-		$this->head_requests = 0;
-		$this->get_requests  = 0;
-		$this->transients    = array();
-		$this->head_response = null;
+		$this->is_feed         = false;
+		$this->is_admin        = false;
+		$this->is_ajax         = false;
+		$this->is_cron         = false;
+		$this->read_transients = true;
+		$this->writes          = 0;
+		$this->head_requests   = 0;
+		$this->get_requests    = 0;
+		$this->transients      = array();
+		$this->transient_ttls  = array();
+		$this->head_response   = null;
+		$this->hq_response     = null;
+
+		YouTubeThumbnail::reset_request_state();
 
 		$test = $this;
 
@@ -235,6 +257,18 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 			}
 		);
 
+		Functions\when( 'wp_doing_ajax' )->alias(
+			static function () use ( $test ) {
+				return $test->is_ajax;
+			}
+		);
+
+		Functions\when( 'wp_doing_cron' )->alias(
+			static function () use ( $test ) {
+				return $test->is_cron;
+			}
+		);
+
 		Functions\when( 'is_tax' )->justReturn( false );
 		Functions\when( 'is_singular' )->justReturn( false );
 
@@ -256,21 +290,30 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 
 		Functions\when( 'get_transient' )->alias(
 			static function ( $key ) use ( $test ) {
+				if ( ! $test->read_transients ) {
+					return false;
+				}
+
 				return array_key_exists( $key, $test->transients ) ? $test->transients[ $key ] : false;
 			}
 		);
 
 		Functions\when( 'set_transient' )->alias(
-			static function ( $key, $value ) use ( $test ) {
-				$test->transients[ $key ] = $value;
+			static function ( $key, $value, $ttl = 0 ) use ( $test ) {
+				$test->transients[ $key ]     = $value;
+				$test->transient_ttls[ $key ] = (int) $ttl;
 
 				return true;
 			}
 		);
 
 		Functions\when( 'wp_remote_head' )->alias(
-			static function () use ( $test ) {
+			static function ( $url = '' ) use ( $test ) {
 				$test->head_requests++;
+
+				if ( is_string( $url ) && false !== strpos( $url, 'hqdefault.jpg' ) && null !== $test->hq_response ) {
+					return $test->hq_response;
+				}
 
 				if ( null !== $test->head_response ) {
 					return $test->head_response;
@@ -323,6 +366,7 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 	}
 
 	protected function tearDown(): void {
+		YouTubeThumbnail::reset_request_state();
 		Monkey\tearDown();
 		parent::tearDown();
 	}
@@ -360,7 +404,8 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 		$this->assertSame( 0, $item->vimeo_calls, 'YouTube occupies the Vimeo slot, so Vimeo is not also requested' );
 		$this->assertSame( 0, $item->service_calls );
 		$this->assertSame( 1, $this->head_requests );
-		$this->assertSame( '1', $this->transients['cpl_yt_maxres_dQw4w9WgXcQ'] );
+		$this->assertSame( 'maxres', $this->transients[ YouTubeThumbnail::TRANSIENT_PREFIX . 'dQw4w9WgXcQ' ] );
+		$this->assertSame( YouTubeThumbnail::TTL_MAXRES, $this->transient_ttls[ YouTubeThumbnail::TRANSIENT_PREFIX . 'dQw4w9WgXcQ' ] );
 		$this->assertSame( 0, $this->writes, 'the thumbnail must not be saved as the featured image or post meta' );
 	}
 
@@ -369,6 +414,11 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 		$this->head_response = array(
 			'response' => array( 'code' => 200 ),
 			'headers'  => array( 'content-length' => '1097' ),
+			'body'     => '',
+		);
+		$this->hq_response = array(
+			'response' => array( 'code' => 200 ),
+			'headers'  => array( 'content-length' => '18000' ),
 			'body'     => '',
 		);
 
@@ -385,11 +435,12 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 			'https://img.youtube.com/vi/jNQXAC9IVRw/hqdefault.jpg',
 			$item->get_thumbnail()
 		);
-		$this->assertSame( '0', $this->transients['cpl_yt_maxres_jNQXAC9IVRw'] );
+		$this->assertSame( 'hq', $this->transients[ YouTubeThumbnail::TRANSIENT_PREFIX . 'jNQXAC9IVRw' ] );
+		$this->assertSame( YouTubeThumbnail::TTL_MISSING, $this->transient_ttls[ YouTubeThumbnail::TRANSIENT_PREFIX . 'jNQXAC9IVRw' ] );
 
 		$item->get_thumbnail();
 
-		$this->assertSame( 1, $this->head_requests, 'a cached answer must not ask YouTube again' );
+		$this->assertSame( 2, $this->head_requests, 'a cached answer must not ask YouTube again' );
 		$this->assertSame( 0, $this->writes );
 	}
 
@@ -399,13 +450,19 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 			'headers'  => array(),
 			'body'     => '',
 		);
+		$this->hq_response = array(
+			'response' => array( 'code' => 200 ),
+			'headers'  => array( 'content-length' => '18000' ),
+			'body'     => '',
+		);
 
-		$this->assertFalse( YouTubeThumbnail::has_maxres( 'dQw4w9WgXcQ' ) );
 		$this->assertSame(
 			'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
 			YouTubeThumbnail::url_for( 'dQw4w9WgXcQ' )
 		);
-		$this->assertSame( 1, $this->head_requests );
+		$this->assertSame( 'hq', $this->transients[ YouTubeThumbnail::TRANSIENT_PREFIX . 'dQw4w9WgXcQ' ] );
+		$this->assertSame( YouTubeThumbnail::TTL_MISSING, $this->transient_ttls[ YouTubeThumbnail::TRANSIENT_PREFIX . 'dQw4w9WgXcQ' ] );
+		$this->assertSame( 2, $this->head_requests );
 		$this->assertSame( 0, $this->get_requests );
 	}
 
@@ -570,7 +627,7 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 			'nocookie'         => array( 'https://www.youtube-nocookie.com/embed/jNQXAC9IVRw', 'jNQXAC9IVRw', 'privacy-enhanced embed' ),
 			'mobile'           => array( 'https://m.youtube.com/watch?v=jNQXAC9IVRw', 'jNQXAC9IVRw', 'mobile watch' ),
 			'embed html'       => array( '<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe>', 'dQw4w9WgXcQ', 'embed snippet' ),
-			'bare id'          => array( 'dQw4w9WgXcQ', 'dQw4w9WgXcQ', 'an id with no URL' ),
+			'bare id in video url' => array( 'dQw4w9WgXcQ', '', 'video_url is not treated as a YouTube id from 11 characters alone' ),
 			'vimeo'            => array( 'https://vimeo.com/123456789', '', 'Vimeo is not a YouTube id' ),
 			'mp4'              => array( 'https://cdn.example.test/sermon.mp4', '', 'a file URL is not a YouTube id' ),
 			'facebook'         => array( 'https://www.facebook.com/watch/?v=123', '', 'Facebook is not a YouTube id' ),
@@ -586,7 +643,13 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 		);
 		$this->assertSame(
 			'jNQXAC9IVRw',
-			YouTubeThumbnail::id_from_sources( '', 'jNQXAC9IVRw' )
+			YouTubeThumbnail::id_from_sources( '', 'jNQXAC9IVRw' ),
+			'the dedicated YouTube field still accepts a bare id'
+		);
+		$this->assertSame(
+			'',
+			YouTubeThumbnail::id_from_sources( 'dQw4w9WgXcQ' ),
+			'the same token in video_url is not a YouTube URL'
 		);
 		$this->assertSame(
 			'',
@@ -648,16 +711,22 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 		);
 	}
 
-	public function test_transport_error_uses_hqdefault_without_caching_the_miss() {
+	public function test_transport_error_uses_hqdefault_and_caches_it_for_an_hour() {
 		$this->head_response = new \WP_Error( 'http_request_failed', 'timed out' );
+		$key                 = YouTubeThumbnail::TRANSIENT_PREFIX . 'dQw4w9WgXcQ';
 
-		$this->assertFalse( YouTubeThumbnail::has_maxres( 'dQw4w9WgXcQ' ) );
-		$this->assertSame( array(), $this->transients );
 		$this->assertSame(
 			'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
 			YouTubeThumbnail::url_for( 'dQw4w9WgXcQ' )
 		);
-		$this->assertSame( 2, $this->head_requests, 'a failed check is not cached, so the next display tries again' );
+		$this->assertSame( 'unknown', $this->transients[ $key ] );
+		$this->assertSame( YouTubeThumbnail::TTL_UNKNOWN, $this->transient_ttls[ $key ] );
+		$this->assertSame( 1, $this->head_requests );
+
+		YouTubeThumbnail::reset_request_state();
+		YouTubeThumbnail::url_for( 'dQw4w9WgXcQ' );
+
+		$this->assertSame( 1, $this->head_requests, 'the hour-long cache must absorb the next lookup' );
 		$this->assertSame( 0, $this->writes );
 	}
 
@@ -668,10 +737,14 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 			'body'     => '',
 		);
 
-		$this->assertTrue( YouTubeThumbnail::has_maxres( 'dQw4w9WgXcQ' ) );
+		$this->assertSame(
+			'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
+			YouTubeThumbnail::url_for( 'dQw4w9WgXcQ' )
+		);
 		$this->assertSame( 1, $this->head_requests );
 		$this->assertSame( 1, $this->get_requests );
-		$this->assertSame( '1', $this->transients['cpl_yt_maxres_dQw4w9WgXcQ'] );
+		$this->assertSame( 'maxres', $this->transients[ YouTubeThumbnail::TRANSIENT_PREFIX . 'dQw4w9WgXcQ' ] );
+		$this->assertSame( YouTubeThumbnail::TTL_MAXRES, $this->transient_ttls[ YouTubeThumbnail::TRANSIENT_PREFIX . 'dQw4w9WgXcQ' ] );
 	}
 
 	public function test_remote_image_html_escapes_a_youtube_url_and_keeps_attachment_html() {
@@ -682,15 +755,45 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 				'alt'   => 'Hope & "Grace"',
 				'class' => 'cpl-thumb',
 				'style' => 'width:100%;',
-			)
+			),
+			true
 		);
 
 		$this->assertStringContainsString( 'src="https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg"', $html );
 		$this->assertStringContainsString( 'alt="Hope &amp; &quot;Grace&quot;"', $html );
 		$this->assertStringContainsString( 'class="cpl-thumb"', $html );
+		$this->assertStringContainsString( 'width="1280"', $html );
+		$this->assertStringContainsString( 'height="720"', $html );
+		$this->assertStringContainsString( 'loading="lazy"', $html );
 
-		$this->assertSame( '', YouTubeThumbnail::remote_image_html( 'javascript:alert(1)', '', array() ) );
-		$this->assertSame( '<img src="local" />', YouTubeThumbnail::remote_image_html( 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg', '<img src="local" />', array() ) );
+		$hq = YouTubeThumbnail::remote_image_html(
+			'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+			'',
+			array(),
+			true
+		);
+		$this->assertStringContainsString( 'width="480"', $hq );
+		$this->assertStringContainsString( 'height="360"', $hq );
+
+		$this->assertSame( '', YouTubeThumbnail::remote_image_html( 'javascript:alert(1)', '', array(), true ) );
+		$this->assertSame( '<img src="local" />', YouTubeThumbnail::remote_image_html( 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg', '<img src="local" />', array(), true ) );
+	}
+
+	public function test_item_graphic_setting_off_does_not_render_a_vimeo_or_logo_thumbnail() {
+		$this->assertSame(
+			'',
+			YouTubeThumbnail::remote_image_html( 'https://i.vimeocdn.com/video/123_640.jpg', '', array( 'alt' => 'Sermon' ), false ),
+			'a Vimeo-only sermon kept an empty item graphic before this feature'
+		);
+		$this->assertSame(
+			'',
+			YouTubeThumbnail::remote_image_html( 'https://example.test/wp-content/plugins/cp-library/assets/images/cpl-logo.jpg', '', array(), false )
+		);
+		$this->assertSame(
+			'',
+			YouTubeThumbnail::remote_image_html( 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg', '', array(), false ),
+			'the remote image is drawn only while the setting is on'
+		);
 	}
 
 	/**
@@ -722,34 +825,170 @@ class YouTubeThumbnailFallbackTest extends TestCase {
 	/**
 	 * @dataProvider fallback_matrix
 	 */
-	public function test_fallback_is_limited_to_site_pages( $enabled, $context, $is_feed, $is_admin, $expected ) {
+	public function test_fallback_is_limited_to_site_pages( $enabled, $context, $is_feed, $is_admin, $is_ajax, $expected ) {
 		$this->assertSame(
 			$expected,
-			YouTubeThumbnail::fallback_allowed( $enabled, $context, $is_feed, $is_admin )
+			YouTubeThumbnail::fallback_allowed( $enabled, $context, $is_feed, $is_admin, $is_ajax )
 		);
 	}
 
 	public function fallback_matrix() {
 		return array(
-			'off'             => array( false, '', false, false, false ),
-			'site'            => array( true, '', false, false, true ),
-			'legacy size arg' => array( true, 'large', false, false, true ),
-			'podcast context' => array( true, 'podcast', false, false, false ),
-			'feed'            => array( true, '', true, false, false ),
-			'admin'           => array( true, '', false, true, false ),
+			'off'             => array( false, '', false, false, false, false ),
+			'site'            => array( true, '', false, false, false, true ),
+			'legacy size arg' => array( true, 'large', false, false, false, true ),
+			'podcast context' => array( true, 'podcast', false, false, false, false ),
+			'feed'            => array( true, '', true, false, false, false ),
+			'admin screen'    => array( true, '', false, true, false, false ),
+			'front-end ajax'  => array( true, '', false, true, true, true ),
 		);
 	}
 
-	public function test_inconclusive_head_does_not_run_when_the_probe_is_disabled() {
+	public function test_front_end_ajax_still_uses_the_youtube_thumbnail() {
+		$this->enable_setting();
+		$this->is_admin = true;
+		$this->is_ajax  = true;
+
+		$item                  = $this->item();
+		$item->resolve_youtube = true;
+		$item->series          = 'https://example.test/series.jpg';
+		$item->set_meta(
+			array(
+				'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+			)
+		);
+
+		$this->assertSame(
+			'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
+			$item->get_thumbnail()
+		);
+		$this->assertSame( 1, $this->head_requests );
+		$this->assertTrue( YouTubeThumbnail::probe_allowed() );
+	}
+
+	public function test_probe_is_skipped_on_an_admin_screen_when_nothing_is_cached() {
 		$this->is_admin = true;
 
-		$this->assertFalse( YouTubeThumbnail::has_maxres( 'dQw4w9WgXcQ' ) );
+		$this->assertSame( '', YouTubeThumbnail::url_for( 'dQw4w9WgXcQ' ) );
 		$this->assertSame( 0, $this->head_requests );
-		$this->assertSame( array(), $this->transients, 'a skipped admin probe must not cache hqdefault as a permanent miss' );
+		$this->assertSame( array(), $this->transients, 'a skipped admin probe must not cache hqdefault as a miss' );
+		$this->assertFalse( YouTubeThumbnail::probe_allowed() );
+	}
+
+	public function test_repeated_lookups_for_one_video_probe_once() {
+		$this->read_transients = false;
+
+		YouTubeThumbnail::url_for( 'dQw4w9WgXcQ' );
+		YouTubeThumbnail::url_for( 'dQw4w9WgXcQ' );
+		YouTubeThumbnail::url_for( 'dQw4w9WgXcQ' );
+		YouTubeThumbnail::url_for( 'dQw4w9WgXcQ' );
+
+		$this->assertSame( 1, $this->head_requests, 'four renders of one sermon share one probe' );
+	}
+
+	public function test_one_timeout_stops_later_probes_in_the_same_request() {
+		$this->head_response = new \WP_Error( 'http_request_failed', 'timed out' );
+
 		$this->assertSame(
 			'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
 			YouTubeThumbnail::url_for( 'dQw4w9WgXcQ' )
 		);
+		$this->assertSame(
+			'https://img.youtube.com/vi/jNQXAC9IVRw/hqdefault.jpg',
+			YouTubeThumbnail::url_for( 'jNQXAC9IVRw' )
+		);
+
+		$this->assertSame( 1, $this->head_requests );
+		$this->assertArrayNotHasKey(
+			YouTubeThumbnail::TRANSIENT_PREFIX . 'jNQXAC9IVRw',
+			$this->transients,
+			'a video that was not checked is not stored as a miss'
+		);
+	}
+
+	public function test_probe_cap_uses_hqdefault_without_another_request() {
+		for ( $i = 0; $i < YouTubeThumbnail::MAX_PROBES; $i++ ) {
+			YouTubeThumbnail::url_for( sprintf( 'vid%08d', $i ) );
+		}
+
+		$this->assertSame( YouTubeThumbnail::MAX_PROBES, $this->head_requests );
+
+		$extra = YouTubeThumbnail::url_for( 'jNQXAC9IVRw' );
+
+		$this->assertSame( 'https://img.youtube.com/vi/jNQXAC9IVRw/hqdefault.jpg', $extra );
+		$this->assertSame( YouTubeThumbnail::MAX_PROBES, $this->head_requests );
+		$this->assertArrayNotHasKey( YouTubeThumbnail::TRANSIENT_PREFIX . 'jNQXAC9IVRw', $this->transients );
+	}
+
+	public function test_both_thumbnails_missing_falls_through_to_the_series_image() {
+		$this->enable_setting();
+		$missing = array(
+			'response' => array( 'code' => 404 ),
+			'headers'  => array(),
+			'body'     => '',
+		);
+		$this->head_response = $missing;
+		$this->hq_response   = $missing;
+
+		$item                  = $this->item();
+		$item->resolve_youtube = true;
+		$item->series          = 'https://example.test/series.jpg';
+		$item->set_meta(
+			array(
+				'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+			)
+		);
+
+		$this->assertSame( 'https://example.test/series.jpg', $item->get_thumbnail() );
+		$this->assertSame( 'none', $this->transients[ YouTubeThumbnail::TRANSIENT_PREFIX . 'dQw4w9WgXcQ' ] );
+		$this->assertSame( YouTubeThumbnail::TTL_MISSING, $this->transient_ttls[ YouTubeThumbnail::TRANSIENT_PREFIX . 'dQw4w9WgXcQ' ] );
+		$this->assertSame( 0, $this->writes );
+	}
+
+	public function test_cli_and_cron_do_not_probe_and_skip_youtube_without_a_cache() {
+		$this->enable_setting();
+		$this->is_cron = true;
+
+		$item                  = $this->item();
+		$item->resolve_youtube = true;
+		$item->series          = 'https://example.test/series.jpg';
+		$item->set_meta(
+			array(
+				'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+			)
+		);
+
+		$this->assertSame( 'https://example.test/series.jpg', $item->get_thumbnail() );
+		$this->assertSame( 0, $this->head_requests );
+		$this->assertFalse( YouTubeThumbnail::probe_allowed() );
+
+		$this->transients[ YouTubeThumbnail::TRANSIENT_PREFIX . 'dQw4w9WgXcQ' ] = 'maxres';
+		YouTubeThumbnail::reset_request_state();
+		$this->is_cron = true;
+
+		$this->assertSame(
+			'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
+			$item->get_thumbnail()
+		);
+		$this->assertSame( 0, $this->head_requests, 'a cached answer is used without a new request' );
+
+		$this->is_cron = false;
+		unset( $this->transients[ YouTubeThumbnail::TRANSIENT_PREFIX . 'dQw4w9WgXcQ' ] );
+		YouTubeThumbnail::reset_request_state();
+		YouTubeThumbnail::$force_cli = true;
+
+		$cli                  = $this->item();
+		$cli->resolve_youtube = true;
+		$cli->series          = 'https://example.test/series.jpg';
+		$cli->set_meta(
+			array(
+				'video_url' => 'https://youtu.be/jNQXAC9IVRw',
+			)
+		);
+
+		$this->assertSame( 'https://example.test/series.jpg', $cli->get_thumbnail() );
+		$this->assertSame( 0, $this->head_requests );
+		$this->assertFalse( YouTubeThumbnail::probe_allowed() );
 	}
 
 	/**

@@ -8,32 +8,97 @@ use CP_Library\Integrations\YouTube;
  * Display-time YouTube thumbnail URLs.
  *
  * Nothing here writes a featured image, attachment, or sermon meta. The only
- * write is a transient that remembers whether maxresdefault.jpg exists for a
- * video id, so later page views do not ask YouTube again.
+ * write is a transient that remembers, per video id, whether the thumbnail
+ * exists. A confirmed max-resolution image is kept for 30 days. A confirmed
+ * miss is kept for 7 days. A failed or timed-out check is kept for an hour
+ * and the sermon shows hqdefault.jpg until that hour is up.
  */
 class YouTubeThumbnail {
 
 	/**
-	 * Transient lifetime. Video thumbnails rarely change.
+	 * Confirmed maxresdefault.jpg.
 	 */
-	const CACHE_TTL = 2592000;
+	const TTL_MAXRES = 2592000;
 
 	/**
-	 * YouTube's missing maxresdefault.jpg is a 120x90 JPEG of about 1097 bytes.
-	 * A real max-resolution frame is much larger. Anything under this size is
-	 * the placeholder.
+	 * Confirmed missing maxres, or both sizes missing.
+	 */
+	const TTL_MISSING = 604800;
+
+	/**
+	 * The check failed. Show hqdefault.jpg until this expires.
+	 */
+	const TTL_UNKNOWN = 3600;
+
+	/**
+	 * Remote checks started in one PHP request. Further videos use hqdefault
+	 * without another request.
+	 */
+	const MAX_PROBES = 8;
+
+	/**
+	 * Transient prefix. The value is maxres, hq, none, or unknown.
+	 */
+	const TRANSIENT_PREFIX = 'cpl_yt_thumb_';
+
+	/**
+	 * YouTube's missing thumbnail is a 120x90 JPEG of about 1097 bytes.
+	 * A real frame is much larger.
 	 */
 	const MIN_REAL_BYTES = 2000;
+
+	/**
+	 * Decision for each video id already resolved in this request.
+	 *
+	 * @var array<string,string>
+	 */
+	protected static $resolved = array();
+
+	/**
+	 * HTTP checks started in this request.
+	 *
+	 * @var int
+	 */
+	protected static $probes = 0;
+
+	/**
+	 * A timeout or transport error happened. Do not start more checks.
+	 *
+	 * @var bool
+	 */
+	protected static $stop_probing = false;
+
+	/**
+	 * Test seam. Null follows the WP_CLI constant.
+	 *
+	 * @var bool|null
+	 */
+	public static $force_cli = null;
+
+	/**
+	 * Clear the per-request probe memory. Transients are left alone.
+	 */
+	public static function reset_request_state() {
+		self::$resolved      = array();
+		self::$probes        = 0;
+		self::$stop_probing  = false;
+		self::$force_cli     = null;
+	}
 
 	/**
 	 * Video id from the sermon's video URL, or from the optional YouTube field
 	 * when the video URL is empty.
 	 *
+	 * video_url must be a YouTube URL or embed. A bare 11-character token in
+	 * that field is not treated as a YouTube id: the field also holds file
+	 * URLs and other providers, and an 11-character string is not identifiable
+	 * on its own. The dedicated YouTube field does accept a bare id.
+	 *
 	 * A non-YouTube video URL is the sermon's video, so a leftover YouTube
 	 * field is ignored.
 	 *
-	 * @param string $video_url      video_url meta.
-	 * @param string $youtube_field  video_id_youtube meta, a URL or a bare id.
+	 * @param string $video_url     video_url meta.
+	 * @param string $youtube_field video_id_youtube meta, a URL or a bare id.
 	 * @return string 11-character id, or an empty string.
 	 */
 	public static function id_from_sources( $video_url, $youtube_field = '' ) {
@@ -42,10 +107,6 @@ class YouTubeThumbnail {
 
 		if ( '' !== $from_url ) {
 			return $from_url;
-		}
-
-		if ( self::is_bare_id( $video_url ) ) {
-			return $video_url;
 		}
 
 		if ( '' !== $video_url && ! self::mentions_youtube( $video_url ) ) {
@@ -72,10 +133,12 @@ class YouTubeThumbnail {
 	}
 
 	/**
-	 * Thumbnail URL for a video id, choosing maxresdefault or hqdefault.
+	 * Thumbnail URL for a video id, or an empty string when YouTube has no
+	 * real image and the sermon should use the series image instead.
 	 *
-	 * hqdefault.jpg exists for every video. maxresdefault.jpg does not, and
-	 * when it is missing YouTube still returns a tiny placeholder image.
+	 * A transport error returns hqdefault.jpg. WP-CLI, cron, and wp-admin
+	 * screens do not send a request: a cached answer is used, and otherwise
+	 * the YouTube fallback is skipped.
 	 *
 	 * @param string $video_id Video id.
 	 * @return string
@@ -87,9 +150,35 @@ class YouTubeThumbnail {
 			return '';
 		}
 
-		$file = self::has_maxres( $video_id ) ? 'maxresdefault.jpg' : 'hqdefault.jpg';
+		if ( isset( self::$resolved[ $video_id ] ) ) {
+			return self::url_for_decision( $video_id, self::$resolved[ $video_id ] );
+		}
 
-		return self::image_url( $video_id, $file );
+		$cached = self::cached_decision( $video_id );
+
+		if ( null !== $cached ) {
+			self::$resolved[ $video_id ] = $cached;
+
+			return self::url_for_decision( $video_id, $cached );
+		}
+
+		if ( ! self::probe_allowed() ) {
+			self::$resolved[ $video_id ] = 'skip';
+
+			return '';
+		}
+
+		if ( self::probe_budget_spent() ) {
+			self::$resolved[ $video_id ] = 'hq-unverified';
+
+			return self::url_for_decision( $video_id, 'hq-unverified' );
+		}
+
+		$decision                    = self::decide( $video_id );
+		self::$resolved[ $video_id ] = $decision;
+		self::remember( $video_id, $decision );
+
+		return self::url_for_decision( $video_id, $decision );
 	}
 
 	/**
@@ -116,18 +205,19 @@ class YouTubeThumbnail {
 	/**
 	 * Whether the site should use a YouTube thumbnail for this request.
 	 *
-	 * Off unless the setting is on. The podcast feed and wp-admin are excluded.
-	 * wp-admin includes the sermon CSV export, which would otherwise save the
-	 * remote image as a featured image on import, and it avoids a YouTube
-	 * request while rendering admin screens.
+	 * Off unless the setting is on. The podcast feed and wp-admin screens are
+	 * excluded. admin-ajax.php is a front-end filter request (is_admin() is
+	 * true there) and is allowed. The CSV export is a normal admin POST, so
+	 * it stays excluded.
 	 *
 	 * @param bool   $enabled  Setting value.
 	 * @param string $context  'podcast' skips the fallback. Other values are ignored.
 	 * @param bool   $is_feed  True while a feed, including the podcast feed, renders.
-	 * @param bool   $is_admin True on wp-admin requests.
+	 * @param bool   $is_admin True on wp-admin and admin-ajax requests.
+	 * @param bool   $is_ajax  True for admin-ajax.php, including sermon filtering.
 	 * @return bool
 	 */
-	public static function fallback_allowed( $enabled, $context, $is_feed, $is_admin ) {
+	public static function fallback_allowed( $enabled, $context, $is_feed, $is_admin, $is_ajax = false ) {
 		if ( ! $enabled ) {
 			return false;
 		}
@@ -140,7 +230,7 @@ class YouTubeThumbnail {
 			return false;
 		}
 
-		if ( $is_admin ) {
+		if ( $is_admin && ! $is_ajax ) {
 			return false;
 		}
 
@@ -148,48 +238,7 @@ class YouTubeThumbnail {
 	}
 
 	/**
-	 * Whether maxresdefault.jpg is a real image for this video.
-	 *
-	 * A transient stores '1' or '0'. Admin requests do not probe; they use
-	 * hqdefault when a caller asks for a URL directly, and the sermon
-	 * thumbnail skips YouTube in wp-admin entirely.
-	 *
-	 * @param string $video_id Video id.
-	 * @return bool
-	 */
-	public static function has_maxres( $video_id ) {
-		$video_id = self::sanitize_id( $video_id );
-
-		if ( '' === $video_id ) {
-			return false;
-		}
-
-		$key    = self::transient_key( $video_id );
-		$cached = get_transient( $key );
-
-		if ( '1' === $cached || '0' === $cached ) {
-			return '1' === $cached;
-		}
-
-		if ( ! self::probe_allowed() ) {
-			return false;
-		}
-
-		$has = self::probe( $video_id );
-
-		// null means the check itself failed. Use hqdefault for this request
-		// and try again next time, instead of remembering a timeout for a month.
-		if ( null === $has ) {
-			return false;
-		}
-
-		set_transient( $key, $has ? '1' : '0', self::CACHE_TTL );
-
-		return $has;
-	}
-
-	/**
-	 * Decide from a normalized HTTP response whether maxres exists.
+	 * Decide from a normalized HTTP response whether the file is a real image.
 	 *
 	 * @param array $response code, content_length (int|null), body.
 	 * @return bool
@@ -227,8 +276,16 @@ class YouTubeThumbnail {
 	 * @return bool
 	 */
 	public static function probe_allowed() {
-		if ( function_exists( 'is_admin' ) && is_admin() ) {
+		if ( self::is_cli() || self::is_cron() ) {
 			return false;
+		}
+
+		if ( function_exists( 'is_admin' ) && is_admin() ) {
+			$ajax = function_exists( 'wp_doing_ajax' ) && wp_doing_ajax();
+
+			if ( ! $ajax ) {
+				return false;
+			}
 		}
 
 		if ( function_exists( 'apply_filters' ) ) {
@@ -239,15 +296,101 @@ class YouTubeThumbnail {
 	}
 
 	/**
-	 * HEAD maxresdefault.jpg. A 200 without Content-Length falls back to a
+	 * Markup for the YouTube thumbnail this feature produces.
+	 *
+	 * With the fallback off, or for any other URL (a Vimeo image, the bundled
+	 * logo), an existing attachment is returned and otherwise nothing. That is
+	 * how the item graphic block rendered before this feature.
+	 *
+	 * @param string $thumb_url                 Thumbnail URL.
+	 * @param string $attachment_html           Markup already built for a local attachment.
+	 * @param array  $attr                      alt, class, and style.
+	 * @param bool   $youtube_fallback_enabled  The YouTube Thumbnail setting.
+	 * @return string
+	 */
+	public static function remote_image_html( $thumb_url, $attachment_html, array $attr, $youtube_fallback_enabled = false ) {
+		if ( is_string( $attachment_html ) && '' !== $attachment_html ) {
+			return $attachment_html;
+		}
+
+		if ( ! $youtube_fallback_enabled ) {
+			return '';
+		}
+
+		$file = self::youtube_thumbnail_file( (string) $thumb_url );
+
+		if ( '' === $file ) {
+			return '';
+		}
+
+		$src = esc_url( (string) $thumb_url, array( 'http', 'https' ) );
+
+		if ( '' === $src ) {
+			return '';
+		}
+
+		$size  = ( 'maxresdefault.jpg' === $file ) ? array( 1280, 720 ) : array( 480, 360 );
+		$class = isset( $attr['class'] ) ? $attr['class'] : '';
+		$style = isset( $attr['style'] ) ? $attr['style'] : '';
+		$alt   = isset( $attr['alt'] ) ? $attr['alt'] : '';
+
+		$html  = '<img src="' . $src . '" alt="' . esc_attr( $alt ) . '"';
+		$html .= ' width="' . (int) $size[0] . '" height="' . (int) $size[1] . '" loading="lazy"';
+
+		if ( '' !== (string) $class ) {
+			$html .= ' class="' . esc_attr( $class ) . '"';
+		}
+
+		if ( '' !== (string) $style ) {
+			$html .= ' style="' . esc_attr( $style ) . '"';
+		}
+
+		return $html . ' />';
+	}
+
+	/**
+	 * maxres when it is real, otherwise hqdefault when that is real.
+	 *
+	 * @param string $video_id Sanitized video id.
+	 * @return string maxres, hq, none, or unknown.
+	 */
+	protected static function decide( $video_id ) {
+		$maxres = self::probe_image( $video_id, 'maxresdefault.jpg' );
+
+		if ( null === $maxres ) {
+			return 'unknown';
+		}
+
+		if ( true === $maxres ) {
+			return 'maxres';
+		}
+
+		if ( self::probe_budget_spent() ) {
+			return 'hq-unverified';
+		}
+
+		$hq = self::probe_image( $video_id, 'hqdefault.jpg' );
+
+		if ( null === $hq ) {
+			return 'unknown';
+		}
+
+		return $hq ? 'hq' : 'none';
+	}
+
+	/**
+	 * HEAD one thumbnail file. A 200 without Content-Length falls back to a
 	 * short GET so the 120x90 placeholder can still be recognized.
 	 *
 	 * @param string $video_id Sanitized video id.
-	 * @return bool|null True when maxres exists, false when it is confirmed
-	 *                   missing, null when the request failed.
+	 * @param string $file     maxresdefault.jpg or hqdefault.jpg.
+	 * @return bool|null True when the file is a real image, false when it is
+	 *                   confirmed missing, null when the request failed.
 	 */
-	protected static function probe( $video_id ) {
-		$url  = self::image_url( $video_id, 'maxresdefault.jpg' );
+	protected static function probe_image( $video_id, $file ) {
+		self::$probes++;
+
+		$url  = self::image_url( $video_id, $file );
 		$args = array(
 			'timeout'     => 2,
 			'redirection' => 3,
@@ -256,6 +399,8 @@ class YouTubeThumbnail {
 		$head = wp_remote_head( $url, $args );
 
 		if ( self::is_error( $head ) ) {
+			self::$stop_probing = true;
+
 			return null;
 		}
 
@@ -263,11 +408,14 @@ class YouTubeThumbnail {
 		$missing_length = ( 200 === $normalized['code'] && null === $normalized['content_length'] && '' === $normalized['body'] );
 
 		if ( $missing_length ) {
+			self::$probes++;
 			$get_args                        = $args;
 			$get_args['limit_response_size'] = 8192;
 			$get                             = wp_remote_get( $url, $get_args );
 
 			if ( self::is_error( $get ) ) {
+				self::$stop_probing = true;
+
 				return null;
 			}
 
@@ -279,10 +427,78 @@ class YouTubeThumbnail {
 		}
 
 		if ( 200 !== $normalized['code'] ) {
+			self::$stop_probing = true;
+
 			return null;
 		}
 
 		return self::response_has_maxres( $normalized );
+	}
+
+	/**
+	 * @param string $video_id Sanitized video id.
+	 * @param string $decision Cached or freshly decided token.
+	 * @return string
+	 */
+	protected static function url_for_decision( $video_id, $decision ) {
+		if ( 'maxres' === $decision ) {
+			return self::image_url( $video_id, 'maxresdefault.jpg' );
+		}
+
+		if ( 'hq' === $decision || 'unknown' === $decision || 'hq-unverified' === $decision ) {
+			return self::image_url( $video_id, 'hqdefault.jpg' );
+		}
+
+		return '';
+	}
+
+	/**
+	 * @param string $video_id Sanitized video id.
+	 * @return string|null
+	 */
+	protected static function cached_decision( $video_id ) {
+		$cached = get_transient( self::transient_key( $video_id ) );
+
+		if ( 'maxres' === $cached || 'hq' === $cached || 'none' === $cached || 'unknown' === $cached ) {
+			return $cached;
+		}
+
+		if ( '1' === $cached ) {
+			return 'maxres';
+		}
+
+		if ( '0' === $cached ) {
+			return 'hq';
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param string $video_id Sanitized video id.
+	 * @param string $decision  Decision token.
+	 */
+	protected static function remember( $video_id, $decision ) {
+		if ( 'hq-unverified' === $decision || 'skip' === $decision ) {
+			return;
+		}
+
+		if ( 'maxres' === $decision ) {
+			$ttl = self::TTL_MAXRES;
+		} elseif ( 'unknown' === $decision ) {
+			$ttl = self::TTL_UNKNOWN;
+		} else {
+			$ttl = self::TTL_MISSING;
+		}
+
+		set_transient( self::transient_key( $video_id ), $decision, $ttl );
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected static function probe_budget_spent() {
+		return self::$stop_probing || self::$probes >= self::MAX_PROBES;
 	}
 
 	/**
@@ -337,42 +553,15 @@ class YouTubeThumbnail {
 	}
 
 	/**
-	 * Markup for a thumbnail that is not a media-library attachment.
-	 *
-	 * The item graphic block renders attachments with wp_get_attachment_image().
-	 * A YouTube URL has no attachment, so the block uses this instead.
-	 *
-	 * @param string $thumb_url       Thumbnail URL.
-	 * @param string $attachment_html Markup already built for a local attachment.
-	 * @param array  $attr            alt, class, and style.
-	 * @return string
+	 * @param string $url Thumbnail URL.
+	 * @return string maxresdefault.jpg, hqdefault.jpg, or an empty string.
 	 */
-	public static function remote_image_html( $thumb_url, $attachment_html, array $attr ) {
-		if ( is_string( $attachment_html ) && '' !== $attachment_html ) {
-			return $attachment_html;
-		}
-
-		$src = esc_url( (string) $thumb_url, array( 'http', 'https' ) );
-
-		if ( '' === $src ) {
+	protected static function youtube_thumbnail_file( $url ) {
+		if ( ! preg_match( '#^https://img\.youtube\.com/vi/[A-Za-z0-9_-]{11}/(maxresdefault|hqdefault)\.jpg$#', $url, $matches ) ) {
 			return '';
 		}
 
-		$class = isset( $attr['class'] ) ? $attr['class'] : '';
-		$style = isset( $attr['style'] ) ? $attr['style'] : '';
-		$alt   = isset( $attr['alt'] ) ? $attr['alt'] : '';
-
-		$html = '<img src="' . $src . '" alt="' . esc_attr( $alt ) . '"';
-
-		if ( '' !== (string) $class ) {
-			$html .= ' class="' . esc_attr( $class ) . '"';
-		}
-
-		if ( '' !== (string) $style ) {
-			$html .= ' style="' . esc_attr( $style ) . '"';
-		}
-
-		return $html . ' />';
+		return $matches[1] . '.jpg';
 	}
 
 	/**
@@ -380,7 +569,7 @@ class YouTubeThumbnail {
 	 * @return string
 	 */
 	protected static function transient_key( $video_id ) {
-		return 'cpl_yt_maxres_' . $video_id;
+		return self::TRANSIENT_PREFIX . $video_id;
 	}
 
 	/**
@@ -415,6 +604,24 @@ class YouTubeThumbnail {
 		return false !== strpos( $value, 'youtube.com' )
 			|| false !== strpos( $value, 'youtube-nocookie.com' )
 			|| false !== strpos( $value, 'youtu.be' );
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected static function is_cli() {
+		if ( null !== self::$force_cli ) {
+			return (bool) self::$force_cli;
+		}
+
+		return defined( 'WP_CLI' ) && WP_CLI;
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected static function is_cron() {
+		return function_exists( 'wp_doing_cron' ) && wp_doing_cron();
 	}
 
 	/**
