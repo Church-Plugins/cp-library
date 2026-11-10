@@ -18,7 +18,7 @@ Check the [frequently asked questions](faq.md) for quick answers to common quest
 
 ## Contacting Support
 
-Support requests go to [https://docs.churchplugins.com/contact-support/](https://docs.churchplugins.com/contact-support/). Include the name of the plugin and a link to the site, along with:
+Support requests go to [https://churchplugins.com/contact/](https://churchplugins.com/contact/). Include the name of the plugin and a link to the site, along with:
 
 - A clear description of the issue
 - Steps to reproduce the problem
@@ -66,4 +66,4 @@ Visit [churchplugins.com](https://churchplugins.com) for:
 
 ## Feature Requests
 
-Have an idea for improving CP Sermon Library? Send it through [https://docs.churchplugins.com/contact-support/](https://docs.churchplugins.com/contact-support/). Describe the feature and how it would help your church.
+Have an idea for improving CP Sermon Library? Send it through [https://churchplugins.com/contact/](https://churchplugins.com/contact/). Describe the feature and how it would help your church.
