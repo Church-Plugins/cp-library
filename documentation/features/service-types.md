@@ -6,7 +6,7 @@ Service Types allow you to categorize sermons by the type of service they were d
 
 Service Types are disabled by default. To enable them:
 
-1. Navigate to Series → Settings → Advanced
+1. Navigate to Series → Settings → Advanced, or under Messages if Series is turned off
 2. Find the "Modules" section
 3. Enable "Service Types"
 4. Save changes
@@ -42,6 +42,8 @@ Each service type has its own archive page that displays all sermons for that se
 ## Filtering by Service Type
 
 The sermon archive includes a Service Type filter that allows visitors to filter sermons by service type.
+
+With Variations turned off, that filter lists each sermon once. Variation sermons are not shown as separate results. Variation sermons appear as their own results when Variations are on and Service Types are the variation source.
 
 ## Service Type Templates
 

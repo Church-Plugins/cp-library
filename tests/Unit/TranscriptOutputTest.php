@@ -198,6 +198,7 @@ class TranscriptOutputTest extends TestCase {
 			}
 		);
 		Functions\when( 'wp_kses_post' )->returnArg();
+		Functions\when( 'force_balance_tags' )->returnArg();
 
 		$this->assertTrue( Item::item_is_readable( 15 ) );
 		$this->assertStringContainsString( $this->stored, $this->renderTranscriptTemplate() );
@@ -215,6 +216,7 @@ class TranscriptOutputTest extends TestCase {
 			}
 		);
 		Functions\when( 'wp_kses_post' )->returnArg();
+		Functions\when( 'force_balance_tags' )->returnArg();
 
 		$this->assertTrue( Item::item_is_readable( 15 ) );
 		$this->assertStringContainsString( $this->stored, $this->renderTranscriptTemplate() );

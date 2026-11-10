@@ -10,7 +10,7 @@ Full Migration is separate from the CSV import and export on the same Tools tab.
 2. Stay on the **Import/Export** tab (it is selected by default).
 3. Scroll down to the **Full Migration Export** and **Full Migration Import** boxes. They appear below the CSV tools.
 
-> **Note:** The default top-level admin menu is **Series** (**Set default menu item**). If you set that to Messages, or you rename a label, the menu name changes to match.
+On a new install the top-level admin menu is **Series**. To change it, go to Series > Settings > Advanced > **Set default menu item** (this option only appears when Series is enabled). If you choose Messages, turn Series off, or rename a label, the menu name changes to match.
 
 You need a user who can manage site options (typically an Administrator) to use Full Migration.
 
@@ -23,7 +23,7 @@ The export is a single portable file (for example, `sermons.ndjson.gz`). It incl
 - Speakers
 - Service types
 - Templates
-- Taxonomy terms (topics, seasons, scripture, and other CP Sermons taxonomies)
+- Taxonomy terms (topics, seasons and scripture)
 - Plugin settings, optionally (off by default; check **Include plugin settings** on export, or pass `--include-settings` with WP-CLI)
 
 Featured image URLs travel with the content. Whether those files (and downloadable files) are copied into the destination site's Media Library depends on the import option described below.
@@ -92,4 +92,4 @@ If the export included settings, your permalinks may need to be rebuilt after th
 
 ## Related
 
-For CSV import and export, merging speakers, and the debug Log, see [Tools: Import, Export & Maintenance](https://docs.churchplugins.com/knowledge-base/tools-cp-library/).
+For CSV import and export, merging speakers, and the debug Log, see [Tools: Import, Export & Maintenance](tools.md).

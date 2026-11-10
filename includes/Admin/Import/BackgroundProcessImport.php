@@ -46,6 +46,16 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 	protected $field_mapping = array();
 
 	/**
+	 * Spreadsheet row of the item currently being imported, header included.
+	 *
+	 * Set in task() so import_item() can report it without a signature change.
+	 * 0 when the queued item did not carry a row.
+	 *
+	 * @var int
+	 */
+	protected $import_row = 0;
+
+	/**
 	 * Accepted mime types
 	 *
 	 * @var array
@@ -388,7 +398,12 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 			// Convert data to UTF-8
 			$data = array_map( [ static::class, 'convert_to_utf8' ], $data );
 
-			$queue[] = array_combine( $headers, $data );
+			$item = array_combine( $headers, $data );
+			// Header is row 1, so the first sermon is row 2. $total has not been incremented yet.
+			if ( is_array( $item ) ) {
+				$item['_cpl_import_row'] = $total + 2;
+			}
+			$queue[] = $item;
 
 			$total++;
 		}
@@ -441,7 +456,8 @@ abstract class BackgroundProcessImport extends WP_Background_Process {
 
 		// import item
 		try {
-			$item = $this->parse_item( $item );
+			$this->import_row = ( is_array( $item ) && isset( $item['_cpl_import_row'] ) ) ? absint( $item['_cpl_import_row'] ) : 0;
+			$item             = $this->parse_item( $item );
 
 			$this->import_item( $item, $this->options );
 
