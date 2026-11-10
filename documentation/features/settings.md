@@ -34,7 +34,7 @@ A series with no image of its own already uses the Default Thumbnail. The servic
 
 With **YouTube Thumbnail** on, step 2 is the video thumbnail. A YouTube video uses its YouTube picture in that same spot. A Vimeo video still uses its Vimeo thumbnail. The rest of the order stays the same.
 
-YouTube tries the larger picture first and uses the smaller one if the larger one is missing. If neither picture exists, the series image is used.
+YouTube tries the larger picture first and uses the smaller one if the larger one is missing. If neither picture exists, the order continues with the series image.
 
 Upload a featured image on the sermon to choose that sermon's image. That image is always used. A series image is used when the sermon has no featured image and no video thumbnail.
 
