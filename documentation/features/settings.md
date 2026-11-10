@@ -18,6 +18,26 @@ Upload an image to use as the logo for your messages.
 
 Upload a fallback thumbnail image used when a sermon or series doesn't have a featured image set.
 
+**YouTube Thumbnail** — A checkbox under Default Thumbnail. It is off until you check it. When a sermon has no image of its own, this uses the picture from its YouTube video before the series image. The picture is shown on your site pages only. It is not saved as the sermon's featured image, it is not used in the podcast feed, and it is not shown in WordPress admin screens or in a CSV export.
+
+#### Sermon image order
+
+With **YouTube Thumbnail** off, a sermon image is chosen in this order:
+
+1. The sermon's own featured image
+2. The Vimeo thumbnail, when the video is on Vimeo
+3. The series image
+4. The service type image
+5. The Default Thumbnail
+
+A series with no image of its own already uses the Default Thumbnail. The service type image is skipped when a sermon belongs to a series.
+
+With **YouTube Thumbnail** on, step 2 is the video thumbnail. A YouTube video uses its YouTube picture in that same spot. A Vimeo video still uses its Vimeo thumbnail. The rest of the order stays the same.
+
+YouTube tries the larger picture first and uses the smaller one if the larger one is missing. If neither picture exists, the series image is used.
+
+Upload a featured image on the sermon to choose that sermon's image. That image is always used. A series image is used when the sermon has no featured image and no video thumbnail.
+
 ### Labels
 
 - **Play Video Button** — Text displayed on the video play button (default: "Watch")
