@@ -104,11 +104,13 @@ class ImportSermons extends BackgroundProcessImport {
 	/**
 	 * Passages from one CSV scripture cell.
 	 *
-	 * The scripture column is a comma-separated list of references. Each piece
-	 * is rewritten the same way as a SermonAudio reference, so "Psalm 23" and
-	 * "Ps 23, Jn 3:16" are kept. The shared rewriter does not itself split on
-	 * commas: "Psalm 23:1, 4" is one reference with a verse list, and splitting
-	 * that would drop the verses after the comma.
+	 * References are separated by ";" or by a comma that starts a new
+	 * reference. A comma followed by a verse, a verse range, or
+	 * chapter:verse stays in the same reference. A range may use a hyphen,
+	 * an en dash, or an em dash. "Psalm 23:1, 4", "Psalm 23:1, 4–6", and
+	 * "Romans 8:28, 9:1" are each one passage.
+	 * "1 Thessalonians 2:1-12; 2 Corinthians 5:11-15" is two. Each piece is
+	 * rewritten the same way as a SermonAudio reference.
 	 *
 	 * @param mixed $field Raw scripture cell.
 	 * @return string[] Normalized passages, with empty pieces removed.
@@ -120,7 +122,7 @@ class ImportSermons extends BackgroundProcessImport {
 
 		$passages = array();
 
-		foreach ( explode( ',', $field ) as $passage ) {
+		foreach ( self::split_scripture_field( $field ) as $passage ) {
 			$passage = SermonAudio::normalize_scripture_passage( $passage );
 
 			if ( '' !== $passage ) {
@@ -129,6 +131,106 @@ class ImportSermons extends BackgroundProcessImport {
 		}
 
 		return $passages;
+	}
+
+	/**
+	 * Split a scripture cell on ";" and on commas that start a new reference.
+	 *
+	 * @param string $field Raw cell.
+	 * @return string[] Pieces, including blanks from a trailing separator.
+	 */
+	private static function split_scripture_field( $field ) {
+		$parts  = array();
+		$buffer = '';
+		$length = strlen( $field );
+
+		for ( $i = 0; $i < $length; $i++ ) {
+			$char = $field[ $i ];
+
+			if ( ';' === $char || ( ',' === $char && ! self::comma_is_verse_list( substr( $field, $i + 1 ) ) ) ) {
+				$parts[] = $buffer;
+				$buffer  = '';
+				continue;
+			}
+
+			$buffer .= $char;
+		}
+
+		$parts[] = $buffer;
+
+		return $parts;
+	}
+
+	/**
+	 * Whether the text after a comma is a verse number or range, not a new book.
+	 *
+	 * "4", "4-6", "4–6", and "9:1" continue the reference. The dash may be
+	 * a hyphen, an en dash, or an em dash. "Jn 3:16", "1 John 1:9", and
+	 * "3rd John 1" start a new one.
+	 *
+	 * @param string $after Text after the comma.
+	 * @return bool
+	 */
+	private static function comma_is_verse_list( $after ) {
+		$verse   = '\d+[a-z]?';
+		$range   = '(?:\s*[-–—]\s*' . $verse . '(?::' . $verse . ')?)?';
+		$pattern = '/^\s*' . $verse . '(?::' . $verse . ')?' . $range . '(?=\s*(?:$|[,;]))/iu';
+
+		return 1 === preg_match( $pattern, $after );
+	}
+
+	/**
+	 * Id of the variation whose name matches $given.
+	 *
+	 * $options is the map from get_source_items(): source id => name.
+	 * update_variant() checks that id against get_source_items( true ), which
+	 * is these keys, so the returned value is that id.
+	 *
+	 * Names are compared after decoding entities, trimming, and lowercasing.
+	 * Lowercasing uses UTF-8, so "Église" and "église" match. "&amp;" and
+	 * "&" match.
+	 *
+	 * @param string $given      Value from the CSV variation column.
+	 * @param array  $options    Source id => name.
+	 * @param int    $row_number Spreadsheet row, or 0 when it is not known.
+	 * @return int|string Source id.
+	 * @throws Exception When no name matches.
+	 */
+	public static function match_variation_id( $given, array $options, $row_number = 0 ) {
+		$needle = self::normalize_variation_name( $given );
+
+		if ( '' !== $needle ) {
+			foreach ( $options as $id => $label ) {
+				if ( self::normalize_variation_name( $label ) === $needle ) {
+					return $id;
+				}
+			}
+		}
+
+		$names = array();
+		foreach ( $options as $label ) {
+			$names[] = (string) $label;
+		}
+
+		$prefix = $row_number ? sprintf( 'Row %d: ', (int) $row_number ) : '';
+		$list   = $names ? implode( ', ', $names ) : '(none)';
+
+		throw new Exception( sprintf( '%sThe variation "%s" could not be found. Valid names: %s.', $prefix, $given, $list ) );
+	}
+
+	/**
+	 * @param mixed $name Variation name from the CSV or from a source item.
+	 * @return string
+	 */
+	private static function normalize_variation_name( $name ) {
+		$name = html_entity_decode( (string) $name, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$name = trim( $name );
+
+		if ( function_exists( 'mb_strtolower' ) ) {
+			return mb_strtolower( $name, 'UTF-8' );
+		}
+
+		return strtolower( $name );
 	}
 
 	/**
@@ -161,7 +263,7 @@ class ImportSermons extends BackgroundProcessImport {
 		$title        = trim( $item['title'] );
 		$desc         = trim( $item['description'] );
 		$transcript   = trim( $item['transcript'] );
-		$series       = explode( ';', $item['series'] )[0];
+		$series       = trim( explode( ';', (string) $item['series'] )[0] );
 		$date         = is_numeric( $date ) ? $date : strtotime( $item['date'] );
 		$location     = trim( strtolower( $item['location'] ) );
 		$service_type = array_filter( array_map( 'trim', explode( ',', $item['service_type'] ) ) );
@@ -272,23 +374,12 @@ class ImportSermons extends BackgroundProcessImport {
 			$series_id = $default_series;
 
 			if ( ! empty( $series ) ) {
-				$results = ItemType::search( 'title', $series );
+				$matched = self::matching_term_id( $series, $this->series_catalog() );
 
-				if ( empty( $results ) ) {
-					$results = ItemType::search( 'title', $series, true );
-				}
-
-				if ( count( $results ) ) {
-					// default to first result
-					$series_id = $results[0]->id;
-
-					// see if there is a direct match
-					foreach ( $results as $result ) {
-						if ( $result->title == $series ) {
-							$series_id = $result->id;
-						}
-					}
-				} elseif ( ! empty( $series ) ) { // create the series if it doesn't exist
+				// A partial name ("Hope" inside "Hope for Today") is not a match.
+				if ( null !== $matched ) {
+					$series_id = $matched;
+				} else {
 					$series_id = wp_insert_post(
 						[
 							'post_type'   => ItemType::get_prop( 'post_type' ),
@@ -312,18 +403,17 @@ class ImportSermons extends BackgroundProcessImport {
 			}
 		}
 
-		// Handle Service Types if they are not set as the variation source
-		if ( cp_library()->setup->post_types->service_type_enabled() && cp_library()->setup->variations->get_source() !== cp_library()->setup->post_types->service_type->post_type ) {
+		// Service Types are a normal column unless Variations are on and they are the source.
+		// An unmapped column leaves existing service types alone. A mapped column with an
+		// empty cell clears them.
+		if ( $this->column_is_mapped( 'service_type' ) && cp_library()->setup->post_types->service_type_enabled() && ! cp_library()->setup->variations->service_type_is_source() ) {
 			$types = $this->get_service_type_ids( $service_type );
 			$item->update_service_types( $types );
 		}
 
 		if ( $variation ) {
-			$variation_id = array_search( $variation, $variation_options );
-
-			if ( false === $variation_id ) {
-				throw new Exception( 'The provided variation could not be found in ' . cp_library()->setup->variations->get_source_label() );
-			}
+			// get_source_items() is id => name. update_variant() accepts that id.
+			$variation_id = self::match_variation_id( $variation, $variation_options, $this->import_row );
 
 			$variant = $item->update_variant(
 				[
@@ -416,6 +506,99 @@ class ImportSermons extends BackgroundProcessImport {
 	}
 
 	/**
+	 * Id of an existing term whose name matches exactly.
+	 *
+	 * Case and surrounding whitespace are ignored. A longer name that only
+	 * contains the lookup ("Hope" inside "Hope for Today") is not a match.
+	 *
+	 * @param string $name     Name from the import file.
+	 * @param array  $existing Objects with id and title, or an id => title map.
+	 * @return int|string|null Matching id, or null when nothing matches.
+	 */
+	public static function matching_term_id( $name, array $existing ) {
+		$needle = self::normalize_term_name( $name );
+
+		if ( '' === $needle ) {
+			return null;
+		}
+
+		foreach ( $existing as $key => $term ) {
+			if ( is_object( $term ) ) {
+				$id    = isset( $term->id ) ? $term->id : $key;
+				$title = isset( $term->title ) ? $term->title : '';
+			} elseif ( is_array( $term ) ) {
+				$id    = array_key_exists( 'id', $term ) ? $term['id'] : $key;
+				$title = isset( $term['title'] ) ? $term['title'] : '';
+			} else {
+				$id    = $key;
+				$title = $term;
+			}
+
+			if ( self::normalize_term_name( $title ) === $needle ) {
+				return $id;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Lowercase a term name and strip surrounding whitespace.
+	 *
+	 * Lowercasing uses UTF-8, so "Église" and "église" match.
+	 *
+	 * With no logged-in user, kses is active and wp_insert_post stores "&" as
+	 * "&amp;" (and quotes as entities). Decode both sides before comparing so
+	 * the stored title still matches the name from the file.
+	 *
+	 * @param mixed $name Raw name.
+	 * @return string
+	 */
+	public static function normalize_term_name( $name ) {
+		if ( is_array( $name ) || is_object( $name ) ) {
+			return '';
+		}
+
+		$name = trim( html_entity_decode( (string) $name, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+
+		if ( function_exists( 'mb_strtolower' ) ) {
+			return mb_strtolower( $name, 'UTF-8' );
+		}
+
+		return strtolower( $name );
+	}
+
+	/**
+	 * Whether the CSV mapping assigned a column to this field.
+	 *
+	 * An unmapped field reads as '' on every row, which is not the same as a
+	 * mapped column whose cell is empty.
+	 *
+	 * @param string $field Field mapping key, such as service_type.
+	 * @return bool
+	 */
+	protected function column_is_mapped( $field ) {
+		return isset( $this->field_mapping[ $field ] ) && '' !== (string) $this->field_mapping[ $field ];
+	}
+
+	/**
+	 * Series rows currently stored, as id/title pairs.
+	 *
+	 * Read from the table on each lookup. ItemType::search() is a LIKE query,
+	 * which is what attached "Hope" to "Hope for Today".
+	 *
+	 * @return array
+	 */
+	protected function series_catalog() {
+		global $wpdb;
+
+		$table = ItemType::get_prop( 'table_name' );
+		$rows  = $wpdb->get_results( "SELECT id, title FROM {$table}" );
+
+		return is_array( $rows ) ? $rows : array();
+	}
+
+	/**
 	 * Get the ids for the provided speakers. Create them if they do not already exist.
 	 *
 	 * @since  1.1.0
@@ -436,9 +619,9 @@ class ImportSermons extends BackgroundProcessImport {
 		}
 
 		foreach ( $speakers as $speaker ) {
-			$speaker_id = array_search( strtolower( $speaker ), $all_speakers, true );
+			$speaker_id = self::matching_term_id( $speaker, $all_speakers );
 
-			if ( false === $speaker_id ) {
+			if ( null === $speaker_id ) {
 				$speaker_id = wp_insert_post(
 					[
 						'post_type'   => Speaker::get_prop( 'post_type' ),
@@ -482,10 +665,13 @@ class ImportSermons extends BackgroundProcessImport {
 	protected function get_service_type_ids( $service_types ) {
 		$types              = [];
 		$service_type_names = $this->maybe_get_service_types();
+		if ( ! is_array( $service_type_names ) ) {
+			return $types;
+		}
 		foreach ( $service_types as $type ) {
-			$type_id = array_search( strtolower( $type ), $service_type_names );
+			$type_id = self::matching_term_id( $type, $service_type_names );
 
-			if ( false === $type_id ) {
+			if ( null === $type_id ) {
 				$post_id = wp_insert_post(
 					[
 						'post_type'   => ServiceType::get_prop( 'post_type' ),
@@ -601,10 +787,10 @@ class ImportSermons extends BackgroundProcessImport {
 
 		$no_series_title = apply_filters( 'cp_library_import_sermons_default_series_title', __( 'No Series', 'cp-library' ) );
 
-		$results = ItemType::search( 'title', $no_series_title );
+		$existing = self::matching_term_id( $no_series_title, $this->series_catalog() );
 
-		if ( $results ) {
-			return $results[0]->id;
+		if ( null !== $existing ) {
+			return $existing;
 		}
 
 		$series_id = wp_insert_post(

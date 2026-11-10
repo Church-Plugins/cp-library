@@ -476,4 +476,4 @@ CP_Library\Filters\TemplateHelpers::render_sermon_filters();
 
 The new filter system provides a more flexible, maintainable, and feature-rich foundation for content filtering in CP Library. By following this migration guide, you can update your code to take advantage of new features while ensuring backward compatibility with existing integrations.
 
-For additional help or to report issues with migration, please contact the CP Library support team or submit an issue on GitHub.
+For additional help or to report issues with migration, contact support at [https://docs.churchplugins.com/contact-support/](https://docs.churchplugins.com/contact-support/) or submit an issue on GitHub.

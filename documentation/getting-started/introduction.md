@@ -1,6 +1,6 @@
-# Introduction to CP Sermon Library
+# Introduction to CP Sermons
 
-CP Sermon Library is a comprehensive WordPress plugin designed for churches and ministries to manage and display sermons, sermon series, speakers, and related media.
+CP Sermons is a comprehensive WordPress plugin designed for churches and ministries to manage and display sermons, sermon series, speakers, and related media.
 
 ## Key Features
 
@@ -18,13 +18,11 @@ CP Sermon Library is a comprehensive WordPress plugin designed for churches and 
 
 ## Admin Menu
 
-After activation, the plugin adds a new top-level menu to your WordPress dashboard. By default, this menu is labeled **Series**.
-
-**Set default menu item** chooses that menu. The default is **Series**. If you set it to Messages, or you rename a label, the menu name changes to match. If Series is turned off, the menu is Messages (or your renamed label).
+On a new install the top-level admin menu is **Series**. To change it, go to Series > Settings > Advanced > **Set default menu item** (this option only appears when Series is enabled). If you choose Messages, turn Series off, or rename a label, the menu name changes to match.
 
 ## How It Works
 
-CP Sermon Library adds a complete sermon management system to your WordPress site:
+CP Sermons adds a complete sermon management system to your WordPress site:
 
 1. **Add content** — Create sermons, series, and speakers through the familiar WordPress admin
 2. **Organize** — Use categories like topics, scripture references, and seasons to keep your library organized

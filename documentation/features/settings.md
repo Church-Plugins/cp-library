@@ -1,8 +1,8 @@
 # Settings & Configuration
 
-This guide provides an overview of CP Sermon Library settings. Access settings at Series → Settings in your WordPress dashboard.
+This guide provides an overview of CP Sermon Library settings. Access settings at Series → Settings, or under Messages if Series is turned off, in your WordPress dashboard.
 
-> **Note:** The settings menu appears under the post type chosen by **Set default menu item**. The default top-level menu is **Series**.
+On a new install the top-level admin menu is **Series**. To change it, go to Series > Settings > Advanced > **Set default menu item** (this option only appears when Series is enabled). If you choose Messages, turn Series off, or rename a label, the menu name changes to match.
 
 ## Main Tab (`cpl_main_options`)
 
@@ -32,7 +32,7 @@ Upload a fallback thumbnail image used when a sermon or series doesn't have a fe
 Customize the terminology used for sermons:
 
 - **Singular Label** — What to call a single sermon (default: "Message")
-- **Plural Label** — What to call the collection (default: "Messages") — this sets the Messages menu label. The top-level menu follows **Set default menu item**, which defaults to Series.
+- **Plural Label** — What to call the collection (default: "Messages") — this sets the Messages menu label. On a new install the top-level admin menu is **Series**. To change it, go to Series > Settings > Advanced > **Set default menu item** (this option only appears when Series is enabled). If you choose Messages, turn Series off, or rename a label, the menu name changes to match.
 - **Slug** — URL base for sermon archives (default: derived from the plural label)
 
 ### Template Options
@@ -57,11 +57,11 @@ Control what information displays with each sermon. The choices are **Publish Da
 **Enable Variations (beta)** and **Variation Source** appear only after a variation source exists. Turn on **Enable Service Types** on the Advanced tab (or a supported add-on), save, and reopen the Messages tab. Until then, this section only explains that Service Types or an add-on is required.
 
 - **Enable Variations (beta)** — **Enable** or **Disable** (default: **Disable**)
-- **Variation Source** — Select the source for variations (for example, Service Types)
+- **Variation Source** — Select the source for variations (for example, Service Types). **None** is one of the choices. **None** saves no source, so sermons are not split into variations from Service Types.
 
 ### Filter Settings
 
-- **Disable Filters** — Check the facets to hide on the sermon archive: **Topics**, **Scripture**, **Seasons**, **Speakers** (when Speakers are enabled), and **Year**
+- **Disable Filters** — Check the facets to hide on the sermon archive: **Topics**, **Scripture**, **Seasons**, **Speakers** (when Speakers are enabled), **Service Types** (when Service Types are enabled), and **Year**
 
 ## Exclude a Sermon from the Podcast
 
@@ -138,7 +138,7 @@ Enable or disable content types and features:
 - **Show Counts** — Show or hide the count of items in each filter option
 - **Count Threshold** — Minimum number of sermons for a filter option to display (default: 3)
 - **Disable Filters** — *(Deprecated)* Use the per-post-type "Disable Filters" settings on the Messages and Series tabs instead
-- **Sort Topics**, **Sort Scripture**, **Sort Seasons**, and **Sort Speakers** (when Speakers are enabled) — **By Message Count** or **Alphabetically**. Scripture uses **By Scripture Order** instead of **Alphabetically**.
+- **Sort Topics**, **Sort Scripture**, **Sort Seasons**, and **Sort Speakers** (when Speakers are enabled), and **Sort Service Types** (when Service Types are enabled) — **By Message Count** or **Alphabetically**. Scripture uses **By Scripture Order** instead of **Alphabetically**.
 
 ### Data
 
@@ -158,6 +158,8 @@ Configure your SermonAudio connection and import settings:
 - **Update Check** — How often to automatically check for new sermons (e.g., twice daily)
 - **Check Now** — Manually trigger an update check
 - **Check Count** — Number of sermons to check per update
+
+A sync can link a SermonAudio sermon to a sermon, speaker, or series already on your site. See [SermonAudio Integration](../advanced/integrations.md#sermons-already-on-your-site).
 
 ## License Tab
 

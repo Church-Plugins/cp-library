@@ -132,6 +132,11 @@ class SermonAudioScriptureTest extends TestCase {
 			'Second John 1'            => '2 John 1',
 			'1stCor 13'                => '1 Corinthians 13',
 			'Psalm 23:1, 4'            => 'Psalms 23:1, 4',
+			',Esther'                  => 'Esther',
+			',Psalm 3'                 => 'Psalms 3',
+			',Matthew 5:5-13'          => 'Matthew 5:5-13',
+			';Psalm 3;'                => 'Psalms 3',
+			', Esther ,'               => 'Esther',
 		);
 
 		foreach ( $cases as $input => $expected ) {
@@ -152,6 +157,7 @@ class SermonAudioScriptureTest extends TestCase {
 			SermonAudio::normalize_bible_text( 'Psalm 23; John 3:16; 1 Cor 13' )
 		);
 		$this->assertSame( 'Psalms 23', SermonAudio::normalize_bible_text( 'Psalm 23;' ) );
+		$this->assertSame( 'Esther; Psalms 3', SermonAudio::normalize_bible_text( ',Esther; ,Psalm 3' ) );
 		$this->assertSame( '', SermonAudio::normalize_bible_text( '   ;  ' ) );
 		$this->assertNull( SermonAudio::normalize_bible_text( null ) );
 	}
@@ -197,15 +203,80 @@ class SermonAudioScriptureTest extends TestCase {
 	}
 
 	/**
-	 * A comma inside one reference is a verse list. The shared rewriter leaves
-	 * it as one passage. The CSV column split is separate, and it does break
-	 * that verse list, because the importer already separated every comma.
+	 * A leading comma or semicolon is not part of the book name. SermonAudio
+	 * does not split on commas, so ",Esther" has to resolve on its own.
 	 */
-	public function test_a_verse_list_comma_stays_one_passage_until_the_csv_split() {
-		$this->assertSame( 'Psalms 23:1, 4', SermonAudio::normalize_scripture_passage( 'Psalm 23:1, 4' ) );
+	public function test_leading_and_trailing_list_punctuation_still_names_the_book() {
+		$this->assertSame( 'Esther', SermonAudio::normalize_scripture_passage( ',Esther' ) );
+		$this->assertSame( 'Matthew 5:5-13', SermonAudio::normalize_scripture_passage( ',Matthew 5:5-13' ) );
+		$this->assertSame( 'Psalms 3', SermonAudio::normalize_scripture_passage( ',Psalm 3' ) );
+		$this->assertSame( 'Psalms 3', SermonAudio::normalize_scripture_passage( ';Psalm 3;' ) );
+		$this->assertSame( 'Esther', SermonAudio::normalize_scripture_passage( ' , Esther ; ' ) );
+	}
+
+	/**
+	 * The CSV cell splits on semicolons and on commas that start a new book.
+	 * A comma before a verse number or range stays inside the reference.
+	 */
+	public function test_csv_scripture_splits_semicolons_and_keeps_verse_lists() {
 		$this->assertSame(
-			array( 'Psalms 23:1', '4' ),
+			array( 'Psalms 23:1, 4' ),
 			ImportSermons::scripture_passages( 'Psalm 23:1, 4' )
+		);
+		$this->assertSame(
+			array( 'Psalms 23:1, 4-6' ),
+			ImportSermons::scripture_passages( 'Psalm 23:1, 4-6' )
+		);
+		$this->assertSame(
+			array( '1 Thessalonians 2:1-12', '2 Corinthians 5:11-15' ),
+			ImportSermons::scripture_passages( '1 Thessalonians 2:1-12; 2 Corinthians 5:11-15' )
+		);
+		$this->assertSame(
+			array( 'Psalms 23:1, 4', 'John 3:16' ),
+			ImportSermons::scripture_passages( 'Psalm 23:1, 4; Jn 3:16' )
+		);
+		$this->assertSame(
+			array( 'John 3:16, 17', '1 John 1:9' ),
+			ImportSermons::scripture_passages( 'John 3:16, 17, 1 John 1:9' )
+		);
+		$this->assertSame(
+			array( 'Esther' ),
+			ImportSermons::scripture_passages( ',Esther' )
+		);
+	}
+
+	/**
+	 * Word and Excel write verse ranges with an en dash or an em dash.
+	 * Those bytes must stay inside the passage. "Psalm 23:1, 4–6" is one
+	 * reference, not "Psalm 23:1" plus a bookless "4–6".
+	 */
+	public function test_csv_scripture_keeps_en_dash_and_em_dash_verse_ranges() {
+		$this->assertSame(
+			array( 'Psalms 23:1, 4–6' ),
+			ImportSermons::scripture_passages( 'Psalm 23:1, 4–6' )
+		);
+		$this->assertSame(
+			array( 'Psalms 23:1, 4—6' ),
+			ImportSermons::scripture_passages( 'Psalm 23:1, 4—6' )
+		);
+	}
+
+	/**
+	 * A comma before chapter:verse continues the same book. "Romans 8:28, 9:1"
+	 * is one reference. A later book name still starts a new passage.
+	 */
+	public function test_csv_scripture_keeps_cross_chapter_references_together() {
+		$this->assertSame(
+			array( 'Romans 8:28, 9:1' ),
+			ImportSermons::scripture_passages( 'Romans 8:28, 9:1' )
+		);
+		$this->assertSame(
+			array( 'Romans 8:28, 9:1-5', 'John 3:16' ),
+			ImportSermons::scripture_passages( 'Romans 8:28, 9:1-5; John 3:16' )
+		);
+		$this->assertSame(
+			array( 'Genesis 1:1, 2:3', 'Exodus 20:1' ),
+			ImportSermons::scripture_passages( 'Genesis 1:1, 2:3, Exodus 20:1' )
 		);
 	}
 

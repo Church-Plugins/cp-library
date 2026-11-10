@@ -1,8 +1,8 @@
 # Tools: Import, Export & Maintenance
 
-The Tools page provides utilities for importing and exporting sermon data in bulk, merging duplicate speakers, and viewing debug logs. Access it by navigating to **Series > Tools** in your WordPress admin.
+The Tools page provides utilities for importing and exporting sermon data in bulk, merging duplicate speakers, and viewing debug logs. Access it by navigating to **Series > Tools** (or under Messages if Series is turned off) in your WordPress admin.
 
-> **Note:** The default top-level admin menu is **Series** (**Set default menu item**). If you set that to Messages, or you rename a label, the menu name changes to match.
+On a new install the top-level admin menu is **Series**. To change it, go to Series > Settings > Advanced > **Set default menu item** (this option only appears when Series is enabled). If you choose Messages, turn Series off, or rename a label, the menu name changes to match.
 
 The Tools page has two tabs: **Import/Export** and **Log**. You need a user who can manage site options (typically an Administrator).
 
@@ -18,13 +18,16 @@ A sample CSV file is available for download directly from the import page. Use i
 
 Key formatting rules:
 
-- **Multiple values** -- Separate multiple speakers, topics, seasons, or scripture references with commas (e.g., `Pastor Bob, Pastor John`).
+- **Multiple values** -- Separate multiple speakers, topics, or seasons with commas (e.g., `Pastor Bob, Pastor John`).
+- **Scripture** -- Separate passages with semicolons, for example `John 3:16; Romans 8:28`. A comma stays in the same passage when it continues a verse, a verse range, or the next chapter, so `Psalm 23:1, 4` and `Romans 8:28, 9:1` are each one reference. A comma before a different book starts another passage, so `Psalm 23, John 3:16` is two references.
+- **Names** -- A variation, series, speaker, or service type name matches an existing one when it is the same name. Capital letters do not matter, including accented letters such as Église and église. An ampersand matches the encoded form a spreadsheet may save (`Faith & Works` matches `Faith &amp; Works`). Spaces at the start or end of the name are ignored. A shorter name does not match a longer one, so Hope does not attach to Hope for Today.
 - **Downloads** -- Use the format `Name|URL` for named downloads. Separate multiple downloads with commas (e.g., `Notes|https://example.com/notes.pdf,https://example.com/bulletin.pdf`). You can also provide a URL without a name.
 - **Date** -- Accepts most standard date formats (e.g., `9/6/2009`, `2009-09-06`) or a Unix timestamp.
-- **Series** -- If a series name does not already exist, it will be created automatically. If no series is specified, sermons are assigned to a default "No Series" series.
+- **Series** -- If a series name does not already exist, it will be created automatically. If no series is specified, sermons are assigned to a default "No Series" series. Series are only assigned when Series are enabled.
 - **Speakers** -- If a speaker name does not already exist, it will be created automatically.
-- **Service Types** -- If a service type does not already exist, it will be created automatically.
-- **Topics, Seasons, Scripture** -- Terms that do not already exist will be created automatically.
+- **Service Types** -- If a service type does not already exist, it will be created automatically. The Service Type column is imported when Service Types are enabled and they are not the active variation source. That includes when Variations are turned off, even if Variation Source is still set to Service Types. Leaving Service Type unmapped leaves the service types already on a sermon. A file with no Service Type column is unmapped. A mapped Service Type cell that is empty clears them.
+- **Topics, Seasons** -- Terms that do not already exist will be created automatically.
+- **Scripture books** -- Each passage is matched to its Bible book, and the book term is created if needed. References whose book name is not recognized are skipped. Use the semicolon and comma rules above when a cell has more than one passage.
 
 ### Running an Import
 
@@ -32,7 +35,7 @@ Key formatting rules:
 2. Select your CSV file in the file input.
 3. Click **Import CSV** to upload the file.
 4. A column mapping table appears. For each sermon field, select the corresponding CSV column from the dropdown. A data preview shows the first row of data for each mapped column.
-5. Any field you do not need can be left set to **- Ignore this field -**.
+5. Any field you do not need can be left set to **- Ignore this field -** (the Variation row reads **- Do not detect Variations -**).
 6. Configure the additional options below the mapping table:
    - **Attempt to import mp3 files to the Media Library** -- When checked, audio file URLs are downloaded and added to your WordPress Media Library. Checked by default.
    - **Attempt to import downloadable files to the Media Library** -- When checked, downloadable file URLs are downloaded and added to your WordPress Media Library. Checked by default.
@@ -46,13 +49,13 @@ Key formatting rules:
 | Description | Sermon content/description |
 | Transcript | Sermon transcript text |
 | Date | Sermon date |
-| Series | Series name (creates the series if it does not exist) |
+| Series | Series name (creates the series if it does not exist; only available when Series are enabled) |
 | Location | Location name (only available when CP Locations is active) |
 | Speaker | Speaker name(s), comma-separated (only available when Speakers are enabled) |
-| Service Type | Service type name(s), comma-separated (only available when Service Types are enabled and not used as the variation source) |
+| Service Type | Service type name(s), comma-separated. Shown when Service Types are enabled and they are not the active variation source, including when Variations are turned off. An unmapped column leaves existing service types in place. A mapped empty cell clears them. |
 | Topics | Topic name(s), comma-separated |
 | Season | Season name(s), comma-separated |
-| Scripture | Scripture reference(s), comma-separated |
+| Scripture | Scripture passage(s). Separate passages with semicolons. A comma that continues a verse, a range, or the next chapter stays in the same passage. |
 | Thumbnail | URL to a thumbnail image |
 | Video | Video URL or embed code |
 | Audio | Audio file URL |
@@ -68,7 +71,7 @@ The import runs as a background process. A progress bar displays the percentage 
 
 ### Duplicate Handling
 
-The importer checks for existing sermons before creating new ones. A sermon is considered a duplicate if it matches on title and date (and location, if applicable). When a duplicate is found, the existing sermon is updated rather than creating a new entry.
+The importer checks for existing sermons before creating new ones. A sermon is treated as a duplicate if an earlier import created it from the same title, date and location, or if an existing sermon has the same title and publish date (this second check does not look at location). When a duplicate is found, the existing sermon is updated rather than creating a new entry.
 
 ## CSV Export
 
@@ -96,7 +99,7 @@ Sites that used the "Show in Main List" checkbox under version 1.6.0 or 1.6.1 sh
 
 1. Navigate to **Series > Tools**.
 2. **Migrate Visibility Settings** is shown only when at least one sermon still holds legacy meta. The box reports that count.
-3. Click **Migrate Visibility Settings** to start. A status indicator shows progress.
+3. Click **Migrate Visibility Settings** and confirm the prompt. A status indicator shows progress.
 4. Sermons that were previously hidden continue to be hidden. Sermons that were previously visible carry no extra meta — they simply default to visible.
 
 The taxonomy term that controls visibility is left untouched by this tool — only the per-sermon meta key is rewritten.
@@ -136,5 +139,5 @@ To run the merge:
 
 The Log tab displays debug log output from the plugin. This is useful for troubleshooting import issues or other plugin behavior.
 
-- Turn on **Enable Debug** under Series → Settings → Advanced for log entries to appear.
+- Turn on **Enable Debug** under Series → Settings → Advanced, or under Messages if Series is turned off, for log entries to appear.
 - Click **Clear Log** to remove all existing log entries.
