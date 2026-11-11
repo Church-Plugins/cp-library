@@ -18,11 +18,11 @@ See [Customization & Display](../features/customization-and-display.md) for deta
 
 ### How do I create a sermon series?
 
-Navigate to Series → Add New. Enter the series title, description, and upload artwork. When adding sermons, assign them to the series using the Series dropdown.
+Navigate to Series → Add New. Enter the series title, description, and upload artwork. When adding sermons, assign them to the series using the **Add to Series** field.
 
 ### Can I rename "Sermons" to "Messages" or another term?
 
-Yes. Navigate to Series → Settings, or under Messages if Series is turned off, and select the tab for the content type you want to rename (Messages, Series, or Speaker). Change the Singular and Plural Labels there. This updates the terminology throughout the plugin and your site, including the admin menu name. If you rename a label, the menu name changes to match.
+Yes. Navigate to Series → Settings, or under Messages if Series is turned off, and select the tab for the content type you want to rename (Messages, Series, or Speakers). Change the Singular and Plural Labels there. This updates the terminology throughout the plugin and your site, including the admin menu name. If you rename a label, the menu name changes to match.
 
 ## Media & Playback
 

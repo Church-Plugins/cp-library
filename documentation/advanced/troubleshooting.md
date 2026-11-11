@@ -39,7 +39,7 @@
 
 **Solutions**:
 1. Verify the video URL is correct and the video is public
-2. Check if your theme or another plugin is conflicting with the oEmbed functionality
+2. Check if your theme or another plugin is conflicting with the sermon video player
 3. Try using the direct embed code instead of the URL
 
 ## Podcast Feed Errors

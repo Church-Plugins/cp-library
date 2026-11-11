@@ -44,8 +44,8 @@ To receive updates and support, activate your license:
 You can customize the terminology used throughout the plugin:
 
 1. Navigate to Series → Settings, or under Messages if Series is turned off
-2. Select the tab for the content type you want to rename (Messages, Series, or Speaker)
-3. Change **Singular Label** and **Plural Label**. On the Messages and Series tabs, also change **Slug**. The Speaker tab has no **Slug** field.
+2. Select the tab for the content type you want to rename (Messages, Series, or Speakers)
+3. Change **Singular Label** and **Plural Label**. On the Messages and Series tabs, also change **Slug**. The Speakers tab has no **Slug** field.
 4. Save changes. If you rename a label, the menu name changes to match.
 
 ### Sermon Settings
@@ -61,7 +61,7 @@ You can customize the terminology used throughout the plugin:
 3. Navigate to Series → Settings → Podcast tab, or under Messages if Series is turned off
 4. Enter the **Title**, **Description**, and **Provider**
 5. Upload podcast artwork (1400×1400px minimum)
-6. Configure feed categories
+6. Choose a **Category**
 
 See the [Podcast Setup Guide](../features/podcast-setup.md) for detailed instructions.
 
