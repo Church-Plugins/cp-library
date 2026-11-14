@@ -530,6 +530,11 @@ class Item extends Controller{
 	/**
 	 * Get array of sermon scriptures.
 	 *
+	 * Several passages can name the same book. The list is keyed by that
+	 * book's slug, and a later passage from the same book uses a suffixed
+	 * key, so every passage is kept. The keys stay strings, which keeps the
+	 * REST field a JSON object.
+	 *
 	 * @return false|array<array{name:string,slug:string,url:string}>
 	 */
 	public function get_scripture() {
@@ -558,7 +563,7 @@ class Item extends Controller{
 					continue;
 				}
 
-				$return[ $term->slug ] = [
+				$return[ $this->scripture_list_key( $return, $term->slug ) ] = [
 					'name' => $passage,
 					'slug' => $term->slug,
 					'url'  => get_term_link( $term ),
@@ -570,7 +575,7 @@ class Item extends Controller{
 					continue;
 				}
 
-				$return[ $term->slug ] = [
+				$return[ $this->scripture_list_key( $return, $term->slug ) ] = [
 					'name' => $term->name,
 					'slug' => $term->slug,
 					'url'  => get_term_link( $term ),
@@ -579,6 +584,36 @@ class Item extends Controller{
 		}
 
 		return $this->filter( $return, __FUNCTION__ );
+	}
+
+	/**
+	 * Key for one scripture row.
+	 *
+	 * The first passage for a book uses the book slug. Another passage from
+	 * that book would overwrite that row, so it uses the slug plus a counter
+	 * (`hebrews`, then `hebrews-2`). Callers read the rows with foreach or
+	 * Object.values(), and a filter that looks up the slug still finds the
+	 * first row there.
+	 *
+	 * @param array  $listed Rows already collected.
+	 * @param string $slug   Book term slug.
+	 * @return string
+	 */
+	private function scripture_list_key( array $listed, $slug ) {
+		$slug = (string) $slug;
+
+		if ( ! isset( $listed[ $slug ] ) ) {
+			return $slug;
+		}
+
+		$n = 2;
+
+		do {
+			$key = $slug . '-' . $n;
+			$n++;
+		} while ( isset( $listed[ $key ] ) );
+
+		return $key;
 	}
 
 	public function get_categories() {
